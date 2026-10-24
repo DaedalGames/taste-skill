@@ -1,0 +1,183 @@
+/* tasteskill / scenes / raster-cut.css — the raster cut between chapters (raster-cut.js).
+
+   By default (no script, reduced motion, a phone set to 'rest') the section shows one still frame of the
+   cut: a band of A's picture or ground, then B with the title once and the deck, joined by the cut frozen
+   mid-way: three slats a third, a half and two thirds grown, B rising from each slat's lower edge with A
+   between, cut with a clip-path polygon (no gradient mask). A B picture stops short of the
+   section's foot, so the next section joins on flat --b-ground.
+   Under .is-live the two layers stack on the held stage and the script prints B over A, slat by slat. */
+
+[data-scene="raster-cut"] {
+  --a-ground: var(--ink, #0f0f0e);
+  --a-ink: var(--ground, #ede8dd);
+  --b-ground: var(--ground, #e8e3d7);
+  --b-ink: var(--ink, #151514);
+  --rc-gutter: 6vw;
+  --rc-slat: 72px;  /* the still seam's slat height (its thinnest strip is a third of it) */
+  --rc-band: 16svh; /* the still frame's flat B band under a B picture */
+  position: relative;
+  background: var(--b-ground);
+  color: var(--b-ink);
+}
+
+/* ---- the finished composition ---- */
+[data-scene="raster-cut"] .rc-layer { position: relative; }
+[data-scene="raster-cut"] .rc-a {
+  height: 52svh;
+  min-height: 300px;
+  overflow: hidden;
+  background: var(--a-ground);
+  color: var(--a-ink);
+}
+[data-scene="raster-cut"] .rc-a .rc-copy { display: none; }
+[data-scene="raster-cut"] .rc-media { position: absolute; inset: 0; overflow: hidden; }
+[data-scene="raster-cut"] .rc-media > img,
+[data-scene="raster-cut"] .rc-media > video,
+[data-scene="raster-cut"] .rc-media > picture,
+[data-scene="raster-cut"] .rc-media > picture > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* flat scrims keep each ink readable over its picture (no gradient) */
+[data-scene="raster-cut"] .rc-media:has(> img, > video, > picture)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / var(--a-scrim, .3));
+}
+[data-scene="raster-cut"] .rc-b .rc-media:has(> img, > video, > picture)::after {
+  background: rgb(0 0 0 / var(--b-scrim, 0));
+  background: color-mix(in srgb, var(--b-scrim-color, #000) calc(var(--b-scrim, 0) * 100%), transparent);
+}
+
+[data-scene="raster-cut"] .rc-b {
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 76svh;
+  margin-top: calc(var(--rc-slat) * -7 / 3);
+  padding: calc(var(--rc-slat) * 7 / 3 + 6svh) var(--rc-gutter) 12svh;
+  background: var(--b-ground);
+  color: var(--b-ink);
+  /* three slats grown a third, a half and two thirds: B runs [2/3, 1], [3/2, 2] and [7/3, end] slats from
+     the top, A in the gaps, so no strip of either ink is thinner than a third of a slat */
+  clip-path: polygon(
+    -2px calc(var(--rc-slat) * 2 / 3), calc(100% + 2px) calc(var(--rc-slat) * 2 / 3),
+    calc(100% + 2px) var(--rc-slat), -2px var(--rc-slat),
+    -2px calc(var(--rc-slat) * 1.5), calc(100% + 2px) calc(var(--rc-slat) * 1.5),
+    calc(100% + 2px) calc(var(--rc-slat) * 2), -2px calc(var(--rc-slat) * 2),
+    -2px calc(var(--rc-slat) * 7 / 3), calc(100% + 2px) calc(var(--rc-slat) * 7 / 3),
+    calc(100% + 2px) calc(100% + 2px), -2px calc(100% + 2px)
+  );
+}
+/* a B picture ends above a flat band of --b-ground, the ground the next section continues on */
+[data-scene="raster-cut"]:not(.is-live):not([data-rc-fold="off"]) .rc-b:has(> .rc-media > img, > .rc-media > video, > .rc-media > picture) {
+  min-height: 100svh;
+  padding-bottom: calc(var(--rc-band) + 7svh);
+}
+[data-scene="raster-cut"]:not(.is-live):not([data-rc-fold="off"]) .rc-b > .rc-media:has(> img, > video, > picture) { bottom: var(--rc-band); }
+
+[data-scene="raster-cut"] .rc-copy { position: relative; }
+[data-scene="raster-cut"] .rc-title {
+  margin: 0;
+  max-width: 12ch;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(56px, 11.5vw, 200px);
+  font-weight: 700;
+  font-style: normal;
+  line-height: .88;
+  letter-spacing: -.04em;
+  text-wrap: balance;
+  color: inherit;
+}
+[data-scene="raster-cut"] .rc-deck {
+  margin: 28px 0 0;
+  max-width: 36ch;
+  font-size: clamp(16px, 1.35vw, 20px);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+[data-scene="raster-cut"] .rc-line { display: none; }
+
+@media (max-width: 767px) {
+  [data-scene="raster-cut"] { --rc-gutter: 24px; --rc-slat: 60px; --rc-band: 14svh; }
+  [data-scene="raster-cut"] .rc-a { height: 42svh; min-height: 240px; }
+  [data-scene="raster-cut"] .rc-b { min-height: 72svh; }
+  [data-scene="raster-cut"] .rc-title { max-width: none; font-size: clamp(40px, 14.5vw, 60px); line-height: .92; }
+  [data-scene="raster-cut"] .rc-deck { margin-top: 20px; max-width: 30ch; font-size: 16px; }
+}
+
+/* ---- live: both layers on the held stage ---- */
+/* a 100lvh stage, so a phone's toolbar never uncovers an edge; the copy is centred on 50svh */
+html.js .scene.is-live[data-scene="raster-cut"] { height: calc((var(--hold, 1.2) + 1) * 100lvh); }
+html.js .scene.is-live[data-scene="raster-cut"] > .scene-stage { height: 100lvh; }
+
+[data-scene="raster-cut"].is-live .rc-layer {
+  position: absolute;
+  inset: -2px 0;             /* both layers reach 2px past the stage (PAD in the script); the stage clips them */
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  transform: translateZ(0);  /* both layers composited the same way, so the two titles register */
+}
+[data-scene="raster-cut"].is-live .rc-media { inset: 0; }
+[data-scene="raster-cut"].is-live .rc-b {
+  display: block;
+  clip-path: var(--rc-clip, inset(100% 0 0 0));
+  /* halftone only: the dot screen (and the title plate) as SVG mask tiles, set by the script */
+  -webkit-mask-image: var(--rc-mask, none);
+  mask-image: var(--rc-mask, none);
+  -webkit-mask-size: var(--rc-mask-size, auto);
+  mask-size: var(--rc-mask-size, auto);
+  -webkit-mask-repeat: var(--rc-mask-repeat, repeat);
+  mask-repeat: var(--rc-mask-repeat, repeat);
+  -webkit-mask-position: var(--rc-mask-pos, 50% 50%);
+  mask-position: var(--rc-mask-pos, 50% 50%);
+}
+[data-scene="raster-cut"].is-live .rc-a .rc-copy { display: block; }
+[data-scene="raster-cut"].is-live[data-rc-covered] .rc-a { visibility: hidden; }
+[data-scene="raster-cut"].is-live .rc-copy {
+  position: absolute;
+  left: var(--rc-gutter);
+  right: var(--rc-gutter);
+  top: calc(50svh + 2px);
+  margin: 0;
+  transform: translateY(-50%);
+}
+/* the deck hangs below the title, out of flow, so both copy boxes are identical */
+[data-scene="raster-cut"].is-live .rc-deck { position: absolute; left: 0; top: calc(100% + 28px); margin: 0; }
+[data-scene="raster-cut"].is-live .rc-media > :is(img, video, picture) { will-change: transform; }
+
+/* bands only: one line in difference blend above both layers, scrubbed sideways, set inside one band */
+[data-scene="raster-cut"].is-live[data-rc-pattern="bands"]:not([data-rc-line="off"]) .rc-line {
+  display: block;
+  position: absolute;
+  left: var(--rc-gutter);
+  top: var(--rc-line-top, 9svh);
+  z-index: 2;
+  height: var(--rc-line-h, auto);
+  margin: 0;
+  white-space: nowrap;
+  font-family: var(--font-display, inherit);
+  font-size: var(--rc-line-size, 9vw);
+  font-weight: 700;
+  line-height: var(--rc-line-h, 1);
+  letter-spacing: -.03em;
+  text-transform: uppercase;
+  color: #fff;
+  mix-blend-mode: difference;
+  pointer-events: none;
+  will-change: transform;
+}
+
+@media (max-width: 767px) {
+  [data-scene="raster-cut"].is-live .rc-deck { top: calc(100% + 20px); }
+  /* the phone drops the bands line (as specific as the rule that shows it, so it wins) */
+  [data-scene="raster-cut"].is-live[data-rc-pattern="bands"]:not([data-rc-line="off"]) .rc-line { display: none; }
+}
