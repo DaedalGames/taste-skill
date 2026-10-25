@@ -58,7 +58,7 @@
 //     a host that sends CORS headers): every colour in it becomes --ts-accent, a light grey or white
 //     --ts-ink-b, a dark grey or black --ts-ground-b. So draw it in the defaults (#ece6d8 and #c8f03c)
 //     and it follows any page; visitors without script see the file's own colours.
-//     demo/media/twin-image-scanner/typewriter-structure.svg is a complete example.
+//     the demo's typewriter-structure.svg (on the scene-media branch) is a complete example.
 //  2. Only one photograph, shot on white: give the section class="ts-cutout" and the B img the same src
 //     plus data-trace="lines". The script reads the photograph once (off the main thread; a same-origin
 //     picture, or a host that sends CORS headers, which it fetches again itself), cuts away the white

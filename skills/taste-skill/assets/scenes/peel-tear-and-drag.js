@@ -222,13 +222,16 @@
   // Everything the scene makes is handed to the page as a plain bitmap <img>: a composited image keeps its
   // raster however it is scaled, where a drawing or a canvas inside a scaled box is painted again each frame.
   const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  // A picture from another host without crossorigin="anonymous" taints the canvas: keep the original then.
   const toImg = (canvas, img) => new Promise((done) => {
-    canvas.toBlob((blob) => {
-      if (!blob) return done();
-      const old = img.dataset.blob;
-      img.src = img.dataset.blob = URL.createObjectURL(blob);
-      img.decode().catch(() => {}).then(() => { if (old) URL.revokeObjectURL(old); done(); });
-    }, 'image/png');
+    try {
+      canvas.toBlob((blob) => {
+        if (!blob) return done();
+        const old = img.dataset.blob;
+        img.src = img.dataset.blob = URL.createObjectURL(blob);
+        img.decode().catch(() => {}).then(() => { if (old) URL.revokeObjectURL(old); done(); });
+      }, 'image/png');
+    } catch { done(); }
   });
   // paint a self-contained SVG at a given pixel size into an <img>; hands the canvas to `then` first
   const paintSvg = (img, svg, size, then) => {
