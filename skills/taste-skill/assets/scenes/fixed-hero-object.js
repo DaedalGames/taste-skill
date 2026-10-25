@@ -258,7 +258,10 @@
         while (s.next < s.order.length) {
           const i = s.order[s.next++];
           try {
-            const img = () => { const im = new Image(); im.decoding = 'async'; im.src = url(i); return im.decode().then(() => im); };
+            // frames on another host (a CDN) are asked for with CORS so their silhouette can be measured; a host
+            // that refuses CORS still serves them plainly, and measure() then falls back to the default box
+            const load = (cors) => { const im = new Image(); im.decoding = 'async'; const u = url(i); if (cors && new URL(u, location.href).origin !== location.origin) im.crossOrigin = 'anonymous'; im.src = u; return im.decode().then(() => im); };
+            const img = () => load(true).catch(() => load(false));
             if (!BITMAP) {
               // no createImageBitmap: decoded <img>s, all kept, as the browser allows
               const im = await img();
