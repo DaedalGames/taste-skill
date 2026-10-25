@@ -2,9 +2,20 @@
 // Drives an installed Chrome / Edge / Chromium in headless mode over Node's built-in WebSocket.
 // Requires Node 22+. No npm install.
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
-import { tmpdir, hostname } from 'node:os';
+import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
+import { tmpdir, hostname, homedir } from 'node:os';
 import { join } from 'node:path';
+
+// Where the throwaway browser profiles live: TASTE_SKILL_TMP, else "tmp" in ~/.taste-skill/config.json
+// (set it once to keep them off a full system drive), else the system temp folder.
+function profileBase() {
+  if (process.env.TASTE_SKILL_TMP) return process.env.TASTE_SKILL_TMP;
+  try {
+    const c = JSON.parse(readFileSync(join(homedir(), '.taste-skill', 'config.json'), 'utf8'));
+    if (c && typeof c.tmp === 'string' && c.tmp) { mkdirSync(c.tmp, { recursive: true }); return c.tmp; }
+  } catch {}
+  return tmpdir();
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -72,7 +83,7 @@ export class Browser {
     }
     // A throwaway profile per run, its cache capped (each run starts cold anyway), removed on exit. It is
     // claimed with an owner file before Chrome starts, so another run's sweep can tell when it was abandoned.
-    const base = process.env.TASTE_SKILL_TMP || tmpdir();
+    const base = profileBase();
     sweepProfiles(base);
     const dir = mkdtempSync(join(base, 'ad-chrome-'));
     const claim = (chrome) => {
