@@ -39,7 +39,7 @@
 .scene[data-scene="arrive-and-settle-track"].is-moving .settle__char { will-change: transform; }
 
 .scene[data-scene="arrive-and-settle-track"] .settle__cluster {
-  margin: 5vh 0 0 56vw;
+  margin: 7vh 0 0 56vw;           /* clear of a descender in the last line */
   max-width: min(36vw, 520px);
   display: grid;
   gap: clamp(18px, 1.5vw, 28px);
@@ -145,8 +145,9 @@
 
 /* ── the phone: one column, both for the finished composition and the live stack ──────────────── */
 @media (max-width: 767px) {
-  /* a padded block, not a screen-high band: the line follows the section before it closely */
-  .scene[data-scene="arrive-and-settle-track"] .settle { min-height: 0; padding: 16vh 16px; }
+  /* a padded block, not a screen-high band: the line follows the section before it closely, and the
+     section after it follows the button at an ordinary section gap */
+  .scene[data-scene="arrive-and-settle-track"] .settle { min-height: 0; padding: 14vh 16px 9vh; }
   /* as the first section it keeps the whole first screen, so its line assembles on screen */
   html.js .scene[data-scene="arrive-and-settle-track"].is-live[data-first] .settle { min-height: 100svh; }
   .scene[data-scene="arrive-and-settle-track"] .settle__line { max-width: none; font-size: var(--settle-fit, 13vw); letter-spacing: -0.04em; }

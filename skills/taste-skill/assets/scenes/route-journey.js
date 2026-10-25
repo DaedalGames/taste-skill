@@ -3,9 +3,9 @@
 // A traveller (a top-down vehicle drawn in SVG, or any cut-out) stays parked at one point of the screen
 // while a tilted map slides, turns and leans under it along a route that draws itself in the accent.
 // The camera cranes in from a flat, north-up overview of the whole trip to a heading-up chase at 52deg,
-// stops at each stop with a slow swing and push-in while standing boards rise beside the road, the rail
-// names the stop and a gauge counts a real unit, then cranes back to straight overhead while a wave of
-// light sweeps the destination plot from its centre out, in perspective, and the plot settles lit.
+// stops at each stop with a slow swing and push-in while a name board swings up beside the road, the
+// rail names the stop and a gauge counts a real unit, then cranes back to straight overhead while a wave
+// of light sweeps the destination plot from its centre out, in perspective, and the plot settles lit.
 // Use it when the story really is a trip with 3 to 5 stops (a delivery, a tour, a process told as a
 // route); skip it for a plain list. Everything is derived from the scroll position, so scrolling back
 // gives exactly the same frame.
@@ -26,12 +26,17 @@
 //           <symbol id="route-mark" class="route-mark" viewBox="0 0 32 32">…</symbol>        optional
 //         </defs>
 //         <g id="route-scene" class="route-scene">          (the class lets the inset's <use> copy take the map colours)
-//           <g class="route-art">  the map, in map px: shapes classed .rm-land (one sheet under all) .rm-water .rm-forest .rm-relief-1..3
-//             .rm-field-a/b .rm-road .rm-lane .rm-house .rm-light (lit windows) .rm-river, <path class="route-road"
-//             d="(the route)"/> and up to three <text class="route-word" transform="translate(x y) rotate(r) scale(1 1.6)">
+//           <g class="route-art">  OPTIONAL. The map, in map px: shapes classed .rm-land (one sheet under all)
+//             .rm-water .rm-forest .rm-relief-1..3 .rm-field-a/b .rm-road .rm-lane .rm-house .rm-light (lit
+//             windows) .rm-river, <path class="route-road" d="(the route)"/> and up to three
+//             <text class="route-word" transform="translate(x y) rotate(r) scale(1 1.6)">. Leave it out and
+//             the scene draws a seeded country of fells, lakes, fields, forest, side roads and lit villages
+//             around the route itself (option seed), in the same classes, so it takes the page's colours.
 //           </g>
 //           <use href="#route-geo" class="route-still__trail"/>
-//           <circle class="route-stop" cx="…" cy="…" r="22"/>   one per stop except the last (the plot)
+//           <circle class="route-stop" data-step="2" cx="…" cy="…" r="22"/>   the stops on the map: data-step is
+//                 the step's number in the list (1 is the first); stops without a circle are spread evenly
+//                 between their neighbours. Circles without data-step are read in order (step 1, 2, …)
 //           <g class="route-still__plot">…</g>   <use href="#route-vehicle" …/>   (the still's finished state)
 //         </g>
 //       </svg>
@@ -54,13 +59,11 @@
 // spins the world. Put the sharp turns at the stops, where the traveller is slow, and keep the legs
 // between them straight or gently bent (radius 1000+): the heading-up camera turns with the road. End
 // the path `plotGap` px short of where the plot's centre should be; the plot (grid x grid tiles) is
-// placed on the route's end, along its last heading. Stops sit at the nearest point of the route to
-// each .route-stop circle (in order); stops without one are spread evenly between their neighbours. Each step's data-value is the gauge reading at
-// that stop, in one real unit. Draw the map well beyond the route's box: the chase looks about 2000 map
-// px ahead and 1500 to the sides, so 2000 past the plot and the far bends. End the art in organic shapes
-// (forest, fell, field patches), never a straight edge. Keep the top-left corner of the overview (left
-// of the route's box, above its middle) quiet: the intro plate sits there at 0%. At night, set
-// --route-light (lit windows, .rm-light) and --route-beam (the headlights) on the section.
+// placed on the route's end, along its last heading. Each step's data-value is the gauge reading at
+// that stop, in one real unit. Drawn map art should reach well beyond the route's box: the chase looks
+// about 2000 map px ahead and 1500 to the sides, so 2000 past the plot and the far bends. End it in
+// organic shapes (forest, fell, field patches), never a straight edge. At night, set --route-light (lit
+// windows, .rm-light) and --route-beam (the headlights) on the section.
 //
 // OPTIONS (data-options, all optional; defaults in brackets)
 //   hold        screens held [1.6 + 0.8 x legs: 3 stops 3.2, 4 stops 4.0, 5 stops 4.8, never more than 5], 1-6
@@ -68,7 +71,8 @@
 //   phone       'same' [the same scene with phone numbers] | 'rest' (the finished composition)
 //   scrub       seconds of catch-up [0.6], 0-1; locked to the bar when Lenis smooths the page
 //   heading     'up' [the road ahead always points up the screen] | 'north' (north stays up)
-//   tilt        camera tilt in the chase, degrees [52], 0-62; 0 is a flat map chase. phoneTilt [46]
+//   tilt        camera tilt in the chase, degrees [52], 0-62; 0 is a flat map chase. Above about 56 the
+//               horizon comes on screen and the fog's solid strip grows down over the far field. phoneTilt [46]
 //   zoom        chase zoom [1.25], 1-1.5. phoneZoom [0.9]
 //   push        push-in at each stop [0.09], 0-0.12. phonePush [0.07]
 //   arrive      zoom over the plot [2.0], 1.3-2.4, lowered by itself until the plot clears the rail and
@@ -79,27 +83,42 @@
 //   grid        tiles a side of the destination plot [5], 3-7.  tile [56] and gap [10], map px
 //   unit        gauge rounding: 'auto' [tens from 1000 up, else whole numbers] or a step such as 0.5
 //   perspective stage perspective in px [1000 desktop, 900 compact, 760 phone], 600-2400
+//   seed        the drawn country's seed when the page has no .route-art [1]; change it for another map
+//   bake        true [the map is painted once into bitmaps before the ride] | false (the browser rasters the
+//               vector map as the camera reaches it, which stutters on a first pass)
 //
 // LAYOUTS. Desktop (1100px and up): the traveller parked at (58vw, 66svh), intro top left, rail bottom
 // left. Compact (768-1099px): traveller centred, intro across the top, rail along the bottom. Phone
 // (767px and down): the same with phone numbers. The arrival zoom and the anchor height are trimmed on
 // every refresh so the parked traveller and the lit plot never sit under a plate.
 //
-// TIMELINE (fractions of the hold): landing 0.05-0.13, crane in 0.09-0.18, legs 0.18-0.78 with 0.08
+// TIMELINE (fractions of the hold): landing 0.05-0.13, crane in 0.09-0.18 (the traveller glides in a
+// straight line from its place in the overview to its anchor by 0.16, ahead of the crane, so it never
+// leaves the frame), intro out 0.09-0.14, rail in from 0.14 (on compact and phone layouts only once the
+// traveller has risen clear of the plate), legs 0.18-0.78 with 0.08
 // dwells between them (each leg's time in proportion to its length, the last 0.02 longer; shorter dwells
 // and smaller swings beyond 4 legs), crane out to overhead 0.74-0.88; the plot lights from its centre out
 // 0.765-0.86 while the camera is still tilted, each tile flashing in the accent and rising into place;
 // arrival copy 0.89-0.95, rest from 0.96. The camera never turns more than 36deg per 0.05 of progress.
+// A stop's board swings up from the ground as the traveller nears it and fades as it pulls away.
 //
 // PERFORMANCE. The map rig is a plain 3D transform over flat layers (only the boards ride a preserve-3d
-// rig), so the map is drawn straight to the screen, never through an offscreen surface. The map and the
-// line layer keep one raster through the ride (will-change, in the CSS); a copy of the few hundred map px
-// seen overhead rasters sharp for the end. The drawn trail adds a finished piece to the big line layer
-// every 240 map px, while the piece being drawn lives in a small layer at the tip. Soft map fills skip edge
-// anti-aliasing, the fog's solid strip hides the far map from the rasteriser, and the pin and plot pulses
-// run only while the scene rests at its two ends.
+// rig). Drawn as vector, the map costs the browser a raster of thousands of shapes for every new piece
+// of map the camera turns towards, which stutters on a first pass. So once the page is idle the scene
+// paints the map itself, in idle slices, into bitmaps: the ground is cut into cells (40 at most), each
+// painted at the sharpest scale the camera's path will ever show it at (worked out from the path itself,
+// leaving out what lies under the fog's solid strip, under the rail plate or beyond the art), within a
+// pixel budget (18 Mpx, 24 on dense screens, 8 on a phone) that coarsens the far ground first, then the
+// middle distance, then the ceiling; and the view over the plot gets a bitmap of its own at the final
+// zoom, pixel for pixel. A coarse draft of the whole map is painted first and stands in until the cells
+// are in. The ride then only copies pixels. Until the draft is in (or with bake: false) the
+// vector map rides. The overview's wide dotted route and the chase's lines are separate layers that
+// cross-fade, so neither is redrawn for its width; the drawn trail adds a finished piece every 240 map px
+// while the piece being drawn lives in a small layer at the tip; the pin and plot pulses run only while
+// the scene rests at its two ends.
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
+  const DEG = Math.PI / 180;
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
   const lerp = (a, b, t) => a + (b - a) * t;
   const seg = (p, start, dur) => clamp((p - start) / dur, 0, 1);
@@ -110,7 +129,7 @@
   const DEFAULTS = {
     phone: 'same', scrub: 0.6, heading: 'up', tilt: 52, phoneTilt: 46, zoom: 1.25, phoneZoom: 0.9,
     push: 0.09, phonePush: 0.07, arrive: 2.0, phoneArrive: 1.0, orbit: 8, smooth: 320, plotGap: 96,
-    grid: 5, tile: 56, gap: 10, unit: 'auto',
+    grid: 5, tile: 56, gap: 10, unit: 'auto', seed: 1, bake: true,
   };
 
   window.Scenes = window.Scenes || {};
@@ -120,10 +139,16 @@
     const legs = clamp(stops, 2, 12) - 1;
     const hold = clamp(o.hold ?? Math.min(5, 1.6 + 0.8 * legs), 1, 6);
     const phoneHold = o.phoneHold ?? +(hold * 0.85).toFixed(2);
+    const still = root.querySelector('.route-still');
+    const geo = still && still.querySelector('.route-geo');
     // without a route or with fewer than two stops there is no trip: show the finished composition
-    if (stops < 2 || !root.querySelector('.route-still .route-geo')) {
+    if (stops < 2 || !geo) {
       console.warn('route-journey: needs svg.route-still with a path.route-geo and two or more .route-step');
       return Stage.scene(root, { hold, build: null });
+    }
+    // no map art on the page: draw a country around the route, so the chase always has ground under it
+    if (!still.querySelector('.route-art')) {
+      try { drawCountry(still, geo, stops, o); } catch (err) { console.warn('route-journey: could not draw a map', err); }
     }
     const build = (tl, ctx) => buildRoute(tl, ctx, root, o);
     return Stage.scene(root, {
@@ -133,6 +158,279 @@
       build,
     });
   };
+
+  // ---------- a seeded country around the route (when the page brings no map art) ----------
+  // Fells in three tiers, lakes, field patchwork, forest, side roads and lanes branching off the route,
+  // a village at every stop and lit farmsteads along the roads, all clear of the route and the plot.
+  // Shapes are merged into one path per class per 640 map px, so a raster tile replays little.
+  function drawCountry(still, geo, nSteps, o) {
+    const d = geo.getAttribute('d') || '';
+    const probe = svgEl('path', { d }, still); // a laid-out copy to measure
+    const L = probe.getTotalLength();
+    if (!(L > 0)) { probe.remove(); return; }
+    const pts = [];
+    for (let s = 0; s <= L; s += 16) { const q = probe.getPointAtLength(s); pts.push([q.x, q.y]); }
+    const a0 = probe.getPointAtLength(Math.max(0, L - 12)), a1 = probe.getPointAtLength(L);
+    probe.remove();
+    const eh = Math.atan2(a1.y - a0.y, a1.x - a0.x);
+    const gap = +o.plotGap || 96, G = clamp(Math.round(+o.grid || 5), 3, 7);
+    const plotR = (G * (+o.tile || 56) + (G - 1) * (+o.gap || 10)) * 0.72; // the plot's half diagonal
+    const PX = a1.x + Math.cos(eh) * gap, PY = a1.y + Math.sin(eh) * gap;
+    let h = 2166136261 ^ Math.round(+o.seed || 0);
+    for (let i = 0; i < d.length; i++) h = Math.imul(h ^ d.charCodeAt(i), 16777619);
+    let st = h >>> 0;
+    const rnd = () => { st = (st + 0x6d2b79f5) | 0; let t = Math.imul(st ^ (st >>> 15), 1 | st); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const R = (a, b) => a + rnd() * (b - a);
+    let bx0 = PX - plotR, by0 = PY - plotR, bx1 = PX + plotR, by1 = PY + plotR;
+    for (const [x, y] of pts) { bx0 = Math.min(bx0, x); by0 = Math.min(by0, y); bx1 = Math.max(bx1, x); by1 = Math.max(by1, y); }
+    const EXT = 2300, B = [bx0 - EXT, by0 - EXT, bx1 + EXT, by1 + EXT];
+    const inB = (x, y, m = 0) => x > B[0] + m && y > B[1] + m && x < B[2] - m && y < B[3] - m;
+    const distR = (x, y) => { let m = Infinity; for (let i = 0; i < pts.length; i++) { const dx = pts[i][0] - x, dy = pts[i][1] - y, q = dx * dx + dy * dy; if (q < m) m = q; } return Math.sqrt(m); };
+    const nearPlot = (x, y, pad) => Math.hypot(x - PX, y - PY) < plotR + pad;
+    const lakes = [], towns = [], fieldsAt = [];
+    const inLake = (x, y, pad = 0) => lakes.some((l) => ((x - l.x) / (l.rx + pad)) ** 2 + ((y - l.y) / (l.ry + pad)) ** 2 < 1);
+    const inTown = (x, y, pad = 0) => towns.some((t) => Math.hypot(x - t.x, y - t.y) < t.r + pad);
+    const f = Math.round;
+    const closed = (p) => {
+      const n = p.length; let s = `M${f(p[0][0])} ${f(p[0][1])}`;
+      for (let i = 0; i < n; i++) {
+        const q0 = p[(i - 1 + n) % n], q1 = p[i], q2 = p[(i + 1) % n], q3 = p[(i + 2) % n];
+        s += `C${f(q1[0] + (q2[0] - q0[0]) / 6)} ${f(q1[1] + (q2[1] - q0[1]) / 6)} ${f(q2[0] - (q3[0] - q1[0]) / 6)} ${f(q2[1] - (q3[1] - q1[1]) / 6)} ${f(q2[0])} ${f(q2[1])}`;
+      }
+      return s + 'Z';
+    };
+    const open = (p) => {
+      const n = p.length; let s = `M${f(p[0][0])} ${f(p[0][1])}`;
+      for (let i = 0; i < n - 1; i++) {
+        const q0 = p[Math.max(0, i - 1)], q1 = p[i], q2 = p[i + 1], q3 = p[Math.min(n - 1, i + 2)];
+        s += `C${f(q1[0] + (q2[0] - q0[0]) / 6)} ${f(q1[1] + (q2[1] - q0[1]) / 6)} ${f(q2[0] - (q3[0] - q1[0]) / 6)} ${f(q2[1] - (q3[1] - q1[1]) / 6)} ${f(q2[0])} ${f(q2[1])}`;
+      }
+      return s;
+    };
+    const blob = (cx, cy, r, irr = 0.28, n = 9, sx = 1, sy = 1, rot = 0) => {
+      const p = [], b0 = R(0, Math.PI * 2), c = Math.cos(rot), s = Math.sin(rot);
+      for (let i = 0; i < n; i++) { const a = b0 + (i / n) * Math.PI * 2, rr = r * (1 + R(-irr, irr)), x = Math.cos(a) * rr * sx, y = Math.sin(a) * rr * sy; p.push([cx + x * c - y * s, cy + x * s + y * c]); }
+      return closed(p);
+    };
+    const quad = (x, y, w, hh, a) => { const c = Math.cos(a), s = Math.sin(a); return 'M' + [[-w / 2, -hh / 2], [w / 2, -hh / 2], [w / 2, hh / 2], [-w / 2, hh / 2]].map(([u, v]) => `${f(x + u * c - v * s)} ${f(y + u * s + v * c)}`).join('L') + 'Z'; };
+    const bins = new Map();
+    const put = (cls, x, y, ds) => { const k = cls + '|' + Math.floor(x / 640) + ',' + Math.floor(y / 640); const b = bins.get(k); if (b) b.d += ds; else bins.set(k, { cls, d: ds }); };
+    const area = (B[2] - B[0]) * (B[3] - B[1]);
+    const cx = (bx0 + bx1) / 2, cy = (by0 + by1) / 2;
+    // the land: one soft sheet a step above the ground, so open country reads as land
+    put('rm-land', cx, cy, blob(cx, cy, 1, 0.06, 16, (bx1 - bx0) / 2 + EXT * 0.94, (by1 - by0) / 2 + EXT * 0.94, 0));
+    // lakes, clear of the route and the plot
+    for (let k = 0, tries = 0, want = 3 + Math.floor(rnd() * 3); k < want && tries < 200; tries++) {
+      const l = { x: R(B[0] + 500, B[2] - 500), y: R(B[1] + 500, B[3] - 500), rx: R(130, 280), ry: 0, rot: R(-0.6, 0.6) };
+      l.ry = l.rx * R(0.5, 0.85);
+      if (distR(l.x, l.y) < l.rx + 160 || nearPlot(l.x, l.y, l.rx + 220) || inLake(l.x, l.y, l.rx + 200)) continue;
+      lakes.push(l); put('rm-water', l.x, l.y, blob(l.x, l.y, 1, 0.16, 10, l.rx, l.ry, l.rot)); k++;
+    }
+    // fells: three tiers each
+    for (let k = 0, n = clamp(Math.round(area / 3.2e6), 6, 16); k < n; k++) {
+      const x = R(B[0] + 300, B[2] - 300), y = R(B[1] + 300, B[3] - 300), r = R(220, 430), sx = R(0.8, 1.4), sy = R(0.7, 1.3), rot = R(-0.6, 0.6);
+      [1, 0.66, 0.36].forEach((m, i) => put('rm-relief-' + (i + 1), x, y, blob(x + R(-24, 24) * i, y + R(-24, 24) * i, r * m, 0.24, 10, sx, sy, rot)));
+    }
+    // roads: side roads branching off the route, two through roads, lanes off the roads
+    const roads = [], lanes = [];
+    const walk = (x, y, ang, n, lenA, lenB, bend) => {
+      const p = [[x, y]];
+      for (let i = 0; i < n; i++) {
+        let nx, ny, ok = false;
+        for (let tr = 0; tr < 4 && !ok; tr++) {
+          const a = ang + R(-bend, bend) + (tr ? (tr % 2 ? 1 : -1) * 0.5 * tr : 0), len = R(lenA, lenB);
+          nx = x + Math.cos(a) * len; ny = y + Math.sin(a) * len;
+          if (!inLake(nx, ny, 40) && !nearPlot(nx, ny, 110)) { ok = true; ang = a; }
+        }
+        if (!ok) break;
+        x = nx; y = ny; p.push([x, y]);
+        if (!inB(x, y, 100)) break;
+      }
+      return p;
+    };
+    const hdgAt = (i) => { const a = pts[Math.max(0, i - 2)], b = pts[Math.min(pts.length - 1, i + 2)]; return Math.atan2(b[1] - a[1], b[0] - a[0]); };
+    for (let s = R(260, 520); s < L - 220; s += R(560, 860)) {
+      const i = Math.round(s / 16), side = rnd() < 0.5 ? -1 : 1;
+      const p = walk(pts[i][0], pts[i][1], hdgAt(i) + side * R(1.15, 1.95), 8, 260, 420, 0.3);
+      if (p.length > 2) roads.push(p);
+    }
+    for (let k = 0; k < 2; k++) {
+      const vert = rnd() < 0.5, t = R(0.15, 0.85);
+      const x = vert ? lerp(B[0], B[2], t) : B[0] + 120, y = vert ? B[1] + 120 : lerp(B[1], B[3], t);
+      const p = walk(x, y, vert ? Math.PI / 2 : 0, 30, 300, 460, 0.22);
+      if (p.length > 3) roads.push(p);
+    }
+    for (const p of roads) for (let i = 1; i < p.length - 1; i++) {
+      if (rnd() > 0.45) continue;
+      const a = Math.atan2(p[i + 1][1] - p[i][1], p[i + 1][0] - p[i][0]) + (rnd() < 0.5 ? -1 : 1) * R(1.1, 2);
+      const q = walk(p[i][0], p[i][1], a, 3, 170, 300, 0.35);
+      if (q.length > 1) lanes.push(q);
+    }
+    // a village at every stop but the last (the plot), aligned to the road there
+    const circles = [...still.querySelectorAll('.route-stop')];
+    const spots = circles.length ? circles.map((c) => [+c.getAttribute('cx'), +c.getAttribute('cy')]) : Array.from({ length: Math.max(1, nSteps - 1) }, (_, k) => pts[Math.min(pts.length - 1, Math.round((k / Math.max(1, nSteps - 1)) * (pts.length - 1)))]);
+    const houses = [];
+    const house = (x, y, w, hh, a) => {
+      houses.push([x, y, quad(x, y, w, hh, a)]);
+      if (rnd() < 0.76) {
+        const n = w > 26 && rnd() < 0.5 ? 2 : 1, c = Math.cos(a), s = Math.sin(a);
+        for (let i = 0; i < n; i++) { const ox = n === 2 ? (i ? 1 : -1) * w * 0.22 : R(-w * 0.18, w * 0.18), oy = R(-hh * 0.12, hh * 0.12); put('rm-light', x, y, quad(x + ox * c - oy * s, y + ox * s + oy * c, 8, 6, a)); }
+      }
+    };
+    for (const [sx, sy] of spots) {
+      if (nearPlot(sx, sy, 200)) continue;
+      let bi = 0, bd = Infinity; pts.forEach((q, i) => { const dd = (q[0] - sx) ** 2 + (q[1] - sy) ** 2; if (dd < bd) { bd = dd; bi = i; } });
+      const ang = hdgAt(bi), side = rnd() < 0.5 ? -1 : 1, rr = R(150, 210);
+      const tx = sx + Math.cos(ang + side * Math.PI / 2) * rr * 0.75, ty = sy + Math.sin(ang + side * Math.PI / 2) * rr * 0.75;
+      towns.push({ x: tx, y: ty, r: rr });
+      for (let k = 0, tries = 0, want = Math.round(R(22, 36)); k < want && tries < want * 40; tries++) {
+        const x = tx + R(-rr, rr), y = ty + R(-rr * 0.7, rr * 0.7);
+        if (Math.hypot(x - tx, y - ty) > rr || distR(x, y) < 36 || inLake(x, y, 20) || nearPlot(x, y, 60)) continue;
+        house(x, y, R(16, 34), R(12, 22), ang + (rnd() < 0.5 ? 0 : Math.PI / 2) + R(-0.06, 0.06)); k++;
+      }
+    }
+    // a hamlet beside the plot, so the view at rest has neighbours
+    {
+      const side = rnd() < 0.5 ? -1 : 1, a = eh + side * R(1.2, 1.9), dd = plotR + R(200, 260);
+      const tx = PX + Math.cos(a) * dd, ty = PY + Math.sin(a) * dd;
+      towns.push({ x: tx, y: ty, r: 120 });
+      for (let k = 0, tries = 0; k < 14 && tries < 400; tries++) {
+        const x = tx + R(-120, 120), y = ty + R(-90, 90);
+        if (distR(x, y) < 50 || nearPlot(x, y, 30) || inLake(x, y, 20)) continue;
+        house(x, y, R(16, 32), R(12, 20), eh + (rnd() < 0.5 ? 0 : Math.PI / 2) + R(-0.08, 0.08)); k++;
+      }
+    }
+    // farmsteads along the roads and lanes, lit
+    const farms = [];
+    for (const p of [...roads, ...lanes]) for (let i = 0; i < p.length - 1; i++) {
+      const [a, b] = [p[i], p[i + 1]], len = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / len, uy = (b[1] - a[1]) / len;
+      for (let t = R(60, 200); t < len; t += R(200, 380)) {
+        if (rnd() < 0.42) continue;
+        const off = R(44, 80) * (rnd() < 0.5 ? -1 : 1), x = a[0] + ux * t - uy * off, y = a[1] + uy * t + ux * off;
+        if (!inB(x, y, 60) || distR(x, y) < 70 || inLake(x, y, 30) || inTown(x, y, 20) || nearPlot(x, y, 80) || farms.some((q) => Math.hypot(q[0] - x, q[1] - y) < 100)) continue;
+        farms.push([x, y]);
+        const ang = Math.atan2(uy, ux) + R(-0.1, 0.1);
+        for (let j = 0, n = 1 + Math.floor(rnd() * 3); j < n; j++) house(x + R(-26, 26), y + R(-20, 20), R(18, 34), R(12, 20), ang + (j % 2 ? Math.PI / 2 : 0));
+      }
+    }
+    // field patchwork, near the villages and out in open country
+    const patch = (px, py, cols, rows, cw, ch, angle) => {
+      const c = Math.cos(angle), s = Math.sin(angle);
+      for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+        if (rnd() < 0.2) continue;
+        const w = cw * R(0.72, 1) - 10, hh = ch * R(0.75, 1) - 10, lx = (i - (cols - 1) / 2) * cw, ly = (j - (rows - 1) / 2) * ch;
+        const x = px + lx * c - ly * s, y = py + lx * s + ly * c;
+        if (distR(x, y) < Math.max(w, hh) / 2 + 28 || inLake(x, y, 40) || inTown(x, y, -30) || nearPlot(x, y, 60) || !inB(x, y, 80)) continue;
+        put(rnd() < 0.5 ? 'rm-field-a' : 'rm-field-b', x, y, quad(x, y, w, hh, angle + R(-0.04, 0.04)));
+      }
+      fieldsAt.push([px, py, Math.max(cols * cw, rows * ch) / 2]);
+    };
+    for (const t of towns) patch(t.x + R(-260, 260), t.y + R(-260, 260), 4, 3, R(105, 130), R(90, 110), R(-0.4, 0.4));
+    for (let k = 0, tries = 0, want = clamp(Math.round(area / 1.6e6), 12, 28); k < want && tries < 400; tries++) {
+      const x = R(B[0] + 300, B[2] - 300), y = R(B[1] + 300, B[3] - 300);
+      if (inLake(x, y, 140) || inTown(x, y, 80) || nearPlot(x, y, 260) || distR(x, y) < 140 || fieldsAt.some((q) => Math.hypot(q[0] - x, q[1] - y) < q[2] + 200)) continue;
+      patch(x, y, 2 + Math.floor(rnd() * 3), 2 + Math.floor(rnd() * 2), R(105, 135), R(90, 115), R(-0.5, 0.5)); k++;
+    }
+    // forest: woods of many crowns around a few centres, and loose stands wherever there is room
+    const woods = Array.from({ length: clamp(Math.round(area / 2.6e6), 8, 18) }, () => [R(B[0] + 300, B[2] - 300), R(B[1] + 300, B[3] - 300), R(260, 520)]);
+    for (let k = 0, tries = 0, want = clamp(Math.round(area / 90000), 160, 420); k < want && tries < want * 25; tries++) {
+      let x, y;
+      if (rnd() < 0.7) { const w = woods[Math.floor(rnd() * woods.length)], a = R(0, Math.PI * 2), q = Math.sqrt(rnd()) * w[2]; x = w[0] + Math.cos(a) * q; y = w[1] + Math.sin(a) * q; }
+      else { x = R(B[0] + 150, B[2] - 150); y = R(B[1] + 150, B[3] - 150); }
+      const r = R(40, distR(x, y) > 900 ? 150 : 105);
+      if (!inB(x, y, 120) || distR(x, y) < r + 28 || nearPlot(x, y, r * 0.5 + 40) || inLake(x, y, r + 20) || inTown(x, y, r - 20) || fieldsAt.some((q) => Math.hypot(q[0] - x, q[1] - y) < q[2] * 0.8 + r)) continue;
+      put('rm-forest', x, y, blob(x, y, r, 0.32, 8)); k++;
+    }
+    for (const p of roads) put('rm-road', p[0][0], p[0][1], open(p));
+    for (const p of lanes) put('rm-lane', p[0][0], p[0][1], open(p));
+    for (const [x, y, ds] of houses) put('rm-house', x, y, ds);
+    const order = ['rm-land', 'rm-relief-1', 'rm-relief-2', 'rm-relief-3', 'rm-field-a', 'rm-field-b', 'rm-forest', 'rm-water', 'rm-road', 'rm-lane', 'rm-house', 'rm-light'];
+    const g = svgEl('g', { class: 'route-art', 'data-drawn': '' });
+    for (const cls of order) for (const b of bins.values()) if (b.cls === cls) svgEl('path', { class: cls, d: b.d }, g);
+    svgEl('path', { class: 'route-road', d }, g);
+    // under everything else in the still: the scene group's first child, or the first thing after <defs>
+    const host = still.querySelector('.route-scene') || still;
+    host.insertBefore(g, [...host.children].find((c) => c.localName !== 'defs' && c.localName !== 'title' && c.localName !== 'desc') || null);
+  }
+
+  // ---------- the map as drawing instructions, for painting it into bitmaps ----------
+  // Every visible shape of the live vector map with its resolved colours and its matrix into map px.
+  // Returns null when the art holds something this does not paint (a <use>, an image, a gradient), and
+  // the scene then keeps the vector map.
+  function readArt(svg) {
+    const out = [];
+    const num = (v) => (v && v.baseVal ? v.baseVal.value : 0);
+    const first = (v) => (v && v.baseVal && v.baseVal.numberOfItems ? v.baseVal.getItem(0).value : 0);
+    const paint = (v) => (!v || v === 'none' ? null : /url\(/.test(v) ? false : v);
+    let ok = true;
+    const walk = (node, alpha) => {
+      for (const e of node.children) {
+        if (!ok) return;
+        const tag = e.localName;
+        if (tag === 'title' || tag === 'desc' || tag === 'defs' || tag === 'metadata' || tag === 'style') continue;
+        const cs = getComputedStyle(e);
+        if (cs.display === 'none') continue;
+        const a = alpha * (cs.opacity === '' ? 1 : parseFloat(cs.opacity));
+        if (tag === 'g' || tag === 'a') { walk(e, a); continue; }
+        if (cs.visibility !== 'visible' || !(a > 0)) continue;
+        const fill = paint(cs.fill), stroke = paint(cs.stroke);
+        if (fill === false || stroke === false) { ok = false; return; }
+        const lf = { fill, stroke, fa: a * parseFloat(cs.fillOpacity || '1'), sa: a * parseFloat(cs.strokeOpacity || '1'), rule: cs.fillRule === 'evenodd' ? 'evenodd' : 'nonzero', sw: parseFloat(cs.strokeWidth) || 0, cap: cs.strokeLinecap || 'butt', join: /round|bevel/.test(cs.strokeLinejoin) ? cs.strokeLinejoin : 'miter', ml: parseFloat(cs.strokeMiterlimit) || 4, dash: cs.strokeDasharray && cs.strokeDasharray !== 'none' ? cs.strokeDasharray.split(/[\s,]+/).map(parseFloat).filter((x) => x >= 0) : [], dashOff: parseFloat(cs.strokeDashoffset) || 0 };
+        let p = null;
+        if (tag === 'path') p = new Path2D(e.getAttribute('d') || '');
+        else if (tag === 'rect') { p = new Path2D(); const w = num(e.width), hh = num(e.height), rx = Math.min(num(e.rx) || num(e.ry), w / 2, hh / 2); if (rx > 0 && p.roundRect) p.roundRect(num(e.x), num(e.y), w, hh, rx); else p.rect(num(e.x), num(e.y), w, hh); }
+        else if (tag === 'circle') { p = new Path2D(); p.arc(num(e.cx), num(e.cy), num(e.r), 0, Math.PI * 2); }
+        else if (tag === 'ellipse') { p = new Path2D(); p.ellipse(num(e.cx), num(e.cy), num(e.rx), num(e.ry), 0, 0, Math.PI * 2); }
+        else if (tag === 'line') { p = new Path2D(); p.moveTo(num(e.x1), num(e.y1)); p.lineTo(num(e.x2), num(e.y2)); }
+        else if (tag === 'polyline' || tag === 'polygon') { p = new Path2D(); const q = e.points; for (let i = 0; i < q.numberOfItems; i++) { const v = q.getItem(i); if (i) p.lineTo(v.x, v.y); else p.moveTo(v.x, v.y); } if (tag === 'polygon') p.closePath(); }
+        else if (tag === 'text') {
+          if (!fill) continue;
+          const tt = cs.textTransform, raw = e.textContent.replace(/\s+/g, ' ').trim();
+          lf.text = tt === 'uppercase' ? raw.toUpperCase() : tt === 'lowercase' ? raw.toLowerCase() : raw;
+          lf.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+          lf.ls = cs.letterSpacing === 'normal' ? '0px' : cs.letterSpacing;
+          lf.align = cs.textAnchor === 'middle' ? 'center' : cs.textAnchor === 'end' ? 'end' : 'start';
+          lf.base = /central|middle/.test(cs.dominantBaseline) ? 'middle' : /hanging|text-before/.test(cs.dominantBaseline) ? 'hanging' : 'alphabetic';
+          lf.x = first(e.x); lf.y = first(e.y); lf.stroke = null;
+        } else { ok = false; return; }
+        if (p) lf.path = p;
+        const m = e.getCTM();
+        if (!m) continue;
+        lf.m = [m.a, m.b, m.c, m.d, m.e, m.f];
+        let bb; try { bb = e.getBBox(); } catch { continue; }
+        const pad = (lf.stroke ? lf.sw * (lf.join === 'miter' ? 2 : 0.75) : 0) + 2;
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        for (const [u, v] of [[bb.x - pad, bb.y - pad], [bb.x + bb.width + pad, bb.y - pad], [bb.x - pad, bb.y + bb.height + pad], [bb.x + bb.width + pad, bb.y + bb.height + pad]]) {
+          const X = m.a * u + m.c * v + m.e, Y = m.b * u + m.d * v + m.f;
+          x0 = Math.min(x0, X); y0 = Math.min(y0, Y); x1 = Math.max(x1, X); y1 = Math.max(y1, Y);
+        }
+        lf.box = [x0, y0, x1, y1];
+        out.push(lf);
+      }
+    };
+    walk(svg, 1);
+    return ok ? out : null;
+  }
+  // paints the shapes that touch map rect `rc` into a canvas whose top left is map (ox, oy), at r px per map px
+  function paintArt(cx, leaves, ox, oy, r, rc) {
+    for (const lf of leaves) {
+      const b = lf.box;
+      if (b[2] < rc[0] || b[0] > rc[2] || b[3] < rc[1] || b[1] > rc[3]) continue;
+      cx.setTransform(r, 0, 0, r, -ox * r, -oy * r);
+      const m = lf.m; cx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+      if (lf.text) {
+        cx.globalAlpha = lf.fa; cx.fillStyle = lf.fill; cx.font = lf.font; cx.textAlign = lf.align; cx.textBaseline = lf.base;
+        if ('letterSpacing' in cx) cx.letterSpacing = lf.ls;
+        cx.fillText(lf.text, lf.x, lf.y);
+        continue;
+      }
+      if (lf.fill) { cx.globalAlpha = lf.fa; cx.fillStyle = lf.fill; cx.fill(lf.path, lf.rule); }
+      if (lf.stroke && lf.sw > 0) {
+        cx.globalAlpha = lf.sa; cx.strokeStyle = lf.stroke; cx.lineWidth = lf.sw; cx.lineCap = lf.cap; cx.lineJoin = lf.join; cx.miterLimit = lf.ml;
+        cx.setLineDash(lf.dash); cx.lineDashOffset = lf.dashOff; cx.stroke(lf.path);
+      }
+    }
+  }
 
   function buildRoute(tl, ctx, root, o) {
     const { stage, phone } = ctx;
@@ -156,12 +454,13 @@
     // is parked on; ox/oy and fit: the overview; zc/zp/za: chase, push-in and arrival zoom;
     // k: counter-scale numerator for pins and lines; kt: for the traveller (the hero at every zoom).
     // 'compact' (768-1099px: tablets, small laptops) centres the traveller over a rail along the bottom.
+    // The overview keeps a margin under the route, so the landing ring at the first stop stays in frame.
     const M = {};
     const compactMQ = window.matchMedia('(min-width: 768px) and (max-width: 1099px)');
     const pickMode = (vw, vh) => {
-      if (phone) Object.assign(M, { ax: 0.5, ay: 0.52, persp: 760, tilt: o.phoneTilt, zc: o.phoneZoom, zp: o.phonePush, za: o.phoneArrive, ox: 0.5, oy: 0.64, fitW: vw - 64, fitH: 0.5 * vh, k: 0.9, kt: 0.9, tMax: 2.6, pMax: 2.6, below: true });
-      else if (compactMQ.matches) Object.assign(M, { ax: 0.5, ay: 0.5, persp: 900, tilt: o.tilt, zc: o.zoom, zp: o.push, za: o.arrive, ox: 0.5, oy: 0.64, fitW: vw - 96, fitH: 0.5 * vh, k: 1.25, kt: 1.4, tMax: 2.4, pMax: 2.4, below: true });
-      else Object.assign(M, { ax: 0.58, ay: 0.66, persp: 1000, tilt: o.tilt, zc: o.zoom, zp: o.push, za: o.arrive, ox: 0.64, oy: 0.54, fitW: 0.56 * vw, fitH: 0.72 * vh, k: 1.25, kt: 1.5, tMax: 2.4, pMax: 2.4, below: false });
+      if (phone) Object.assign(M, { ax: 0.5, ay: 0.52, persp: 760, tilt: o.phoneTilt, zc: o.phoneZoom, zp: o.phonePush, za: o.phoneArrive, ox: 0.5, oy: 0.63, fitW: vw - 64, fitH: 0.46 * vh, k: 0.9, kt: 0.9, tMax: 2.6, pMax: 2.6, below: true });
+      else if (compactMQ.matches) Object.assign(M, { ax: 0.5, ay: 0.5, persp: 900, tilt: o.tilt, zc: o.zoom, zp: o.push, za: o.arrive, ox: 0.5, oy: 0.62, fitW: vw - 96, fitH: 0.46 * vh, k: 1.25, kt: 1.4, tMax: 2.4, pMax: 2.4, below: true });
+      else Object.assign(M, { ax: 0.58, ay: 0.66, persp: 1000, tilt: o.tilt, zc: o.zoom, zp: o.push, za: o.arrive, ox: 0.64, oy: 0.5, fitW: 0.56 * vw, fitH: 0.7 * vh, k: 1.25, kt: 1.5, tMax: 2.4, pMax: 2.4, below: false });
       M.tilt = clamp(+M.tilt || 0, 0, 62);
       M.za = clamp(+M.za || 1, 0.3, 2.4);
       if (o.perspective) M.persp = clamp(+o.perspective, 600, 2400) * (phone ? 0.76 : 1);
@@ -174,24 +473,31 @@
     world.style.width = W + 'px'; world.style.height = H + 'px';
     const flat = el('div', 'route-flat', world);
     const art = root.querySelector('.route-art');
+    // the painted map (see PERFORMANCE): cells of bitmaps under the vector map, which is removed once
+    // every cell is painted
+    const bakeEl = el('div', 'route-bake', flat);
     const ground = svgEl('svg', { class: 'route-ground', width: W, height: H, viewBox: `0 0 ${W} ${H}` }, flat);
     const cloneArt = (into) => { if (!art) return; const c = art.cloneNode(true); c.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id')); into.appendChild(c); };
     cloneArt(ground);
-    // The map keeps one raster through the ride (will-change), which leaves it soft once the camera has
-    // zoomed in over the plot. So the few hundred map px seen at the end get a copy of their own that
-    // rasters at the final zoom; it shows only once the camera is overhead.
+    // Until the map is painted, the vector map keeps one raster through the ride (will-change), which
+    // leaves it soft once the camera has zoomed in over the plot; so the few hundred map px seen at the end
+    // get a copy of their own that rasters at the final zoom. It shows only once the camera is overhead.
     const groundEnd = svgEl('svg', { class: 'route-ground route-ground--end' }, flat);
     cloneArt(groundEnd);
-    // the dotted route ahead and the finished pieces of the trail, in their own layer above the map
-    const lines = svgEl('svg', { class: 'route-lines', width: W, height: H, viewBox: `0 0 ${W} ${H}` }, flat);
+    // the dotted route ahead and the finished pieces of the trail, in their own layer above the map. The
+    // overview gets a second dotted route drawn wide (lines at chase width would be hairlines that far
+    // out); the two cross-fade as the crane in starts, so neither layer is ever redrawn for its width
     const d = geoSrc.getAttribute('d');
-    svgEl('path', { class: 'route-ghost', d }, lines);
+    const wide = svgEl('svg', { class: 'route-lines route-lines--wide', width: W, height: H, viewBox: `0 0 ${W} ${H}` }, flat);
+    const wideGhost = svgEl('g', { class: 'route-ghosts' }, wide);
+    const lines = svgEl('svg', { class: 'route-lines', width: W, height: H, viewBox: `0 0 ${W} ${H}` }, flat);
+    const ghost = svgEl('g', { class: 'route-ghosts' }, lines);
     const measurePath = svgEl('path', { d }, lines);
     if (!cam.parentNode) stage.insertBefore(cam, stage.firstChild);
     made.push(cam);
     // The standing boards ride a second camera with the same transform. Only that rig keeps preserve-3d:
     // a flat plane inside a 3D context makes the browser draw the whole map into an offscreen surface
-    // every frame, while a plain 3D transform on a flat rig draws the map's tiles straight to the screen.
+    // every frame, while a plain 3D transform on a flat rig draws the map straight to the screen.
     const cam3 = el('div', 'route-cam route-cam--posts'); cam3.setAttribute('aria-hidden', 'true');
     const world3 = el('div', 'route-world', cam3);
     world3.style.width = W + 'px'; world3.style.height = H + 'px';
@@ -221,9 +527,10 @@
     };
     const nearestS = (x, y) => { let best = 0, bd = Infinity; for (let i = 0; i < n; i++) { const dd = (X[i] - x) ** 2 + (Y[i] - y) ** 2; if (dd < bd) { bd = dd; best = i; } } return Math.min(L, best * STEP); };
 
-    // The drawn trail, in pieces of the same route. A finished piece shows in the big line layer (so that
-    // layer repaints once per piece, not every frame); the piece being drawn lives in a small SVG of its
-    // own that sits on the tip, so a frame only repaints that small layer.
+    // The dotted route and the drawn trail, in pieces of the same route: a raster tile then replays only the
+    // pieces it touches (one long dashed path is replayed whole by every tile). A finished piece of trail
+    // shows in the big line layer (so that layer repaints once per piece, not every frame); the piece being
+    // drawn lives in a small SVG of its own that sits on the tip, so a frame only repaints that small layer.
     const CH = 240, chunks = [];
     for (let a = 0; a < L - 0.5; a += CH) {
       const i0 = Math.floor(a / STEP), i1 = Math.min(n - 1, Math.ceil(Math.min(L, a + CH) / STEP));
@@ -232,6 +539,8 @@
         dd += `L${X[i].toFixed(1)} ${Y[i].toFixed(1)}`; len += Math.hypot(X[i] - X[i - 1], Y[i] - Y[i - 1]);
         x0 = Math.min(x0, X[i]); x1 = Math.max(x1, X[i]); y0 = Math.min(y0, Y[i]); y1 = Math.max(y1, Y[i]);
       }
+      // the dots run on across the pieces: each piece starts its dash pattern where the route has got to
+      for (const g of [ghost, wideGhost]) svgEl('path', { class: 'route-ghost', d: dd, style: `stroke-dashoffset:${(i0 * STEP).toFixed(1)}px` }, g);
       const pc = svgEl('path', { class: 'route-trail', d: dd }, lines);
       pc.style.visibility = 'hidden';
       chunks.push({ el: pc, a: i0 * STEP, b: i0 * STEP + len, len, d: dd, box: [x0, y0, x1, y1], done: false });
@@ -254,13 +563,16 @@
     };
     setTip(-1);
 
-    // stops: the .route-stop circles in the still (in order); stops without a circle are spread evenly
-    // between their neighbours; the first stop is the route's start and the last its end
+    // stops: each .route-stop circle names its step with data-step (1 is the first; without it the circles
+    // count in order); steps without a circle are spread evenly between their neighbours; the first stop
+    // is the route's start and the last its end
     const circles = [...still.querySelectorAll('.route-stop')];
+    const circleFor = new Map();
+    circles.forEach((c, i) => { const k = c.hasAttribute('data-step') ? Math.round(+c.getAttribute('data-step')) - 1 : i; if (k >= 0 && k < N && !circleFor.has(k)) circleFor.set(k, c); });
     const known = steps.map((_, k) => {
       if (k === 0) return 0;
       if (k === N - 1) return L;
-      const c = circles[k];
+      const c = circleFor.get(k);
       return c ? nearestS(+c.getAttribute('cx'), +c.getAttribute('cy')) : null;
     });
     for (let k = 1; k < N - 1; k++) if (known[k] != null && known[k] <= known[k - 1]) known[k] = null; // out of order: spread it
@@ -281,25 +593,37 @@
     const plotSize = G * TS + (G - 1) * TG;
     const plot = el('div', 'route-plot', flat);
     plot.style.cssText = `left:${plotC.x - plotSize / 2}px;top:${plotC.y - plotSize / 2}px;width:${plotSize}px;height:${plotSize}px;--tile:${TS}px;--gap:${TG}px;--grid:${G}`;
-    const tiles = [];
+    // The plot: the grid of bare tiles, and over it the light, in one layer per ring of tiles (the tiles
+    // the same distance from the centre light together), so the sweep only changes the opacity and scale
+    // of a few layers and never repaints a tile
     const mid = (G - 1) / 2;
     let maxDist = 0;
+    const ringsBy = new Map();
     for (let r = 0; r < G; r++) for (let c = 0; c < G; c++) {
-      const t = el('i', 'route-tile', plot);
-      const lit = el('i', 'route-tile__lit', t);
-      const flash = el('i', 'route-tile__flash', t);
+      el('i', 'route-tile', plot);
       const dist = Math.hypot(r - mid, c - mid);
       maxDist = Math.max(maxDist, dist);
-      // the plot settles as a pool of light: each ring out from the centre a step dimmer (flat steps)
-      const ringN = Math.max(Math.abs(r - mid), Math.abs(c - mid));
-      tiles.push({ t, lit, flash, dist, glow: 1 - (0.3 * ringN) / Math.max(1, mid), centre: r === mid && c === mid });
+      const k = dist.toFixed(3);
+      if (!ringsBy.has(k)) ringsBy.set(k, { dist, cells: [] });
+      ringsBy.get(k).cells.push([r, c]);
     }
-    const centre = tiles.find((t) => t.centre) || tiles[Math.floor(tiles.length / 2)];
-    centre.t.classList.add('route-tile--centre');
-    const centreFill = el('i', 'route-tile__accent', centre.t);
+    const square = (cls, parent, r, c) => { const s = el('i', cls, parent); s.style.left = c * (TS + TG) + 'px'; s.style.top = r * (TS + TG) + 'px'; return s; };
+    const rings = [...ringsBy.values()].sort((a, b) => a.dist - b.dist).map((rg) => {
+      const lit = el('i', 'route-plot__lit', plot), flash = el('i', 'route-plot__flash', plot);
+      for (const [r, c] of rg.cells) {
+        // a lit tile: the accent tint with a point of accent (one of the cabin's ground screws); the plot
+        // settles as a pool of light, each square ring out from the centre a step dimmer (flat steps)
+        const ringN = Math.max(Math.abs(r - mid), Math.abs(c - mid));
+        square('route-plot__sq', lit, r, c).style.opacity = (1 - (0.3 * ringN) / Math.max(1, mid)).toFixed(3);
+        square('route-plot__sq', flash, r, c);
+      }
+      return { lit, flash, dist: rg.dist };
+    });
+    const centreFill = square('route-plot__centre', plot, Math.floor(mid), Math.floor(mid));
     let markEl = null;
     if (mark && mark.id) {
-      markEl = svgEl('svg', { class: 'route-tile__mark', viewBox: mark.getAttribute('viewBox') || '0 0 32 32' }, centre.t);
+      markEl = svgEl('svg', { class: 'route-plot__mark', viewBox: mark.getAttribute('viewBox') || '0 0 32 32' }, plot);
+      markEl.style.left = Math.floor(mid) * (TS + TG) + 'px'; markEl.style.top = Math.floor(mid) * (TS + TG) + 'px';
       svgEl('use', { href: '#' + mark.id }, markEl);
     }
     for (let i = 0; i < 3; i++) el('i', 'route-plot__ring', plot);
@@ -337,34 +661,45 @@
     else svgEl('path', { d: `M${vb[2] / 2} 0 L${vb[2]} ${vb[3]} L${vb[2] / 2} ${vb[3] * 0.78} L0 ${vb[3]}Z`, class: 'route-traveller__chevron' }, body);
 
     // posts: standing boards for the stops between the first and the last, on the outside of the bend.
-    // On short legs (many stops) they stand further out and rise later, so one board is down before the
-    // next one rises; the board's plate reaches away from the road, never over the traveller.
+    // On short legs (many stops) they stand further out. The plate reaches away from the road (on screen),
+    // never over the traveller; a board swings up from the ground as the traveller nears its stop and
+    // fades as it pulls away, before the plate could come level with the traveller.
     const postsEl = el('div', 'route-posts', world3);
     const posts = [];
     for (let k = 1; k < N - 1; k++) {
       const a = sample(stopS[k]), b0 = sample(Math.max(0, stopS[k] - 120)), b1 = sample(Math.min(L, stopS[k] + 120));
       const legIn = stopS[k] - stopS[k - 1], legOut = stopS[k + 1] - stopS[k];
       const turn = b1.h - b0.h; // > 0 turns right (clockwise on screen)
-      const side = turn > 0 ? -1 : 1; // outside of the bend: +1 is right of the road, -1 left
-      const off = 56 + 34 * clamp((900 - Math.min(legIn, legOut)) / 500, 0, 1);
+      let side = turn > 0 ? -1 : 1; // outside of the bend: +1 is right of the road, -1 left
+      let off = 56 + 34 * clamp((900 - Math.min(legIn, legOut)) / 500, 0, 1);
+      // north-up: where the road runs across the screen, the board stands on its far (north) side, so its
+      // stem rises away from the traveller, and a little further out, since that side is foreshortened
+      if (o.heading === 'north') {
+        const north = Math.sin(((a.h + 90) * Math.PI) / 180) < 0 ? 1 : -1;
+        if (Math.abs(Math.sin(((a.h + 90) * Math.PI) / 180)) > 0.5) side = north;
+        off += 50 * Math.abs(Math.sin(((a.h + 90 * side) * Math.PI) / 180));
+      }
       const hr = ((a.h + 90 * side) * Math.PI) / 180;
       const post = el('div', 'route-post', postsEl);
       post.style.left = a.x + Math.cos(hr) * off + 'px'; post.style.top = a.y + Math.sin(hr) * off + 'px';
       const inner = el('div', 'route-post__inner', post);
-      if (o.heading !== 'north') inner.classList.add(side > 0 ? 'route-post__inner--right' : 'route-post__inner--left');
+      // heading-up: the road's right is the screen's right; north-up: the screen's right is map east
+      const right = o.heading === 'north' ? Math.cos(hr) >= -0.2 : side > 0;
+      inner.classList.add(right ? 'route-post__inner--right' : 'route-post__inner--left');
       el('span', 'route-post__stem', inner);
       const tile = el('span', 'route-post__tile', inner);
       const title = steps[k].querySelector('.route-step__title');
       tile.textContent = title ? title.textContent.trim() : '';
-      posts.push({ inner, s: stopS[k], lead: Math.min(480, 0.55 * legIn), rise: Math.min(200, 0.3 * legIn), tail: Math.min(200, 0.35 * legOut), shown: null });
+      posts.push({ inner, s: stopS[k], lead: Math.min(400, 0.5 * legIn), rise: Math.min(260, 0.35 * legIn), fade: Math.min(70, 0.2 * legOut), shown: null });
     }
 
     // fog over the far plane: a solid strip of the ground colour, then flat bands that step down (no
     // gradient). It slides down from above the screen as the camera tilts and back up as it straightens.
     const fog = el('div', 'route-fog'); fog.setAttribute('aria-hidden', 'true');
-    el('i', 'route-fog__solid', fog);
-    const FOG = [0.9, 0.76, 0.62, 0.48, 0.36, 0.25, 0.15, 0.07];
-    FOG.forEach((a) => { const b = el('i', '', fog); b.style.opacity = a; });
+    const fogSolid = el('i', 'route-fog__solid', fog);
+    // eighteen even steps of about 5 per cent from the solid strip down, so no step reads as a seam over
+    // the forest or a road
+    for (let i = 0; i < 18; i++) { const b = el('i', '', fog); b.style.opacity = (1 - (i + 1) / 19).toFixed(3); }
     // the fog lies over the far map but under the boards: a board is near, so it stands in front of the haze
     stage.insertBefore(fog, cam3);
     made.push(fog);
@@ -411,7 +746,7 @@
     const LIGHT0 = 0.765, LIGHT_SPREAD = 0.06, LIGHT_DUR = 0.035;
 
     // ---------- measuring (on build and on every refresh) ----------
-    let vw = 1, vh = 1, z0 = 0.4, bbox = null;
+    let vw = 1, vh = 1, z0 = 0.4, bbox = null, fogH = 0, fogSolidH = 0, railAt = 0.14, endRect = null, endPx = null;
     {
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       for (let i = 0; i < n; i++) { x0 = Math.min(x0, X[i]); x1 = Math.max(x1, X[i]); y0 = Math.min(y0, Y[i]); y1 = Math.max(y1, Y[i]); }
@@ -419,6 +754,7 @@
       y0 = Math.min(y0, plotC.y - plotSize / 2); y1 = Math.max(y1, plotC.y + plotSize / 2);
       bbox = { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
     }
+    const DPR = () => clamp(window.devicePixelRatio || 1, 1, 2);
     const measure = () => {
       vw = stage.clientWidth || innerWidth; vh = stage.clientHeight || innerHeight;
       pickMode(vw, vh);
@@ -437,23 +773,48 @@
           M.za = Math.max(0.3, Math.min(M.za, (M.ax * vw - right - 24) / (plotSize / 2), (vw - M.ax * vw - 24) / (plotSize / 2), (M.ay * vh - 24) / plotUp, (vh - 16 - M.ay * vh) / plotDown));
         }
       }
-      // the copy of the map for the end: what the overhead camera sees, plus a margin
-      const ex0 = end.x - (M.ax * vw) / M.za - 80, ey0 = end.y - (M.ay * vh) / M.za - 80;
-      const ew = vw / M.za + 160, eh = vh / M.za + 160;
+      // the fog: a solid strip, then the steps. At a steep tilt the horizon comes on screen, and the solid
+      // strip reaches down to where the ground shows at a fifth of a screen px per map px, so the far
+      // field stays in the haze (and the painted map need not reach out to the horizon)
+      fog.style.removeProperty('height'); fogSolid.style.removeProperty('flex-basis');
+      const fogBase = fog.offsetHeight || 0.28 * vh;
+      const tanT = Math.tan(M.tilt * DEG);
+      fogSolidH = 0.24 * fogBase;
+      if (tanT > 1e-3) fogSolidH = Math.min(0.4 * vh, Math.max(fogSolidH, M.ay * vh + ((0.2 / M.zc - 1) * M.persp) / tanT + 12));
+      fogH = fogSolidH + 0.76 * fogBase;
+      fog.style.height = fogH.toFixed(1) + 'px'; fogSolid.style.flexBasis = fogSolidH.toFixed(1) + 'px';
+      wide.style.setProperty('--lw', clamp(M.k / z0, 1, 2.6).toFixed(2));
+      // the view at rest over the plot, plus a margin: the vector copy for the end, and the painted
+      // bitmap of it, placed so its pixels land exactly on the screen's
+      const dpr = DPR(), za = M.za, ex = +end.x.toFixed(2), ey = +end.y.toFixed(2);
+      const edge = Math.floor(-80 * za * dpr) / dpr; // the bitmap's top left on screen, on a device pixel
+      const ex0 = ex + (edge - M.ax * vw) / za, ey0 = ey + (edge - M.ay * vh) / za;
+      const pw = Math.ceil((vw + 160 * za) * dpr), ph = Math.ceil((vh + 160 * za) * dpr);
+      endRect = [ex0, ey0, ex0 + pw / (za * dpr), ey0 + ph / (za * dpr)];
+      endPx = { pw, ph, r: za * dpr };
+      const ew = endRect[2] - endRect[0], eh = endRect[3] - endRect[1];
       for (const [k, v] of [['width', ew.toFixed(0)], ['height', eh.toFixed(0)], ['viewBox', `${ex0.toFixed(0)} ${ey0.toFixed(0)} ${ew.toFixed(0)} ${eh.toFixed(0)}`]]) groundEnd.setAttribute(k, v);
       groundEnd.style.transform = `translate3d(${ex0.toFixed(0)}px,${ey0.toFixed(0)}px,0)`;
       stage.style.setProperty('--route-persp', M.persp + 'px');
       stage.style.setProperty('--route-ax', M.ax * 100 + '%');
       stage.style.setProperty('--route-ay', M.ay * 100 + '%');
+      // the rail comes in once the intro has gone, and where the overview shows the traveller low on the
+      // screen (compact, phone), only once the traveller has risen clear of the plate, so it never fades
+      // in over it
+      railAt = 0.14;
+      if (rail) {
+        const rt = rail.offsetTop - 8, rl = rail.offsetLeft - 8, rr = rail.offsetLeft + rail.offsetWidth + 8;
+        for (let q = 0.14; q < 0.17; q += 0.0025) {
+          const c = camAt(q);
+          const X = M.ax * vw + c.sx, Y = M.ay * vh + c.sy;
+          const half = (Math.max(TW, TH) / 2) * clamp(M.kt / c.zoom, 1, M.tMax) * c.zoom * (1 + (Math.max(0, c.sy) * Math.tan(c.tilt * DEG)) / M.persp);
+          if (Y + half < rt || X + half < rl || X - half > rr) break;
+          railAt = q + 0.0025;
+        }
+      }
     };
 
-    // ---------- render: everything from the timeline's progress ----------
-    const state = { p: 0 };
-    const cache = new Map();
-    const put = (node, prop, val) => { let c = cache.get(node); if (!c) cache.set(node, (c = {})); if (c[prop] !== val) { c[prop] = val; node.style[prop] = val; } };
-    const flag = (node, cls, on) => { const k = 'class:' + cls; let c = cache.get(node); if (!c) cache.set(node, (c = {})); if (c[k] !== on) { c[k] = on; node.classList.toggle(cls, on); } };
-    let active = -1, lastGauge = null, lastLw = null;
-
+    // ---------- the camera at any progress ----------
     // distance along the route at progress q
     const sAt = (q) => {
       let u = 0; for (let k = 0; k < legs; k++) u += e.p1io(seg(q, legStart[k], legDur[k]));
@@ -480,12 +841,15 @@
     let HP = null;
     for (const w of [0.06, 0.075, 0.09, 0.105, 0.12]) { HP = smoothH(w); if (turnRate(HP) <= 36) break; }
     const headingAt = (p) => { const f = clamp(p, 0, 1) * NP, i = Math.min(NP - 1, Math.floor(f)); return lerp(HP[i], HP[i + 1], f - i); };
-
-    const render = () => {
-      const p = state.p;
-      // camera
+    // The crane in moves the traveller, not the map: its place on screen runs in a straight line from
+    // where the overview shows it to the anchor (KIN, ahead of the crane), and the camera's centre is
+    // solved back through this frame's tilt, turn and zoom so the traveller lands exactly there. (Moving
+    // the map's centre on the zoom's own curve would swing the traveller out of frame before it settled.)
+    const KIN = 0.07;
+    const camAt = (p) => {
       const cin = e.p2io(seg(p, 0.09, 0.09));
       const cout = e.p2io(seg(p, 0.74, 0.14));
+      const kin = e.p2io(seg(p, 0.09, KIN));
       const s = sAt(p);
       let orbit = 0, push = 0;
       for (let k = 0; k < dwellStart.length; k++) {
@@ -493,18 +857,292 @@
         orbit += orbitSign[k] * orbitDeg * a; push += a;
       }
       const P = sample(s);
-      const C0x = bbox.cx + ((M.ax - M.ox) * vw) / z0, C0y = bbox.cy + ((M.ay - M.oy) * vh) / z0;
-      const Cx = lerp(C0x, P.x, cin), Cy = lerp(C0y, P.y, cin);
       const yawMix = o.heading === 'north' ? 0 : cin * (1 - cout);
       const yaw = yawMix > 0 ? wrap180(-(headingAt(p) + 90)) * yawMix + orbit : orbit;
       const tilt = M.tilt * cin * (1 - cout);
       const zoom = lerp(lerp(z0, M.zc, cin) + push * M.zp, M.za, cout);
+      let Cx = P.x, Cy = P.y, sx = 0, sy = 0;
+      if (kin < 1) {
+        // the traveller's offset from the anchor on screen, shrinking to nothing
+        const C0x = bbox.cx + ((M.ax - M.ox) * vw) / z0, C0y = bbox.cy + ((M.ay - M.oy) * vh) / z0;
+        sx = (P.x - C0x) * z0 * (1 - kin); sy = (P.y - C0y) * z0 * (1 - kin);
+        // back through the perspective onto the tilted plane, then the turn and the zoom, into map px
+        const t = tilt * DEG, ct = Math.cos(t), st = Math.sin(t), Pp = M.persp;
+        const y1 = (sy * Pp) / Math.max(1, Pp * ct + sy * st), x1 = (sx * (Pp - y1 * st)) / Pp;
+        const cy = Math.cos(yaw * DEG), syw = Math.sin(yaw * DEG);
+        Cx = P.x - (x1 * cy + y1 * syw) / zoom; Cy = P.y - (-x1 * syw + y1 * cy) / zoom;
+      }
+      return {
+        cin, cout, kin, s, P, Cx, Cy, sx, sy, yaw, tilt, zoom,
+        fg: e.p2io(seg(p, 0.1, 0.08)) - e.p2io(seg(p, 0.8, 0.08)),
+      };
+    };
+
+    // ---------- the painted map ----------
+    // The ground is cut into square cells (256 to 2048 map px, overlapping by PAD so no seam shows), each
+    // painted once at the sharpest scale the camera's path ever shows it at, in device px per map px. The
+    // plan comes from the camera itself: for every step of progress the screen (below the fog's solid
+    // strip, and beside the rail plate once it is in) is cast onto the map plane, and each 128 px patch
+    // under it records how large its centre gets; they merge into cells, each a layer the compositor only
+    // moves (40 at most), so the browser copies pixels where it used to draw the vector map, and samples
+    // them down smoothly when they are far. The view over the plot gets a bitmap of its own (its own
+    // layer), painted at the final zoom and placed so its pixels land on the screen's.
+    const CELL = 128, PAD = 6;
+    const LEVELS = [0.125, 0.1875, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1, 1.25, 1.5, 1.75, 2];
+    const bk = { on: false, leaves: null, cells: new Map(), keys: new Set(), end: null, draftJob: null, draftDone: false, queue: [], timer: 0, dead: false, ready: false };
+    const canBake = o.bake !== false && !!art && typeof Path2D === 'function';
+    const plan = () => {
+      const dpr = DPR(), ax = M.ax * vw, ay = M.ay * vh, Pp = M.persp, ab = bk.artBox;
+      const need = new Map();
+      // the rail is a solid plate: once it is fully in, the ground under it is never seen
+      const rp = rail ? [rail.offsetLeft, rail.offsetTop, rail.offsetLeft + rail.offsetWidth] : null;
+      for (let i = 0; i <= 172; i++) {
+        const p = (i / 172) * 0.86;
+        const c = camAt(p);
+        const t = c.tilt * DEG, ct = Math.cos(t), st = Math.sin(t), cyw = Math.cos(c.yaw * DEG), syw = Math.sin(c.yaw * DEG);
+        const cut = Math.max(0, fogSolidH - (1 - c.fg) * 1.02 * fogH);
+        const top = Math.max(cut, st > 1e-4 ? ay - (Pp * ct) / st + 24 : -Infinity, 0);
+        const toPlane = (sx, sy) => { const dx = sx - ax, dy = sy - ay, y1 = (dy * Pp) / (Pp * ct + dy * st), x1 = (dx * (Pp - y1 * st)) / Pp; return [x1, y1]; };
+        const toMap = ([x1, y1]) => [c.Cx + (x1 * cyw + y1 * syw) / c.zoom, c.Cy + (-x1 * syw + y1 * cyw) / c.zoom];
+        // the screen as one or two rectangles (above the rail, and beside it), each cast onto the map
+        const rects = rp && p >= railAt + 0.05 && rp[1] > top + 40 ? [[0, top, vw, rp[1]], [rp[2], rp[1], vw, vh]].filter((q) => q[2] - q[0] > 24) : [[0, top, vw, vh]];
+        for (const [sx0, sy0, sx1, sy1] of rects) {
+          const yTop = toPlane(0, sy0)[1], yBot = toPlane(0, sy1)[1];
+          const poly = [toMap(toPlane(sx0, sy0)), toMap(toPlane(sx1, sy0)), toMap(toPlane(sx1, sy1)), toMap(toPlane(sx0, sy1))];
+          let area2 = 0; for (let k = 0; k < 4; k++) { const [x0, y0] = poly[k], [x1, y1] = poly[(k + 1) % 4]; area2 += x0 * y1 - x1 * y0; }
+          const sgn = area2 >= 0 ? 1 : -1;
+          let mx0 = Infinity, my0 = Infinity, mx1 = -Infinity, my1 = -Infinity;
+          for (const [x, y] of poly) { mx0 = Math.min(mx0, x); my0 = Math.min(my0, y); mx1 = Math.max(mx1, x); my1 = Math.max(my1, y); }
+          const half = CELL * 0.71;
+          for (let gi = Math.floor(mx0 / CELL); gi <= Math.floor(mx1 / CELL); gi++) for (let gj = Math.floor(my0 / CELL); gj <= Math.floor(my1 / CELL); gj++) {
+            const qx = (gi + 0.5) * CELL, qy = (gj + 0.5) * CELL;
+            let inside = true;
+            for (let k = 0; k < 4 && inside; k++) {
+              const [x0, y0] = poly[k], [x1, y1] = poly[(k + 1) % 4], ex = x1 - x0, ey = y1 - y0, el2 = Math.hypot(ex, ey) || 1;
+              if ((sgn * ((qx - x0) * ey - (qy - y0) * ex)) / el2 > half) inside = false;
+            }
+            if (!inside) continue;
+            const x0 = gi * CELL - PAD, y0 = gj * CELL - PAD, x1 = x0 + CELL + 2 * PAD, y1 = y0 + CELL + 2 * PAD;
+            if (x1 < ab[0] || y1 < ab[1] || x0 > ab[2] || y0 > ab[3]) continue; // beyond the art: bare ground
+            if (p >= 0.78 && x0 >= endRect[0] && y0 >= endRect[1] && x1 <= endRect[2] && y1 <= endRect[3]) continue; // the end bitmap covers it
+            // how large the patch shows: at its centre, or at the screen's edge when the centre is off it
+            const hi = clamp(((qx - c.Cx) * syw + (qy - c.Cy) * cyw) * c.zoom, yTop, yBot);
+            const mag = (c.zoom * Pp) / Math.max(1, Pp - hi * st);
+            const key = gi + ',' + gj, q = need.get(key);
+            if (q) q.hi = Math.max(q.hi, mag); else need.set(key, { gi, gj, hi: mag, at: p });
+          }
+        }
+      }
+      // The cells, within a budget of pixels. Over budget, the ground only ever seen in the distance
+      // (never as large as in the overview, and in the haze) is painted coarser first, then the ceiling
+      // comes down step by step, the middle distance (under a screen px per map px) giving a little at
+      // each step, so the road ahead and the ground around the traveller stay the sharpest things on
+      // screen. Every cell is a layer, so a square is cut into quarters only when that saves more pixels
+      // than the extra layers cost (over, each), and that cost rises until the map is 40 layers at most.
+      const budget = (phone ? 8 : dpr > 1.25 ? 24 : 18) * 1e6;
+      const farAt = z0 * 0.95;
+      // [factor for the far ground, for the middle distance (under a screen px per map px), ceiling], in
+      // the order they are tried
+      const TIERS = [[1, 1, 2], [0.6, 1, 2], [0.6, 1, 1.75], [0.6, 1, 1.5], [0.6, 1, 1.25], [0.6, 0.85, 1.25], [0.6, 1, 1], [0.5, 0.85, 1], [0.5, 0.7, 1], [0.5, 0.7, 0.875], [0.5, 0.6, 0.75], [0.4, 0.5, 0.625]];
+      const rFor = (hi, [fa, mi, rmax]) => { const want = Math.min(hi * dpr * (hi < farAt ? fa : hi < 1 ? mi : 1), rmax); return Math.min(LEVELS.find((r) => r >= want * 0.92) || rmax, rmax); };
+      const cost = (size, r) => Math.ceil((size + 2 * PAD) * r) ** 2;
+      const blocks = new Map();
+      for (const q of need.values()) { const k = Math.floor(q.gi / 16) + ',' + Math.floor(q.gj / 16); if (!blocks.has(k)) blocks.set(k, [Math.floor(q.gi / 16), Math.floor(q.gj / 16)]); }
+      const split = (gi, gj, span, tier, over, out) => {
+        // the 256 px patches under this square (span patches a side, top left gi, gj): one bitmap for the
+        // square, or the best cut of its four quarters
+        let hi = 0, at = 1, any = false;
+        for (let i = gi; i < gi + span; i++) for (let j = gj; j < gj + span; j++) { const q = need.get(i + ',' + j); if (q) { any = true; hi = Math.max(hi, q.hi); at = Math.min(at, q.at); } }
+        if (!any) return null;
+        const r = rFor(hi, tier), px = cost(span * CELL, r);
+        if (span > 2) {
+          const kids = [], h2 = span / 2;
+          let kpx = 0, kn = 0;
+          for (const [a, b] of [[0, 0], [h2, 0], [0, h2], [h2, h2]]) { const k = split(gi + a, gj + b, h2, tier, over, kids); if (k) { kpx += k.px; kn += k.n; } }
+          if (kpx + over * (kn - 1) < px) { out.push(...kids); return { px: kpx, n: kn }; }
+        }
+        out.push({ key: `${span * CELL}:${gi},${gj}@${r}`, x: gi * CELL, y: gj * CELL, size: span * CELL, r, at });
+        return { px, n: 1 };
+      };
+      const cutCells = (tier) => {
+        let cells = null, total = 0;
+        for (const over of [0.03e6, 0.06e6, 0.1e6, 0.15e6, 0.25e6, 0.4e6, 1e6, 3e6]) {
+          cells = []; total = 0;
+          for (const [bi, bj] of blocks.values()) { const k = split(bi * 16, bj * 16, 16, tier, over, cells); if (k) total += k.px; }
+          if (cells.length <= 40) break;
+        }
+        return { cells, total, rmax: tier[2] };
+      };
+      let out = null;
+      for (const tier of TIERS) { out = cutCells(tier); if (out.total <= budget) break; }
+      return out;
+    };
+    const BAND = 160;
+    // a canvas covering map rect (x, y, w, h) at pw x ph pixels; r is its true scale. Each is a layer of
+    // its own whose pixels the compositor only moves (will-change, in the CSS)
+    const newJob = (x, y, w, h, pw, ph, cls, cpu) => {
+      const cv = document.createElement('canvas');
+      cv.width = pw; cv.height = ph;
+      cv.className = cls;
+      cv.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+      return { cv, cpu, ox: x, oy: y, r: pw / w };
+    };
+    const discard = (cv) => { cv.remove(); cv.width = cv.height = 0; };
+    // work: paint one band of a canvas (a few ms), then hand finished canvases to the page
+    const runItem = (it) => {
+      const job = it.job;
+      if (it.kind === 'band') {
+        const { cv, ox, oy, r } = job;
+        let c2 = job.c2;
+        if (!c2) {
+          // opaque, on the ground colour, so the compositor neither blends nor draws what lies under a cell.
+          // A CPU canvas (willReadFrequently): its shapes are rastered here, in the idle slice, and the ride
+          // only uploads finished pixels. A GPU canvas defers that raster until the cell first shows on
+          // screen, and a first ride then stalls for a tenth of a second or more as each new cell comes in.
+          c2 = job.c2 = cv.getContext('2d', { alpha: false, willReadFrequently: true });
+          c2.fillStyle = bk.ground; c2.fillRect(0, 0, cv.width, cv.height);
+        }
+        c2.save();
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.beginPath(); c2.rect(0, it.y0, cv.width, it.y1 - it.y0); c2.clip();
+        paintArt(c2, bk.leaves, ox, oy, r, [ox, oy + it.y0 / r, ox + cv.width / r, oy + it.y1 / r]);
+        c2.restore();
+      } else if (it.kind === 'draft') {
+        if (bk.draftJob !== job) return;
+        bakeEl.insertBefore(job.cv, bakeEl.firstChild);
+        bk.draftDone = true;
+        show();
+        try { performance.mark('route-journey:draft'); } catch {}
+      } else if (it.kind === 'cell') {
+        const cell = it.cell;
+        if (cell.next !== job) return; // superseded by a later plan
+        if (cell.cv) discard(cell.cv);
+        cell.cv = job.cv; cell.next = null;
+        bakeEl.insertBefore(job.cv, bk.end && bk.end.parentNode === bakeEl ? bk.end : null);
+      } else if (it.kind === 'end') {
+        if (bk.endJob !== job) return;
+        if (bk.end) discard(bk.end);
+        // the finished trail is painted in: the bitmap shows once the trail is complete, and from 0.85 it
+        // stands in for the line layer, which then never has to be redrawn sharper for the rest frame
+        const cs = getComputedStyle(chunks[0].el), c2 = job.c2;
+        c2.setTransform(job.r, 0, 0, job.r, -job.ox * job.r, -job.oy * job.r);
+        c2.strokeStyle = cs.stroke; c2.lineWidth = parseFloat(cs.strokeWidth) || 8; c2.lineCap = 'round'; c2.lineJoin = 'round';
+        c2.stroke(new Path2D(d));
+        bk.end = job.cv;
+        bk.end.style.visibility = state.p >= 0.78 ? 'visible' : 'hidden';
+        bakeEl.appendChild(bk.end);
+        bk.endDone = bk.endKey;
+      }
+    };
+    const queueBands = (job) => { for (let y = 0; y < job.cv.height; y += BAND) bk.queue.push({ kind: 'band', job, y0: y, y1: Math.min(job.cv.height, y + BAND) }); };
+    const show = () => {
+      // the painted map replaces the vector one as soon as the draft is in (the cells then arrive over it),
+      // or once nothing is missing
+      const on = bk.draftDone || (bk.ready && [...bk.keys].every((k) => bk.cells.get(k).cv) && bk.endDone === bk.endKey);
+      if (on === bk.on) return;
+      bk.on = on;
+      ground.style.display = on ? 'none' : '';
+      groundEnd.style.display = on ? 'none' : '';
+      render();
+    };
+    const schedule = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 100 }) : setTimeout(fn, 16));
+    const unschedule = (h) => (window.cancelIdleCallback ? cancelIdleCallback(h) : clearTimeout(h));
+    const pump = (deadline) => {
+      bk.timer = 0;
+      if (bk.dead) return;
+      // short slices while the scene is on screen; elsewhere the whole idle period the browser offers
+      const idle = deadline && !deadline.didTimeout && typeof deadline.timeRemaining === 'function' ? deadline.timeRemaining() : 0;
+      const slice = state.p > 0 && state.p < 1 ? 6 : Math.max(8, Math.min(30, idle - 2));
+      const t = performance.now();
+      while (bk.queue.length && performance.now() - t < slice) runItem(bk.queue.shift());
+      if (bk.queue.length) { bk.timer = schedule(pump); return; }
+      settle();
+    };
+    // done: cells an earlier plan cut differently are no longer needed
+    const settle = () => {
+      for (const [k, cell] of bk.cells) if (!bk.keys.has(k)) { if (cell.cv) discard(cell.cv); bk.cells.delete(k); }
+      bk.ready = true; show();
+      try { performance.mark('route-journey:baked'); } catch {}
+    };
+    const replan = () => {
+      if (!bk.leaves || bk.dead) return;
+      const pl = plan();
+      // for profiling: the plan's size shows in the browser's performance timeline
+      try { performance.mark('route-journey:plan', { detail: { cells: pl.cells.length, px: pl.total, rmax: pl.rmax } }); } catch {}
+      bk.queue = [];
+      // First a draft: the whole art at a quarter of a device px per map px in one bitmap, which stands in
+      // for the vector map a moment after the bake starts (and lies under the cells, so a new plan after a
+      // resize paints over it). The vector map, rastered afresh at every scale the crane passes, would
+      // stall a visitor who reaches the scene before the cells are done.
+      if (!bk.draftDone) {
+        if (bk.draftJob) discard(bk.draftJob.cv);
+        const ab = bk.artBox, x = Math.floor(ab[0]) - PAD, y = Math.floor(ab[1]) - PAD;
+        const r = Math.min(0.25, 4096 / Math.max(ab[2] - ab[0], ab[3] - ab[1]));
+        const pw = Math.ceil((ab[2] - ab[0] + 2 * PAD) * r), ph = Math.ceil((ab[3] - ab[1] + 2 * PAD) * r);
+        bk.draftJob = newJob(x, y, pw / r, ph / r, pw, ph, 'route-bake__draft', true);
+        queueBands(bk.draftJob);
+        bk.queue.push({ kind: 'draft', job: bk.draftJob });
+      }
+      bk.keys = new Set(pl.cells.map((q) => q.key));
+      const todo = [];
+      for (const q of pl.cells) {
+        let cell = bk.cells.get(q.key);
+        if (!cell) { cell = { cv: null, next: null }; bk.cells.set(q.key, cell); }
+        if (cell.cv) { cell.next = null; continue; }
+        const x = q.x - PAD, y = q.y - PAD, w = q.size + 2 * PAD, pw = Math.ceil(w * q.r);
+        cell.next = newJob(x, y, w, w, pw, pw, 'route-bake__cell', true);
+        todo.push([q.at, cell]);
+      }
+      todo.sort((a, b) => a[0] - b[0]);
+      for (const [, cell] of todo) { queueBands(cell.next); bk.queue.push({ kind: 'cell', cell, job: cell.next }); }
+      const key = endRect.map((v) => v.toFixed(2)).join() + '@' + endPx.r;
+      if (bk.endDone !== key) {
+        bk.endKey = key;
+        bk.endJob = newJob(endRect[0], endRect[1], endRect[2] - endRect[0], endRect[3] - endRect[1], endPx.pw, endPx.ph, 'route-bake__end', false);
+        bk.endJob.r = endPx.r;
+        queueBands(bk.endJob);
+        bk.queue.push({ kind: 'end', job: bk.endJob });
+      }
+      if (!bk.queue.length) { settle(); return; }
+      bk.ready = false;
+      show();
+      if (!bk.timer) bk.timer = schedule(pump);
+    };
+    const startBake = async () => {
+      if (!canBake || bk.dead) return;
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch {}
+      if (bk.dead) return;
+      const leaves = readArt(ground);
+      if (!leaves) { console.info('route-journey: the map holds shapes the painter skips; it stays vector'); return; }
+      try { await Promise.all([...new Set(leaves.filter((l) => l.text).map((l) => l.font))].map((f) => document.fonts.load(f))); } catch {}
+      if (bk.dead) return;
+      bk.leaves = leaves;
+      // the art's extent: beyond it the stage's own ground shows, so no cell is painted there
+      bk.artBox = leaves.reduce((b, l) => [Math.min(b[0], l.box[0]), Math.min(b[1], l.box[1]), Math.max(b[2], l.box[2]), Math.max(b[3], l.box[3])], [Infinity, Infinity, -Infinity, -Infinity]);
+      bk.ground = getComputedStyle(stage).backgroundColor;
+      replan();
+    };
+
+    // ---------- render: everything from the timeline's progress ----------
+    const state = { p: 0 };
+    const cache = new Map();
+    const put = (node, prop, val) => { let c = cache.get(node); if (!c) cache.set(node, (c = {})); if (c[prop] !== val) { c[prop] = val; node.style[prop] = val; } };
+    const flag = (node, cls, on) => { const k = 'class:' + cls; let c = cache.get(node); if (!c) cache.set(node, (c = {})); if (c[k] !== on) { c[k] = on; node.classList.toggle(cls, on); } };
+    let active = -1, lastGauge = null;
+
+    const render = () => {
+      const p = state.p;
+      const c = camAt(p);
+      const { cin, cout, s, P, tilt, yaw, zoom } = c;
       const camT = `rotateX(${tilt.toFixed(3)}deg) rotateZ(${yaw.toFixed(3)}deg) scale3d(${zoom.toFixed(4)},${zoom.toFixed(4)},${zoom.toFixed(4)})`;
-      const worldT = `translate3d(${(-Cx).toFixed(2)}px,${(-Cy).toFixed(2)}px,0)`;
+      const worldT = `translate3d(${(-c.Cx).toFixed(2)}px,${(-c.Cy).toFixed(2)}px,0)`;
       cam.style.transform = camT; world.style.transform = worldT;
-      // raster lock (see the CSS): the lines drop it once the camera is overhead, so they re-raster sharp
-      flag(cam, 'is-ride', p < 0.85);
-      put(groundEnd, 'visibility', p >= 0.85 ? 'visible' : 'hidden');
+      // the map: the painted cells (and the view over the plot from the start of the crane out), or the
+      // vector map with its raster lock (see the CSS) until they are ready
+      const trailIn = bk.on && !!bk.end && p >= 0.85; // the end bitmap, trail and all, stands in for the lines
+      if (bk.end) put(bk.end, 'visibility', p >= 0.78 ? 'visible' : 'hidden');
+      if (!bk.on) put(groundEnd, 'visibility', p >= 0.85 ? 'visible' : 'hidden');
+      flag(cam, 'is-ride', p < 0.85 || !!trailIn);
       const postsOn = tilt > 10 && posts.length > 0;
       put(cam3, 'visibility', postsOn ? 'visible' : 'hidden');
       if (postsOn) { cam3.style.transform = camT; world3.style.transform = worldT; }
@@ -527,39 +1165,42 @@
       // pins keep their size in the overview
       const ps = clamp(M.k / zoom, 1, M.pMax).toFixed(3);
       for (const pin of pins) put(pin, 'transform', `scale(${ps})`);
-      // trail (the lines keep a readable width in the overview)
-      const lw = (Math.round(clamp(M.k / zoom, 1, 2.6) * 4) / 4).toFixed(2); // in steps, so the lines repaint rarely
-      if (lw !== lastLw) { lastLw = lw; lines.style.setProperty('--lw', lw); tip.style.setProperty('--lw', lw); }
+      // the wide dotted route of the overview hands over to the chase's lines as the camera comes down
+      const xf = e.p2io(seg(p, 0.095, 0.045));
+      put(wide, 'opacity', (1 - xf).toFixed(3)); put(wide, 'visibility', xf >= 1 ? 'hidden' : 'visible');
+      put(lines, 'opacity', xf.toFixed(3)); put(lines, 'visibility', xf <= 0 || trailIn ? 'hidden' : 'visible');
       let tipK = -1;
       for (let k = 0; k < chunks.length; k++) {
-        const c = chunks[k], done = s >= c.b - 0.05;
-        if (done !== c.done) { c.done = done; c.el.style.visibility = done ? 'visible' : 'hidden'; }
-        if (!done && s > c.a && tipK < 0) tipK = k;
+        const ch = chunks[k], done = s >= ch.b - 0.05;
+        if (done !== ch.done) { ch.done = done; ch.el.style.visibility = done ? 'visible' : 'hidden'; }
+        if (!done && s > ch.a && tipK < 0) tipK = k;
       }
       if (tipK !== tipChunk) setTip(tipK);
       if (tipK >= 0) {
-        const c = chunks[tipK], v = clamp(s - c.a, 0, c.len), r = (c.len - v).toFixed(1);
+        const ch = chunks[tipK], v = clamp(s - ch.a, 0, ch.len), r = (ch.len - v).toFixed(1);
         if (r !== tipShown) { tipShown = r; tipPath.style.strokeDashoffset = r; }
       }
-      // boards: up shortly before their stop, down again once the traveller has left it
+      // boards: each swings up from the ground about its foot (lying flat, then standing to face the
+      // camera) as the traveller nears its stop, and fades as the traveller pulls away
       const vis = clamp((tilt - 10) / 15, 0, 1);
       for (const post of posts) {
-        let pop = clamp((s - (post.s - post.lead)) / post.rise, 0, 1) - clamp((s - (post.s + 40)) / post.tail, 0, 1);
-        pop = 1 - (1 - pop) * (1 - pop);
-        const sc = pop * vis, shown = sc > 0.001;
+        const up = e.p2o(clamp((s - (post.s - post.lead)) / post.rise, 0, 1));
+        const gone = clamp((s - post.s - 16) / post.fade, 0, 1);
+        const op = clamp(up / 0.45, 0, 1) * (1 - gone) * vis;
+        const shown = op > 0.002;
         if (shown !== post.shown) { post.shown = shown; post.inner.style.visibility = shown ? 'visible' : 'hidden'; }
         if (!shown) continue;
-        post.inner.style.transform = `rotateZ(${(-yaw).toFixed(3)}deg) rotateX(${(-tilt).toFixed(3)}deg) scaleY(${sc.toFixed(3)})`;
-        put(post.inner, 'opacity', clamp((sc - 0.25) / 0.35, 0, 1).toFixed(3)); // no sliver while it is nearly flat
+        post.inner.style.transform = `rotateZ(${(-yaw).toFixed(3)}deg) rotateX(${(-tilt * up).toFixed(3)}deg)`;
+        put(post.inner, 'opacity', op.toFixed(3));
       }
       // plates and fog (faded text stays in the page for screen readers; the arrival line and button are
       // hidden until they show, and the stops once the arrival has replaced them)
       const io = e.p2i(seg(p, 0.09, 0.05));
       if (intro) { put(intro, 'opacity', (1 - io).toFixed(3)); put(intro, 'transform', `translate3d(0,${(-32 * io).toFixed(2)}px,0)`); }
-      const fg = e.p2io(seg(p, 0.1, 0.08)) - e.p2io(seg(p, 0.8, 0.08));
+      const fg = c.fg;
       put(fog, 'transform', `translate3d(0,${(-(1 - fg) * 102).toFixed(2)}%,0)`);
       put(fog, 'visibility', fg <= 0 ? 'hidden' : 'visible');
-      const ri = e.p3o(seg(p, 0.12, 0.06));
+      const ri = e.p3o(seg(p, railAt, 0.05));
       if (rail) { put(rail, 'opacity', ri.toFixed(3)); put(rail, 'transform', `translate3d(0,${(40 * (1 - ri)).toFixed(2)}px,0)`); }
       const so = e.p2i(seg(p, 0.86, 0.04));
       for (const node of [list, count]) if (node) { put(node, 'opacity', (1 - so).toFixed(3)); put(node, 'transform', `translate3d(0,${(-16 * so).toFixed(2)}px,0)`); put(node, 'visibility', so >= 1 ? 'hidden' : 'visible'); }
@@ -567,13 +1208,17 @@
       if (arriveLine) { put(arriveLine, 'opacity', al.toFixed(3)); put(arriveLine, 'transform', `translate3d(0,${(24 * (1 - al)).toFixed(2)}px,0)`); put(arriveLine, 'visibility', al <= 0 ? 'hidden' : 'visible'); }
       if (arriveCta) { put(arriveCta, 'opacity', ac.toFixed(3)); put(arriveCta, 'transform', `translate3d(0,${(24 * (1 - ac)).toFixed(2)}px,0)`); put(arriveCta, 'visibility', ac <= 0 ? 'hidden' : 'visible'); }
       // the plot: a wave of light runs out from the centre tile while the camera is still tilted; each
-      // tile flashes in the accent as the wave passes, rises into place and settles lit
-      for (const tt of tiles) {
-        const at = LIGHT0 + (maxDist ? tt.dist / maxDist : 0) * LIGHT_SPREAD;
-        const lit = e.p3o(seg(p, at, LIGHT_DUR));
-        put(tt.lit, 'opacity', (lit * tt.glow).toFixed(3));
-        put(tt.lit, 'transform', `scale(${(0.8 + 0.2 * lit).toFixed(3)})`);
-        put(tt.flash, 'opacity', (0.92 * Math.sin(Math.PI * seg(p, at, LIGHT_DUR * 1.5))).toFixed(3));
+      // ring of tiles flashes in the accent as the wave passes and settles lit, landing into place
+      for (const rg of rings) {
+        const at = LIGHT0 + (maxDist ? rg.dist / maxDist : 0) * LIGHT_SPREAD;
+        const lit = e.p3o(seg(p, at, LIGHT_DUR)), fl = Math.sin(Math.PI * seg(p, at, LIGHT_DUR * 1.5));
+        const land = `scale(${(1.08 - 0.08 * lit).toFixed(4)})`;
+        put(rg.lit, 'opacity', lit.toFixed(3));
+        put(rg.lit, 'transform', land);
+        put(rg.lit, 'visibility', lit <= 0 ? 'hidden' : 'visible');
+        put(rg.flash, 'transform', land);
+        put(rg.flash, 'opacity', (0.92 * fl).toFixed(3));
+        put(rg.flash, 'visibility', fl <= 0 ? 'hidden' : 'visible');
       }
       const ca = e.p3o(seg(p, LIGHT0 + 0.02, 0.04));
       put(centreFill, 'opacity', ca.toFixed(3));
@@ -603,12 +1248,17 @@
 
     measure();
     tl.to(state, { p: 1, duration: 1, ease: 'none', onUpdate: render }, 0);
-    const onRefresh = () => { measure(); render(); };
+    const onRefresh = () => { measure(); render(); if (bk.leaves) replan(); };
     ScrollTrigger.addEventListener('refresh', onRefresh);
     render();
+    // paint the map once the page is idle (it waits for the fonts the map's words use)
+    bk.timer = schedule(() => { bk.timer = 0; startBake(); });
 
     // undo everything this build wrote when the scene reverts (reduced motion, breakpoint change)
     const teardown = () => {
+      bk.dead = true;
+      if (bk.timer) unschedule(bk.timer);
+      bakeEl.querySelectorAll('canvas').forEach((cv) => { cv.width = cv.height = 0; });
       ScrollTrigger.removeEventListener('refresh', onRefresh);
       made.forEach((m) => m.remove());
       for (const node of [intro, rail, list, count, arriveLine, arriveCta]) if (node) for (const k of ['opacity', 'transform', 'visibility']) node.style.removeProperty(k);

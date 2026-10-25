@@ -1,11 +1,14 @@
 /* tasteskill / scenes / letter-physics.css — a claim bursts apart in 3D; an answer lands in the light.
    Default: the finished composition (reduced motion, no script, a phone set to 'rest'): the claim with
    the two labels beside it, then a feathered disc of light with the answer set in it. Under .is-live:
-   the held stage, the claim at the centre, the pool of light behind it. The disc, the halo and the bloom
-   are flat circles feathered by a blur, never gradients; the scrim is one flat translucent fill. */
+   the held stage, the claim at the centre, the pool of light behind it. The disc, the halo and the glow
+   are flat circles feathered by a blur, never gradients; the scrim is one flat translucent fill of the
+   ground. */
 
+/* The stage colour: --lp-ground when the page or the section sets it; else the page's own --ground when
+   the script finds it dark enough (--lp-ground-page); else near-black. */
 [data-scene="letter-physics"] {
-  --lp-ground: #0a0d0b;
+  --lp-g: var(--lp-ground, var(--lp-ground-page, #0a0d0b));
   --lp-paper: #f2f3f0;
   --lp-ink: #0b0e0c;
   --lp-light: #ffffff;
@@ -13,12 +16,12 @@
   --lp-display: var(--font-display, inherit);
   --lp-text: var(--font-text, var(--font-display, inherit));
   --lp-a-size: clamp(48px, 8.4vw, 132px);
-  --lp-a-grow: 1;
+  --lp-a-grow: 1.5;
   --lp-a-cap: min(calc(100vw - 444px), 13ch);
   --lp-lh: .92;
   --lp-d: min(72svh, 92vw);
   position: relative;
-  background: var(--lp-ground);
+  background: var(--lp-g);
   color: var(--lp-paper);
   overflow: clip;
 }
@@ -42,7 +45,12 @@
 [data-scene="letter-physics"][data-light="none"] .lp-bg { opacity: .7; }
 [data-scene="letter-physics"] .lp-bg-img { display: block; width: 100%; height: 100%; object-fit: cover; }
 [data-scene="letter-physics"] .lp-bg picture { display: contents; }
-[data-scene="letter-physics"] .lp-scrim { position: absolute; inset: 0; background: rgb(10 13 11 / var(--lp-scrim)); }
+[data-scene="letter-physics"] .lp-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(10 13 11 / var(--lp-scrim));
+  background: color-mix(in srgb, var(--lp-g) calc(var(--lp-scrim) * 100%), transparent);
+}
 
 [data-scene="letter-physics"] .lp-space { position: relative; z-index: 1; grid-column: 2; grid-row: 1; display: flex; justify-content: center; min-width: 0; }
 [data-scene="letter-physics"] .lp-a {
@@ -69,7 +77,7 @@
    its edge; the halo: a larger, fainter flat circle with a wider feather */
 [data-scene="letter-physics"] .lp-disc,
 [data-scene="letter-physics"] .lp-halo,
-[data-scene="letter-physics"] .lp-bloom {
+[data-scene="letter-physics"] .lp-core {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -91,13 +99,14 @@
   filter: blur(calc(var(--lp-d) * .15));
   opacity: .5;
 }
-/* the bloom is the live scene's first light only; the finished composition has no use for it */
-[data-scene="letter-physics"] .lp-bloom,
+/* the glow is the live scene's first light only; the finished composition has no use for it */
+[data-scene="letter-physics"] .lp-core,
 [data-scene="letter-physics"] .lp-glow { display: none; }
-/* live: the script paints the same soft circles once into a canvas, so the scrub only scales a bitmap */
+/* live: the script paints the same soft circles once into a bitmap, so the scrub only scales an image;
+   every light starts dark (the timeline fades them in) */
 [data-scene="letter-physics"].is-live.is-baked .lp-disc,
 [data-scene="letter-physics"].is-live.is-baked .lp-halo,
-[data-scene="letter-physics"].is-live.is-baked .lp-bloom { background: none; filter: none; border-radius: 0; }
+[data-scene="letter-physics"].is-live.is-baked .lp-core { background: none; filter: none; border-radius: 0; opacity: 0; visibility: hidden; }
 [data-scene="letter-physics"].is-live.is-baked .lp-disc {
   width: calc(var(--lp-d) * 1.1);
   height: calc(var(--lp-d) * 1.1);
@@ -108,17 +117,23 @@
   height: calc(var(--lp-d) * 2);
   margin: calc(var(--lp-d) * -1) 0 0 calc(var(--lp-d) * -1);
 }
-[data-scene="letter-physics"].is-live.is-baked .lp-bloom {
+[data-scene="letter-physics"].is-live.is-baked .lp-core {
   display: block;
-  width: calc(var(--lp-d) * 2.2);
-  height: calc(var(--lp-d) * 2.2);
-  margin: calc(var(--lp-d) * -1.1) 0 0 calc(var(--lp-d) * -1.1);
-  opacity: 0;
+  width: calc(var(--lp-d) * 1.6);
+  height: calc(var(--lp-d) * 1.6);
+  margin: calc(var(--lp-d) * -.8) 0 0 calc(var(--lp-d) * -.8);
 }
-[data-scene="letter-physics"].is-live.is-baked .lp-glow { display: block; width: 100%; height: 100%; }
+[data-scene="letter-physics"].is-live.is-baked .lp-glow { display: block; width: 100%; height: 100%; max-width: none; user-select: none; }
+/* while the stage is on screen, every big moving surface is its own layer, painted once: the scrub only
+   scales and fades it */
+[data-scene="letter-physics"].is-live.is-active .lp-bg,
+[data-scene="letter-physics"].is-live.is-active.is-baked .lp-disc,
+[data-scene="letter-physics"].is-live.is-active.is-baked .lp-halo,
+[data-scene="letter-physics"].is-live.is-active.is-baked .lp-core,
+[data-scene="letter-physics"].is-live.is-active.is-baked .lp-glow { will-change: transform, opacity; }
 [data-scene="letter-physics"][data-light="none"] .lp-disc,
 [data-scene="letter-physics"][data-light="none"] .lp-halo,
-[data-scene="letter-physics"][data-light="none"] .lp-bloom { display: none; }
+[data-scene="letter-physics"][data-light="none"] .lp-core { display: none; }
 
 /* the answer sits in the disc's solid core (0.6 D wide; three lines of 32px stay well inside it). 32px is
    the house ceiling for a sentence set large in a <p>; above it the inspector treats it as a headline. */
@@ -185,11 +200,11 @@
 /* ---------- live: the held stage ---------- */
 
 html.js [data-scene="letter-physics"].is-live > .scene-stage {
-  --lp-d: min(calc(var(--lp-disc, .8) * 100svh), 110vw);
+  --lp-d: min(calc(var(--lp-disc, 1.1) * 100svh), 110vw);
   display: block;
   min-height: 0;
   padding: 0;
-  background: var(--lp-ground);
+  background: var(--lp-g);
 }
 [data-scene="letter-physics"].is-live .lp-bg { opacity: 1; }
 [data-scene="letter-physics"].is-live .lp-space,

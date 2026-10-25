@@ -50,10 +50,14 @@
 //         one closed path of class core over the part under the is-focus dot;
 //       - in its <style>: path { vector-effect: non-scaling-stroke } and stroke widths in CSS px of the
 //         picture box (they are then multiplied by --ts-zoom on screen, whatever the screen size):
-//         o 1.9, i 1.3, h 1.25 dashed 5 3.75, core 1.3 with fill-opacity .24 (the demo, at zoom 2 and
-//         1.6: 3.8 / 2.6 / 2.5 px on desktop, 3 / 2.1 / 2 px on the phone). For --ts-zoom z use widths
-//         of at least 2 / z for the smallest zoom the page uses;
+//         o 1.9, i 1.4, h 1.4 dashed 5 3.75, core 1.4 with fill-opacity .24 (the demo, at zoom 2 and
+//         1.6: 3.8 / 2.8 / 2.8 px on desktop, 3 / 2.2 / 2.2 px on the phone). For --ts-zoom z use
+//         widths of at least 2.2 / z for the smallest zoom the page uses (a little over the 2 px floor);
 //       - one stroke colour (the dark side's ink) and the accent only on the core; under about 120 KB.
+//     The script repaints the drawing in the page's colours (it fetches the file again: same origin, or
+//     a host that sends CORS headers): every colour in it becomes --ts-accent, a light grey or white
+//     --ts-ink-b, a dark grey or black --ts-ground-b. So draw it in the defaults (#ece6d8 and #c8f03c)
+//     and it follows any page; visitors without script see the file's own colours.
 //     demo/media/twin-image-scanner/typewriter-structure.svg is a complete example.
 //  2. Only one photograph, shot on white: give the section class="ts-cutout" and the B img the same src
 //     plus data-trace="lines". The script reads the photograph once (off the main thread; a same-origin
@@ -68,6 +72,11 @@
 //     B shows it as a negative (data-trace="negative" keeps that look on purpose).
 // Never put crossorigin on either img: a host that sends no CORS headers would then refuse the picture
 // outright, on both layers. The script asks for CORS on a copy of its own when it needs the pixels.
+// While the scene runs, B's drawing and the wake (the accent band under the line) show from canvases
+// drawn once from B's picture, so a heavy SVG is rasterised once at load, not as the line uncovers it;
+// for an SVG drawing the script fetches the file again for that (same origin, or a host that sends
+// CORS headers). Where it cannot, B shows its img and the wake falls back to a CSS mask: the same
+// look, but more to paint while scrolling.
 // Portrait 4:5 canvas, the subject centred. Tighten the framing with --ts-zoom (1-2.4) about the point
 // --ts-fx / --ts-fy (% of the picture); --ts-phone-zoom does the same in the one-column layout (phones and
 // portrait tablets). Both pictures and every callout get the same framing, so they stay registered.
@@ -77,10 +86,12 @@
 // A callout whose dot sits above that split (on the photograph) gets class="is-above": without script it
 // is not shown, so no label ever sits on the surface. With script the scene works this out itself.
 // The tags ride the line just left of the picture; where the headline reaches that far (laptop sizes)
-// they fade out before the line comes to the headline, so they never cover a letter.
+// they leave quickly as the line enters the slow band round the core (in one column: just before the
+// line comes to the headline), so they never cover a letter or linger half faded.
 //
-// COLOURS come from the page: --ground and --ink (B swaps them), --accent for the line, the wake and the
-// callout marks (lime #c8f03c if the page has none; it must read on the dark ground), --font-display,
+// COLOURS come from the page: --ground and --ink (B swaps them), --accent for the line, the wake, the
+// callout marks and the drawing's core (lime #c8f03c if the page has none; it must read on the dark
+// ground), --font-display,
 // --font-text, --margin, --gutter. Override per scene with --ts-ground-a, --ts-ink-a, --ts-ground-b,
 // --ts-ink-b, --ts-accent. The section after the scene should start on the dark ground (--ink).
 //
@@ -109,13 +120,16 @@
 // column: the words, then a full-bleed figure split at --ts-phone-edge that ends on the dark ground)
 // with the line, both tags and every callout showing.
 //
-// CONTENT. Headline 4-8 words, two lines at most; outro 18-30 words (18 or fewer reads best on the
-// phone, where it takes the headline's place); tags 1-2 words naming the two materials; 1 to 12
-// callouts, 3 words or fewer each. Labels never overlap: one that would is moved to the other side of
-// its dot or nudged, and shown as a dot alone if neither fits. The focus is always named: it is placed
-// first, beside, above or below its dot, and if every place is blocked by other dots, the dots under its
-// label are dropped. In one column at most 6 labels show (the focus first, then in order); the rest
-// are dots. A dot cropped off the stage is not shown.
+// CONTENT. Headline 4-8 words, two lines at most: the script fits it to its column (beside the picture
+// a short one grows up to 1.25x, a long one shrinks rather than take a third line); outro 18-30 words
+// (18 or fewer reads best on the phone, where it takes the headline's place, and the picture moves down
+// at the end as far as it must to clear it); tags 1-2 words naming the two materials; 1 to 12
+// callouts, 3 words or fewer each. Labels never overlap each other or the words: one that would is
+// moved to the other side of its dot, nudged, or set above or below it, and shown as a dot alone if
+// none of these fits. The focus is always named: it is placed first, and if every place is blocked by
+// other dots, the dots under its label are dropped. In one column at most 6 labels show (the focus
+// first, then in order); the rest are dots. A dot that falls outside the picture (its zoomed, cropped
+// box) or off the stage is not shown.
 // If the B copy is left out the script copies the A copy into B, but then visitors without script see
 // no outro on the dark half: keep it.
 (() => {
@@ -127,14 +141,50 @@
   const out3 = (t) => 1 - Math.pow(1 - clamp(t), 3);
 
   // ---- colour helpers --------------------------------------------------------------------------
-  const rgbOf = (str, fallback) => {
-    const c = document.createElement('canvas').getContext('2d');
-    c.fillStyle = fallback;
-    try { c.fillStyle = (str || '').trim() || fallback; } catch {}
-    const v = c.fillStyle;
-    if (v[0] === '#') return [1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16));
+  let cx2 = null;
+  // any CSS colour as [r, g, b, a], or null if it is not one
+  const colourOf = (str) => {
+    const s = (str || '').trim();
+    if (!s) return null;
+    cx2 = cx2 || document.createElement('canvas').getContext('2d');
+    if (!cx2) return null;
+    cx2.fillStyle = '#010203';
+    try { cx2.fillStyle = s; } catch { return null; }
+    const v = cx2.fillStyle;
+    if (v === '#010203' && !/^#010203$/i.test(s)) return null;
+    if (v[0] === '#') return [...[1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16)), 1];
     const m = v.match(/[\d.]+/g);
-    return m ? m.slice(0, 3).map(Number) : [236, 230, 216];
+    return m ? [+m[0], +m[1], +m[2], m[3] != null ? +m[3] : 1] : null;
+  };
+  const rgbOf = (str, fallback) => (colourOf(str) || colourOf(fallback) || [236, 230, 216]).slice(0, 3);
+  // the drawing in the page's colours. By the recipe it has one light stroke colour and one accent:
+  // any colour (chroma) becomes the accent, a light grey or white B's ink, a dark grey or black B's
+  // ground (a shape that hides the lines behind it). Returns the new SVG text, or null if nothing changes
+  const repaint = (text, ink, ground, acc) => {
+    const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+    const svg = doc.documentElement;
+    if (!svg || svg.nodeName.toLowerCase() !== 'svg' || doc.getElementsByTagName('parsererror').length) return null;
+    let changed = false;
+    const to = (c) => {
+      const [r, g, b, a] = c;
+      const chroma = Math.max(r, g, b) - Math.min(r, g, b), L = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      const t = chroma > 48 ? acc : L > 0.5 ? ink : ground;
+      if (t[0] !== r || t[1] !== g || t[2] !== b) changed = true;
+      return a < 1 ? `rgba(${t.join(',')},${a})` : `rgb(${t.join(',')})`;
+    };
+    const inText = (s) => s.replace(/(?<!url\()#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})\b|rgba?\([^)]*\)/gi, (m) => { const c = colourOf(m); return c ? to(c) : m; });
+    for (const s of svg.getElementsByTagName('style')) s.textContent = inText(s.textContent);
+    for (const el of [svg, ...svg.getElementsByTagName('*')]) {
+      for (const at of ['fill', 'stroke', 'stop-color', 'color', 'flood-color']) {
+        const v = el.getAttribute(at);
+        if (!v || /^(none|currentcolor|inherit|transparent)$/i.test(v.trim()) || /url\(/i.test(v)) continue;
+        const c = colourOf(v);
+        if (c) el.setAttribute(at, to(c));
+      }
+      const st = el.getAttribute('style');
+      if (st) el.setAttribute('style', inText(st));
+    }
+    return changed ? new XMLSerializer().serializeToString(svg) : null;
   };
 
   // ---- the picture work: cut-out and trace, from one read of the photograph ---------------------------
@@ -522,12 +572,16 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
     const marks = stage.querySelector('.ts-marks');
     const subjM = marks && marks.querySelector('.ts-subject');
     const srcA = imgA ? imgA.currentSrc || imgA.src : '';
+    const srcB = imgB ? imgB.currentSrc || imgB.src : '';
     const traced = !!(imgB && imgB.dataset.trace === 'lines');
 
-    // the wake: the drawing again in the accent, in a band just under the line (live only). It is the
-    // accent shown through the drawing as a mask, framed like B, so its lines are B's lines exactly
-    // (same weight, dashes and registration, a drawing with non-scaling strokes included)
-    let band = null, bandInner = null, bandMask = null;
+    // the wake: the drawing again in the accent, in a band just under the line (live only), framed like
+    // B so its lines are B's lines exactly (same weight, dashes and registration). It is drawn once into
+    // a canvas the size of the picture box, already cropped and tinted, so moving the band only moves a
+    // finished bitmap: no clip inside it, nothing to repaint or rasterise while scrolling. If the
+    // drawing cannot be read (an SVG on a host without CORS), the accent shows through it as a CSS mask
+    // instead: the same picture, but rasterised as the band uncovers it
+    let band = null, bandInner = null, bandMask = null, bandSubj = null;
     if (imgB && o.wake > 0 && imgB.dataset.trace !== 'negative') {
       band = document.createElement('div');
       band.className = 'ts-band';
@@ -537,6 +591,7 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
       stage.insertBefore(band, head);
       bandInner = band.firstElementChild;
       bandMask = band.querySelector('.ts-wake');
+      bandSubj = band.querySelector('.ts-subject');
     }
     const subjects = [...stage.querySelectorAll('.ts-subject')];
     const titles = [...stage.querySelectorAll('.ts-title')];
@@ -557,7 +612,9 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
 
     // ---- pictures: decode first; cut-out, trace and wake made off the main thread ----------------------
     [imgA, imgB].forEach((i) => { if (i && i.decode) i.decode().catch(() => {}); });
-    const pic = { busy: false, again: false, dispW: 0, wakeSrc: '', traced: false };
+    // drawSrc / svg: the SVG file B's drawing came from and its text in the page's colours; drawTop: how
+    // far below the top of its box the drawing starts (CSS px at scale 1); 0 = unknown, use the box
+    const pic = { busy: false, again: false, dispW: 0, wakeSrc: '', flatKey: '', wantKey: '', pending: null, traced: false, drawSrc: '', svg: null, svgVer: 0, drawTop: 0 };
     const dispWidth = () => {
       const nw = (imgA && imgA.naturalWidth) || 1600, nh = (imgA && imgA.naturalHeight) || 2000;
       const sw = subjA ? subjA.offsetWidth : 720, sh = subjA ? subjA.offsetHeight : 900;
@@ -625,22 +682,209 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
         if (pic.again) { pic.again = false; idle(work); }
       }
     };
-    // the accent copy of whatever drawing B shows, for the wake (a picture that fails to load as a mask
-    // masks everything: the wake is then simply not there)
-    const wake = () => {
-      if (!band || !bandMask || !imgB) return;
-      if (imgB.dataset.trace && !imgB.classList.contains('is-traced')) return;
-      const src = imgB.currentSrc || imgB.src;
-      if (!src || src === pic.wakeSrc) return;
+    // the accent copy of whatever drawing B shows, for the wake: a canvas drawn once (redrawn when the
+    // picture box, the zoom or the screen's density changes), or the CSS mask when that cannot be done
+    const maskWake = (src) => {
+      if (!band || !bandMask) return;
+      band.classList.remove('ts-band--drawn');
+      band.classList.add('ts-band--masked');
+      if (src === pic.wakeSrc) return;
       pic.wakeSrc = src;
       const u = `url("${src.replace(/["\\]/g, (ch) => encodeURIComponent(ch))}")`;
       bandMask.style.webkitMaskImage = u;
       bandMask.style.maskImage = u;
     };
+    // an SVG drawing is drawn at the size it has inside the img box, so its non-scaling strokes keep
+    // the width they have on screen (a canvas would otherwise draw them at the file's own size)
+    const svgText = new Map();
+    const svgSource = (src) => {
+      if (!svgText.has(src)) {
+        svgText.set(src, (async () => {
+          try {
+            const r = await fetch(src, { credentials: 'same-origin' });
+            const t = r.ok ? await r.text() : '';
+            return /<svg[\s>]/i.test(t) ? t : null;
+          } catch { return null; }
+        })());
+      }
+      return svgText.get(src);
+    };
+    // A canvas draws non-scaling strokes (and their dashes) at their width in canvas pixels, while the
+    // img draws them in the px of its box and then scales them with it (--ts-zoom, the subject's scale,
+    // the density): for a canvas drawn at f times the box, they are made f times wider first
+    const widen = (text, f) => {
+      if (!/non-scaling-stroke/i.test(text) || Math.abs(f - 1) < 0.01) return text;
+      const mul = (v) => v.replace(/\d*\.?\d+(?:e-?\d+)?/gi, (n) => String(+(+n * f).toFixed(3)));
+      return text
+        .replace(/(stroke-(?:width|dasharray|dashoffset)\s*:\s*)([^;}"'<]+)/gi, (m, a, v) => a + mul(v))
+        .replace(/(stroke-(?:width|dasharray|dashoffset)\s*=\s*["'])([^"']+)/gi, (m, a, v) => a + mul(v));
+    };
+    // where an SVG drawing's lines start: the top of its geometry as a fraction of its viewBox, read
+    // from a hidden copy (no styles, nothing painted) instead of a raster of it read back from a canvas
+    const inkOf = (svg) => {
+      try {
+        const vb = (svg.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+        if (vb.length !== 4 || !(vb[2] > 0 && vb[3] > 0)) return null;
+        const copy = document.importNode(svg, true);
+        copy.querySelectorAll('style, script, title, desc, foreignObject').forEach((e) => e.remove());
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        while (copy.firstChild) g.appendChild(copy.firstChild);
+        copy.appendChild(g);
+        copy.setAttribute('aria-hidden', 'true');
+        copy.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none';
+        document.body.appendChild(copy);
+        let b = null;
+        try { b = g.getBBox(); } finally { copy.remove(); }
+        return b && b.height > 0 ? { top: (b.y - vb[1]) / vb[3], vw: vb[2], vh: vb[3] } : null;
+      } catch { return null; }
+    };
+    const svgAt = async (src, w, h, f = 1) => {
+      let text = (src === pic.drawSrc && pic.svg) || (await svgSource(src));
+      if (!text) return null;
+      text = widen(text, f);
+      const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+      const svg = doc.documentElement;
+      if (!svg || svg.nodeName.toLowerCase() !== 'svg') return null;
+      if (!svg.getAttribute('viewBox')) {
+        const vw = parseFloat(svg.getAttribute('width')), vh = parseFloat(svg.getAttribute('height'));
+        if (!(vw > 0 && vh > 0)) return null;
+        svg.setAttribute('viewBox', `0 0 ${vw} ${vh}`);
+      }
+      const ink = inkOf(svg);
+      svg.setAttribute('width', String(w));
+      svg.setAttribute('height', String(h));
+      const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }));
+      try { const im = await load(url, false); if (im.decode) await im.decode().catch(() => {}); return { im, ink }; } catch { return null; } finally { setTimeout(() => URL.revokeObjectURL(url), 0); }
+    };
+    const isSvg = (src) => /^data:image\/svg\+xml/i.test(src) || /\.svgz?(?:[?#]|$)/i.test(src);
+    // B's picture inside the subject box at scale 1: object-fit cover, then scale(--ts-z) about its
+    // transform-origin
+    const frameOf = () => {
+      const W = subjA ? subjA.offsetWidth : 0, H = subjA ? subjA.offsetHeight : 0;
+      const nw = imgB.naturalWidth, nh = imgB.naturalHeight;
+      if (!W || !H || !nw || !nh) return null;
+      const z = zoomNow();
+      const [Fx, Fy] = getComputedStyle(imgB).transformOrigin.split(' ').map(parseFloat);
+      if (!Number.isFinite(Fx) || !Number.isFinite(Fy)) return null;
+      const c = Math.max(W / nw, H / nh), cw = nw * c, ch = nh * c, ox = (W - cw) / 2, oy = (H - ch) / 2;
+      return { W, H, z, Fx, Fy, cw, ch, x: Fx + (ox - Fx) * z, y: Fy + (oy - Fy) * z, w: cw * z, h: ch * z };
+    };
+    // where the drawing starts below the top of its box: the end frame in one column keeps it clear of
+    // the outro by that, not by the box (a picture the page cannot read keeps 0: the box decides)
+    const scanTop = (art, f) => {
+      try {
+        const s = 240 / f.W, w = 240, h = Math.max(1, Math.round(f.H * s));
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        const x = cv.getContext('2d', { willReadFrequently: true });
+        x.setTransform(s, 0, 0, s, 0, 0);
+        x.drawImage(art, f.x, f.y, f.w, f.h);
+        const d = x.getImageData(0, 0, w, h).data;
+        for (let r = 0; r < h; r++) for (let i = r * w * 4 + 3, e = i + w * 4; i < e; i += 4) if (d[i] > 20) return Math.max(0, (r - 1) / s);
+        return 0;
+      } catch { return 0; }
+    };
+    const setTop = (v) => { if (Math.abs(v - pic.drawTop) > 0.5) { pic.drawTop = v; if (st.col) { dropNow(); st.s = null; render(); } } };
+    // While the scene runs, B's drawing is shown from a canvas drawn once (framed and cropped like its
+    // img, at the subject's largest scale and the screen's density, at most about 6 megapixels), and
+    // the wake is the same bitmap tinted with the accent. A drawing of many dashed paths is then
+    // rasterised once, at load, not tile by tile as the line uncovers it (which holds up the frame in
+    // which a tile first shows). Both are redrawn when the picture box, the zoom or the density
+    // changes. If the drawing cannot be read (an SVG on a host without CORS), B keeps its img and the
+    // wake shows the accent through it as a CSS mask
+    let flatB = null;
+    const subjB = imgB ? imgB.closest('.ts-subject') : null;
+    // A request for the drawing already on its way joins it rather than drawing it again; one for
+    // another size or colour makes the older one stand down
+    const drawFlat = async (src) => {
+      const f = frameOf();
+      if (!f || !subjB) return false;
+      const { W, H, cw, ch } = f;
+      let k = Math.min(2, window.devicePixelRatio || 1) * clamp(Math.max(+o.scale || 1, +o.phoneScale || 1), 1, 1.2);
+      if (W * H * k * k > 6e6) k = Math.sqrt(6e6 / (W * H));
+      const cvW = Math.round(W * k), cvH = Math.round(H * k);
+      const acc = rgbOf(getComputedStyle(root).getPropertyValue('--ts-accent'), '#c8f03c');
+      const key = [src, pic.svgVer, cvW, cvH, f.z, f.Fx, f.Fy, acc, !!band].join('|');
+      pic.wantKey = key;
+      if (key === pic.flatKey && flatB) return true;
+      if (pic.pending && pic.pending.key === key) return pic.pending.p;
+      const p = (async () => {
+        const got = isSvg(src) ? await svgAt(src, cw, ch, f.z * k) : { im: imgB, ink: null };
+        if (pic.wantKey !== key) return true; // a newer drawing is on its way
+        if (!got) return false;
+        const art = got.im, ink = got.ink;
+        // the top of the lines inside the box at scale 1 (an SVG is fitted into cw x ch, then zoomed)
+        if (ink) {
+          const s = Math.min(cw / ink.vw, ch / ink.vh);
+          setTop(Math.max(0, f.y + f.z * ((ch - ink.vh * s) / 2 + ink.top * ink.vh * s) - 4));
+        } else setTop(scanTop(art, f));
+        const canvas = () => { const cv = document.createElement('canvas'); cv.width = cvW; cv.height = cvH; const x = cv.getContext('2d'); return x ? { cv, x } : null; };
+        const b = canvas();
+        if (!b) return false;
+        b.x.setTransform(k, 0, 0, k, 0, 0);
+        b.x.drawImage(art, f.x, f.y, f.w, f.h);
+        const cb = b.cv;
+        cb.className = 'ts-flat-c';
+        if (flatB) flatB.replaceWith(cb); else subjB.appendChild(cb);
+        flatB = cb;
+        root.classList.add('ts-flat');
+        // the wake: that bitmap again, tinted (copied from it, so the drawing is rasterised once)
+        if (band && bandSubj) {
+          const t = canvas();
+          if (t) {
+            t.x.drawImage(cb, 0, 0);
+            t.x.globalCompositeOperation = 'source-in';
+            t.x.fillStyle = `rgb(${acc.join(',')})`;
+            t.x.fillRect(0, 0, cvW, cvH);
+            t.cv.className = 'ts-wake-c';
+            const old = bandSubj.querySelector(':scope > canvas');
+            if (old) old.replaceWith(t.cv); else bandSubj.appendChild(t.cv);
+            band.classList.remove('ts-band--masked');
+            band.classList.add('ts-band--drawn');
+          }
+        }
+        pic.flatKey = key;
+        return true;
+      })();
+      pic.pending = { key, p };
+      try { return await p; } finally { if (pic.pending && pic.pending.p === p) pic.pending = null; }
+    };
+    let wakeJob = 0;
+    const wake = () => {
+      if (!imgB) return;
+      if (imgB.dataset.trace && !imgB.classList.contains('is-traced')) return;
+      // a repainted drawing shows from a blob: the canvases still read the file it came from
+      const src = pic.drawSrc || imgB.currentSrc || imgB.src;
+      if (!src || !(imgB.complete && imgB.naturalWidth)) return;
+      const job = ++wakeJob;
+      drawFlat(src).then((ok) => ok, () => false).then((ok) => {
+        if (job !== wakeJob || ok) return;
+        setTop(0);
+        if (flatB) { flatB.remove(); flatB = null; }
+        root.classList.remove('ts-flat');
+        pic.flatKey = '';
+        maskWake(src);
+      });
+    };
+    // an SVG drawing takes the page's colours (its file keeps the default ones for visitors without
+    // script): the core in --ts-accent, the strokes in --ts-ink-b, so a page has one accent, not two
+    const paintDrawing = async () => {
+      if (!imgB || imgB.dataset.trace || !isSvg(srcB)) return;
+      const text = await svgSource(srcB);
+      if (!text) return;
+      const ink = rgbOf(getComputedStyle(layerB).color, '#ece6d8');
+      const ground = rgbOf(getComputedStyle(layerB).backgroundColor, '#0c0e11');
+      const acc = rgbOf(getComputedStyle(root).getPropertyValue('--ts-accent'), '#c8f03c');
+      const out = repaint(text, ink, ground, acc);
+      pic.drawSrc = srcB;
+      pic.svg = out || text;
+      pic.svgVer++;
+      if (out) await swap(imgB, URL.createObjectURL(new Blob([out], { type: 'image/svg+xml' })));
+    };
     const startPictures = () => {
       const go = () => idle(work);
       const wait = [imgA, imgB].filter((i) => i && !(i.complete && i.naturalWidth)).map((i) => new Promise((r) => { i.addEventListener('load', r, { once: true }); i.addEventListener('error', r, { once: true }); }));
-      Promise.all(wait).then(go);
+      Promise.all(wait).then(() => paintDrawing().catch(() => {})).then(go);
     };
     if (traced) root.classList.add('ts-tracing');
     startPictures();
@@ -658,7 +902,7 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
     else window.addEventListener('resize', grown);
 
     // ---- layout of the marks: positions, sides, collisions ---------------------------------------------
-    const st = { live: false, col: false, tagFade: false, H: 1, cy: 0, copyBottom: 0, px: null, s: null, proxy: null };
+    const st = { live: false, col: false, tagFade: false, tagA: -1, tagTop: 0, bandTop: null, H: 1, cy: 0, copyBottom: 0, px: null, s: null, dy: 0, drop: 0, proxy: null };
 
     const placeLabels = () => {
       const SW = stage.clientWidth, H = stage.clientHeight || window.innerHeight;
@@ -666,11 +910,21 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
       const gap = lead + 15, m = st.col ? 12 : 16;
       const fl = frameA && !st.col ? posIn(frameA, stage).x : m;
       const placed = [], dots = [];
+      // the words are obstacles too: a label never covers the headline, nor the outro beside the picture
+      // (in one column the picture moves down to clear the outro at the end, so the headline is enough)
+      const tb = textBox(layerA.querySelector('.ts-title'), stage);
+      if (tb) placed.push({ x0: tb.left - 8, x1: tb.right + 8, y0: tb.top - 8, y1: tb.bottom + 8 });
+      const ob = st.col ? null : layerA.querySelector('.ts-outro');
+      if (ob && ob.offsetWidth) { const q = posIn(ob, stage); placed.push({ x0: q.x - 8, x1: q.x + ob.offsetWidth + 8, y0: q.y - 8, y1: q.y + ob.offsetHeight + 8 }); }
       // in the finished composition a callout never sits on the photograph: only those below the seam show
       let seam = -1;
       if (!st.live) { const ln = head.querySelector('.ts-line'); seam = ln ? posIn(ln, stage).y : -1; }
+      // a dot must sit on the picture: one that the zoom and the crop leave outside the picture's box
+      // (on bare ground) is left out, as is one cropped off the stage
+      const sp = subjM ? posIn(subjM, stage) : { x: 0, y: 0 }, sw = subjM ? subjM.offsetWidth : SW, sh = subjM ? subjM.offsetHeight : H;
       for (const c of calls) {
-        c.off = c.x1 < 6 || c.x1 > SW - 6 || c.y1 < 6 || c.y1 > H - 6 || c.y1 < seam + 8;
+        c.off = c.x1 < 6 || c.x1 > SW - 6 || c.y1 < 6 || c.y1 > H - 6 || c.y1 < seam + 8
+          || c.x1 < sp.x + 4 || c.x1 > sp.x + sw - 4 || c.y1 < sp.y + 4 || c.y1 > sp.y + sh - 4;
         c.el.toggleAttribute('data-off', c.off);
         if (!c.off) dots.push({ c, x0: c.x1 - 10, x1: c.x1 + 10, y0: c.y1 - 10, y1: c.y1 + 10 });
       }
@@ -680,18 +934,20 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
       for (const c of order) if (c.label) { c.lw = c.label.offsetWidth; c.lh = c.label.offsetHeight; }
       let shown = 0;
       for (const c of order) {
-        c.bare = true; c.ny = 0;
+        c.bare = true; c.ny = 0; c.lift = 0;
         if (c.off || !c.label) continue;
         if (st.col && shown >= COLUMN_LABELS) { c.el.setAttribute('data-bare', ''); continue; }
         const lw = c.lw, lh = c.lh;
         const pref = st.col ? (c.x1 > SW / 2 ? 'left' : 'right') : c.el.classList.contains('is-right') ? 'right' : c.el.classList.contains('is-left') || c.x1 - posIn(subjM, stage).x > subjM.offsetWidth * 0.64 ? 'left' : 'right';
         const sides = [pref, pref === 'left' ? 'right' : 'left'];
-        // beside the dot (the leader reaches it), then, for the focus only, above or below it
+        // beside the dot (the leader reaches it), then above or below it (no leader: the name sits
+        // right over its dot), so a part crowded on both sides by others is still named
         const spots = [];
         for (const side of sides) for (const ny of [0, -0.42 * lh, 0.42 * lh]) spots.push({ side, ny, x0: side === 'right' ? c.x1 + gap : c.x1 - gap - lw, y0: c.y1 - lh / 2 + ny });
-        if (c.focus) for (const side of ['above', 'below']) spots.push({ side, ny: 0, x0: c.x1 - lw / 2, y0: side === 'above' ? c.y1 - 14 - lh : c.y1 + 14 });
+        for (const side of ['above', 'below']) spots.push({ side, ny: 0, x0: c.x1 - lw / 2, y0: side === 'above' ? c.y1 - 14 - lh : c.y1 + 14 });
         const box = (s) => ({ x0: s.x0 - 4, x1: s.x0 + lw + 4, y0: s.y0 - 3, y1: s.y0 + lh + 3 });
-        const inside = (b) => !(b.x0 < fl - 4 || b.x1 > SW - m + 4 || b.y0 < 0 || b.y1 > H);
+        // (at rest a name sits wholly below the seam, on the drawing)
+        const inside = (b) => !(b.x0 < fl - 4 || b.x1 > SW - m + 4 || b.y0 < Math.max(0, seam + 4) || b.y1 > H);
         const hit = (b) => (r) => r.x0 < b.x1 && r.x1 > b.x0 && r.y0 < b.y1 && r.y1 > b.y0;
         let done = null;
         for (const s of spots) {
@@ -710,6 +966,9 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
             break;
           }
         }
+        // lift: how far the label reaches above its dot; the callout opens once the line is past that too,
+        // so no name ever shows on the surface
+        c.lift = done ? Math.max(0, c.y1 - done.b.y0) : 0;
         if (done) { placed.push(done.b); c.side = done.s.side; c.ny = done.s.ny; }
         done = !!done;
         c.bare = !done;
@@ -719,9 +978,47 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
       }
     };
 
+    // the headline holds its column on two lines at most: while the scene runs beside the picture a
+    // short one grows to fill the column (up to 1.25x the CSS size, 128px at most; the finished split
+    // keeps the CSS size, as without script, so it stays clear of the seam), and anywhere a long one
+    // shrinks (to 0.62x) rather than take a third line. Both copies follow, through --ts-fit on the stage
+    const fitTitle = () => {
+      const t = layerA.querySelector('.ts-title');
+      if (!t) return;
+      const set = (f) => stage.style.setProperty('--ts-fit', f.toFixed(3));
+      const lines = () => {
+        const r = document.createRange();
+        r.selectNodeContents(t);
+        const rows = [];
+        for (const q of r.getClientRects()) {
+          if (q.width < 1 || q.height < 1) continue;
+          const row = rows.find((w) => Math.abs(w.top - q.top) < q.height * 0.5);
+          if (row) { row.l = Math.min(row.l, q.left); row.r = Math.max(row.r, q.right); } else rows.push({ top: q.top, l: q.left, r: q.right });
+        }
+        return { n: rows.length, w: rows.reduce((m, w) => Math.max(m, w.r - w.l), 0) };
+      };
+      set(1);
+      const cw = t.clientWidth, base = parseFloat(getComputedStyle(t).fontSize) || 60;
+      let m = lines(), f = 1;
+      if (!cw || !m.n) return;
+      if (m.n > 2) {
+        for (let i = 0; i < 10 && m.n > 2 && f > 0.62; i++) { f = Math.max(0.62, f * 0.94); set(f); m = lines(); }
+      } else if (st.live && !st.col && m.w > 0) {
+        f = Math.min(1.25, 128 / base, (cw / m.w) * 0.99);
+        for (let i = 0; i < 8 && f > 1; i++) {
+          set(f);
+          m = lines();
+          if (m.n <= 2 && m.w <= cw + 0.5) return;
+          f *= 0.97;
+        }
+        set(1);
+      }
+    };
+
     const measure = () => {
       st.col = colMQ.matches;
       st.H = stage.clientHeight || window.innerHeight;
+      fitTitle();
       const subj = subjM || subjA;
       if (subj) {
         const p = posIn(subj, stage);
@@ -738,6 +1035,9 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
       // into that place (the copy column and the frame share a column), they fade out before the line
       // comes to the headline, as they do in one column: they never cover a letter
       st.tagFade = st.col;
+      st.tagA = -1;
+      // how far the upper tag's top stands above the line (it sits 8px above it)
+      st.tagTop = tags.length ? 8 + Math.max(...tags.map((g) => g.offsetHeight)) : 0;
       if (!st.col && tags.length && subj) {
         const fx = frameA ? posIn(frameA, stage).x : 0;
         const tw = Math.max(...tags.map((g) => g.offsetWidth));
@@ -754,9 +1054,37 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
         }
       } else head.style.removeProperty('--ts-tag-x');
       if (!st.tagFade || st.live) for (const g of tags) g.style.removeProperty('visibility');
+      if (!st.tagFade) for (const g of tags) g.style.removeProperty('opacity');
       placeLabels();
+      dropNow();
+      wake();
       st.px = st.s = null;
-      for (const c of calls) c.d = -1;
+      for (const c of calls) { c.d = -1; c.sa = null; c.el.style.removeProperty('opacity'); }
+    };
+
+    // one column, the end: the outro takes the headline's place, and the picture moves down just enough
+    // to keep its drawing (and every label) 16px under the outro's action, whatever the screen's height.
+    // A callout that this would push off the foot of the stage leaves as the picture moves
+    const dropNow = () => {
+      st.drop = 0;
+      for (const c of calls) c.sink = false;
+      if (!st.col || !st.live || !subjA) return;
+      const ou = layerA.querySelector('.ts-outro');
+      if (!ou) return;
+      const bottom = posIn(ou, stage).y + ou.offsetHeight;
+      let top = posIn(subjA, stage).y + (pic.drawTop || 0);
+      for (const c of calls) {
+        if (c.off) continue;
+        top = Math.min(top, c.y1 - 8);
+        if (!c.bare && c.label) top = Math.min(top, (c.side === 'above' ? c.y1 - 14 - c.lh : c.side === 'below' ? c.y1 + 14 : c.y1 + c.ny - c.lh / 2) - 3);
+      }
+      st.drop = Math.max(0, Math.ceil(bottom + 16 - top));
+      if (!st.drop) return;
+      for (const c of calls) {
+        if (c.off) continue;
+        const reach = c.bare || !c.label ? 8 : c.side === 'below' ? 14 + c.lh + 3 : c.side === 'above' ? 8 : c.lh / 2 + Math.abs(c.ny) + 3;
+        c.sink = c.y1 + st.drop + reach > st.H - 6;
+      }
     };
 
     const render = () => {
@@ -772,19 +1100,31 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
         head.style.transform = t;
         if (band) { band.style.transform = t; bandInner.style.transform = ti; }
         // where the tags share their place with the headline (always in one column), they leave before
-        // the line reaches it
-        // (the upper tag's top is about 36px above the line: gone by the time it would touch the words)
-        if (st.tagFade) { const a = clamp((px - st.copyBottom - 40) / 48); for (const g of tags) g.style.opacity = a; }
+        // the line reaches it: quickly, over 14px of the line's travel, gone 24px before the upper tag's
+        // top would reach the words (in one column 5% of the stage earlier still), and on desktop already
+        // as the line enters the slow band round the core, so no ghost of a tag lingers while it is slow
+        if (st.tagFade) {
+          const gone = Math.max(st.copyBottom + st.tagTop + 24 + (st.col ? 0.05 * H : 0), st.bandTop == null ? 0 : (st.bandTop / 100) * H);
+          const a = Math.round(clamp((px - gone) / 14) * 100) / 100;
+          if (a !== st.tagA) { st.tagA = a; for (const g of tags) g.style.opacity = a; }
+        }
       }
-      if (p.s !== st.s) {
+      const dy = st.drop ? Math.round(st.drop * (p.d || 0) * dpr) / dpr : 0;
+      if (p.s !== st.s || dy !== st.dy) {
         st.s = p.s;
-        const ts = `scale(${p.s.toFixed(5)})`;
+        st.dy = dy;
+        const ts = (dy ? `translate3d(0,${dy}px,0) ` : '') + `scale(${p.s.toFixed(5)})`;
         for (const el of subjects) el.style.transform = ts;
+        for (const c of calls) {
+          if (!c.sink || c.off) { if (c.sa != null) { c.sa = null; c.el.style.removeProperty('opacity'); } continue; }
+          const a = Math.round((1 - clamp(p.d || 0)) * 100) / 100;
+          if (a !== c.sa) { c.sa = a; c.el.style.opacity = a; }
+        }
       }
       const lead = 0.02 * H, span = 0.075 * H;
       for (const c of calls) {
         if (c.off) continue;
-        const y = st.cy + (c.y1 - st.cy) * p.s;
+        const y = st.cy + (c.y1 - (c.lift || 0) - st.cy) * p.s;
         const d = p.e <= 0.001 ? 1 : Math.round(clamp((y - lead - px) / span) * 1000) / 1000;
         if (d === c.d) continue;
         c.d = d;
@@ -809,9 +1149,12 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
       st.proxy = null;
       for (const el of [layerB, innerB, head, band, bandInner, ...subjects]) if (el) el.style.removeProperty('transform');
       for (const g of tags) g.style.removeProperty('opacity');
+      st.drop = st.dy = 0;
       for (const c of calls) {
         c.el.classList.remove('is-on');
         c.el.style.removeProperty('visibility');
+        c.el.style.removeProperty('opacity');
+        c.sink = false; c.sa = null;
         for (const el of [c.dot, c.leader, c.label]) if (el) { el.style.removeProperty('transform'); el.style.removeProperty('opacity'); }
       }
     };
@@ -832,11 +1175,16 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
       if (focus == null) { const f = calls.find((c) => c.focus && !c.off); focus = ((f ? f.y1 : st.cy) / st.H) * 100; }
       const bandH = clamp(+o.band, 0, 40), slow = clamp(+o.slow, 0.2, 1);
       let top = Math.min(park, focus + bandH / 2), bot = clamp(focus - bandH / 2, 0, top);
+      // the slow stretch ends 24px below the headline's letters, so the line never lingers on words:
+      // where the core sits that high, the band slides down (not past park) rather than reach them
+      const clearE = ((st.copyBottom + 24) / st.H) * 100;
+      if (bot < clearE) { const sh = Math.max(0, Math.min(clearE - bot, park - top)); top += sh; bot = Math.min(Math.max(bot + sh, clearE), top); }
       if (top - bot < 1) { top = park; bot = park; }
+      st.bandTop = col || top >= park ? null : top;
       const T0 = 0.06, T3 = 0.78;
       const v = (park - top + bot + (top - bot) / slow) / (T3 - T0);
       const t1 = T0 + (park - top) / v, t2 = t1 + (top - bot) / (slow * v);
-      const proxy = (st.proxy = { e: park, s: scale0 });
+      const proxy = (st.proxy = { e: park, s: scale0, d: 0 });
       if (t1 - T0 > 0.001) tl.fromTo(proxy, { e: park }, { e: top, duration: t1 - T0, immediateRender: false }, T0);
       if (t2 - t1 > 0.001) tl.fromTo(proxy, { e: top }, { e: bot, duration: t2 - t1, immediateRender: false }, t1);
       tl.fromTo(proxy, { e: bot }, { e: 0, duration: T3 - t2, immediateRender: false }, t2);
@@ -851,9 +1199,11 @@ onmessage = (e) => { const d = e.data; const r = analyse(new Uint8ClampedArray(d
 
       // the outro: under the headline on desktop, in its place in one column
       if (col) {
-        // the headline is gone before the outro starts: never both in the slot at once
+        // the headline is gone before the outro starts: never both in the slot at once. Meanwhile the
+        // picture moves down by the room the outro needs (st.drop, measured; 0 on a tall screen)
         tl.fromTo(titles, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -16, duration: 0.04, immediateRender: false }, 0.8);
-        tl.fromTo(outros, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.07, ease: 'power2.out' }, 0.85);
+        tl.fromTo(proxy, { d: 0 }, { d: 1, duration: 0.06, immediateRender: false }, 0.8);
+        tl.fromTo(outros, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.08, ease: 'power2.out' }, 0.84);
       } else {
         tl.fromTo(outros, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.1, ease: 'power2.out' }, 0.8);
         if (ctas.length) tl.fromTo(ctas, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.1, ease: 'power2.out' }, 0.82);

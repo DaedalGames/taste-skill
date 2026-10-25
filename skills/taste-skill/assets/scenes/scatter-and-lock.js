@@ -41,7 +41,9 @@
 // The word: put it over a dark, quiet part of the photograph (or set --sl-scrim), and inside one row band
 // of the grid (on 4 rows: --sl-word-y 12.5%, 37.5%, 62.5% or 87.5%) so no gap runs through its middle.
 // Check every letter at the lock and at full bleed: at least 3:1 against the pixels behind it.
-// Across the columns the script nudges it by up to half a letter so the gaps fall between letters.
+// Across the columns the script nudges it by up to half a letter so the cuts fall in the white between
+// letters (it measures each letter's ink). Where two cuts cannot both find white, try a size a little up or
+// down: the demo's word fits its 7 columns at 9.75cqi and cuts into a letter at 9cqi.
 // Inside .sl-art, size things in cqi (or in em of something sized in cqi): the art is drawn at two sizes
 // (the cells at frame size, the poster at full-bleed size, scaled down until the hand-off), and px would
 // differ between them. The micro-copy's 14px floor is already handled (--sl-up).
@@ -600,7 +602,6 @@
         }
       }
       field.forEach((k, a) => { [k.px, k.py] = pts[own[a]]; k.route = mr[a][own[a]][1]; });
-      root.__slDebug = () => cells.map((k) => `${k.c},${k.r} s${k.s.toFixed(3)} ${k.hero ? 'H' : 'f'} r${k.route} @${k.px.toFixed(0)}/${k.py.toFixed(0)} z${Math.round(k.z)} cost${cost(k, [k.px, k.py], k.z)[0].toFixed(2)}`); // DEBUG
       // start and home on the screen (px from the stage's centre), and the start in depth
       const sx = [];
       const sy = [];
@@ -681,14 +682,17 @@
       }, 0);
     }
     // Depth blur and faint far shards clear as each one sets off: one clock for all cells, and a style is
-    // written only when it changes (filter goes back to none as soon as a shard is sharp).
+    // written only when it changes (filter goes back to none as soon as a shard is sharp). The blur steps
+    // down in whole pixels: a 1px step on a moving shard does not show, while a radius that changes at every
+    // frame makes the compositor size a new blur surface (and, the first time, build a new blur) for every
+    // shard at every frame, which is what stalls the first scroll through the scene.
     const clock = { t: 0 };
     const paint = () => {
       const t = clock.t;
       for (const k of cells) {
         const u = Math.max(0, t - k.s);
-        const b = k.blur > 0 && u < 0.175 ? k.blur * (1 - soft(u / 0.175)) : 0;
-        const f = b > 0.05 ? `blur(${b.toFixed(2)}px)` : 'none';
+        const b = k.blur > 0 && u < 0.175 ? Math.round(k.blur * (1 - soft(u / 0.175))) : 0;
+        const f = b >= 1 ? `blur(${b}px)` : 'none';
         if (f !== k.f) { k.el.style.filter = f; k.f = f; }
         const op = k.op >= 1 || u >= 0.1 ? '1' : (k.op + (1 - k.op) * soft(u / 0.1)).toFixed(3);
         if (op !== k.o) { k.el.style.opacity = op; k.o = op; }
@@ -720,37 +724,98 @@
       tl0.fromTo(tl, { time: REST }, { time: 0, duration: 1, ease: 'none' }, 0);
     }
     // A hand-off still after the section holds the same last frame underneath the stage; once the stage
-    // releases (by scroll position), it steps aside and the still carries on. A fast flick can leave the
-    // scrub behind: it is finished first, so the poster is at full bleed in the stage's last frame too.
+    // releases (by scroll position), it steps aside and the still carries on. A fast scroll can leave the
+    // scrub behind, with the poster still growing when the stage releases: then the still takes the poster
+    // over where it is (its place and scale, copied at every update of the timeline) and grows it on to full
+    // bleed with the scrub while the next section rises, so the hand-over never jumps. Only a flick that
+    // leaves before the cells have even turned into the poster is finished at once.
     if (grow && hasStill) {
+      const pic = still.querySelector('.sl-still-pic > .sl-art');
+      let released = false;
+      let moved = false;
+      const follow = () => {
+        if (!pic) return;
+        const s = +gsap.getProperty(solid, 'scale');
+        const x = +gsap.getProperty(solid, 'x');
+        const y = +gsap.getProperty(solid, 'y');
+        const g = G || geo();
+        const at = released && (s < 0.9995 || Math.abs(x + g.fx) > 0.5 || Math.abs(y + g.fy) > 0.5);
+        if (at) {
+          gsap.set(pic, { xPercent: -50, yPercent: -50, x: g.fx + x, y: g.fy + y, scale: s, force3D: true });
+          moved = true;
+        } else if (moved) {
+          gsap.set(pic, { clearProps: 'transform' });
+          moved = false;
+        }
+      };
+      const prev = tl0.eventCallback('onUpdate');
+      tl0.eventCallback('onUpdate', function () { if (prev) prev.apply(this, arguments); if (released || moved) follow(); });
       ScrollTrigger.create({
         trigger: root, start: 'bottom bottom', end: 'max',
         onToggle: (self) => {
-          if (self.isActive) {
+          released = self.isActive;
+          if (released && tl0.time() < 0.765) {
             const lag = tl0.scrollTrigger && tl0.scrollTrigger.getTween();
             if (lag && lag.isActive()) lag.progress(1);
           }
-          root.classList.toggle('sl-released', self.isActive);
+          follow();
+          root.classList.toggle('sl-released', released);
         },
       });
     }
 
+    // GSAP sets a tween up the first time the playhead moves past its start. After every invalidation (a
+    // refresh, a recast) that would be the first frame of scroll into the scene: some 120 tweens re-reading
+    // their cells at once, a frame of 100ms and more. So the timeline is run once to its end and back to
+    // where it was, right away, while nobody is watching it move (events suppressed: nothing else runs).
+    const warm = () => {
+      const t = tl0.totalTime();
+      tl0.render(tl0.duration(), true, true);
+      tl0.render(t, true, true);
+      paint();
+    };
     // Recast the cloud with new start values: invalidate, then render the current frame again.
     const recast = () => {
       tl.invalidate();
       if (explode) tl0.invalidate();
       tl0.render(tl0.totalTime(), true, true);
       if (explode) tl.render(tl.totalTime(), true, true);
-      paint();
+      warm();
     };
     // The paused explode timeline is not reached by the trigger's invalidateOnRefresh. After a refresh the
-    // blur and fade are painted again: a new deal may have given a piece another place.
+    // timeline is set up again at once, and the blur and fade are painted again: a new deal may have given a
+    // piece another place.
     const onRefresh = () => { if (explode) tl.invalidate(); };
-    const onRefreshed = () => paint();
+    const onRefreshed = () => warm();
     ScrollTrigger.addEventListener('refreshInit', onRefresh);
     ScrollTrigger.addEventListener('refresh', onRefreshed);
 
-    // The poster word: nudge it (by at most half a letter) so the column gaps fall between letters.
+    // Where the ink of each letter of the word lies (art px): each glyph measured on a canvas in the word's
+    // own face, placed where the page set it (so kerning and tracking are the page's). A T's bar or an a's
+    // tail reaches past its letter's box, and a cut there leaves a stub. Without a canvas, or when the
+    // canvas cannot set the face exactly (a width the canvas has no keyword for), the letters' boxes.
+    const STRETCH = { 50: 'ultra-condensed', 62.5: 'extra-condensed', 75: 'condensed', 87.5: 'semi-condensed', 100: 'normal', 112.5: 'semi-expanded', 125: 'expanded', 150: 'extra-expanded', 200: 'ultra-expanded' };
+    const inkOf = (word, chars, box) => {
+      try {
+        const cs = getComputedStyle(word);
+        const cx = document.createElement('canvas').getContext('2d');
+        const st = STRETCH[parseFloat(cs.fontStretch) || 100];
+        if (!cx || !st || (st !== 'normal' && !('fontStretch' in cx))) return box;
+        cx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        if (st !== 'normal') cx.fontStretch = st;
+        const ls = parseFloat(cs.letterSpacing) || 0;
+        const ink = [];
+        for (let i = 0; i < chars.length; i++) {
+          const m = cx.measureText(chars[i]);
+          const w = box[i][1] - box[i][0];
+          if (!(Math.abs(m.width + ls - w) < Math.max(2, w * 0.06))) return box; // not the same face
+          ink.push([box[i][0] - m.actualBoundingBoxLeft, box[i][0] + m.actualBoundingBoxRight]);
+        }
+        return ink;
+      } catch { return box; }
+    };
+    // The poster word: nudge it (by at most half a letter) so the column cuts fall in the white between
+    // letters, or else cut off as little of a letter as possible.
     const fitWord = () => {
       root.style.removeProperty('--sl-word-dx');
       if (hasStill) still.style.removeProperty('--sl-word-dx');
@@ -762,27 +827,31 @@
       const sc = ab.width / W || 1;
       const rg = document.createRange();
       const box = [];
+      const chars = [];
       for (let i = 0; i < tn.nodeValue.length; i++) {
         if (/\s/.test(tn.nodeValue[i])) continue;
         rg.setStart(tn, i);
         rg.setEnd(tn, i + 1);
         const b = rg.getBoundingClientRect();
-        if (b.width) box.push([(b.left - ab.left) / sc, (b.right - ab.left) / sc]);
+        if (b.width) { box.push([(b.left - ab.left) / sc, (b.right - ab.left) / sc]); chars.push(tn.nodeValue[i]); }
       }
       if (box.length < 2) return;
-      const joins = box.slice(1).map((b, i) => (box[i][1] + b[0]) / 2);
-      const L = box[0][0];
-      const R = box[box.length - 1][1];
-      const half = Math.round((R - L) / box.length / 2);
+      const pad = (parseFloat(getComputedStyle(word).fontSize) || 0) * 0.015; // keep a cut a hair off the ink
+      const ink = inkOf(word, chars, box).map(([a, b]) => [a - pad, b + pad]);
+      const L = Math.min(...ink.map((k) => k[0]));
+      const R = Math.max(...ink.map((k) => k[1]));
+      const half = Math.round((box[box.length - 1][1] - box[0][0]) / box.length / 2);
+      // a cut through a letter costs the smaller of the two pieces it leaves
+      const cut = (x) => ink.reduce((s, [a, b]) => (x > a && x < b ? s + Math.min(x - a, b - x) : s), 0);
       let best = 0;
       let low = Infinity;
-      for (let dx = -half; dx <= half; dx++) {
-        let cost = Math.abs(dx) * 0.02;
+      for (let dx = -half; dx <= half; dx += 0.5) {
+        let cost = Math.abs(dx) * 0.01;
         for (let c = 1; c < cols; c++) {
-          const x = (c * W) / cols;
-          if (x > L + dx && x < R + dx) cost += Math.min(...joins.map((j) => Math.abs(x - j - dx)));
+          const x = (c * W) / cols - dx;
+          if (x > L && x < R) cost += cut(x);
         }
-        if (cost < low) { low = cost; best = dx; }
+        if (cost < low - 1e-9) { low = cost; best = dx; }
       }
       if (!best) return;
       const v = ((best / W) * 100).toFixed(3); // in cqi of the art, so it scales with the hand-off and the still

@@ -204,6 +204,14 @@ html.js .scene.is-live[data-scene="fly-into-the-shape"] > .scene-stage {
   clip-path: inset(50%);
   pointer-events: none;
 }
+/* the side deepens towards the night as the face clears (the script sets its opacity), so it always
+   reads darker than the face beside it */
+.scene.is-live[data-scene="fly-into-the-shape"] .portal-depth-night {
+  position: absolute;
+  inset: 0;
+  background: var(--_night);
+  opacity: 0;
+}
 
 /* the light title, over the world, clipped to the whole mark (face and side) by the script */
 .scene.is-live[data-scene="fly-into-the-shape"] .portal-lit {
@@ -235,11 +243,12 @@ html.js .scene.is-live[data-scene="fly-into-the-shape"] > .scene-stage {
   z-index: -3;
   background: var(--_night);
 }
-/* the picture grows about the anchor, which the script pins to the stage's centre */
+/* the picture grows about the stage's centre (the script sets the origin wherever its box is). It is
+   not promoted to its own layer: under a clip-path that changes every frame, a composited picture adds
+   a full-screen mask and an offscreen pass, which cost more than painting it with the world */
 .scene.is-live[data-scene="fly-into-the-shape"] .portal-media {
   display: block;
   transform-origin: 50% 50%;
-  will-change: transform;
 }
 .scene.is-live[data-scene="fly-into-the-shape"] .portal-scrim { display: block; }
 .scene.is-live[data-scene="fly-into-the-shape"] .portal-tint {

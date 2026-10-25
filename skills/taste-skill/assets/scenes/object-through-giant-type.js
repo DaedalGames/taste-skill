@@ -83,7 +83,8 @@
 //                        fly home once it has gone; 'fall': it only swells, tips and drops out while the
 //                        wall opens around it (never past the stage edge) and closes behind it
 //   shatter     3        break: how many lines, counted up from the last, break into letters (1-6); the
-//                        throw weakens line by line away from the object
+//                        throw weakens line by line away from the object. Two lines in five always stay
+//                        whole (a 3-line quote breaks only its last line), so the quote is never all letters
 //   giants      2        break: letters of the last line that swell to half the stage height behind the
 //                        object (0-3)
 //   seed        7        break: the throw is seeded, so scrubbing back and forth shows the same picture;
@@ -108,8 +109,8 @@
 // edge-on between, the halves parting before it and closing behind it, the wall climbing; 60% it sits
 // in the last line. Exit 'break': 60-62% it swells and the last three lines burst into letters, nearest
 // first, thrown out and up, tumbling in depth, many past the stage edges, two swelling to giant size low
-// behind it; 62-74% it tips, falls and leaves; 70-82% every letter flies home (power3.inOut) and the
-// lines close; 78-88% the credit comes in; 82-100% the closed quote is held in ink. Exit 'fall': the
+// behind it; 62-74% it tips, falls and leaves; 70-79% every letter flies home (power3.inOut) and the
+// lines close; 75-85% the credit comes in; 79-100% the closed quote is held in ink. Exit 'fall': the
 // object swells (1.9x by 65%) while the last lines open wide, then drops out by 74%; credit 74-84%.
 // The phone: the same with phone lines and a longer hold. A travelling wall: the object falls through
 // the middle third of the stage while the taller wall climbs past it, lines fading as the stage edge cuts
@@ -123,7 +124,7 @@
   const EXIT = 0.14;    // and has left the stage this much later
   const ENTER = 0.08;   // from just above the wall into line 1 (or held in line 1)
   const BREAK = 0.603;  // the first letters leave here (exit 'break')
-  const HOME = 0.82;    // and every letter is back in its place here
+  const HOME = 0.79;    // and every letter is back in its place here
   const FIT0 = 0.74, FIT1 = 0.84;   // a travelling wall pulls back to show the whole quote
   const ASIDE = 1.15;   // a word that steps aside stops this many object radii from the object's centre
   const WALL = 7, PHONE_WALL = 8;   // more lines than this travel through the stage
@@ -284,6 +285,10 @@
     // decode before anything moves
     for (const img of obj.querySelectorAll('img')) if (img.decode) img.decode().then(aspect).catch(() => {});
 
+    // how many lines break (exit 'break'): `shatter`, but two lines in five stay whole and readable
+    // through the break, so a short quote never turns entirely into flying letters
+    const shatterOf = (n) => clamp(Math.min(o.shatter, n - Math.max(1, Math.ceil(0.4 * n))), 1, n);
+
     const S = { live: false, posed: false, phone: false, key: '', geo: null, fonts: 0, ver: 0, putVer: -1, tl: null, lines: [], A: [], B: [], side: [], cut: [], L: [], on: [], put: null, setX: null, x: [], op: [], rimOp: NaN };
 
     // A half's letters, one span each, laid over the half's own text and shown only while the line is
@@ -314,7 +319,7 @@
         quote.textContent = '';
         S.L = [];
         const cut = lines.some((l) => l.b && !l.sep);
-        const breaking = o.exit === 'break' ? Math.min(lines.length, o.shatter) : 0;
+        const breaking = o.exit === 'break' ? shatterOf(lines.length) : 0;
         lines.forEach((l, i) => {
           const p = document.createElement('p');
           p.className = 'ott-line';
@@ -452,7 +457,6 @@
         // the author's own lines win a near tie, so the phone keeps the desktop's phrasing when it can
         const own = lines.length === model.length && lines.every((t, i) => t === norm(model[i].a + model[i].sep + model[i].b));
         const score = Fe * (0.4 + 0.6 * cover) * (1 - 0.3 * cuts - 0.06 * lone) * (travel ? 0.85 : 1) * (own ? 1.04 : 1);
-        (window.__ottWraps = window.__ottWraps || []).push({ s: +score.toFixed(2), Fe: +Fe.toFixed(1), cover: +cover.toFixed(2), cuts, lone, own, lines: lines.join(' / ') }); // DEBUG
         if (!best || score > best.score + 1e-6) best = { score, lines };
       }
       return best ? best.lines.map(split) : model;
@@ -542,7 +546,7 @@
     const throwOf = (g, Lm, cap) => {
       const { W, H, n, cx, cy, F } = g;
       const rand = seeded(o.seed);
-      const N = Math.max(1, Math.min(n, o.shatter));
+      const N = shatterOf(n);
       const M = Math.max(W, H);
       const ox = cx + g.fx[n - 1], oy = cy[n - 1] + g.byA;   // the object's centre as it breaks the wall
       // the giants: one of the two widest letters of each half of the last line, each swelling on its
@@ -575,7 +579,7 @@
           const ty = first ? H - 0.3 * capT : H - 0.62 * capT;
           return {
             pin: true, dx: tx - lx, dy: ty - ly, rot: side * (first ? 4 + 6 * u[2] : 10 + 8 * u[2]), rx: 0, ry: -side * (12 + 14 * u[3]),
-            sc: capT / (cap * F), t0: BREAK + (first ? 0.004 : 0.012), t1: BREAK + (first ? 0.09 : 0.085), b0: first ? 0.705 : 0.698, b1: HOME, persp: 4 * M,
+            sc: capT / (cap * F), t0: BREAK + (first ? 0.004 : 0.012), t1: BREAK + (first ? 0.09 : 0.085), b0: first ? 0.7 : 0.694, b1: HOME, persp: 4 * M,
           };
         }
         // thrown out to its own side, fanning up and down, harder the nearer the object; a letter that
@@ -589,7 +593,7 @@
         if (ly + dy < lim) dy = Math.max(lim - ly, Math.abs(dy) * 0.6);
         const t0 = BREAK + 0.02 * Math.min(1, d0 / (0.5 * W)) + 0.004 * u[2];
         const t1 = t0 + 0.065 + 0.025 * u[3];
-        const b0 = Math.max(t1 + 0.004, 0.695 + 0.03 * u[4]);
+        const b0 = Math.max(t1 + 0.004, 0.695 + 0.02 * u[4]);
         return {
           pin: false,
           dx: dirX * reach,
@@ -598,7 +602,7 @@
           rx: (u[7] * 2 - 1) * 140 * e,
           ry: (u[8] * 2 - 1) * 320 * e,
           sc,
-          t0, t1, b0, b1: Math.min(HOME, Math.max(b0 + 0.06, b0 + 0.09 + 0.015 * u[4])),
+          t0, t1, b0, b1: Math.min(HOME, b0 + 0.065 + 0.01 * u[4]),
           persp: Math.max(500, 6 * F),
         };
       });
@@ -729,8 +733,10 @@
         rg.setStart(t, L.off);
         rg.setEnd(t, L.off + L.len);
         const r = rg.getBoundingClientRect(), hr = L.half.getBoundingClientRect();
+        L.el.style.fontSize = '';
+        L.el.style.transformOrigin = '';
         L.el.style.left = ((r.left - hr.left) / F).toFixed(4) + 'em';
-        return { x: r.left + r.width / 2 - st.left, w: r.width };
+        return { x: r.left + r.width / 2 - st.left, w: r.width, l: (r.left - hr.left) / F };
       });
       root.classList.remove('ott-measure');
       const r = (k * F) / 2;
@@ -772,6 +778,18 @@
         yEnd: Math.max(H + 1.1 * o.grow * r + 10, cy[n - 1] + byEnd + o.radius * r * (1 + (o.grow - 1) / 2) + 4),
       };
       g.fl = S.L.length && !posed ? throwOf(g, Lm, cap) : [];
+      // a giant is set at its swollen size and scaled down to its glyph at rest, so the browser draws it
+      // sharp at the size it is seen at (a small glyph scaled up six times is drawn soft on a phone)
+      g.fl.forEach((f, j) => {
+        if (!f.pin) return;
+        const L = S.L[j];
+        f.m = Math.max(1, f.sc);
+        f.cx = Lm[j].w / 2;
+        f.cy = (lh * F) / 2;
+        L.el.style.fontSize = f.m.toFixed(3) + 'em';
+        L.el.style.left = ((Lm[j].l || 0) / f.m).toFixed(4) + 'em';
+        L.el.style.transformOrigin = '0 0';
+      });
       // the stretch of the scene each breaking line spends in letters
       g.brk = S.lines.map(() => null);
       g.fl.forEach((f, j) => {
@@ -830,8 +848,15 @@
           const c = g.H / 2 + (g.cy[i] - g.H / 2) * sq + by, h = (g.capH / 2) * sq;
           op *= Math.max(back, smooth(clamp(Math.min(c - h, g.H - c - h) / (0.45 * g.F * sq) + 0.15, 0, 1)));
         }
+        // on the halves, not the line: each half is its own layer already, so a faded line costs no extra
+        // offscreen surface in the compositor
         op = Math.round(op * 1000) / 1000;
-        if (op !== S.op[i]) { S.lines[i].style.opacity = op >= 1 ? '' : String(op); S.op[i] = op; }
+        if (op !== S.op[i]) {
+          const v = op >= 1 ? '' : String(op);
+          S.A[i].style.opacity = v;
+          if (S.B[i]) S.B[i].style.opacity = v;
+          S.op[i] = op;
+        }
       }
       // the break: the lines in letters while their throw lasts, each letter where its throw has it
       if (g.fl.length) {
@@ -845,13 +870,20 @@
           const f = g.fl[j];
           const [a, as] = f ? thrown(f, p) : [0, 0];
           let tr = '';
-          if (a > 0) {
-            let dx = f.dx * a, dy = f.dy * a;
-            // a giant lands where it was thrown, wherever its half has moved meanwhile
-            if (f.pin) {
+          if (f && f.m) {
+            // a giant (set at its swollen size, origin at its corner): turned about its glyph's centre and
+            // scaled down by its own size, so at rest it is exactly its glyph
+            let dx = 0, dy = 0;
+            if (a > 0) {
+              // it lands where it was thrown, wherever its half has moved meanwhile
               if (!hx.has(L.half)) hx.set(L.half, gsap.getProperty(L.half, 'x') || 0);
-              dx -= hx.get(L.half) * Math.min(1, a);
+              dx = f.dx * a - hx.get(L.half) * Math.min(1, a);
+              dy = f.dy * a;
             }
+            const sc = (1 + (f.sc - 1) * as) / f.m;
+            tr = `translate3d(${(dx + f.cx).toFixed(1)}px,${(dy + f.cy).toFixed(1)}px,0) perspective(${Math.round(f.persp)}px) rotate(${(f.rot * a).toFixed(1)}deg) rotateY(${(f.ry * a).toFixed(1)}deg) scale(${sc.toFixed(4)}) translate(${(-f.cx * f.m).toFixed(1)}px,${(-f.cy * f.m).toFixed(1)}px)`;
+          } else if (a > 0) {
+            const dx = f.dx * a, dy = f.dy * a;
             const sc = 1 + (f.sc - 1) * as;
             tr = `perspective(${Math.round(f.persp)}px) translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0) rotate(${(f.rot * a).toFixed(1)}deg) rotateX(${(f.rx * a).toFixed(1)}deg) rotateY(${(f.ry * a).toFixed(1)}deg) scale(${sc.toFixed(3)})`;
           }
@@ -898,7 +930,7 @@
           .fromTo(obj, { rotationY: turn }, { rotationY: () => turn() + 180, duration: EXIT, ease: 'power2.in', immediateRender: false }, TRAVEL);
       }
       // the credit comes in once the object has gone (and, after a break, once the letters are nearly home)
-      if (credit) tl.fromTo(credit, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.1, ease: 'power2.out' }, o.exit === 'break' ? 0.78 : TRAVEL + EXIT);
+      if (credit) tl.fromTo(credit, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.1, ease: 'power2.out' }, o.exit === 'break' ? 0.75 : TRAVEL + EXIT);
       tl.eventCallback('onUpdate', wake);
       wake(true);
     };

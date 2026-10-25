@@ -63,8 +63,11 @@
 [data-scene="twin-image-scanner"] .ts-band { display: none; z-index: 3; bottom: auto; height: var(--ts-wake, 5%); overflow: hidden; pointer-events: none; }
 [data-scene="twin-image-scanner"] .ts-band > .ts-inner { position: absolute; top: 0; left: 0; right: 0; height: 100svh; }
 
-/* copy: cols 1-5; the headline high, the outro at 56% (below the line in the finished split) */
-[data-scene="twin-image-scanner"] .ts-copy { grid-column: 1 / span 5; grid-row: 1; position: relative; min-width: 0; height: 100%; }
+/* copy: cols 1-5; the headline high, the outro at 56% (below the line in the finished split). The
+   words always paint over the picture of their own layer. --ts-fit (script) fits the headline to its
+   column on two lines at most */
+[data-scene="twin-image-scanner"] .ts-copy { grid-column: 1 / span 5; grid-row: 1; position: relative; z-index: 2; min-width: 0; height: 100%; }
+[data-scene="twin-image-scanner"] .ts-frame { z-index: 1; }
 [data-scene="twin-image-scanner"] .ts-title {
   position: absolute;
   top: 12%;
@@ -73,7 +76,7 @@
   margin: 0;
   font-family: var(--font-display, inherit);
   font-weight: 600;
-  font-size: clamp(40px, 5.6vw, 112px);
+  font-size: calc(clamp(40px, 5.6vw, 112px) * var(--ts-fit, 1));
   line-height: 0.96;
   letter-spacing: -0.02em;
   text-wrap: balance;
@@ -137,7 +140,21 @@
   transform: scale(var(--ts-z));
   transform-origin: var(--ts-fx) var(--ts-fy);
 }
-/* the wake: the accent seen through the drawing (the script sets the mask to B's picture), framed as B */
+/* the wake: the drawing in the accent, framed as B. Normally a canvas the script draws once, already
+   cropped to the box, so the band holds no clip and nothing in it is painted again as it moves; else
+   the accent seen through B's picture as a mask */
+[data-scene="twin-image-scanner"] .ts-band .ts-wake-c { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+/* live, B's drawing shows from the script's canvas of it (drawn once, framed like the img), so a
+   complex SVG is not rasterised tile by tile as the line uncovers it; the finished composition keeps
+   the img */
+[data-scene="twin-image-scanner"] .ts-flat-c { display: none; position: absolute; inset: 0; width: 100%; height: 100%; }
+[data-scene="twin-image-scanner"].is-live.ts-flat .ts-layer--b .ts-flat-c { display: block; }
+[data-scene="twin-image-scanner"].is-live.ts-flat .ts-layer--b .ts-img { visibility: hidden; }
+[data-scene="twin-image-scanner"] .ts-band.ts-band--drawn .ts-subject { overflow: visible; }
+/* until one of the two is ready (a drawing still being traced) the band shows nothing, never a bare
+   accent bar */
+[data-scene="twin-image-scanner"] .ts-band:not(.ts-band--masked) .ts-wake,
+[data-scene="twin-image-scanner"] .ts-band:not(.ts-band--drawn) .ts-wake-c { display: none; }
 [data-scene="twin-image-scanner"] .ts-band .ts-wake {
   display: block;
   background: var(--ts-accent);
@@ -214,7 +231,7 @@
 [data-scene="twin-image-scanner"] .ts-callout[data-side="left"] .ts-callout__leader { left: auto; right: 9px; transform-origin: 100% 50%; }
 [data-scene="twin-image-scanner"] .ts-callout.is-left:not([data-side]) .ts-callout__label,
 [data-scene="twin-image-scanner"] .ts-callout[data-side="left"] .ts-callout__label { left: auto; right: calc(var(--ts-lead) + 15px); }
-/* the core's name may sit above or below its dot when nothing fits beside it: no leader then */
+/* a name may sit above or below its dot when nothing fits beside it: no leader then */
 [data-scene="twin-image-scanner"] .ts-callout[data-side="above"] .ts-callout__leader,
 [data-scene="twin-image-scanner"] .ts-callout[data-side="below"] .ts-callout__leader { display: none; }
 [data-scene="twin-image-scanner"] .ts-callout[data-side="above"] .ts-callout__label { left: 0; transform: translate(-50%, calc(-100% - 14px)); }
@@ -238,12 +255,19 @@ html:not(.js) [data-scene="twin-image-scanner"] .ts-callout.is-above { display: 
 /* ---- live: the script drives the edge ---------------------------------------------------------- */
 [data-scene="twin-image-scanner"].is-live > .scene-stage { min-height: 0; }
 [data-scene="twin-image-scanner"].is-live .ts-head { top: 0; }
+/* live, the inner box (which the script makes if the page left it out) paints B's ground: the window
+   painting it too would only be one more full-screen layer to composite every frame */
+[data-scene="twin-image-scanner"].is-live .ts-layer--b { background: none; }
 [data-scene="twin-image-scanner"].is-live .ts-band { display: block; }
 [data-scene="twin-image-scanner"].is-live .ts-layer--b,
 [data-scene="twin-image-scanner"].is-live .ts-inner,
 [data-scene="twin-image-scanner"].is-live .ts-band,
 [data-scene="twin-image-scanner"].is-live .ts-head,
 [data-scene="twin-image-scanner"].is-live .ts-subject { will-change: transform; }
+/* what fades and slides near the end (the outro, the CTA, the tags) is composited too, so its fade is
+   not a repaint of the layer under it every frame */
+[data-scene="twin-image-scanner"].is-live .ts-outro,
+[data-scene="twin-image-scanner"].is-live .ts-tag { will-change: transform, opacity; }
 [data-scene="twin-image-scanner"].is-live .ts-callout { visibility: hidden; }
 [data-scene="twin-image-scanner"].is-live .ts-callout.is-focus.is-on .ts-callout__dot::after { animation: ts-breathe 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
 @keyframes ts-breathe {
@@ -254,7 +278,7 @@ html:not(.js) [data-scene="twin-image-scanner"] .ts-callout.is-above { display: 
 /* ---- one column: phones and portrait tablets -------------------------------------------------- */
 @media (max-width: 767px), (max-width: 1024px) and (orientation: portrait) {
   [data-scene="twin-image-scanner"] > .scene-stage { --ts-z: var(--ts-phone-zoom, var(--ts-zoom)); }
-  [data-scene="twin-image-scanner"] .ts-title { font-size: clamp(32px, 7.6vw, 60px); line-height: 1; }
+  [data-scene="twin-image-scanner"] .ts-title { font-size: calc(clamp(32px, 7.6vw, 60px) * var(--ts-fit, 1)); line-height: 1; }
   [data-scene="twin-image-scanner"] .ts-tag { left: var(--ts-m); }
   /* the picture is sized by the frame's height and may run past both sides of the screen */
   [data-scene="twin-image-scanner"] .ts-subject { top: 0; right: auto; left: calc(50% - 40cqh); width: auto; height: 100cqh; }
@@ -264,7 +288,7 @@ html:not(.js) [data-scene="twin-image-scanner"] .ts-callout.is-above { display: 
   [data-scene="twin-image-scanner"].is-live .ts-inner,
   [data-scene="twin-image-scanner"].is-live .ts-marks { display: block; padding: 0; }
   [data-scene="twin-image-scanner"].is-live .ts-copy { position: absolute; left: var(--ts-m); right: var(--ts-m); top: 0; height: 100%; }
-  [data-scene="twin-image-scanner"].is-live .ts-title { top: 10%; }
+  [data-scene="twin-image-scanner"].is-live .ts-title { top: 10%; will-change: transform, opacity; }
   [data-scene="twin-image-scanner"].is-live .ts-outro { top: 6%; }
   [data-scene="twin-image-scanner"].is-live .ts-outro p { margin-bottom: 20px; }
   [data-scene="twin-image-scanner"].is-live .ts-frame { position: absolute; left: 0; right: 0; top: 19%; bottom: 0; height: auto; }
@@ -307,7 +331,7 @@ html:not(.js) [data-scene="twin-image-scanner"] .ts-callout.is-above { display: 
 @media (max-width: 767px) {
   [data-scene="twin-image-scanner"] { --ts-m: 16px; }
   [data-scene="twin-image-scanner"] > .scene-stage { --ts-lead: 20px; }
-  [data-scene="twin-image-scanner"] .ts-title { font-size: clamp(30px, 8.6vw, 36px); }
+  [data-scene="twin-image-scanner"] .ts-title { font-size: calc(clamp(30px, 8.6vw, 36px) * var(--ts-fit, 1)); }
   [data-scene="twin-image-scanner"] .ts-tag { font-size: 14px; padding: 3px 8px; }
   [data-scene="twin-image-scanner"] .ts-callout__label { font-size: 14px; padding: 4px 8px; }
   [data-scene="twin-image-scanner"] .ts-callout__leader { left: 8px; }

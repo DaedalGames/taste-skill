@@ -23,13 +23,13 @@
 //           <p class="fho-caption">One sentence, 24 words at most.</p>
 //           <figure class="fho-still"><img src="turn/d/000.webp" width="1280" height="960" alt="…"></figure>
 //         </article>
-//         <article class="fho-panel" id="shutter" data-frame="61">      a chapter (1-4 of them)
+//         <article class="fho-panel" id="shutter" data-frame="66">      a chapter (1-4 of them)
 //           <div class="fho-copy">
 //             <h3 class="fho-head"><span class="fho-line">…</span> <span class="fho-line">…</span></h3>
 //             <p>…</p>                                                     any blocks: p, ul, a
 //             <dl class="fho-specs"><div><dt>Lens</dt><dd>35 mm f/2</dd></div> …</dl>   3-12 rows
 //           </div>
-//           <figure class="fho-still"><img src="turn/d/061.webp" loading="lazy" …></figure>   the same pose
+//           <figure class="fho-still"><img src="turn/d/066.webp" loading="lazy" …></figure>   the same pose
 //         </article>
 //         <article class="fho-panel is-dark"> … </article>                is-dark: the dark ground
 //         <article class="fho-panel fho-dock is-dark">                     optional last panel: the dock
@@ -48,12 +48,17 @@
 //
 // The script adds the object (.fho-object: a poster image and a canvas) and the count ("2 of 4") to the
 // stage; neither exists without it. Headings: wrap each line in .fho-line (two lines at most); each is
-// set on one line, smaller if it is too long for its column. A heading without them rises as one block. Chapters alternate lanes (the object right, copy left; then the
-// object left, copy right); data-lane="left|right" on a chapter overrides. data-frame on a chapter is
-// the frame of the sequence (0 to count - 1, desktop numbering) its copy talks about: the lens in
-// profile beside a paragraph about the lens. Give the still in that chapter the same frame. Numbers
-// count up from 0 to the value written in the HTML (or data-to), with as many decimals as written (or
-// data-decimals). The gauge fills to --fho-v (0-1); say what it measures in a readout label. A link
+// set on one line, smaller if it is too long for its column, and wrapped (never clipped) if it would
+// need to shrink below 0.6. A heading without them rises as one block. Chapters alternate lanes (the
+// object right, copy left; then the object left, copy right); data-lane="left|right" on a chapter
+// overrides. data-frame on a chapter is the frame of the sequence (0 to count - 1, desktop numbering)
+// its copy talks about: the lens turned toward a paragraph about the lens. Give the still in that
+// chapter the same frame. Numbers count up from 0 to the value written in the HTML (or data-to), with
+// as many decimals as written (or data-decimals); each holds the width of the widest value it passes,
+// set right, so its unit never moves while it counts. Readings too wide for their columns (four of
+// them, long values) are set smaller together; where that would take the numbers below 0.6 of their
+// size, each unit goes under its number instead. Number and unit never wrap apart; only the label does.
+// The gauge fills to --fho-v (0-1); say what it measures in a readout label. A link
 // to a chapter's id (href="#shutter") scrolls to the moment that chapter is parked and read. Colours
 // come from the page: --ground (light ground), --night (dark ground), --ink, --paper (text on dark),
 // --accent (gauge fill and the action), --font-display, --font-text, --margin.
@@ -64,8 +69,9 @@
 // 72 frames at 1280x960 (about 2-3 MB) on desktop, 36 at 960x720 on phones, tablets and any touch
 // screen. Frames load from frame 0 and the chapters' poses outward, in strides of 12, 6, 3, 1, once the
 // scene is a screen away; the nearest loaded frame is drawn, so the canvas is never blank and there is
-// no preloader. Frames are kept as decoded images the browser may release, not as bitmaps it must hold.
-// Each frame's opaque box is measured as it loads; the object is clipped to the box of the frame it shows.
+// no preloader. Every frame is kept compressed; only a window around the frame shown (about 64 MB) is
+// decoded, off the main thread, so a turn step never decodes while the page scrolls. Each frame's
+// opaque box is measured as it loads; the object is clipped to the box of the frame it shows.
 //
 // Options (data-options JSON). Default, then range:
 //   frames       —        URL pattern of the sequence; {000} is the zero-padded index, {i} the plain one.
@@ -80,7 +86,8 @@
 //   hold         auto     screens held on desktop; auto = 1.75 x panels (7 for 4 panels)
 //   phoneHold    auto     screens held on the phone; auto = 1.5 x panels (6 for 4 panels)
 //   hero         1.2      scale of the opening pose (0.9-1.3), lowered until it clears the title
-//   park         1.42     scale in the right lane (1.15-1.5); a narrow pose (a profile) grows up to 1.2x
+//   park         1.6      largest scale in the right lane (1.15-1.9), as far as the stage's height allows;
+//                         a narrow pose (a profile) grows up to 1.2x
 //   left         1.15     scale in the left lane (0.9-1.3)
 //   bleed        8        how far the object's silhouette runs past the right edge, in vw (0-14)
 //   dock         0.62     scale at the dock (0.5-0.7)
@@ -92,21 +99,28 @@
 //   phone        'same'   'same' runs the vertical route on the phone; 'rest' shows the finished composition
 //
 // Layouts. Landscape (wider than tall, 768px and up): the object box min(80svh, 54vw) wide, its base
-// centre at 50% / 65%. Each lane is fitted to the silhouette of the pose parked in it: in the right lane
-// it bleeds `bleed` vw off the edge, never nearer the copy than 3vw nor further than 28vw from it, and
-// never under the count; in the left lane it is centred in the space left of the copy, with room for its
-// rock. Every pose shown while a chapter's copy is up stays clear of it. The count is drawn in two inks,
-// each clipped to its ground, so a passing edge cuts it cleanly. Vertical (phones, and any stage taller
-// than wide): no lateral flights; the object rises from the centre (52svh) to a top lane (27svh, scale
-// 0.9, a profile up to 1.08) and docks at 30svh (scale dock + 0.12), with all copy in the
-// lower lane (47-94svh). A sheet of 7 rows or more goes into two columns there; on desktop its rows get
-// shorter so 3-12 rows fit the stage.
+// centre at 50% / 65%; the hero and dock poses centre frame 0's silhouette, not the turntable axis. Each
+// lane is fitted to the silhouette of the pose parked in it: in the right lane it is as tall as the stage
+// allows below the count and bleeds `bleed` vw off the edge, but never starts further than 14vw from the
+// end of its copy's text (the lines as set, not the column) nor nearer than 3vw; on a stage wide for its
+// height (1920x1080) that lead grows, up to 21vw, until half the bleed is kept; in the left lane it is
+// centred in the space left of the copy, with room for its rock. Every pose shown while a chapter's copy
+// is up stays clear of it. The dock keeps the object 3vh above the top of the gauge. The count is drawn
+// in two inks, each clipped to its ground, so a passing edge cuts it cleanly. Vertical (phones, and any
+// stage taller than wide): no lateral flights; the object rises from the centre (52svh, scale 1.25) into
+// the room between the count and the copy, as large as that room allows (up to 1.3, a narrow pose more),
+// and docks 5vh above the gauge (scale dock x 1.45), 2vh or more under the dock's heading. Every pose it shows, leaning as
+// it banks and rocks, stays 2vw inside the stage and below the count (and the dock's heading once it
+// is up): each flight is followed through as its tweens run it, and where a turning pose would come
+// nearer an edge, the scale that dominates there (a parked pose's, or the one passed mid-way) is lowered. The copy sits at the foot of the lower lane (44-93svh), so a short chapter leaves the object
+// more room. A sheet of 7 rows or more goes into two columns there; on desktop its rows get shorter so
+// 3-12 rows fit the stage.
 //
-// Progress map (desktop, 4 panels, the demo's poses): 0% the object large (1.2) in the centre of the
-// hero, frame 0, the title top left and the caption bottom left; 5-18% it flies right, banking, growing,
-// turning into the lens profile as the next panel rises behind it; 25% parked right on the profile,
-// bleeding off the edge, heading and text on the left, 2 of 4; 33-47% it turns through its back while
-// it crosses to the left lane, the dark ground's edge sweeping up under it; 50% parked left on the front
+// Progress map (desktop 1440x900, 4 panels, the demo's poses): 0% the object large (1.18) in the centre
+// of the hero, frame 0, the title top left and the caption bottom left; 5-18% it flies right, banking,
+// growing, turning toward the copy as the next panel rises behind it; 25% parked right on the lens
+// three-quarter (frame 66), 82vh tall from 52vw to the edge, 14vw from the end of the heading, 2 of 4;
+// 33-47% it turns through its back while it crosses to the left lane, the dark ground's edge sweeping up under it; 50% parked left on the front
 // three-quarter, rocking, the spec sheet on the right, 3 of 4; 64-80% it docks small and centred as the
 // last panel rises, turning back onto frame 0, where the turn stops at 78%; 77-93% the gauge draws, the
 // numbers fade in counting and the action comes in; 93-100% held. Reduced motion, no script and phone
@@ -116,7 +130,7 @@
   const VERT = '(max-width: 767px), (max-aspect-ratio: 1/1)';
   const W = { lead: 0.05, flight: 0.125, dockFlight: 0.16, dockShow: 0.13, end: 0.07 };
   const BOX = [0.12, 0.08, 0.88, 0.86]; // a frame's opaque box (l t r b, fractions) until it is measured
-  const LEAD = 28; // vw: the furthest the right lane's silhouette sits from its copy
+  const LEAD = 14; // vw: the furthest the right lane's silhouette sits from the end of its copy's text
   const cache = new Map();
   const mod = (i, n) => ((i % n) + n) % n;
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -141,13 +155,21 @@
     } catch (e) { return false; }
   }
 
-  // One turntable sequence, shared by every build of the scene. Frames stay decoded <img>s, which the
-  // browser can release under memory pressure (bitmaps of 72 frames at 1280x960 would pin ~350 MB).
+  // One turntable sequence, shared by every build of the scene. Every frame is fetched once and kept
+  // compressed (30-60 KB each); only a window of frames around the one shown, plus frame 0, is held
+  // decoded, as ImageBitmaps decoded off the main thread, two at a time, nearest first. A canvas fed
+  // plain <img>s decodes each new frame on the main thread as it draws it (20-70 ms, a dropped frame per
+  // turn step), and holding every frame decoded would pin ~350 MB.
+  const BITMAP = typeof createImageBitmap === 'function';
+  const bitmapOf = (src, o) => (o ? createImageBitmap(src, o) : createImageBitmap(src));
   function sequence(pattern, count) {
     const key = pattern + '|' + count;
     if (cache.has(key)) return cache.get(key);
     const url = (i) => pattern.replace(/\{(0+|i)\}/, (m, g) => (g === 'i' ? String(i) : String(i).padStart(g.length, '0')));
-    const s = { key, count, url, frames: new Array(count).fill(null), boxes: new Array(count).fill(null), w: 0, h: 0, on: new Set(), started: false, order: [], next: 0 };
+    const s = {
+      key, count, url, src: new Array(count).fill(null), boxes: new Array(count).fill(null), bmp: new Map(), pend: new Set(),
+      w: 0, h: 0, on: new Set(), started: false, order: [], next: 0, keep: new Set([0]), reach: 6,
+    };
     for (const stride of [12, 6, 3, 1]) for (let i = 0; i < count; i += stride) if (!s.order.includes(i)) s.order.push(i);
     // frames wanted early (the chapters' poses) move to the front of what is not yet requested
     s.prefer = (list) => {
@@ -158,8 +180,69 @@
     };
     s.box = (i) => {
       i = mod(i, count);
-      if (s.boxes[i] === null && s.frames[i]) s.boxes[i] = measure(s.frames[i]);
       return s.boxes[i] === null ? null : s.boxes[i] || BOX;
+    };
+    s.ready = (i) => s.bmp.get(i) || null;
+    const tell = (i) => s.on.forEach((fn) => fn(s, i));
+
+    // the decoder: the window's frames first (nearest first), then the opaque boxes of frames not yet
+    // measured (from a small decode); never more than two at once, so the page's own work keeps a core
+    let full = [], running = 0;
+    const small = [];
+    const sized = (b) => {
+      if (s.w) return;
+      s.w = b.width; s.h = b.height;
+      // about 64 MB of decoded frames: 7 ahead at 1280x960, 12 at 960x720
+      s.reach = clamp(Math.floor((64e6 / (s.w * s.h * 4) - 2) / 1.5), 3, 12);
+      s.want(last);
+    };
+    const pump = () => {
+      while (running < 2) {
+        let i = -1;
+        while (full.length) { const j = full.shift(); if (s.keep.has(j) && !s.bmp.has(j) && !s.pend.has(j) && s.src[j]) { i = j; break; } }
+        if (i >= 0) {
+          running++; s.pend.add(i);
+          bitmapOf(s.src[i]).then((b) => {
+            sized(b);
+            if (s.boxes[i] === null) s.boxes[i] = measure(b);
+            if (s.keep.has(i)) s.bmp.set(i, b); else b.close();
+          }).catch(() => {}).then(() => { s.pend.delete(i); running--; tell(i); pump(); });
+          continue;
+        }
+        while (small.length && s.boxes[small[0]] !== null) small.shift();
+        if (!small.length) return;
+        const j = small.shift();
+        running++;
+        bitmapOf(s.src[j], { resizeWidth: 128, resizeHeight: 96, resizeQuality: 'low' }).catch(() => bitmapOf(s.src[j])).then((b) => {
+          if (s.boxes[j] === null) s.boxes[j] = measure(b);
+          b.close();
+        }).catch(() => { if (s.boxes[j] === null) s.boxes[j] = false; }).then(() => { running--; tell(j); pump(); });
+      }
+    };
+    // the window: frame 0, `reach` frames ahead in the direction of the turn and half that behind
+    let last = 0, dir = 1;
+    const near = (a, i) => { const d = Math.abs(a - i) % count; return Math.min(d, count - d); };
+    s.want = (i) => {
+      i = mod(i, count);
+      let d = i - last;
+      if (d > count / 2) d -= count; else if (d < -count / 2) d += count;
+      if (d) dir = d < 0 ? -1 : 1;
+      last = i;
+      const keep = new Set([0, i]);
+      for (let j = 1; j <= s.reach; j++) keep.add(mod(i + dir * j, count));
+      for (let j = 1; j <= Math.ceil(s.reach / 2); j++) keep.add(mod(i - dir * j, count));
+      s.keep = keep;
+      if (!BITMAP) return;
+      for (const [j, b] of s.bmp) if (!keep.has(j)) { b.close(); s.bmp.delete(j); }
+      full = [...keep].filter((j) => !s.bmp.has(j)).sort((a, b) => near(a, i) - near(b, i));
+      pump();
+    };
+    // another sequence takes over (the stage crossed into the phone layout): its decoded frames go
+    s.release = () => {
+      s.keep = new Set();
+      full = [];
+      for (const b of s.bmp.values()) if (b.close) b.close();
+      if (BITMAP) s.bmp.clear();
     };
     s.start = () => {
       if (s.started) return;
@@ -168,14 +251,21 @@
         while (s.next < s.order.length) {
           const i = s.order[s.next++];
           try {
-            const img = new Image();
-            img.decoding = 'async';
-            img.src = url(i);
-            await img.decode();
-            if (!s.w) { s.w = img.naturalWidth; s.h = img.naturalHeight; }
-            s.frames[i] = img;
-            s.boxes[i] = measure(img);
-            s.on.forEach((fn) => fn(s, i));
+            const img = () => { const im = new Image(); im.decoding = 'async'; im.src = url(i); return im.decode().then(() => im); };
+            if (!BITMAP) {
+              // no createImageBitmap: decoded <img>s, all kept, as the browser allows
+              const im = await img();
+              if (!s.w) { s.w = im.naturalWidth; s.h = im.naturalHeight; }
+              s.src[i] = im; s.boxes[i] = measure(im); s.bmp.set(i, im);
+              tell(i);
+              continue;
+            }
+            // the compressed frame: a Blob when it can be fetched, else a decoded <img> (a page opened
+            // from disk), which createImageBitmap accepts too
+            try { const r = await fetch(url(i)); if (!r.ok) throw new Error(r.status); s.src[i] = await r.blob(); } catch (e) { s.src[i] = await img(); }
+            if (s.keep.has(i) && !full.includes(i)) full.push(i);
+            small.push(i);
+            pump();
           } catch (e) { /* a missing frame: its neighbours stand in */ }
         }
       };
@@ -193,8 +283,8 @@
     const nearest = (i) => {
       for (let d = 0; d <= n / 2; d++) {
         const a = (i + d) % n, b = (i - d + n) % n;
-        if (seq.frames[a]) return a;
-        if (seq.frames[b]) return b;
+        if (seq.ready(a)) return a;
+        if (seq.ready(b)) return b;
       }
       return -1;
     };
@@ -207,25 +297,26 @@
       if (shown < 0 && poster.getAttribute('src') && j !== want && dist(j, want) >= dist(0, want)) return;
       if (canvas.width !== seq.w || canvas.height !== seq.h) { canvas.width = seq.w; canvas.height = seq.h; }
       g.clearRect(0, 0, canvas.width, canvas.height);
-      g.drawImage(seq.frames[j], 0, 0, canvas.width, canvas.height);
+      g.drawImage(seq.ready(j), 0, 0, canvas.width, canvas.height);
       shown = j;
-      canvas.style.visibility = 'visible';
-      poster.style.visibility = 'hidden';
+      if (canvas.style.visibility !== 'visible') { canvas.style.visibility = 'visible'; poster.style.visibility = 'hidden'; }
       if (onDraw) onDraw(seq.boxes[j] || null);
     };
     const attached = new Set();
     const api = {
       use(s) {
         if (!s || s === seq) return;
+        if (seq) seq.release();
         seq = s; n = s.count; shown = -1;
         if (!attached.has(s)) { attached.add(s); s.on.add((from) => { if (from === seq && want !== shown) paint(); }); }
         canvas.style.visibility = 'hidden';
         if (onDraw) onDraw(s.boxes[0] || null);
         poster.src = s.url(0);
         poster.style.visibility = 'visible';
+        s.want(want);
         paint();
       },
-      set(i) { want = mod(i, n); if (want !== shown) paint(); },
+      set(i) { const w = mod(i, n); if (w !== want) { want = w; if (seq) seq.want(w); } if (want !== shown) paint(); },
       get seq() { return seq; },
       get count() { return n; },
       get frame() { return shown; },
@@ -346,7 +437,7 @@
     chapters.forEach((p, i) => p.classList.add(lanes[i] === 'right' ? 'is-lane-right' : 'is-lane-left'));
 
     const o = {
-      count: 72, turns: 0, hero: 1.2, park: 1.42, left: 1.15, bleed: 8, dock: 0.62, bank: 7, sweep: 12, counter: true, intro: true, phone: 'same',
+      count: 72, turns: 0, hero: 1.2, park: 1.6, left: 1.15, bleed: 8, dock: 0.62, bank: 7, sweep: 12, counter: true, intro: true, phone: 'same',
       ...opts,
     };
     const count = Math.round(o.count) || 72;
@@ -354,7 +445,7 @@
     const hold = o.hold || Math.round(N * 1.75 * 2) / 2;
     const phoneHold = o.phoneHold || Math.round(N * 1.5 * 2) / 2;
     const heroScale = clamp(+o.hero || 1.2, 0.9, 1.3);
-    const park = clamp(+o.park || 1.42, 1.15, 1.5);
+    const park = clamp(+o.park || 1.6, 1.15, 1.9);
     const leftScale = clamp(+o.left || 1.15, 0.9, 1.3);
     const bleed = clamp(o.bleed == null ? 8 : +o.bleed, 0, 14);
     const dockScale = clamp(+o.dock || 0.62, 0.5, 0.7);
@@ -417,7 +508,7 @@
       const el = li.querySelector('.fho-num');
       return { li, num: el ? { el, ...numberOf(el), text: el.textContent } : null };
     }) : [];
-    readouts.forEach((r) => { if (r.num) r.num.el.style.minWidth = r.num.text.trim().length * 0.62 + 'em'; });
+    const readList = dockPanel && dockPanel.querySelector('.fho-readouts');
     const gauge = dockPanel && dockPanel.querySelector('.fho-gauge');
     const arcBase = gauge && gauge.querySelector('.fho-arc:not(.fho-arc--fill)');
     const arcFill = gauge && gauge.querySelector('.fho-arc--fill');
@@ -472,15 +563,27 @@
     };
 
     // the lanes are fitted to measured silhouettes; until a pose's frame is in, a default box stands in,
-    // and the layout is read again once it arrives
+    // and the layout is read again once, when every box it waited for is in (or 1.5 s after the last one
+    // came, if a frame never does), so a page still loading is not re-laid out frame by frame
     const waiting = new Set();
     let refreshTimer = 0;
-    const askRefresh = () => {
+    const askRefresh = (ms = 250) => {
       clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(() => { if (root.classList.contains('is-live') && window.ScrollTrigger) ScrollTrigger.refresh(); }, 250);
+      refreshTimer = setTimeout(() => { waiting.clear(); if (root.classList.contains('is-live') && window.ScrollTrigger) ScrollTrigger.refresh(); }, ms);
     };
     if (seqs) {
-      for (const s of Object.values(seqs)) if (s) s.on.add((from, i) => { if (waiting.has(from.key + ':' + i)) { waiting.clear(); askRefresh(); } });
+      for (const s of Object.values(seqs)) {
+        if (s) s.on.add((from, i) => { if (waiting.delete(from.key + ':' + i)) askRefresh(waiting.size ? 1500 : 250); });
+      }
+    }
+    // a face (or a subset of one) that arrives after the stage's first refresh can change the headings'
+    // measure: when it has, lay out again
+    let headSig = '';
+    const sigOf = () => [...root.querySelectorAll('.fho-in, .fho-specs dd, .fho-label')].map((e) => e.scrollWidth).join(',');
+    if (document.fonts && document.fonts.ready && document.fonts.addEventListener) {
+      document.fonts.ready.then(() => document.fonts.addEventListener('loadingdone', () => {
+        if (root.classList.contains('is-live') && headSig && sigOf() !== headSig) askRefresh(120);
+      }));
     }
     let posterBox = null;
     poster.addEventListener('load', () => { if (!seqs && waiting.has('poster')) { waiting.clear(); posterBox = null; askRefresh(); } });
@@ -505,19 +608,24 @@
     const posesOf = (i) => {
       if (!(paint && paint.seq && R)) { const b = boxAt(0); return { B: b, U: b }; }
       const [a, b] = R.windows[i], seen = new Set();
-      for (let t = a; t <= b + 1e-9; t += 0.004) seen.add(frameAt(t));
+      for (let t = a; t <= b + 1e-9; t += 0.002) seen.add(frameAt(t));
       seen.add(frameAt(b));
       return { B: boxAt(frameAt(R.reads[i])), U: union([...seen].map(boxAt)) };
     };
 
-    // headings set one line per .fho-line: a line too long for its column is set smaller, not wrapped
+    // headings set one line per .fho-line: a line too long for its column is set smaller, not wrapped;
+    // one that would need to shrink below 0.6 wraps at 0.6 instead (a clipped glyph is never an option)
     const heads = [heroTitleEl, ...chapterCopy.map((c) => c.head[0] && c.head[0].closest('.fho-title, .fho-head, h2, h3')), dockCopy && dockCopy.head[0] && dockCopy.head[0].closest('.fho-title, .fho-head, h2, h3')].filter(Boolean);
     const fitHeads = () => {
       for (const el of heads) {
         el.style.removeProperty('--fho-fit');
+        el.classList.remove('is-wrapped');
         let over = 1;
         for (const l of el.querySelectorAll('.fho-line:not(.fho-block) > .fho-in')) if (l.clientWidth) over = Math.max(over, l.scrollWidth / l.clientWidth);
-        if (over > 1.002) el.style.setProperty('--fho-fit', Math.max(0.6, 0.985 / over).toFixed(3));
+        if (over <= 1.002) continue;
+        const fit = 0.985 / over;
+        el.style.setProperty('--fho-fit', Math.max(0.6, fit).toFixed(3));
+        if (fit < 0.6) el.classList.add('is-wrapped');
       }
     };
 
@@ -530,15 +638,31 @@
       });
     }
     const lay = () => LAY || (LAY = layout());
-    // a chapter's copy, in its panel's coordinates (the panel is at rest when it is read)
-    const edgesOf = (c, panel) => {
-      if (c.box !== panel) return { l: c.box.offsetLeft, r: c.box.offsetLeft + c.box.offsetWidth, t: c.box.offsetTop };
-      let l = Infinity, r = -Infinity, t = Infinity;
-      for (const el of panel.children) {
-        if (el.classList.contains('fho-still')) continue;
-        l = Math.min(l, el.offsetLeft); r = Math.max(r, el.offsetLeft + el.offsetWidth); t = Math.min(t, el.offsetTop);
+    root.__fhoLayout = lay;
+    // a chapter's copy, in its panel's coordinates (the panel is at rest when it is read): across, the
+    // extent of its text as set (the lines, not the column), down, the top of the column
+    const rg = document.createRange();
+    const inkOf = (el, base) => {
+      let l = Infinity, r = -Infinity;
+      const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let n = tw.nextNode(); n; n = tw.nextNode()) {
+        if (!n.nodeValue.trim()) continue;
+        rg.selectNodeContents(n);
+        for (const q of rg.getClientRects()) if (q.width > 0 && q.height > 0) { l = Math.min(l, q.left - base); r = Math.max(r, q.right - base); }
       }
-      return isFinite(l) ? { l, r, t } : { l: 0, r: 0, t: panel.offsetHeight };
+      // boxes that carry a ground (spec rows, a button) count whole
+      for (const b of el.querySelectorAll('.fho-specs > div, a, button')) { const q = b.getBoundingClientRect(); l = Math.min(l, q.left - base); r = Math.max(r, q.right - base); }
+      return { l, r };
+    };
+    const edgesOf = (c, panel) => {
+      const base = panel.getBoundingClientRect().left;
+      const els = c.box !== panel ? [c.box] : [...panel.children].filter((el) => !el.classList.contains('fho-still'));
+      let l = Infinity, r = -Infinity, t = Infinity;
+      for (const el of els) {
+        const k = inkOf(el, base);
+        l = Math.min(l, k.l); r = Math.max(r, k.r); t = Math.min(t, el.offsetTop);
+      }
+      return isFinite(l) && isFinite(r) ? { l, r, t } : { l: 0, r: 0, t: panel.offsetHeight };
     };
     // the object at offset (x, y) and scale s, posed on box B: its silhouette on the stage
     const silhouette = (bx, by, Wb, Hb, x, y, s, B) => ({
@@ -549,6 +673,58 @@
     const boost = (B) => clamp(Math.sqrt(0.72 / Math.max(0.2, B[2] - B[0])), 1, 1.2);
     function layout() {
       fitHeads();
+      // each number keeps the width of the widest value it counts through, set right, so its unit stays
+      // put while it counts: the written value with every digit set as the face's widest digit (a count
+      // passes through values with the same digits or fewer, never more)
+      const nums = readouts.filter((r) => r.num).map((r) => r.num);
+      let wide = '0';
+      if (nums.length) {
+        // the widest digit of the numbers' face: ten runs of each digit side by side, read in one layout
+        const m = nums[0].el.cloneNode(false);
+        m.removeAttribute('data-to');
+        m.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;min-width:0;white-space:nowrap';
+        m.innerHTML = [...'0123456789'].map((d) => `<span style="display:inline-block">${d.repeat(8)}</span>`).join('');
+        nums[0].el.parentNode.appendChild(m);
+        const ws = [...m.children].map((s) => s.getBoundingClientRect().width);
+        m.remove();
+        wide = String(ws.indexOf(Math.max(...ws)));
+      }
+      const widths = () => {
+        // every number set to its widest form, then read together (one layout), then put back
+        const now = nums.map((n) => n.el.textContent);
+        const read = (form) => { nums.forEach((n) => { n.el.textContent = form(n).replace(/\d/g, wide); }); return nums.map((n) => n.el.getBoundingClientRect().width); };
+        nums.forEach((n) => n.el.style.removeProperty('min-width'));
+        const a = read((n) => n.text), b = read((n) => n.fmt(n.to));
+        nums.forEach((n, i) => { n.el.style.minWidth = Math.ceil(Math.max(a[i], b[i]) + 0.5) + 'px'; n.el.textContent = now[i]; });
+      };
+      // numbers too wide for their columns (four readouts, long values) are all set smaller together,
+      // from the size the stylesheet starts them at; the unit gives way less than the number, so the fit
+      // is measured again until every reading fits its column. When that would take the numbers below
+      // 0.6 of their size, each unit goes under its number instead (is-stacked) and the fit is redone.
+      const fitReadings = () => {
+        readList.style.removeProperty('--fho-nfit');
+        let fit = parseFloat(getComputedStyle(readList).getPropertyValue('--fho-nfit')) || 1;
+        widths();
+        for (let pass = 0; pass < 8; pass++) {
+          let need = fit;
+          for (const r of readouts) {
+            const cw = r.li.clientWidth;
+            if (!cw || r.li.scrollWidth <= cw + 0.5 || !r.num) continue;
+            const nw = r.num.el.offsetWidth, rest = r.li.scrollWidth - nw;
+            need = Math.min(need, fit * Math.max(0.1, (cw - 2 - rest) / nw));
+          }
+          if (need >= fit - 1e-4) break;
+          fit = Math.max(0.4, need);
+          readList.style.setProperty('--fho-nfit', fit.toFixed(3));
+          widths();
+          if (fit <= 0.4) break;
+        }
+        return fit;
+      };
+      if (readList) {
+        readList.classList.remove('is-stacked');
+        if (fitReadings() < 0.6 && readList.querySelector('.fho-unit')) { readList.classList.add('is-stacked'); fitReadings(); }
+      }
       const w = stage.clientWidth || innerWidth, h = stage.clientHeight || innerHeight;
       const vw = w / 100, vh = h / 100, V = vert();
       const Wb = obj.offsetWidth || 1, Hb = obj.offsetHeight || 1;
@@ -556,39 +732,71 @@
       const cBottom = counter ? counter.offsetTop + counter.offsetHeight : 0;
       const B0 = boxAt(0);
 
-      // the opening pose: as large as the option asks, while it clears the title and the caption
-      let hs = V ? 1.1 : heroScale;
+      // the opening pose: as large as the option asks, its silhouette (not the turntable axis) centred
+      // across the stage, 4vh clear of the title (lowered toward the foot of the stage first, made
+      // smaller only when that is not enough) and clear of the caption
+      const half0 = ((B0[2] - B0[0]) / 2) * Wb, off0 = (B0[0] + B0[2]) / 2 - 0.5;
+      const up = (0.5 - B0[1]) * Hb, down = (B0[3] - 0.5) * Hb, foot = h - 2 * vh;
+      let hs = V ? 1.25 : heroScale, hy = 0;
+      if (V) hs = Math.min(hs, (0.92 * w) / (2 * half0));
+      hs = Math.min(hs, (foot - by) / down);
       if (heroTitleEl) {
-        const tb = heroTitleEl.offsetTop + heroTitleEl.offsetHeight + 2 * vh;
-        if (B0[1] < 0.5) hs = Math.min(hs, (by - tb) / ((0.5 - B0[1]) * Hb));
+        // its last line as drawn: the descenders hang about 0.18em below the line box
+        const tb = heroTitleEl.offsetTop + heroTitleEl.offsetHeight + 0.18 * parseFloat(getComputedStyle(heroTitleEl).fontSize) + 4 * vh;
+        hs = Math.min(hs, (foot - tb) / (up + down));
+        hy = clamp(tb - (by - up * hs), 0, foot - (by + down * hs));
       }
       if (caption && !V) {
         const cr = caption.offsetLeft + caption.offsetWidth + 2 * vw;
-        const ct = caption.offsetTop;
-        const sl = silhouette(bx, by, Wb, Hb, 0, 0, hs, B0);
-        if (sl.b > ct && sl.l < cr && B0[0] < 0.5) hs = Math.min(hs, (bx - cr) / ((0.5 - B0[0]) * Wb));
+        const sb = by + hy + down * hs;
+        if (sb > caption.offsetTop && bx - half0 * hs < cr) hs = Math.min(hs, (bx - cr) / half0);
       }
-      if (B0[3] > 0.5) hs = Math.min(hs, (h - 1 * vh - by) / ((B0[3] - 0.5) * Hb));
       hs = Math.max(0.8, hs);
+
+      // vertical: how far a silhouette reaches either side of the turntable axis at scale 1, leaning by
+      // up to deg degrees (the corners of its box turned about the object's centre)
+      const LEAN = 5; // the vertical route banks and rocks by 5 degrees at most
+      const reach = (U0, deg = LEAN) => {
+        // the box as clipped (1/64 wider each side, as clipTo cuts it), so no drawn pixel is left out
+        const e = 1 / 64, U = [U0[0] - e, U0[1] - e, U0[2] + e, U0[3] + e];
+        const a = (deg * Math.PI) / 180, c = Math.cos(a), sn = Math.abs(Math.sin(a));
+        const hy = Math.max(0.5 - U[1], U[3] - 0.5) * Hb, hx = Math.max(0.5 - U[0], U[2] - 0.5) * Wb;
+        return {
+          l: (0.5 - U[0]) * Wb * c + hy * sn, r: (U[2] - 0.5) * Wb * c + hy * sn,
+          t: (0.5 - U[1]) * Hb * c + hx * sn, b: (U[3] - 0.5) * Hb * c + hx * sn,
+        };
+      };
+      const topV = cBottom + 1 * vh; // nothing in the vertical route rises into the count
+      // the top lane: as large as the room between the count and the copy below allows, every pose shown
+      // while the copy is up 2vw inside the stage and clear of the count and the copy, leaning as it does
+      // there (a left-lane chapter rocks through 5 degrees either way; a right-lane one holds level),
+      // sMax: a cap from the flights either side
+      const placeV = (i, sMax = Infinity) => {
+        const { B, U, E } = fits[i];
+        const copyTop = E.t - 3 * vh, top = topV;
+        const ru = reach(U, lanes[i] === 'left' ? LEAN : 1);
+        const s = Math.min(1.3 * boost(B), sMax, (copyTop - top) / (ru.t + ru.b), (w - 4 * vw) / (ru.l + ru.r));
+        // down: the pose centred in the room between the count and the copy; across: its silhouette
+        // centred, then moved in if a pose shown would come nearer an edge than 2vw
+        let y = (top + copyTop) / 2 - by - ((B[1] + B[3]) / 2 - 0.5) * Hb * s;
+        let x = -((B[0] + B[2]) / 2 - 0.5) * Wb * s;
+        if (by + y + ru.b * s > copyTop) y -= by + y + ru.b * s - copyTop;
+        const L = bx + x - ru.l * s, Rr = bx + x + ru.r * s;
+        const inL = Math.max(0, Rr - (w - 2 * vw)); // moved left this far, then right if that is too far
+        x += Math.max(0, 2 * vw - (L - inL)) - inL;
+        if (by + y - ru.t * s < top) y += top - (by + y - ru.t * s);
+        return { x, y, s, drift: 0 };
+      };
 
       // each chapter: B, the pose read there (placed and sized on it); U, every pose shown while its
       // copy is up (kept clear of the copy and the count)
+      const fits = [];
       const stops = chapters.map((p, i) => {
         const { B, U } = posesOf(i);
         const E = edgesOf(chapterCopy[i], p);
+        fits[i] = { B, U, E };
         const hU = (U[3] - U[1]) * Hb, wU = (U[2] - U[0]) * Wb;
-        if (V) {
-          // the top lane: centred, between the count and the copy below
-          const copyTop = E.t - 3 * vh, top = cBottom + 1 * vh;
-          let s = 0.9 * boost(B);
-          s = Math.min(s, (copyTop - top) / hU, 0.96 * w / wU);
-          let y = -25 * vh;
-          const sl = silhouette(bx, by, Wb, Hb, 0, y, s, U);
-          if (sl.b > copyTop) y -= sl.b - copyTop;
-          const s2 = silhouette(bx, by, Wb, Hb, 0, y, s, U);
-          if (s2.t < top) y += top - s2.t;
-          return { x: 0, y, s, drift: 0 };
-        }
+        if (V) return placeV(i);
         const drift = lanes[i] === 'right' ? -2 * vh : 0;
         if (lanes[i] === 'right') {
           const cR = E.r;
@@ -602,7 +810,10 @@
           // while the copy is up comes nearer it than 3vw
           let x = w + bleed * vw - bx - (B[2] - 0.5) * Wb * s;
           const L = (xx, b) => bx + xx + (b[0] - 0.5) * Wb * s;
-          if (L(x, B) > cR + LEAD * vw) x -= L(x, B) - (cR + LEAD * vw);
+          // LEAD from the end of the text at most; on a stage wide for its height that would leave the
+          // pose short of the edge, so the lead grows (up to 1.5 x) until half the bleed asked for is kept
+          const lead = clamp(w + (bleed / 2) * vw - (B[2] - B[0]) * Wb * s - cR, LEAD * vw, 1.5 * LEAD * vw);
+          if (L(x, B) > cR + lead) x -= L(x, B) - (cR + lead);
           if (L(x, U) < cR + 3 * vw) x += cR + 3 * vw - L(x, U);
           return { x, y, s, drift };
         }
@@ -620,8 +831,112 @@
         else if (su.l < lo) x += Math.min(lo - su.l, hi - su.r);
         return { x, y, s, drift: 0 };
       });
-      const dock = V ? { x: 0, y: -22 * vh, s: Math.min(0.8, dockScale + 0.12) } : { x: 0, y: -33 * vh, s: dockScale };
-      return { hero: { x: 0, y: 0, s: hs }, stops, dock, vh };
+      // the dock: frame 0 again, its silhouette centred over the gauge
+      let ds = V ? Math.min(0.95, dockScale * 1.45) : dockScale;
+      let dy = (V ? -20 : -33) * vh;
+      // vertical: the dock's heading sits above the object, which lands 2vh below its last line (on
+      // desktop the heading keeps to the left of it)
+      const dockHead = dockCopy && dockCopy.head[0] ? dockCopy.head[0].closest('.fho-head, h2, h3') : null;
+      const headB = V && dockHead && dockHead.offsetHeight ? dockHead.offsetTop + dockHead.offsetHeight + 0.18 * parseFloat(getComputedStyle(dockHead).fontSize) + 2 * vh : -Infinity;
+      const up0 = (0.5 - B0[1]) * Hb, dn0 = (B0[3] - 0.5) * Hb;
+      if (gauge && dockPanel) {
+        // and its silhouette ends 3vh above the top of the arc (the path's apex is 6 of its 104 units down)
+        const g = gauge.getBoundingClientRect(), pr = dockPanel.getBoundingClientRect();
+        const floor = g.top - pr.top + (6 / 104) * g.height - 3 * vh;
+        if (g.height) {
+          if (headB > -Infinity) ds = Math.max(0.3, Math.min(ds, (floor - headB) / (up0 + dn0)));
+          // vertical: it sits down on the gauge (5vh above the arc), not up under the heading
+          if (V) dy = floor - 2 * vh - by - dn0 * ds;
+          const low = by + dy + dn0 * ds;
+          if (low > floor) dy -= low - floor;
+        }
+      }
+      if (by + dy - up0 * ds < headB) dy += headB - (by + dy - up0 * ds);
+      const dock = { x: -off0 * Wb * ds, y: dy, s: ds };
+      // vertical: every pose turned through in a flight, leaning, stays 2vw inside the stage. Each flight
+      // is followed through, moment by moment, as its tweens run it (the scale from one end to its
+      // mid-way value and on, the offset, the frame shown): where a pose would come nearer an edge than
+      // 2vw, the scale that dominates there is lowered, the end's when the flight has barely left it or
+      // is about to land, else the mid-way one (caps). The ends are placed again when they change.
+      const hero = { x: -off0 * Wb * hs, y: hy, s: hs };
+      const ends = [hero, ...stops, dock];
+      const fl = R && R.flights ? R.flights : [];
+      const caps = fl.map(() => Infinity);
+      if (V && fl.length === ends.length - 1) {
+        const pe = (n) => gsap.parseEase(n);
+        const curves = fl.map(([a, b], j) => {
+          const dk = hasDock && j === fl.length - 1;
+          return {
+            a, d: b - a, dk, c: dk ? 0.47 : 0.5, xd: dk ? 0.875 : 1, ex: pe(dk ? 'power3.inOut' : 'power2.inOut'),
+            ey: pe(dk || j === 0 ? 'power2.inOut' : 'sine.inOut'), ey2: pe('power2.out'),
+            e1: pe(dk ? 'power2.in' : j === 0 ? 'power1.in' : 'sine.inOut'), e2: pe(dk ? 'power2.out' : j === 0 ? 'power1.out' : 'sine.inOut'),
+            mid: (A, Bs) => (!dk && j > 0 ? Math.min(A, Bs) * 0.925 : (A + Bs) / 2),
+          };
+        });
+        // the lean through a flight, as the tilt tweens run it: banked half-way, then into the rest tilt
+        // of the end it reaches (a left lane is reached at -5 and left at +5, the rock between)
+        const kindOf = (e) => (e === 0 ? "hero" : e <= stops.length ? lanes[e - 1] : "dock");
+        const sine = pe("sine.inOut"), bankV = Math.min(bank, 5);
+        const leanAt = (j, u) => {
+          const from = kindOf(j) === "left" ? LEAN : 0, k = kindOf(j + 1);
+          if (k === "dock") return Math.abs(from * (1 - sine(Math.min(1, u / 0.875))));
+          const bk = (k === "right" ? -1 : 1) * bankV, rest = k === "left" ? -LEAN : 0;
+          return Math.abs(u < 0.5 ? from + (bk - from) * sine(u / 0.5) : bk + (rest - bk) * sine((u - 0.5) / 0.5));
+        };
+        const reaches = new Map();
+        // the largest scale a pose can take at (x, y): 2vw inside the sides and below `lim`: the count
+        // once it shows (it fades in at the end of the first flight), and the dock's heading once it rises
+        const room = (t, x, y, deg, lim) => {
+          const i = frameAt(t), key = i + ":" + deg.toFixed(1);
+          if (!reaches.has(key)) reaches.set(key, reach(boxAt(i), +deg.toFixed(1) + 0.05));
+          const r = reaches.get(key);
+          const side = Math.min((bx + x - 2 * vw) / Math.max(1e-6, r.l), (w - 2 * vw - bx - x) / Math.max(1e-6, r.r));
+          return lim > -Infinity ? Math.min(side, (by + y - lim) / Math.max(1e-6, r.t)) : side;
+        };
+        const limAt = (j, cv, u) => (j === 0 ? (u >= 0.75 ? topV : -Infinity) : cv.dk && u >= 0.72 ? Math.max(topV, headB) : topV);
+        // the offset down, as the y tweens run it (the dock's in two legs, lifting at the end)
+        const yAt = (j, cv, A, Bn, u) => {
+          if (cv.dk) {
+            const yM = A.y + (Bn.y - A.y) * (2 / 3);
+            return u < 0.625 ? A.y + (yM - A.y) * cv.ey(u / 0.625) : yM + (Bn.y - yM) * cv.ey2(Math.min(1, (u - 0.625) / 0.375));
+          }
+          return A.y + (Bn.y - A.y) * cv.ey(Math.min(1, u));
+        };
+        for (let pass = 0; pass < 8; pass++) {
+          const need = ends.map((e) => e.s);
+          let moved = false;
+          curves.forEach((cv, j) => {
+            const A = ends[j], Bn = ends[j + 1];
+            for (let u = 0; u <= 1 + 1e-9; u += 0.01) {
+              const t = cv.a + cv.d * Math.min(u, 1);
+              const x = A.x + (Bn.x - A.x) * cv.ex(Math.min(1, u / cv.xd));
+              const sM = Math.max(0.3, Math.min(cv.mid(A.s, Bn.s), caps[j]));
+              let sc, e, from, to, fromEnd;
+              if (u < cv.c) { e = cv.e1(u / cv.c); from = A.s; to = sM; fromEnd = j; }
+              else if (u < 2 * cv.c) { e = cv.e2((u - cv.c) / cv.c); from = sM; to = Bn.s; fromEnd = -1; }
+              else { e = 1; from = Bn.s; to = Bn.s; fromEnd = -1; }
+              sc = from + (to - from) * e;
+              const cap = room(t, x, yAt(j, cv, A, Bn, u), leanAt(j, Math.min(u, 1)), limAt(j, cv, u)) * 0.998;
+              if (sc <= cap) continue;
+              moved = true;
+              if (fromEnd >= 0) {
+                // leaving end j: its weight is 1 - e, the mid-way scale's e
+                if (e < 0.5) need[j] = Math.min(need[j], Math.max(0.3, (cap - sM * e) / (1 - e)));
+                else caps[j] = Math.min(caps[j], Math.max(0.3, (cap - A.s * (1 - e)) / e));
+              } else if (u < 2 * cv.c && e < 0.5) caps[j] = Math.min(caps[j], Math.max(0.3, (cap - Bn.s * e) / (1 - e)));
+              else need[j + 1] = Math.min(need[j + 1], Math.max(0.3, e >= 1 ? cap : (cap - sM * (1 - e)) / e));
+            }
+          });
+          if (!moved) break;
+          ends.forEach((end, e) => {
+            if (need[e] >= end.s - 1e-6) return;
+            if (e > 0 && e <= stops.length) { ends[e] = stops[e - 1] = placeV(e - 1, need[e]); }
+            else { end.s = need[e]; end.x = -off0 * Wb * need[e]; }
+          });
+        }
+      }
+      headSig = sigOf();
+      return { hero: ends[0], stops, dock: ends[ends.length - 1], caps, vh };
     }
 
     // ------------------------------------------------------------------ links to a chapter
@@ -722,7 +1037,7 @@
         }
         const named = poses.some((g) => g != null);
         const r = route(keys, Math.min(3, Math.max(0, Math.round(o.turns) || (named ? 0 : Math.max(1, flights - 1)))));
-        R = { route: r, windows: stops.slice(0, M).map((st) => [st.fEnd - 0.006 * k, st.pEnd]), reads: stops.slice(0, M).map((st) => st.read) };
+        R = { route: r, windows: stops.slice(0, M).map((st) => [st.fEnd - 0.006 * k, st.pEnd]), reads: stops.slice(0, M).map((st) => st.read), flights: stops.map((st) => [st.fStart, st.fEnd]) };
         root.__fhoRoute = r;
       }
 
@@ -732,13 +1047,13 @@
         drift: () => lay().stops[i].drift,
       });
       const P = {
-        hero: { x: () => 0, y: () => 0, s: () => lay().hero.s, tilt: () => 0 },
-        dock: { x: () => 0, y: () => lay().dock.y, s: () => lay().dock.s, tilt: () => 0 },
+        hero: { x: () => lay().hero.x, y: () => lay().hero.y, s: () => lay().hero.s, tilt: () => 0 },
+        dock: { x: () => lay().dock.x, y: () => lay().dock.y, s: () => lay().dock.s, tilt: () => 0 },
       };
       const rock = () => (vert() ? 5 : sweep / 2);
       const bankOf = (kind) => () => (kind === 'right' ? -1 : 1) * (vert() ? Math.min(bank, 5) : bank);
 
-      gsap.set(obj, { xPercent: -50, yPercent: -50, x: 0, y: 0, scale: P.hero.s() });
+      gsap.set(obj, { xPercent: -50, yPercent: -50, x: P.hero.x(), y: P.hero.y(), scale: P.hero.s() });
       gsap.set(tilt, { rotation: 0 });
       gsap.set(track, { yPercent: 0 });
       if (digits) gsap.set(digits, { yPercent: 0 });
@@ -750,10 +1065,10 @@
       }
 
       // the hero pose holds until the first flight (a tween, so a refresh re-reads its scale)
-      if (stops.length) fx(obj, { scale: P.hero.s }, { scale: P.hero.s }, 0, stops[0].fStart);
+      if (stops.length) fx(obj, { x: P.hero.x, y: P.hero.y, scale: P.hero.s }, { x: P.hero.x, y: P.hero.y, scale: P.hero.s }, 0, stops[0].fStart);
 
       // flights, parks and the track
-      let prev = P.hero, prevKind = 'hero', prevY = () => 0, prevTilt = () => 0;
+      let prev = P.hero, prevKind = 'hero', prevY = P.hero.y, prevTilt = () => 0;
       stops.forEach((st, i) => {
         const to = st.kind === 'dock' ? P.dock : { ...pose(i), tilt: st.kind === 'right' ? () => 0 : () => -rock() };
         const d = st.fEnd - st.fStart, a = st.fStart;
@@ -763,7 +1078,7 @@
           fx(obj, { x: fromX }, { x: to.x }, a, d * 0.875, 'power3.inOut');
           fx(obj, { y: fromY }, { y: yMid }, a, d * 0.625, 'power2.inOut');
           fx(obj, { y: yMid }, { y: to.y }, a + d * 0.625, d * 0.375, 'power2.out');
-          const sMid = () => (fromS() + to.s()) / 2;
+          const sMid = () => Math.min((fromS() + to.s()) / 2, lay().caps[i] || Infinity);
           fx(obj, { scale: fromS }, { scale: sMid }, a, d * 0.47, 'power2.in');
           fx(obj, { scale: sMid }, { scale: to.s }, a + d * 0.47, d * 0.47, 'power2.out');
           fx(tilt, { rotation: fromT }, { rotation: 0 }, a, d * 0.875, 'sine.inOut');
@@ -773,14 +1088,14 @@
           fx(obj, { x: fromX }, { x: to.x }, a, d, 'power2.inOut');
           fx(obj, { y: fromY }, { y: to.y }, a, d, first ? 'power2.inOut' : 'sine.inOut');
           const between = !first;
-          const sMid = () => (between && vert() ? Math.min(fromS(), to.s()) * 0.925 : (fromS() + to.s()) / 2);
+          const sMid = () => Math.min(between && vert() ? Math.min(fromS(), to.s()) * 0.925 : (fromS() + to.s()) / 2, lay().caps[i] || Infinity);
           fx(obj, { scale: fromS }, { scale: sMid }, a, d / 2, modeEase(between ? 'sine.inOut' : 'power1.in', 'power1.in'));
           fx(obj, { scale: sMid }, { scale: to.s }, a + d / 2, d / 2, modeEase(between ? 'sine.inOut' : 'power1.out', 'power1.out'));
           fx(tilt, { rotation: fromT }, { rotation: bankOf(st.kind) }, a, d / 2, 'sine.inOut');
           fx(tilt, { rotation: bankOf(st.kind) }, { rotation: to.tilt }, a + d / 2, d / 2, 'sine.inOut');
-          // the page follows the object; out of the hero it follows closely, so the title is gone before
-          // the growing object reaches it
-          const lag = first ? 0.05 : 0.154;
+          // the page follows the object; out of the hero it leaves with it, so the title rises away faster
+          // than the growing object climbs toward it
+          const lag = first ? 0 : 0.154;
           fx(track, { yPercent: -(100 * i) / N }, { yPercent: -(100 * (i + 1)) / N }, a + d * lag, d * (1 - lag), 'power2.inOut');
           // the park: a slow drift in the right lane, a rock in the left one
           const pd = st.pEnd - st.fEnd;
@@ -795,7 +1110,7 @@
           }
         }
         // the count turns over as the next panel passes the middle of the stage
-        const mid = st.kind === 'dock' ? a + d * 0.435 : a + d * (prevKind === 'hero' ? 0.525 : 0.577);
+        const mid = st.kind === 'dock' ? a + d * 0.435 : a + d * (prevKind === 'hero' ? 0.5 : 0.577);
         if (digits) fx(digits, { yPercent: -(100 * i) / N }, { yPercent: -(100 * (i + 1)) / N }, mid - d * 0.075, d * 0.15, 'power2.inOut');
         prev = to; prevKind = st.kind;
       });
@@ -811,10 +1126,13 @@
           const edge = j < N - 1 ? G.tops[j + 1] + ty : Infinity;
           const f = clamp((edge - c0) / ch, 0, 1); // the share of the count on panel j
           const top = dark(j), bottom = dark(j + 1);
-          const clip = (showTop, showBottom) => (showTop && showBottom ? 'none' : showTop ? `inset(0 0 ${(1 - f) * 100}% 0)` : showBottom ? `inset(${f * 100}% 0 0 0)` : 'inset(0 0 100% 0)');
-          inks[0].style.clipPath = clip(!top, f < 1 && !bottom);
-          inks[1].style.clipPath = clip(top, f < 1 && bottom);
+          const clip = (showTop, showBottom) => (showTop && showBottom ? 'none' : showTop ? `inset(0 0 ${((1 - f) * 100).toFixed(2)}% 0)` : showBottom ? `inset(${(f * 100).toFixed(2)}% 0 0 0)` : 'inset(0 0 100% 0)');
+          // written only when it changes: the count is restyled only while an edge passes it
+          const a = clip(!top, f < 1 && !bottom), b = clip(top, f < 1 && bottom);
+          if (a !== inkNow[0]) inks[0].style.clipPath = inkNow[0] = a;
+          if (b !== inkNow[1]) inks[1].style.clipPath = inkNow[1] = b;
         };
+        const inkNow = ['', ''];
         tl.eventCallback('onUpdate', ink);
         root.__fhoInk = ink;
         ink();
@@ -875,9 +1193,12 @@
           gsap.set(r.li, { opacity: 0, y: 12 });
           fx(r.li, { opacity: 0, y: 12 }, { opacity: 1, y: 0 }, at, 0.03 * k, 'power2.out');
           if (r.num) {
+            // the text follows the count's value; a refresh renders the value without callbacks (and,
+            // reverting first, would leave a 0 behind), so it is written again after every refresh
             const nm = r.num, p = { v: 0 };
+            nm.show = () => { const s = p.v >= nm.to ? nm.text : nm.fmt(p.v); if (nm.el.textContent !== s) nm.el.textContent = s; };
             nm.el.textContent = nm.fmt(0);
-            fx(p, { v: 0 }, { v: nm.to, onUpdate: () => { nm.el.textContent = p.v >= nm.to ? nm.text : nm.fmt(p.v); } }, at, 0.11 * k, 'power2.out');
+            fx(p, { v: 0 }, { v: nm.to, onUpdate: nm.show }, at, 0.11 * k, 'power2.out');
           }
         });
         if (cta) { gsap.set(cta, { opacity: 0, y: 16 }); fx(cta, { opacity: 0, y: 16 }, { opacity: 1, y: 0 }, showEnd - 0.04 * k, 0.04 * k, 'power2.out'); }
@@ -898,6 +1219,7 @@
         if (tl.progress() < 0.0005) { tl.progress(0.001, true); tl.progress(0, true); }
         // a refresh restores the progress without updates: the frame follows it here
         if (paint && R) paint.set(Math.round(R.route.at(Math.min(tl.progress(), turnEnd)) * paint.count));
+        readouts.forEach((r) => { if (r.num && r.num.show) r.num.show(); });
         if (root.__fhoInk) root.__fhoInk();
       };
       ScrollTrigger.addEventListener('refresh', onRefresh);
@@ -905,8 +1227,9 @@
       // numbers back to their written values when the scene stops running
       root.__fhoRestore = () => {
         root.__fhoBuild = null; root.__fhoInk = null; root.__fhoTrigger = null;
-        heads.forEach((el) => el.style.removeProperty('--fho-fit'));
-        readouts.forEach((r) => { if (r.num) r.num.el.textContent = r.num.text; });
+        heads.forEach((el) => { el.style.removeProperty('--fho-fit'); el.classList.remove('is-wrapped'); });
+        readouts.forEach((r) => { if (r.num) { r.num.el.textContent = r.num.text; r.num.el.style.removeProperty('min-width'); } });
+        if (readList) { readList.style.removeProperty('--fho-nfit'); readList.classList.remove('is-stacked'); }
       };
     }
 

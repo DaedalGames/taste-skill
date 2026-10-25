@@ -64,8 +64,9 @@
 
   /* The word sits on the dark pool and the moss right of the spray at the foot of the falls (every letter
      at least 3.5:1 against the brightest fifth of the pixels behind it), inside one row band of the grid.
+     At 9.75cqi its letters fit the 7 columns: two cuts, both in the white between letters (T|h, a|w).
      On the 4:5 art it stays in the middle 60% of the width: that is all a phone keeps of it at the end. */
-  [data-scene="scatter-and-lock"] { --sl-gutter: var(--gutter); --sl-word-size: 9cqi; --sl-word-x: 52%; --sl-word-y: 87.5%; }
+  [data-scene="scatter-and-lock"] { --sl-gutter: var(--gutter); --sl-word-size: 9.75cqi; --sl-word-x: 52%; --sl-word-y: 87.5%; }
   [data-scene="scatter-and-lock"] .sl-word { font-stretch: 125%; font-weight: 700; letter-spacing: -0.01em; }
   @media (max-width: 767px), (orientation: portrait) {
     [data-scene="scatter-and-lock"] { --sl-word-size: 13cqi; --sl-word-x: 52%; --sl-word-y: 74%; }

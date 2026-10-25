@@ -141,6 +141,9 @@ html.js [data-scene="scatter-and-lock"].is-live > .scene-stage { padding: 0; }
   z-index: 1;
   perspective: 1200px;
   perspective-origin: 50% 50%;
+  /* The stage writes --p on the section at every frame. Stopped here, it never reaches the 28 cells and
+     their copies of the poster (about 200 elements): otherwise every frame would restyle all of them. */
+  --p: initial;
 }
 /* Nothing between the field and the cells may group (opacity, filter, overflow, clip-path, blend):
    that would flatten every shard onto one plane. Fade, blur and clip only the cells. */
@@ -224,6 +227,8 @@ html.js [data-scene="scatter-and-lock"].is-live > .scene-stage { padding: 0; }
   aspect-ratio: 16 / 9;
   transform: translate(-50%, -50%);
 }
+/* after a fast scroll the still finishes the poster's growth (the script moves it): keep it on its own layer */
+.scene[data-scene="scatter-and-lock"].is-live.sl-grow + .sl-still > .sl-still-pic > .sl-art { will-change: transform; }
 .sl-still[data-scene="scatter-and-lock"] > :not(.sl-still-pic) { position: relative; z-index: 1; }
 .scene[data-scene="scatter-and-lock"].is-live.sl-released > .scene-stage { visibility: hidden; }
 .scene[data-scene="scatter-and-lock"]:not(.is-live) + .sl-still > .sl-still-pic { display: none; }

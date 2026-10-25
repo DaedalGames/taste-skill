@@ -14,7 +14,10 @@
   --hs-soft: color-mix(in oklch, var(--hs-ground-a) 86%, #000);
   /* small words that sit on ground-a: the ink a step deeper, so they keep 4.5:1 there */
   --hs-ink-deep: color-mix(in srgb, var(--hs-ink) 80%, #000);
+  /* the turn shade: the back darkens in its own ink; the paper front greys, cool, like a sheet tipping
+     out of the light (an ink-tinted shade on white reads as dusty rose) */
   --hs-shade: color-mix(in srgb, var(--hs-ink) 40%, #000);
+  --hs-shade-paper: color-mix(in oklch, var(--hs-ground-a) 30%, #000);
   --hs-gap: 28px;
   --n: 3;                                   /* tickets in the row (2-4), from the markup */
   --max-cols: 4;                            /* what the width allows: every ticket at least 296px */
@@ -207,15 +210,15 @@
 /* ---------- live: both versions ---------- */
 
 [data-scene="hinged-sheets"].is-live .hs-sheet { transform-style: preserve-3d; will-change: transform; }
-/* while live the perforation is a path clip the script builds (#hs-perf), not the mask: a masked face
-   under a moving 3D transform is repainted, photo and all, on every frame; a path clip is not */
+/* While live a face has no mask and no clip-path: a moving 3D layer with either is drawn through a mask
+   texture the size of its projection on every frame. The script punches the perforation into each
+   surface's own background instead (a bitmap in the page's colours, set on the face and its shade), so
+   the holes are still real; until it has, the faces are solid. */
 [data-scene="hinged-sheets"].is-live .hs-face {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   -webkit-mask: none;
   mask: none;
-  -webkit-clip-path: url(#hs-perf);
-  clip-path: url(#hs-perf);
 }
 [data-scene="hinged-sheets"].is-live .hs-face--front { transform: translateZ(0.1px); }
 [data-scene="hinged-sheets"].is-live .hs-face--back { display: flex; flex-direction: column; transform: rotateY(180deg) translateZ(0.1px); }
@@ -230,6 +233,7 @@
   opacity: 0;
   pointer-events: none;
 }
+[data-scene="hinged-sheets"].is-live .hs-face--front > .hs-shade { background: var(--hs-shade-paper); }
 
 /* ---------- live: the deal on the held stage ---------- */
 
@@ -277,12 +281,13 @@ html.js [data-scene="hinged-sheets"].is-live:not(.hs-flow) > .scene-stage {
   content: attr(data-soft) / "";
   display: block;
   color: var(--hs-soft);
-  filter: blur(var(--hs-soften, 7px));
+  filter: blur(var(--hs-soften, 6px));
 }
 /* layers only while the headline tips and fades (the script sets .hs-moving from 0.15 to 0.60); the rest
    of the time it is painted flat into the stage, blur and all, once */
 [data-scene="hinged-sheets"].is-live.hs-moving:not(.hs-flow) .hs-title { will-change: transform; }
-[data-scene="hinged-sheets"].is-live.hs-moving:not(.hs-flow) .hs-title > * { will-change: opacity; }
+[data-scene="hinged-sheets"].is-live.hs-moving:not(.hs-flow) .hs-title-sharp { will-change: opacity, filter; }
+[data-scene="hinged-sheets"].is-live.hs-moving:not(.hs-flow) .hs-title-soft { will-change: opacity; }
 [data-scene="hinged-sheets"].is-live:not(.hs-flow) .hs-sub { margin-top: 28px; color: var(--hs-ink-deep); }
 /* reserved bands: the line over the row ends 24px above it, the fine print starts 28px below it */
 [data-scene="hinged-sheets"].is-live:not(.hs-flow) .hs-lead {

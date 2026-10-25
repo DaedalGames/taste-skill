@@ -16,18 +16,23 @@
 // ── DOM (rooms are optional except the track and the ground; keep this order) ────────────────────
 // <section class="scene" data-scene="room-walk-track" id="walk" aria-labelledby="rw-title">
 //  <div class="scene-stage">
+//   <div class="rw-chrome">                                     optional, walk mode only; first, so the
+//     <a class="rw-chip rw-mark" href="#top">Wordmark</a>                        skip link is an early tab stop
+//     <p class="rw-chip rw-where" aria-hidden="true"><span class="rw-where__name"></span><span class="rw-where__count"></span><span class="rw-bar"><span></span></span></p>
+//     <a class="rw-chip rw-skip" href="#after">Skip the walk</a></div>
 //   <div class="rw-track">
 //    <article class="rw-room rw-threshold" data-name="Varde">                              80vw, paper
 //      <h2 id="rw-title" class="rw-h1"><span class="rw-line">Line one</span><span class="rw-line">Line two</span></h2>
 //      <p class="rw-lede">25-35 words.</p></article>
 //    <article class="rw-room rw-photo" data-name="Ring Library">                           90vw, paper
-//      <figure class="rw-bleed"><img></figure>                                   wide picture, 1500px+
+//      <figure class="rw-bleed"><img></figure>                    wide picture, srcset up to 2400px
 //      <figure class="rw-flip"><div class="rw-flip__b"><img></div><div class="rw-flip__a"><img></div></figure>
-//      <div class="rw-copy"><h3><span class="rw-line">..</span><span class="rw-line">..</span></h3><p>about 30 words</p></div></article>
+//      <div class="rw-copy"><h3><span class="rw-line">Line one</span><span class="rw-line">line two</span></h3><p>about 30 words</p></div></article>
+//                         a short two-line heading (10 and 7 characters), set large beside the frame
 //    <article class="rw-room rw-ink" data-name="On stairs">                                90vw, ink
 //      <figure class="rw-pic rw-pic--a"><img></figure><figure class="rw-pic rw-pic--b"><img></figure>   3:4 portraits
 //      <p class="rw-read"><span class="rw-rl">one line</span> … five lines, 35-45 words</p></article>
-//    <div class="rw-band" aria-hidden="true"><div class="rw-band__col"><span>Word</span> <span>*</span> …</div></div>   15vw
+//    <div class="rw-band" aria-hidden="true"><div class="rw-band__col">Word * Word * Word * Word *</div></div>   15vw, one run of text
 //    <article class="rw-room rw-values" data-name="Three rules">                           110vw, powder
 //      <h3 class="rw-sr">Three rules</h3>
 //      <ol class="rw-vals"><li class="rw-val">Word</li> ×3 (13 characters or fewer)</ol>
@@ -54,23 +59,25 @@
 //   <div class="rw-ground" data-name="Contact">                       the still stage under the track
 //     <div class="rw-exit"><h2 class="rw-exit__title"><span class="rw-line">Bring us</span><span class="rw-line">your site</span></h2>
 //       <p class="rw-exit__foot">One line.</p></div></div>
-//   <div class="rw-chrome">                                                    optional, walk mode only
-//     <a class="rw-chip rw-mark" href="#top">Wordmark</a>
-//     <p class="rw-chip rw-where" aria-hidden="true"><span class="rw-where__name"></span><span class="rw-where__count"></span><span class="rw-bar"><span></span></span></p>
-//     <a class="rw-chip rw-skip" href="#after">Skip the walk</a></div>
 //  </div>
 // </section>
 // <section id="after" style="background: <the ground colour>">…</section>       continues the ground
 //
 // The hold is measured from the rooms: 10.5 screens for the full set above with five cards (each extra
 // card adds 0.6). Pictures: 14 for the full set, in colour and in one grade (one shoot, or one warm or
-// cool cast throughout); the photo room's two framed pictures are two views of one building (a close
-// crop and a wide one), or the swap reads as a cut.
+// cool cast throughout); give each a srcset whose sizes are what it is drawn at (a card 60vw, a portrait
+// 29vw, the coral window 64vw; a 3:2 picture covering the bleed's 67vw x 100vh box is drawn about 94vw
+// wide on a 16:10 screen), so nothing is decoded far above or below its size. The photo room's two
+// framed pictures are two views of one room, close and wide, or the swap reads as a cut. The close one
+// may be the wide picture zoomed (`.rw-flip__a img { scale: 2.3; transform-origin: … }`; each layer
+// clips its own picture), but never a crop of the bleed beside it: on a phone the frame overlaps the
+// bleed, and the same picture twice reads as a glitch.
 //
 // Text that is set on one line shrinks to fit its room once the fonts are in (--rw-fit, never above
-// 1): the title lines, the question lines, the card names and the value words. Below these lengths
-// nothing shrinks: title lines 18 characters, question lines 24 and 18 (the second is indented), card
-// names 14, value words 9. Longer lines still fit; they just get smaller.
+// 1): the title lines, the photo room's heading, the question lines, the card names and the value
+// words. Below these lengths nothing shrinks: title lines 18 characters, photo heading lines 10 and 7
+// (the second is indented), question lines 24 and 18, card names 14, value words 9. Longer lines still
+// fit; they just get smaller.
 //
 // ── Options (data-options='{"rate":1.1}') ────────────────────────────────────────────────────────
 //   rate    0.8-1.25  screen widths walked per screen of scroll (1)
@@ -95,6 +102,7 @@
   const EDGE = 6;              // vw of extra exit travel, so the coral's trailing shade leaves the frame too
   const BLOCK = 34, SHUT = 13; // card colour block, open and closed, % of the stage height
   const DRIFT = [-8, 6, -12];  // threshold title lines, vw over the first screen
+  const PHOTO_DRIFT = [[10, -4], [18, -6]];   // photo room heading lines, vw across the room's crossing
   const SHEAR = [[-14, 14], [10, -10], [-22, 22]];  // value words, vw across the room's crossing
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const num = (v, d, a, b) => (typeof v === 'number' || (typeof v === 'string' && v.trim() !== '' && Number.isFinite(+v)) ? clamp(+v, a, b) : d);
@@ -139,15 +147,22 @@
     root.querySelectorAll('.rw-line, .rw-rl, .rw-card__year, .rw-card__place').forEach(inner);
     root.querySelectorAll('.rw-card__name').forEach((n) => { n.__chars = splitChars(n); });
     root.querySelectorAll('.rw-q .rw-line').forEach((l) => { l.__chars = splitChars(l.__in); });
+    // the band word is one run of text, so it sets as one line down the strip (and across it on a phone)
+    root.querySelectorAll('.rw-band__col').forEach((c) => {
+      const words = c.children.length ? [...c.children].map((k) => k.textContent.trim()) : c.textContent.split(/\s+/);
+      c.textContent = words.filter(Boolean).join(' ');
+    });
   };
+  const STRIPS = 14;
   const edge = (el, side) => {
     let e = el.querySelector(':scope > .rw-edge--' + side);
     if (!e) {
-      // six flat translucent strips (the span, its child and their ::before/::after), widest outermost
+      // flat translucent strips, each a little wider than the last, all flush with the sheet's edge:
+      // where they overlap the shade deepens, in steps of under 2% so they never read as stripes
       e = document.createElement('span');
       e.className = 'rw-edge rw-edge--' + side;
       e.setAttribute('aria-hidden', 'true');
-      e.appendChild(document.createElement('span')).className = 'rw-edge__in';
+      for (let k = 1; k <= STRIPS; k++) e.appendChild(document.createElement('i')).style.width = (((k / STRIPS) ** 1.6) * 100).toFixed(2) + '%';
       el.appendChild(e);
     }
     return e;
@@ -180,7 +195,7 @@
     if (k < 0.999) host.style.setProperty('--rw-fit', clamp(k, 0.4, 1).toFixed(4));
   };
   const fit = (root) => {
-    const hosts = root.querySelectorAll('.rw-h1, .rw-q, .rw-vals, .rw-card__name');
+    const hosts = root.querySelectorAll('.rw-h1, .rw-copy h3, .rw-q, .rw-vals, .rw-card__name');
     hosts.forEach((h) => h.style.removeProperty('--rw-fit'));
     const walkMode = root.classList.contains('rw-walk');
     if (!root.classList.contains('is-live') || (!walkMode && !root.classList.contains('rw-v'))) return;
@@ -194,6 +209,9 @@
     // in the walk the title lines drift by up to 8vw and stay clear of the photo sliver
     if (h1 && thr) fitTo(h1, [...h1.querySelectorAll('.rw-line')].map((l) => [l, walkMode ? thr.clientWidth - 16 * u : h1.clientWidth]));
     if (!walkMode) return;
+    // the photo room's heading: each line inside the paper column beside the picture
+    const ch = root.querySelector('.rw-copy h3');
+    if (ch) fitTo(ch, [...ch.querySelectorAll('.rw-line')].map((l) => [l, ch.clientWidth - pad(l, 'Left')]));
     root.querySelectorAll('.rw-card__name').forEach((n) => {
       const b = n.closest('.rw-card__block');
       if (b) fitTo(n, [[n, b.clientWidth - pad(b, 'Left') - pad(b, 'Right')]]);
@@ -201,10 +219,10 @@
   };
 
   // A photo swap inside a frame: the top picture slides up and out, the one under it settles down.
-  const swap = (tl, flip, pos, dur) => {
+  const swap = (tl, flip, pos, dur, extra = {}) => {
     const a = flip.querySelector('.rw-flip__a'), b = flip.querySelector('.rw-flip__b');
-    if (a) tl.fromTo(a, { yPercent: 0 }, { yPercent: -105, ease: 'power2.inOut', duration: dur }, pos);
-    if (b) tl.fromTo(b, { yPercent: -10 }, { yPercent: 0, ease: 'power2.out', duration: dur }, pos);
+    if (a) tl.fromTo(a, { yPercent: 0 }, { ...extra, yPercent: -105, ease: 'power2.inOut', duration: dur }, pos);
+    if (b) tl.fromTo(b, { yPercent: -10 }, { ...extra, yPercent: 0, ease: 'power2.out', duration: dur }, pos);
   };
 
   // ── The plan: rooms, their end-state left edges (vw), and the walk in screens of scroll ───────────
@@ -300,6 +318,12 @@
   // ── Walk mode: the pinned sideways walk ──────────────────────────────────────────────────────────
   const walk = (tl, ctx, o) => {
     const { root, stage } = ctx;
+    // Everything that moves for long has its own layer in the CSS (will-change). The small things the
+    // walk moves (letters, lines, captions) stay 2D, so starting and ending their tweens never creates
+    // and drops layers mid-walk; they repaint inside their room's layer instead. F() marks the tweens on
+    // elements; the walk's proxies ({ x }, { v }) are plain objects, which have no force3D.
+    const F = (v) => ({ force3D: false, ...v });
+    root.__rwTl = tl;
     prep(root);
     root.classList.remove('rw-v');
     root.classList.add('rw-walk');
@@ -336,18 +360,26 @@
     if (thr) {
       titleLines = [...thr.el.querySelectorAll('.rw-h1 .rw-line')];
       const s1 = sAt(thr, -77.5);
-      titleLines.forEach((ln, i) => tl.fromTo(ln, { x: 0 }, { x: () => DRIFT[i % 3] * vw(), duration: dd(s1) }, 0));
+      titleLines.forEach((ln, i) => tl.fromTo(ln, { x: 0 }, F({ x: () => DRIFT[i % 3] * vw(), duration: dd(s1) }), 0));
     }
 
-    // photo room: counter-parallax in the bleed, heading lines rise, the framed pair swaps
+    // photo room: counter-parallax in the bleed; the heading's lines rise as the room comes in and
+    // travel slower than the walk, the indented one slowest, so they arrive behind the room and meet
+    // their places just as it reaches the reading position; the framed pair swaps
     const ph = seg('photo');
     if (ph) {
       const img = ph.el.querySelector('.rw-bleed img');
       const s0 = sAt(ph, 100), s1 = sAt(ph, -7.5);
-      if (img) tl.fromTo(img, { xPercent: (-15 / 73) * 100 }, { xPercent: 0, duration: dd(s1 - s0) }, at(s0));
-      stag(tl, [...ph.el.querySelectorAll('.rw-copy .rw-line > .rw-in')], { yPercent: 110 }, { yPercent: 0, ease: 'power2.out', duration: dd(0.22), stagger: dd(0.07) }, at(sAt(ph, 30)));
+      if (img) tl.fromTo(img, { x: () => -15 * vw() }, F({ x: 0, duration: dd(s1 - s0) }), at(s0));
+      const lines = [...ph.el.querySelectorAll('.rw-copy h3 .rw-line')];
+      const d0 = sAt(ph, 70), d1 = sAt(ph, -50);
+      lines.forEach((ln, i) => {
+        const [a, b] = PHOTO_DRIFT[i % 2];
+        tl.fromTo(ln, { x: () => a * vw() }, F({ x: () => b * vw(), duration: dd(d1 - d0) }), at(d0));
+      });
+      stag(tl, lines.map((l) => l.__in).filter(Boolean), { yPercent: 110 }, F({ yPercent: 0, ease: 'power2.out', duration: dd(0.26), stagger: dd(0.08) }), at(sAt(ph, 46)));
       const fl = ph.el.querySelector('.rw-flip');
-      if (fl) swap(tl, fl, at(sAt(ph, 17.5)), dd(0.55));
+      if (fl) swap(tl, fl, at(sAt(ph, 17.5)), dd(0.55), F({}));
     }
 
     // ink room: two portraits open from the bottom, then the statement brightens line by line
@@ -357,11 +389,12 @@
         if (!fig) return;
         tl.fromTo(fig, { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', ease: 'power2.out', duration: dd(0.4) }, at(s));
         const im = fig.querySelector('img');
-        if (im) tl.fromTo(im, { scale: 1.25 }, { scale: 1, ease: 'power2.out', duration: dd(0.4) }, at(s));
+        if (im) tl.fromTo(im, { scale: 1.25 }, F({ scale: 1, ease: 'power2.out', duration: dd(0.4) }), at(s));
       };
       reveal(ink.el.querySelector('.rw-pic--a'), sAt(ink, 97.5));
       reveal(ink.el.querySelector('.rw-pic--b'), sAt(ink, 82.5));
-      stag(tl, [...ink.el.querySelectorAll('.rw-read .rw-rl')], { opacity: 0.3 }, { opacity: 1, duration: dd(0.2), stagger: dd(0.075) }, at(sAt(ink, 40)));
+      // the statement brightens from 40%, never fainter, so the lines still to come stay readable
+      stag(tl, [...ink.el.querySelectorAll('.rw-read .rw-rl')], { opacity: 0.4 }, { opacity: 1, duration: dd(0.2), stagger: dd(0.075) }, at(sAt(ink, 40)));
     }
 
     // band: the vertical word climbs while the walk runs left
@@ -369,7 +402,7 @@
     if (band) {
       const col = band.el.querySelector('.rw-band__col');
       const s0 = sAt(band, 95), s1 = sAt(band, -15);
-      if (col) tl.fromTo(col, { y: () => 75 * vh() }, { y: 0, duration: dd(s1 - s0) }, at(s0));
+      if (col) tl.fromTo(col, { y: () => 75 * vh() }, F({ y: 0, duration: dd(s1 - s0) }), at(s0));
     }
 
     // values: three words shear across the room's whole crossing and line up flush-left halfway
@@ -378,7 +411,7 @@
       const s0 = sAt(val, 100), s1 = sAt(val, -110);
       val.el.querySelectorAll('.rw-val').forEach((w, i) => {
         const [a, b] = SHEAR[i % 3];
-        tl.fromTo(w, { x: () => a * vw() }, { x: () => b * vw(), duration: dd(s1 - s0) }, at(s0));
+        tl.fromTo(w, { x: () => a * vw() }, F({ x: () => b * vw(), duration: dd(s1 - s0) }), at(s0));
       });
       const note = val.el.querySelector('.rw-vals__note');
       if (note) tl.fromTo(note, { opacity: 0 }, { opacity: 1, duration: dd(0.3) }, at(sAt(val, 47.5)));
@@ -396,11 +429,11 @@
       c.ws = ws; c.we = we;
       tl.fromTo(c.e, { v: 0 }, { v: 1, ease: 'power1.inOut', duration: dd(u), immediateRender: false }, at(ws));
       const yp = [...c.el.querySelectorAll('.rw-card__year > .rw-in, .rw-card__place > .rw-in')];
-      if (yp.length) tl.fromTo(yp, { yPercent: 105 }, { yPercent: 0, ease: 'power2.out', duration: dd(0.245 * u) }, at(ws + 0.455 * u));
+      if (yp.length) tl.fromTo(yp, { yPercent: 105 }, F({ yPercent: 0, ease: 'power2.out', duration: dd(0.245 * u) }), at(ws + 0.455 * u));
       const nm = c.el.querySelector('.rw-card__name');
-      stag(tl, (nm && nm.__chars) || [], { yPercent: 110 }, { yPercent: 0, ease: 'power3.out', duration: dd(0.19 * u), stagger: { amount: dd(0.245 * u) } }, at(ws + 0.5 * u));
+      stag(tl, (nm && nm.__chars) || [], { yPercent: 110 }, F({ yPercent: 0, ease: 'power3.out', duration: dd(0.19 * u), stagger: { amount: dd(0.245 * u) } }), at(ws + 0.5 * u));
       const link = c.el.querySelector('.rw-card__link');
-      if (link) tl.fromTo(link, { yPercent: 100, opacity: 0 }, { yPercent: 0, opacity: 1, ease: 'power2.out', duration: dd(0.245 * u) }, at(ws + 0.7 * u));
+      if (link) tl.fromTo(link, { yPercent: 100, opacity: 0 }, F({ yPercent: 0, opacity: 1, ease: 'power2.out', duration: dd(0.245 * u) }), at(ws + 0.7 * u));
     });
 
     // hold: a paper underlay narrows the column, the question builds, the column's photos stack up.
@@ -411,20 +444,23 @@
       const under = H.el.querySelector('.rw-underlay');
       // the underlay covers the column's edge first, so the headline that reaches over it never sits on a
       // photo; it slides while the last card opens, so the column grows straight to its held width
-      if (under && H.card && H.qn) tl.fromTo(under, { x: 0 }, { x: () => -SLIDE * vw(), ease: 'power1.inOut', duration: dd(0.3) }, at(sA - 0.75));
+      if (under && H.card && H.qn) tl.fromTo(under, { x: 0 }, F({ x: () => -SLIDE * vw(), ease: 'power1.inOut', duration: dd(0.3) }), at(sA - 0.75));
       // every line rises out of its own mask; a line dropping from above would hang its first strokes
       // under the descenders of the line over it
       const qch = [...H.el.querySelectorAll('.rw-q .rw-line')].flatMap((ln) => ln.__chars || []);
-      stag(tl, qch, { yPercent: 110 }, { yPercent: 0, ease: 'power3.out', duration: dd(0.15), stagger: { amount: dd(0.4) } }, at(sA - 0.45));
+      stag(tl, qch, { yPercent: 110 }, F({ yPercent: 0, ease: 'power3.out', duration: dd(0.15), stagger: { amount: dd(0.4) } }), at(sA - 0.45));
       const stack = H.el.querySelector('.rw-stack');
       if (stack) {
+        // two lifts that share the held stretch (0.3 + 0.25 of the default 0.7), so the column is at
+        // rest before the coral starts to slide in, whatever the stack option
         const lift = () => Math.max(0, stack.offsetHeight - stage.clientHeight);
-        tl.fromTo(stack, { y: 0 }, { y: () => -lift() / 2, ease: 'power1.inOut', duration: dd(0.3) }, at(sA));
-        tl.fromTo(stack, { y: () => -lift() / 2 }, { y: () => -lift(), ease: 'power1.inOut', duration: dd(0.25), immediateRender: false }, at(sA + 0.3));
+        const l1 = 0.43 * o.stack, l2 = 0.36 * o.stack;
+        tl.fromTo(stack, { y: 0 }, F({ y: () => -lift() / 2, ease: 'power1.inOut', duration: dd(l1) }), at(sA));
+        tl.fromTo(stack, { y: () => -lift() / 2 }, F({ y: () => -lift(), ease: 'power1.inOut', duration: dd(l2), immediateRender: false }), at(sA + l1));
         const pics = [...stack.querySelectorAll('.rw-stack__pic img')];
-        if (pics.length) tl.fromTo(pics, { scale: 1.15 }, { scale: 1, duration: dd(0.55) }, at(sA));
+        if (pics.length) tl.fromTo(pics, { scale: 1.15 }, F({ scale: 1, duration: dd(l1 + l2) }), at(sA));
       }
-      stag(tl, [...H.el.querySelectorAll('.rw-q__body .rw-rl > .rw-in')], { yPercent: 100 }, { yPercent: 0, ease: 'power2.out', duration: dd(0.2), stagger: dd(0.05) }, at(sA - 0.15));
+      stag(tl, [...H.el.querySelectorAll('.rw-q__body .rw-rl > .rw-in')], { yPercent: 100 }, F({ yPercent: 0, ease: 'power2.out', duration: dd(0.2), stagger: dd(0.05) }), at(sA - 0.15));
     }
 
     // coral: slides over the still column with its picture panning in, holds for a swap, then leaves
@@ -432,14 +468,14 @@
     if (K) {
       const sIn = stops.coralIn, sC = stops.coral;
       const pan = K.el.querySelector('.rw-window__pan');
-      if (pan) tl.fromTo(pan, { xPercent: -100 }, { xPercent: 0, duration: dd(sC - sIn) }, at(sIn));
+      if (pan) tl.fromTo(pan, { xPercent: -100 }, F({ xPercent: 0, duration: dd(sC - sIn) }), at(sIn));
       const caps = [...K.el.querySelectorAll('.rw-cap > span')];
-      if (caps[0]) tl.fromTo(caps[0], { yPercent: 105 }, { yPercent: 0, ease: 'power2.out', duration: dd(0.25) }, at(sC - 0.25));
+      if (caps[0]) tl.fromTo(caps[0], { yPercent: 105 }, F({ yPercent: 0, ease: 'power2.out', duration: dd(0.25) }), at(sC - 0.25));
       const fl = K.el.querySelector('.rw-flip');
-      if (fl) swap(tl, fl, at(sC + 0.05), dd(0.35));
+      if (fl) swap(tl, fl, at(sC + 0.05), dd(0.35), F({}));
       if (caps[0] && caps[1]) {
-        tl.fromTo(caps[0], { yPercent: 0 }, { yPercent: -105, ease: 'power2.inOut', duration: dd(0.35), immediateRender: false }, at(sC + 0.05));
-        tl.fromTo(caps[1], { yPercent: 105 }, { yPercent: 0, ease: 'power2.inOut', duration: dd(0.35) }, at(sC + 0.05));
+        tl.fromTo(caps[0], { yPercent: 0 }, F({ yPercent: -105, ease: 'power2.inOut', duration: dd(0.35), immediateRender: false }), at(sC + 0.05));
+        tl.fromTo(caps[1], { yPercent: 105 }, F({ yPercent: 0, ease: 'power2.inOut', duration: dd(0.35) }), at(sC + 0.05));
       }
       // the sheet's shade: only while it moves (at the column hold its leading edge sits just off-screen)
       tl.fromTo(edge(K.el, 'l'), { opacity: 0 }, { opacity: 1, duration: dd(0.12) }, at(sIn));
@@ -448,7 +484,7 @@
 
     // exit: the still stage settles as the last room pulls away
     const exit = root.querySelector('.rw-exit');
-    if (exit) tl.fromTo(exit, { x: () => 6 * vw(), scale: 1.04 }, { x: 0, scale: 1, ease: 'power2.out', duration: dd(stops.exit - stops.exitIn) }, at(stops.exitIn));
+    if (exit) tl.fromTo(exit, { x: () => 6 * vw(), scale: 1.04 }, F({ x: 0, scale: 1, ease: 'power2.out', duration: dd(stops.exit - stops.exitIn) }), at(stops.exitIn));
     // the chips belong to the walk: they leave during the closing rest instead of riding up into the next section
     const chromeEl = root.querySelector('.rw-chrome');
     const fade = Math.min(0.15, o.rest * 0.6);
@@ -463,11 +499,11 @@
     // zero-time sets record the untouched inline styles, so reverting the scene (reduced motion turned
     // on, the window made narrow) also clears everything place() writes
     const slid = [track, ...P.segs.filter((s) => s.set).map((s) => s.el), ...cards.filter((c) => c.setX).map((c) => c.el), H && H.el, H && H.qn].filter(Boolean);
-    tl.set(slid, { x: 0 }, 0);
+    tl.set(slid, F({ x: 0 }), 0);
     const imgs = cards.map((c) => c.el.querySelector('.rw-card__photo img')).filter(Boolean);
     const blocks = cards.map((c) => c.el.querySelector('.rw-card__block')).filter(Boolean);
-    if (imgs.length) tl.set(imgs, { xPercent: 0 }, 0);
-    if (blocks.length) tl.set(blocks, { yPercent: 0 }, 0);
+    if (imgs.length) tl.set(imgs, F({ xPercent: 0 }), 0);
+    if (blocks.length) tl.set(blocks, F({ yPercent: 0 }), 0);
     const paint = (c) => { const k = 1 - c.e.v; if (c.imgX) c.imgX(IMG0 * k); if (c.blockY) c.blockY(BLK0 * k); };
 
     const chip = root.querySelector('.rw-where');
@@ -485,22 +521,27 @@
       if (cCount) cCount.textContent = (i + 1) + ' of ' + P.chapters.length;
     };
 
+    const ground = root.querySelector('.rw-ground');
     const place = () => {
       if (root.__rwPlace !== place || !root.classList.contains('is-live')) return;
       const u = vw();
       const tpx = Math.round(st.x * u);
       setTrack(tpx);
-      let un = 0, ci = 0;
+      let un = 0, ci = 0, centre = null;
+      // the room across the middle of the screen (the last one wins: later rooms lie on top)
+      const over = (sg, shift, el) => { const l = sg.L + st.x + shift; if (l <= 50 && l + sg.w > 50) centre = el; };
       for (const sg of P.segs) {
         if (sg.type === 'card') {
           const c = cards[ci++];
           c.setX(Math.round(-GAP * un * u));
           paint(c);
+          over(sg, -GAP * un, sg.el);
           un += 1 - c.e.v;
         } else if (sg.type === 'hold') {
           // while the coral slides over it, the column moves against the walk, so it stays pixel-still
           const mirror = K ? clamp(Math.round(-sg.L * u) - tpx, 0, Math.round(K.w * u)) : 0;
           setHold(Math.round(-GAP * un * u) + mirror);
+          over(sg, -GAP * un + mirror / u, sg.card && sg.L + st.x - GAP * un + mirror / u + O > 50 ? sg.card : sg.qn || sg.el);
           if (sg.card) {
             const c = cards[ci++];
             paint(c);
@@ -508,8 +549,12 @@
             if (setQ) setQ(Math.round(-GAP * left * u));
             un += left;
           }
-        } else if (sg.set) sg.set(Math.round(-GAP * un * u));
+        } else {
+          if (sg.set) sg.set(Math.round(-GAP * un * u));
+          over(sg, sg.set ? -GAP * un : 0, sg.el);
+        }
       }
+      root.__rwRoom = centre || ground;
       chrome(tl.time() * T);
     };
     root.__rwPlace = place;
@@ -559,7 +604,7 @@
       if (im) t.fromTo(im, { scale: 1.25 }, { scale: 1, ease: 'power2.out' }, 0);
     });
     const read = one('.rw-read');
-    if (read) stag(S(read, 'top 88%', 'top 45%'), [...read.querySelectorAll('.rw-rl')], { opacity: 0.3 }, { opacity: 1, duration: 0.5, stagger: 0.12 }, 0);
+    if (read) stag(S(read, 'top 88%', 'top 45%'), [...read.querySelectorAll('.rw-rl')], { opacity: 0.4 }, { opacity: 1, duration: 0.5, stagger: 0.12 }, 0);
 
     const band = one('.rw-band'), col = one('.rw-band__col');
     if (band && col) S(band, 'top bottom', 'bottom top').fromTo(col, { xPercent: 0 }, { xPercent: -50 });
@@ -603,11 +648,16 @@
       const o = S(win, 'top bottom', 'center 72%');
       o.fromTo(win, { clipPath: 'inset(14% 12% 14% 12%)' }, { clipPath: 'inset(0% 0% 0% 0%)', ease: 'power2.out' }, 0);
       if (pan) o.fromTo(pan, { scale: 1.18 }, { scale: 1, ease: 'power2.out' }, 0);
-      const t = S(win, 'center 70%', 'center 40%');
       const fl = win.querySelector('.rw-flip');
-      if (fl) swap(t, fl, 0, 1);
+      if (fl) swap(S(win, 'center 70%', 'center 40%'), fl, 0, 1);
+      // the captions trade places over a shorter stretch than the pictures, so a reader who stops while
+      // the pictures are still sliding never meets two half-hidden lines
       const caps = [...root.querySelectorAll('.rw-cap > span')];
-      if (caps[1]) { t.fromTo(caps[0], { yPercent: 0 }, { yPercent: -105, duration: 1 }, 0); t.fromTo(caps[1], { yPercent: 105 }, { yPercent: 0, duration: 1 }, 0); }
+      if (caps[1]) {
+        const c = S(win, 'center 70%', 'center 58%');
+        c.fromTo(caps[0], { yPercent: 0 }, { yPercent: -105, duration: 1 }, 0);
+        c.fromTo(caps[1], { yPercent: 105 }, { yPercent: 0, duration: 1 }, 0);
+      }
     }
 
     const exit = one('.rw-exit__title');
@@ -620,6 +670,8 @@
   // ── Focus: a link inside a room that is off to the side scrolls the walk to that room ────────────
   const focusTime = (P, el) => {
     if (el.closest('.rw-ground')) return P.T;
+    // the column's lower photos and its tile are on screen once the stack has lifted, before the coral comes
+    if (el.closest('.rw-stack') && !el.closest('.rw-stack > .rw-card__block, .rw-stack > .rw-card__photo')) return P.stops.holdEnd - 0.05;
     const card = el.closest('.rw-card');
     if (card) { const c = P.cards.find((k) => k.el === card); if (c) return P.sAtX(80 - P.open - c.L) + 0.05; }
     if (el.closest('.rw-question')) return P.stops.holdEnd - 0.05;
@@ -642,6 +694,9 @@
       scrub: opts.scrub === true ? true : num(opts.scrub, Stage.lenis ? 0.3 : 0.6, 0.1, 1.5),
       intro: opts.intro !== false,
     };
+    const mqWide = window.matchMedia(WIDE);
+    const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mqPhone = window.matchMedia('(max-width: 767px)');
     let mm = null;
     const make = () => {
       if (mm) mm.revert();
@@ -649,7 +704,7 @@
       mm = Stage.scene(root, {
         hold: +P.T.toFixed(3),
         scrub: o.scrub,
-        build: (tl, ctx) => (window.matchMedia(WIDE).matches ? walk(tl, ctx, o) : vertical(tl, ctx)),
+        build: (tl, ctx) => (mqWide.matches ? walk(tl, ctx, o) : vertical(tl, ctx)),
         phone: { hold: 1, build: (tl, ctx) => vertical(tl, ctx) },
       });
     };
@@ -659,7 +714,7 @@
     // Leaving the walk (reduced motion turned on, a narrow or portrait window): reverting the timeline
     // renders it once more while the scene is still live, so the pixel offsets place() wrote are cleared
     // here, after the stage has finished switching.
-    const settle = () => requestAnimationFrame(() => {
+    const settle = () => {
       if (root.classList.contains('is-live') && root.classList.contains('rw-walk')) return;
       root.__rwPlace = null;
       const P = root.__rwPlan;
@@ -670,14 +725,106 @@
         if (img) gsap.set(img, { xPercent: 0 });
         if (block) gsap.set(block, { yPercent: 0 });
       }
-    });
+    };
+
+    // Switching between the walk and the column changes the section's height by several screens, and by
+    // the time a media query reports the change the page may already have moved (the stage's CSS drops
+    // the pinned height the moment reduced motion turns on). So where the reader is is kept every frame:
+    // the room across the middle of the screen, or how far past the scene they are; at a switch the last
+    // one from before it is frozen and brought back once the new layout has its heights.
+    // In the walk the anchor also holds the walk's progress, so a plain resize (the section's height is
+    // in screens, so it changes with the window while the scroll position in pixels does not) brings the
+    // reader back to the same moment of the walk instead of another room.
+    const geo = { top: 0, h: 0, rooms: null };
+    const measure = () => { geo.top = root.getBoundingClientRect().top + window.scrollY; geo.h = root.offsetHeight; geo.rooms = null; };
+    // lastWalk: where the walk was when the reader last walked, so a trip to the column and straight back
+    // (reduced motion on and off, a window narrowed and widened) returns to that very moment
+    let anchor = null, lastWalk = null, frozen = null, keep = null, lastY = -1, timer = 0, keepTimer = 0;
+    const track = () => {
+      if (frozen || keep) return;
+      const y = window.scrollY, H = window.innerHeight, mid = y + H / 2, end = geo.top + geo.h;
+      const walking = !!root.__rwPlace && root.classList.contains('rw-walk');
+      if (y === lastY && !walking) return;
+      lastY = y;
+      if (mid < geo.top) anchor = null;                       // above the scene: nothing there moves
+      else if (walking ? y > end - H + 1 : mid >= end) anchor = { below: y - end, walk: walking };
+      else if (walking) {
+        const st = root.__rwTl && root.__rwTl.scrollTrigger;
+        anchor = { room: root.__rwRoom || null, p: st && y >= geo.top - 1 ? st.progress : null, walk: true };
+        if (anchor.room && anchor.p != null) lastWalk = anchor;
+      } else {
+        if (!geo.rooms) geo.rooms = [...root.querySelectorAll('.rw-track > :not(.rw-relay):not(.rw-hold), .rw-relay > .rw-card, .rw-hold > *, .rw-ground')].map((el) => [el, el.getBoundingClientRect().top + y]);
+        // the lowest row of rooms that has started above the middle (cards sit two to a row on a wide
+        // column); its first room, so the walk comes back to the card that is read first
+        let top = -Infinity;
+        for (const [, t] of geo.rooms) if (t <= mid && t > top) top = t;
+        const row = geo.rooms.filter(([, t]) => Math.abs(t - top) <= 1).map(([el]) => el);
+        anchor = row.length ? { room: row[0], row } : null;
+      }
+    };
+    const restore = () => {
+      measure();
+      const a = frozen;
+      if (!a || (a.below == null && !a.room && a.p == null)) return;
+      let y = null;
+      const walking = root.__rwPlace && root.classList.contains('rw-walk') && root.__rwPlan;
+      if (a.below != null) y = geo.top + geo.h + a.below;
+      else if (walking && a.p != null) y = geo.top + clamp(a.p, 0, 1) * (geo.h - window.innerHeight);   // still walking: the same moment
+      else if (walking && a.room) {
+        // back from the column: the moment the walk was left, if the reader is still on that room
+        const P = root.__rwPlan, back = lastWalk && (a.row || [a.room]).includes(lastWalk.room);
+        const s = back ? null : focusTime(P, a.room);
+        if (back) y = geo.top + clamp(lastWalk.p, 0, 1) * (geo.h - window.innerHeight);
+        else if (s != null) y = geo.top + (clamp(s, 0, P.T) / P.T) * (geo.h - window.innerHeight);
+      } else if (a.room && a.room.isConnected) y = a.room.getBoundingClientRect().top + window.scrollY;
+      if (y == null) return;
+      y = Math.max(0, Math.round(y));
+      if (Math.abs(y - window.scrollY) < 2) return false;     // nothing moved (a refresh that changed no height)
+      // Lenis measures the page on its own (debounced) clock: bring its limit up to date first, or a
+      // taller page would be clamped to the old one
+      if (Stage.lenis) { if (Stage.lenis.resize) Stage.lenis.resize(); Stage.lenis.scrollTo(y, { immediate: true, force: true }); }
+      else window.scrollTo(0, y);
+      return true;
+    };
+    const switched = () => {
+      if (!frozen) frozen = anchor || {};
+      requestAnimationFrame(() => { settle(); restore(); });
+      // once more after the stage's own refresh has measured the new heights
+      clearTimeout(timer);
+      timer = setTimeout(() => { ScrollTrigger.refresh(); restore(); frozen = null; lastY = -1; }, 450);
+    };
+    ScrollTrigger.addEventListener('refresh', measure);
+    measure();
+    gsap.ticker.add(track);
     // The stage switches on its own phone query (767px); the walk also needs a wide landscape screen,
     // so crossing that line rebuilds the scene.
-    window.matchMedia(WIDE).addEventListener('change', () => { make(); ScrollTrigger.refresh(); settle(); });
-    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', settle);
-    window.matchMedia('(max-width: 767px)').addEventListener('change', settle);
-    ScrollTrigger.addEventListener('refreshInit', () => fit(root));
-    ScrollTrigger.addEventListener('refresh', () => { if (root.__rwPlace) root.__rwPlace(); });
+    mqWide.addEventListener('change', () => { switched(); make(); ScrollTrigger.refresh(); });
+    mqReduce.addEventListener('change', switched);
+    mqPhone.addEventListener('change', switched);
+    // A resize, or any other refresh, while walking: the anchor from the frame before it is kept (the
+    // resize event comes before the next frame, so it still matches the old heights) and brought back
+    // once the refresh has measured the new ones. A layout switch takes over with its own anchor.
+    const pin = () => {
+      if (!frozen && !keep && anchor && anchor.walk) keep = anchor;
+      clearTimeout(keepTimer);
+      keepTimer = setTimeout(() => { keep = null; }, 1500);  // no refresh came: let the anchor follow again
+    };
+    window.addEventListener('resize', pin);
+    ScrollTrigger.addEventListener('refreshInit', () => { fit(root); pin(); });
+    ScrollTrigger.addEventListener('refresh', () => {
+      if (root.__rwPlace) root.__rwPlace();
+      const a = keep;
+      keep = null;
+      clearTimeout(keepTimer);
+      if (!a || frozen || !root.__rwPlace) return;
+      frozen = a;
+      const moved = restore();
+      frozen = null;
+      lastY = -1;
+      // land on it at once rather than scrubbing back from where the new heights had put the walk
+      const st = moved && root.__rwTl && root.__rwTl.scrollTrigger;
+      if (st) { st.update(); const tw = st.getTween && st.getTween(); if (tw) tw.progress(1); }
+    });
     // late fonts change every line's width: fit again, and let the column measure its new heights
     if (document.fonts && document.fonts.status !== 'loaded') document.fonts.ready.then(() => ScrollTrigger.refresh());
 
@@ -686,10 +833,16 @@
       if (!P || !root.__rwPlace || !root.classList.contains('is-live') || e.target.closest('.rw-chrome')) return;
       const s = focusTime(P, e.target);
       if (s == null) return;
-      const top = root.getBoundingClientRect().top + window.scrollY;
-      const y = Math.round(top + (clamp(s, 0, P.T) / P.T) * (root.offsetHeight - window.innerHeight));
-      if (Stage.lenis) Stage.lenis.scrollTo(y, { immediate: true, force: true });
-      else window.scrollTo(0, y);
+      const go = () => {
+        const top = root.getBoundingClientRect().top + window.scrollY;
+        const y = Math.round(top + (clamp(s, 0, P.T) / P.T) * (root.offsetHeight - window.innerHeight));
+        if (Stage.lenis) { if (Stage.lenis.resize) Stage.lenis.resize(); Stage.lenis.scrollTo(y, { immediate: true, force: true }); }
+        else window.scrollTo(0, y);
+      };
+      go();
+      // once more after the browser's own scroll to the focused link, which reads the walk's layout of
+      // the moment (a link low in the unlifted column would otherwise pull the page past its room)
+      requestAnimationFrame(go);
     });
     return mm;
   };

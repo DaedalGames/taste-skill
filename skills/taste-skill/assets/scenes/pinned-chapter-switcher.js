@@ -15,9 +15,12 @@
 //
 // The pictures stay clean above their horizon. Every word (title, text, heading, count and index) sits low
 // on the stage, on a flat band of scrim whose top edge lies on the picture's horizon, so the step from
-// clear sky to darker sea hides in a line the picture already has.
+// clear sky to darker sea hides in a line the picture already has. The finished composition does the same
+// when a script runs; with no script the scrim covers each whole picture.
 //
-// DOM (the scene builds the count and the progress bars itself; it builds the index when it is missing)
+// DOM (the scene builds the count and the progress bars itself; it builds the index when it is missing;
+// it wraps each picture in a <div class="chs-move">, the one box the wipes scale and drift, which also
+// carries the band, so a picture and its band are one layer)
 // <section class="scene" data-scene="pinned-chapter-switcher" aria-labelledby="route-title" data-options='{}'>
 //   <div class="scene-stage">
 //     <header class="chs-head"><h2 class="chs-heading" id="route-title">Section heading, 2-5 words</h2></header>
@@ -46,6 +49,12 @@
 //               The scene lifts or lowers each such picture inside its crop so the lines meet at one height
 //               and every seam continues them, and lays the scrim band from that line down. Without it, the
 //               scrim covers the whole picture.
+//   data-horizon-at  0.2-0.8, optional: where this picture's line lands on the stage (a share of its
+//               height), instead of the shared height. A level seam (rise, drop) never crosses a horizon, so
+//               the scene already gives a picture that rises in its own line at 0.58 (0.42 for a drop) when
+//               no upright seam follows it (it is the last chapter, or the next wipe is level too): the strip
+//               the rising edge uncovers first is then what stands on its horizon, not the ground below it.
+//               The line never lands lower than just above the words.
 //   --plate-bg  shown while the picture decodes; set it to the picture's dominant dark tone
 //   --scrim     the flat black of the band under the horizon (or over the whole picture without
 //               data-horizon), default .45 (0-.7). A calm, mid-toned sea reads at .3-.4; a bright or busy one
@@ -79,7 +88,7 @@
 //   horizon      auto     where the data-horizon lines meet, as a share of the stage's height, 0.2-0.8; auto
 //                         picks the height that lines up the most pictures, as close to 0.45 as their crops
 //                         allow (the words need the lower half)
-//   shade        0.35     how dark the outgoing picture gets as it is covered, 0-0.6
+//   shade        0.25     how dark the outgoing picture gets as it is covered, 0-0.6
 //   push         1        strength of the scale and drift on both pictures, 0-1.5
 //   index        'tabs'   'tabs' (names over progress bars) | 'bars' (bars only) | 'none'; above 7 chapters 'bars'
 //   counter      true     the rolling "2 of 4" beside the heading
@@ -90,6 +99,9 @@
 //   phoneLength  0.85     screens per chapter on a phone
 //   phoneWipe    0.55     wipe share on a phone
 //   phoneMax     6        more chapters than this and the phone shows the finished composition
+// A screen under 560px tall or 340px wide (a phone on its side, a window dragged short) shows the
+// finished composition at any width, and the scene goes live again when the screen grows back. A turned
+// phone or a resized window returns the reader to the same point of the scene.
 // Index links scroll to the start of their chapter's rest, never to a seam.
 (() => {
   if (!window.Stage) return;
@@ -120,14 +132,15 @@
   // title lines travel this far (% of a line) so they clear masks padded for the tight display leading;
   // a skewed line travels further, by as much as its leading end is lifted, so no end of it shows early
   const TRAVEL = 135, SKEW = 7, TAN = Math.tan((SKEW * Math.PI) / 180);
-  const travel = (el, skew) => {
-    if (!skew) return TRAVEL;
+  // measured once per split (never during a swap, where a read would force a layout mid-frame)
+  const measureLift = (el) => {
     let w = el.offsetWidth; // the words' own width, not the line box's
     try { const r = document.createRange(); r.selectNodeContents(el); w = r.getBoundingClientRect().width || w; } catch (e) { /* keep the box */ }
-    return TRAVEL + (100 * TAN * w) / Math.max(1, el.offsetHeight);
+    el.__chsLift = (100 * TAN * w) / Math.max(1, el.offsetHeight);
   };
+  const travel = (el, skew) => TRAVEL + (skew ? el.__chsLift || 0 : 0);
   // the old words are gone (opacity 0) before the new first line shows in a mask they share
-  const FADE = 0.12, ENTER_AT = 0.04;
+  const FADE = 0.1, ENTER_AT = 0.025;
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const num = (v, d, a, b) => (v === undefined || v === null || v === '' || !Number.isFinite(+v) ? d : clamp(+v, a, b));
 
@@ -143,9 +156,23 @@
     root.dataset.set = pair ? 'pair' : 'plates';
     chapters.forEach((c, i) => { if (!c.id) c.id = (root.id || 'chapter') + '-' + (i + 1); });
     const plates = chapters.map((c) => c.querySelector('.chs-plate'));
-    const pics = plates.map((p) => (p && p.querySelector('picture')) || null);
     const imgs = plates.map((p) => (p && p.querySelector('img, video')) || null);
     const texts = chapters.map((c) => c.querySelector('.chs-text'));
+    // The mover: one box per frame that holds the picture (its <picture>, clip or img) and, live, its scrim
+    // band (the box's ::after, from the horizon down). Scale and drift move this one box, so the picture
+    // and its band are painted once into one composited layer and travel together: the band's edge never
+    // leaves the horizon, and nothing is painted again while a wipe runs.
+    const moverOf = (frame) => {
+      if (!frame) return null;
+      let m = frame.querySelector(':scope > .chs-move');
+      if (m) return m;
+      const media = frame.querySelector(':scope > picture, :scope > img, :scope > video');
+      if (!media) return null;
+      m = document.createElement('div'); m.className = 'chs-move';
+      media.before(m); m.append(media);
+      return m;
+    };
+    const movers = plates.map(moverOf);
     const shadeOf = (p) => {
       if (!p) return null;
       let s = p.querySelector(':scope > .chs-shade');
@@ -153,22 +180,12 @@
       return s;
     };
     const shades = plates.map(shadeOf);
-    // the scrim band: a box the size of the picture's own (so it takes the same scale and drift and its
-    // edge stays on the horizon) whose fill runs from the horizon line down; 'pair' has its words on the
-    // ground and needs none
-    const bands = plates.map((p) => {
-      if (!p || pair) return null;
-      let b = p.querySelector(':scope > .chs-band');
-      if (!b) { b = document.createElement('span'); b.className = 'chs-band'; b.setAttribute('aria-hidden', 'true'); p.appendChild(b); }
-      return b;
-    });
-    const withBand = (k, el) => (bands[k] ? [el, bands[k]] : el);
 
     // 'pair': the small frame of each chapter, the article's own .chs-inset or a detail of its picture
     const insets = chapters.map((c, k) => {
       let f = c.querySelector(':scope > .chs-inset');
-      if (f || !pair || !plates[k]) return f;
-      const src = pics[k] || imgs[k];
+      if (f || !pair || !movers[k]) return f;
+      const src = movers[k].firstElementChild;
       if (!src) return null;
       let pic;
       if (src.tagName === 'VIDEO') { // a clip's detail is its poster, not a second decoder
@@ -185,6 +202,7 @@
       return f;
     });
     const insetImgs = insets.map((f) => (f && f.querySelector('img, video')) || null);
+    const insetMovers = insets.map(moverOf);
     const insetShades = insets.map(shadeOf);
     [...imgs, ...insetImgs].forEach((img) => { if (img && img.decode) img.decode().catch(() => {}); });
 
@@ -244,7 +262,7 @@
     const maxHold = num(opts.maxHold, 6, 3, 8);
     const desk = { L: Math.min(num(opts.length, 1, 0.8, 1.4), maxHold / N), w: num(opts.wipe, 0.5, 0.35, 0.7), amp: 1, phone: false };
     const hand = { L: Math.min(num(opts.phoneLength, 0.85, 0.6, 1.4), maxHold / N), w: num(opts.phoneWipe, 0.55, 0.35, 0.7), amp: 0.6, phone: true };
-    const push = num(opts.push, 1, 0, 1.5), shadeTo = num(opts.shade, 0.35, 0, 0.6);
+    const push = num(opts.push, 1, 0, 1.5), shadeTo = num(opts.shade, 0.25, 0, 0.6);
     const masked = !!window.SplitText;
     const EASE = window.gsap ? gsap.parseEase('power1.inOut') : (t) => t;
     if (Stage.touch && window.ScrollTrigger) ScrollTrigger.config({ ignoreMobileResize: true });
@@ -257,9 +275,13 @@
       t.style.visibility = on ? '' : 'hidden';
       if (on) t.removeAttribute('aria-hidden'); else t.setAttribute('aria-hidden', 'true');
     };
+    // Lines at rest are set to explicit neutral values, never cleared: GSAP keeps its cache of each line's
+    // transform and reads its opacity from the inline style, so a swap starts without a single
+    // getComputedStyle (each one forces a style recalculation in the middle of a frame).
+    const NEUTRAL = { yPercent: 0, xPercent: 0, skewY: 0, opacity: 1 };
     const settleLines = (i) => {
       const L = S.lines[i];
-      if (L) gsap.set([...L.title, ...L.body], { clearProps: 'transform,opacity' });
+      if (L && (L.title.length || L.body.length)) gsap.set([...L.title, ...L.body], NEUTRAL);
     };
     const settle = () => { // after a re-split or a jump: the active text set, every other hidden
       if (S.swap) { S.swap.kill(); S.swap = null; }
@@ -281,8 +303,8 @@
     const enter = (tl, i, v, at, quick) => {
       const L = S.lines[i]; if (!L) return;
       if (quick) { // a fling: the target is readable within a few frames, however often it is replaced
-        tl.fromTo([...L.title, ...L.body], { yPercent: 40 * v.y, xPercent: 0, skewY: 0, opacity: 0 },
-          { yPercent: 0, opacity: 1, duration: 0.45, ease: 'expo.out', stagger: 0.02 }, at);
+        tl.fromTo([...L.title, ...L.body], { yPercent: 24 * v.y, xPercent: 0, skewY: 0, opacity: 0.3 },
+          { yPercent: 0, opacity: 1, duration: 0.35, ease: 'expo.out', stagger: 0.015 }, at);
         setText(i, true);
         return;
       }
@@ -291,7 +313,7 @@
         // the line nearest the incoming edge first
         tl.fromTo(L.title,
           masked ? { yPercent: (j, el) => travel(el, v.skew) * v.y, xPercent: v.x, skewY: SKEW * v.skew, opacity: 1 } : { yPercent: 24 * v.y, opacity: 0 },
-          { yPercent: 0, xPercent: 0, skewY: 0, opacity: 1, duration: 0.7 * v.slow, ease: 'expo.out', stagger: { each: 0.05, from: v.from } }, at);
+          { yPercent: 0, xPercent: 0, skewY: 0, opacity: 1, duration: 0.62 * v.slow, ease: 'expo.out', stagger: { each: 0.05, from: v.from } }, at);
       }
       // the body cascade comes from growing durations, not from delays, in the same order as the title
       const n = L.body.length;
@@ -323,9 +345,13 @@
       });
       if (reel) gsap.to(reel, { yPercent: (-100 * idx) / N, duration: instant ? 0 : 0.55, ease: 'power3.out', overwrite: 'auto' });
       // busy: the last swap's titles are still moving; after that its tail (the body cascade) can be
-      // overtaken by an ordinary exit
-      const busy = !!(S.swap && S.swap.isActive() && S.swap.time() < 0.5);
+      // overtaken by an ordinary exit. (Its own clock, not isActive(): a swap made in the same frame has
+      // not rendered yet, and isActive() calls it idle.)
+      const busy = !!(S.swap && S.swap.progress() < 1 && S.swap.time() < 0.5);
       if (S.swap) { S.swap.kill(); S.swap = null; }
+      // whatever path follows, only the outgoing and the incoming words may stay on: a swap killed before
+      // its exit hid the old words would otherwise leave them standing
+      texts.forEach((_, i) => { if (i !== idx && i !== prev && texts[i] && texts[i].style.visibility !== 'hidden') { setText(i, false); settleLines(i); } });
       const v = vec(dir > 0 ? idx : prev, dir);
       if (instant || busy || Math.abs(idx - prev) > 1) {
         // a fling or a reversal mid-swap: straight to the target, nothing else on screen
@@ -341,6 +367,7 @@
     };
 
     // footage plays only where it shows and while the scene is on screen
+    const footage = [...imgs, ...insetImgs].some((v) => v && v.tagName === 'VIDEO');
     const playIf = (v, on) => {
       if (!v || v.tagName !== 'VIDEO') return;
       if (on) { if (v.paused) v.play().catch(() => {}); } else if (!v.paused) v.pause();
@@ -366,6 +393,19 @@
     // The height chosen is the one that lines up the most pictures, as close to the preferred one as they
     // allow. A crop taller than the stage's shape gives the room; one exactly its shape keeps its line.
     const horizons = chapters.map((c) => { const h = parseFloat(c.dataset.horizon); return h > 0 && h < 1 ? h : null; });
+    // A level seam (rise, drop) runs along the horizon, never across it, so the picture it brings in needs
+    // the shared line only where an upright seam (right, left, corner) follows it. When none does (it is the
+    // last chapter, or the next wipe is level too) it gets its own line: just below the middle for a rise,
+    // so the strip the rising edge uncovers first is what stands on its horizon (the glow, the figure), not
+    // the dark ground under it; just above the middle for a drop. data-horizon-at sets it by hand.
+    const LEVEL_AT = 0.58;
+    const level = (x) => x === 'rise' || x === 'drop';
+    const ownAt = chapters.map((c, k) => {
+      const a = parseFloat(c.dataset.horizonAt);
+      if (a >= 0.2 && a <= 0.8) return a;
+      if (pair || k === 0 || !level(wipes[k]) || (k < N - 1 && !level(wipes[k + 1]))) return null;
+      return wipes[k] === 'rise' ? LEVEL_AT : 1 - LEVEL_AT;
+    });
     const align = () => {
       if (!S.live) return;
       const rows = [];
@@ -378,9 +418,10 @@
         if (!nw || !nh || !bw || !bh) return;
         const ph = nh * Math.max(bw / nw, bh / nh), slack = ph - bh >= 1 ? ph - bh : 0;
         // where the line can land, from lo (picture lifted as far as it goes) to hi, as shares of the box
-        rows.push({ k, img, h, ph, bh, slack, lo: (h * ph - slack) / bh, hi: (h * ph) / bh });
+        rows.push({ k, img, h, ph, bh, slack, lo: (h * ph - slack) / bh, hi: (h * ph) / bh, own: ownAt[k] });
       });
       if (!rows.length) return;
+      const shared = rows.filter((r) => r.own === null);
       // the picture's box runs 6% past the stage at the top and the bottom
       const H = stage.offsetHeight || window.innerHeight;
       const toBox = (s) => (s + 0.06) / 1.12;
@@ -393,30 +434,67 @@
       const cap = toBox(Math.max(0.2, (words - 16) / H));
       const given = num(opts.horizon, NaN, 0.2, 0.8);
       let t = Math.min(cap, toBox(Number.isFinite(given) ? given : 0.45));
-      if (!Number.isFinite(given)) {
+      if (!Number.isFinite(given) && shared.length) {
         const pref = t, EPS = 0.004;
         let best = -1, bestD = Infinity;
-        for (const c of [pref, ...rows.flatMap((r) => [r.lo, r.hi, clamp(pref, r.lo, r.hi)])]) {
+        for (const c of [pref, ...shared.flatMap((r) => [r.lo, r.hi, clamp(pref, r.lo, r.hi)])]) {
           if (c > cap + EPS) continue;
-          const n = rows.filter((r) => c >= r.lo - EPS && c <= r.hi + EPS).length, dd = Math.abs(c - pref);
+          const n = shared.filter((r) => c >= r.lo - EPS && c <= r.hi + EPS).length, dd = Math.abs(c - pref);
           if (n > best || (n === best && dd < bestD)) { best = n; bestD = dd; t = c; }
         }
       }
       rows.forEach((r) => {
-        const o = r.slack ? clamp(r.h * r.ph - t * r.bh, 0, r.slack) : 0;
+        const at = r.own === null ? t : Math.min(cap, toBox(r.own));
+        const o = r.slack ? clamp(r.h * r.ph - at * r.bh, 0, r.slack) : 0;
         if (r.slack) {
           const x = (getComputedStyle(r.img).objectPosition || '50%').split(' ')[0];
           r.img.style.objectPosition = `${x} ${(-o).toFixed(1)}px`;
         }
         // a crop that can't lift its line above the words gets its band raised to them anyway
-        if (bands[r.k]) bands[r.k].style.setProperty('--band-top', `${Math.round(Math.min(r.h * r.ph - o, cap * r.bh))}px`);
+        if (movers[r.k] && !pair) movers[r.k].style.setProperty('--band-top', `${Math.round(Math.min(r.h * r.ph - o, cap * r.bh))}px`);
       });
     };
+    // The finished composition, when a script runs (reduced motion, a phone set to 'rest'): each block's
+    // picture is set so its horizon sits a little above the middle of the block, and its scrim starts there
+    // instead of covering the sky. With no script at all the scrim covers the whole picture.
+    const restAlign = () => {
+      if (S.live || root.classList.contains('is-live')) return;
+      chapters.forEach((c, k) => {
+        const img = imgs[k], plate = plates[k], h = horizons[k];
+        if (!img || !plate || h === null) return;
+        img.style.removeProperty('object-position');
+        const nw = img.naturalWidth || img.videoWidth, nh = img.naturalHeight || img.videoHeight;
+        const bw = img.offsetWidth, bh = img.offsetHeight;
+        if (!nw || !nh || !bw || !bh) return;
+        const ph = nh * Math.max(bw / nw, bh / nh), slack = ph - bh >= 1 ? ph - bh : 0;
+        const tr = texts[k] && texts[k].getBoundingClientRect(), top = plate.getBoundingClientRect().top;
+        const cap = tr && tr.height ? Math.max(0.2 * bh, tr.top - top - 16) : bh;
+        const o = slack ? clamp(h * ph - Math.min(cap, 0.42 * bh), 0, slack) : 0;
+        if (slack) {
+          const x = (getComputedStyle(img).objectPosition || '50%').split(' ')[0];
+          img.style.objectPosition = `${x} ${(-o).toFixed(1)}px`;
+        }
+        plate.style.setProperty('--band-top', `${Math.round(clamp(h * ph - o, 0, cap))}px`);
+      });
+    };
+    let restQueued = 0;
+    const queueRest = () => { if (!restQueued) restQueued = requestAnimationFrame(() => { restQueued = 0; restAlign(); }); };
     imgs.forEach((img, k) => {
-      if (img && horizons[k] !== null) img.addEventListener(img.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', align);
+      if (img && horizons[k] !== null) img.addEventListener(img.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', () => (S.live ? align() : queueRest()));
     });
+    window.addEventListener('resize', () => { if (!S.live) queueRest(); }, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!S.live) queueRest(); });
+    // the stage never calls rest() on a wide screen with reduced motion (its matchMedia matches neither
+    // condition there), so the scene looks for itself, now and whenever that preference changes
+    queueRest();
+    if (window.matchMedia) {
+      const rm = window.matchMedia('(prefers-reduced-motion: reduce)');
+      // (and the reader keeps their place while the stage collapses into it, or back)
+      if (rm.addEventListener) rm.addEventListener('change', () => { arm(); requestAnimationFrame(queueRest); });
+    }
 
-    // hide what is fully covered or not yet started; promote only the pictures in play
+    // hide what is fully covered or not yet started; promote only the pictures in play (the one showing,
+    // the one coming in and the next after it, so no layer is made or dropped while a seam moves)
     const paint = (p) => {
       for (const t of S.tracks) {
         let top = 0;
@@ -425,9 +503,9 @@
           if (!el) return;
           const v = j >= top && (j === 0 || (t.wipes[j] && p > t.wipes[j].t0));
           if (t.vis[j] !== v) { t.vis[j] = v; el.style.visibility = v ? '' : 'hidden'; }
-          playIf(t.imgs[j], v && S.inView);
-          const wc = v || j === top + 1;
-          if (t.imgs[j] && t.wc[j] !== wc) { t.wc[j] = wc; t.imgs[j].style.willChange = wc ? 'transform' : ''; }
+          if (footage) playIf(t.media[j], v && S.inView);
+          const wc = j >= top && j <= top + 2;
+          if (t.movers[j] && t.wc[j] !== wc) { t.wc[j] = wc; t.movers[j].style.willChange = wc ? 'transform' : ''; }
         });
       }
     };
@@ -444,12 +522,17 @@
       paint(p);
     };
 
-    const split = (el, onLines) => {
+    const split = (el, onLines, lift) => {
       if (!el) return null;
       if (masked) {
         return SplitText.create(el, {
           type: 'lines', mask: 'lines', linesClass: 'chs-line', aria: 'auto', autoSplit: true,
-          onSplit: (self) => { onLines(self.lines); if (!S.building && S.live) settle(); },
+          onSplit: (self) => {
+            if (lift) self.lines.forEach(measureLift);
+            gsap.set(self.lines, NEUTRAL); // parsed now, while nothing moves, not on the first swap
+            onLines(self.lines);
+            if (!S.building && S.live) settle();
+          },
         });
       }
       onLines([el]);
@@ -465,11 +548,11 @@
       [...plates, ...insets].forEach((p) => { if (p) { p.style.removeProperty('visibility'); p.style.removeProperty('clip-path'); } });
       [...imgs, ...insetImgs].forEach((v) => playIf(v, false)); // the finished composition shows posters
       imgs.forEach((img, k) => { if (img && horizons[k] !== null) img.style.removeProperty('object-position'); });
-      bands.forEach((b) => b && b.style.removeProperty('--band-top'));
+      [...movers, ...plates].forEach((m) => m && m.style.removeProperty('--band-top'));
       tabs.forEach((t) => t.classList.remove('is-active'));
       links.forEach((a) => a && a.removeAttribute('aria-current'));
       if (!window.gsap) return; // no script library: nothing was ever moved
-      const moved = [...pics, ...imgs, ...insetImgs, ...shades, ...insetShades, ...bands, ...fills, reel].filter(Boolean);
+      const moved = [...movers, ...insetMovers, ...shades, ...insetShades, ...fills, reel].filter(Boolean);
       gsap.killTweensOf(moved);
       gsap.set(moved, { clearProps: 'transform,opacity,willChange' });
     };
@@ -482,55 +565,59 @@
       tl.to({}, { duration: 1 }, 0); // positions below read as fractions of the hold
 
       // one track of frames: the full-bleed plates (or the big frames), and in 'pair' the small frames.
-      // A picture's scrim band moves with it, so the band's edge stays on the picture's horizon.
-      const track = (els, ims, shs, bnd, kindOf, lag, inScale) => {
-        const t = { els, imgs: ims, wipes: [], vis: [], wc: [] };
-        const moving = (j) => (bnd && bnd[j] ? [ims[j], bnd[j]] : ims[j]);
+      // Each frame's mover carries its picture and its scrim band, so the band's edge stays on the horizon.
+      const track = (els, mvs, media, shs, kindOf, lag, inScale) => {
+        const t = { els, movers: mvs, media, wipes: [], vis: [], wc: [] };
         for (let k = 1; k < N; k++) {
           const W = WIPES[kindOf(k)], t0 = k / N - d / 2 + lag * d;
           if (els[k]) t.wipes[k] = { el: els[k], edges: W.edges, t0, d, w: 0, h: 0, last: '' };
-          if (ims[k]) {
+          if (mvs[k]) {
             // the incoming picture is still settling after its seam lands
             const sc = 1 + ((inScale || W.in.scale) - 1) * amp;
-            tl.fromTo(moving(k), { scale: sc }, { scale: 1, duration: Math.min((inScale ? 1.5 : 1.35) * d, 0.95 / N), ease: 'power2.out' }, t0);
+            tl.fromTo(mvs[k], { scale: sc }, { scale: 1, duration: Math.min((inScale ? 1.5 : 1.35) * d, 0.95 / N), ease: 'power2.out' }, t0);
             const from = {}, to = { duration: d, ease: 'power1.inOut' };
             if (W.in.xPercent) { from.xPercent = W.in.xPercent * amp; to.xPercent = 0; }
             if (W.in.yPercent) { from.yPercent = W.in.yPercent * amp; to.yPercent = 0; }
-            if ('xPercent' in from || 'yPercent' in from) tl.fromTo(moving(k), from, to, t0);
+            if ('xPercent' in from || 'yPercent' in from) tl.fromTo(mvs[k], from, to, t0);
           }
-          if (ims[k - 1]) { // the outgoing picture is pushed by the incoming one
+          if (mvs[k - 1]) { // the outgoing picture is pushed by the incoming one
             const from = { scale: 1 }, to = { scale: 1 + (W.out.scale - 1) * amp, duration: d, ease: 'none', immediateRender: false };
             if (W.out.xPercent) { from.xPercent = 0; to.xPercent = W.out.xPercent * amp; }
             if (W.out.yPercent) { from.yPercent = 0; to.yPercent = W.out.yPercent * amp; }
-            tl.fromTo(moving(k - 1), from, to, t0);
+            tl.fromTo(mvs[k - 1], from, to, t0);
           }
           // the shade is the plate's scrim (live CSS sets it to --scrim); it deepens as the plate is covered
           const sh = shs[k - 1];
           if (shadeTo && sh) {
             const base = parseFloat(getComputedStyle(sh).opacity) || 0;
+            // written inline now, while nothing moves: a tween that starts later (immediateRender false)
+            // would otherwise read the computed opacity as it starts, a forced style pass mid-wipe
+            gsap.set(sh, { opacity: base });
             tl.fromTo(sh, { opacity: base }, { opacity: base + (1 - base) * shadeTo, duration: d, ease: 'none', immediateRender: false }, t0);
           }
         }
         S.tracks.push(t);
       };
-      track(plates, imgs, shades, bands, (k) => wipes[k], 0, pair ? 1.2 : 0);
+      track(plates, movers, imgs, shades, (k) => wipes[k], 0, pair ? 1.2 : 0);
       // the small frame crosses the big one: drawn in from the right, a beat behind
-      if (pair && !cfg.phone) track(insets, insetImgs, insetShades, null, () => 'right', 0.2, 1.2);
+      if (pair && !cfg.phone) track(insets, insetMovers, insetImgs, insetShades, () => 'right', 0.2, 1.2);
 
       fills.forEach((f, k) => { if (f) tl.fromTo(f, { scaleX: 0 }, { scaleX: 1, duration: 1 / N, ease: 'none' }, k / N); });
 
-      // pre-roll: the first picture settles into its frame while the section arrives
-      if (opts.preroll !== false && pics[0]) {
-        gsap.fromTo(bands[0] ? [pics[0], bands[0]] : pics[0], { yPercent: -5 * cfg.amp }, {
-          yPercent: 0, ease: 'none',
-          scrollTrigger: { trigger: root, start: 'top bottom', end: 'top top', scrub: true },
+      // pre-roll: the first picture settles into its frame while the section arrives (in px, so it never
+      // fights the percentages the wipes move it by)
+      if (opts.preroll !== false && movers[0]) {
+        const m = movers[0];
+        gsap.fromTo(m, { y: () => -0.05 * cfg.amp * m.offsetHeight }, {
+          y: 0, ease: 'none',
+          scrollTrigger: { trigger: root, start: 'top bottom', end: 'top top', scrub: true, invalidateOnRefresh: true },
         });
       }
 
       texts.forEach((t, i) => {
         S.lines[i] = { title: [], body: [] };
         if (!t) return;
-        S.splits.push(split(t.querySelector('.chs-title'), (ls) => { S.lines[i].title = ls; }));
+        S.splits.push(split(t.querySelector('.chs-title'), (ls) => { S.lines[i].title = ls; }, true));
         S.splits.push(split(t.querySelector('.chs-body'), (ls) => { S.lines[i].body = ls; }));
         setText(i, i === 0);
       });
@@ -555,14 +642,15 @@
       });
     }
 
-    // Crossing a breakpoint (a phone turned to landscape, a window dragged past 768px) rebuilds the scene,
-    // and the refresh that follows measures with the page scrolled to the top and leaves it there. The scene
-    // keeps where the reader was relative to itself (above it, a point of its progress, or past it) and, if
-    // the page has fallen back to the top after a rebuild, returns them to the same point.
+    // A turned phone or a resized window changes every height the scene measured, and crossing a breakpoint
+    // rebuilds it. The scene keeps where the reader was relative to itself (above it, a point of its
+    // progress, or past it) and returns them to that point after the refresh. While a resize is being
+    // settled, scroll events are not the reader's: the browser clamps the scroll to the new page height and
+    // reports it right after 'resize', before the scene is rebuilt, measured against the old geometry.
     const mem = { y: -1, above: false, p: 0, past: 0 };
     let pendingUntil = 0;
     const remember = () => {
-      if (performance.now() < pendingUntil) return; // the collapse itself is not a reader's scroll
+      if (performance.now() < pendingUntil) return; // the clamp and the collapse are not a reader's scroll
       const y = window.scrollY, st = S.live && S.tl && S.tl.scrollTrigger;
       let above = false, p = 0, past = 0;
       if (st) {
@@ -581,17 +669,42 @@
     };
     window.addEventListener('scroll', remember, { passive: true });
     const arm = () => { if (mem.y > 2) pendingUntil = performance.now() + 900; };
+    // 'resize' runs before the scroll steps of the same frame, so arming here keeps the clamp out of mem.
+    // A phone's address bar sliding in or out changes only the height: that is the reader scrolling.
+    let vw = window.innerWidth, vh = window.innerHeight;
+    window.addEventListener('resize', () => {
+      const w = window.innerWidth, h = window.innerHeight;
+      if (w !== vw || (h !== vh && !Stage.touch)) arm();
+      vw = w; vh = h;
+    }, { passive: true });
+    window.addEventListener('orientationchange', arm, { passive: true });
+    // The scene changing height by itself (the stage collapsing it when reduced motion is switched on, a
+    // rebuild) clamps the scroll too, and that clamp can be reported before any listener of ours has run.
+    // A resize observer reports the new height after layout, before the next scroll event, so it arms first.
+    if ('ResizeObserver' in window) {
+      let lastH = -1;
+      new ResizeObserver((es) => {
+        const h = Math.round(es[es.length - 1].contentRect.height);
+        if (lastH >= 0 && h !== lastH) arm();
+        lastH = h;
+      }).observe(root);
+    }
+    // the reader taking over ends the wait, so a late refresh never pulls them back
+    ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach((ev) => window.addEventListener(ev, () => { pendingUntil = 0; }, { passive: true }));
     const putBack = () => {
-      if (window.scrollY > 2 || mem.y <= 2) return;
+      if (mem.y <= 2) return;
       const st = S.live && S.tl && S.tl.scrollTrigger;
       let y = mem.y;
-      if (!mem.above && st) y = mem.past > 0 ? st.end + mem.past : st.start + mem.p * (st.end - st.start);
-      else if (!mem.above) {
+      if (mem.above) { if (window.scrollY > 2) return; } // above the scene the browser keeps its own place
+      else if (st) y = mem.past > 0 ? st.end + mem.past : st.start + mem.p * (st.end - st.start);
+      else {
         const top = root.getBoundingClientRect().top + window.scrollY;
         y = mem.past > 0 ? top + root.offsetHeight - window.innerHeight + mem.past
           : chapters[clamp(Math.floor(mem.p * N), 0, N - 1)].getBoundingClientRect().top + window.scrollY;
       }
       y = Math.max(0, Math.round(y));
+      mem.y = y;
+      if (Math.abs(window.scrollY - y) < 1) return;
       if (Stage.lenis) Stage.lenis.scrollTo(y, { immediate: true, force: true }); else window.scrollTo(0, y);
     };
     if (window.ScrollTrigger) {
@@ -600,7 +713,7 @@
       });
     }
     // footage stops when the scene leaves the screen and picks up where it shows when it returns
-    if ([...imgs, ...insetImgs].some((v) => v && v.tagName === 'VIDEO') && 'IntersectionObserver' in window) {
+    if (footage && 'IntersectionObserver' in window) {
       new IntersectionObserver((es) => {
         S.inView = es[es.length - 1].isIntersecting;
         if (S.live && S.tl) paint(S.tl.progress());
@@ -623,19 +736,44 @@
     });
 
     const scrub = opts.scrub !== undefined ? opts.scrub : Stage.lenis ? true : Stage.phone ? 0.4 : 0.6;
-    // a phone too small for the held stage (under 340 x 560) gets the finished composition too
+    // A screen too small for the held stage (under 340px wide or 560px tall: a phone turned on its side, a
+    // window dragged short) gets the finished composition, on either side of 768px: there the words and
+    // the dock would cover most of the stage and leave the picture a strip.
     const tiny = () => window.innerWidth < 340 || window.innerHeight < 560;
+    const still = () => {
+      arm();
+      reset();
+      S.built = 'still';
+      root.classList.remove('is-live'); root.classList.add('is-rest'); root.style.removeProperty('--hold');
+      queueRest();
+    };
+    // the stage reverts a build (a breakpoint, reduced motion switched on) by its own context; the inline
+    // clips, visibility and positions the scene wrote outside GSAP are cleared with it
+    const live = (tl, ctx, cfg) => {
+      if (tiny()) return still();
+      build(tl, ctx, cfg);
+      S.built = 'live';
+      if (gsap.context) gsap.context(() => () => { if (S.tl === tl) { reset(); S.built = null; } });
+    };
     const phone = opts.phone === 'rest' || N > num(opts.phoneMax, 6, 2, 12)
       ? 'rest'
-      : {
-        hold: N * hand.L,
-        build: (tl, ctx) => {
-          if (!tiny()) return build(tl, ctx, hand);
-          arm();
-          reset();
-          root.classList.remove('is-live'); root.classList.add('is-rest'); root.style.removeProperty('--hold');
-        },
-      };
-    return Stage.scene(root, { hold: N * desk.L, scrub, build: (tl, ctx) => build(tl, ctx, desk), phone, rest: () => { arm(); reset(); } });
+      : { hold: N * hand.L, build: (tl, ctx) => live(tl, ctx, hand) };
+    const plan = { hold: N * desk.L, scrub, build: (tl, ctx) => live(tl, ctx, desk), phone, rest: () => { arm(); reset(); S.built = null; queueRest(); } };
+    let mm = Stage.scene(root, plan);
+    // The stage's media queries watch the width and reduced motion only, so a resize that crosses 560px
+    // in height (or 340px in width) without crossing 768px is rebuilt here, once it has settled.
+    let tinyT = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(tinyT);
+      tinyT = setTimeout(() => {
+        if (!mm || !S.built || S.built === (tiny() ? 'still' : 'live')) return;
+        arm();
+        mm.revert();
+        mm = Stage.scene(root, plan);
+        root.__scene = mm;
+        ScrollTrigger.refresh();
+      }, 180);
+    }, { passive: true });
+    return mm;
   };
 })();

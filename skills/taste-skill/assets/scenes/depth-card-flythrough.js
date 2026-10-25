@@ -16,7 +16,8 @@
 //         <img class="fly__backdrop-img" src="…" alt="" width="2400" height="1500" fetchpriority="high">
 //         (or, for a moving backdrop: <video class="fly__backdrop-video" src="…" poster="…" muted playsinline preload="auto"></video>)
 //       </div>
-//       <div class="fly__scrim" aria-hidden="true"></div>                       (optional, see --fly-scrim)
+//       <div class="fly__scrim" aria-hidden="true"></div>                       (optional, see --fly-scrim; over a still the
+//                                                                          script draws it inside the picture while live)
 //       <div class="fly__field">
 //         <figure class="fly__card" style="--dy:2">                               (x N, 3-12; 7 reads best)
 //           <img class="fly__img" src="…" alt="What the photo shows" width="1200" height="800">
@@ -38,15 +39,25 @@
 // Statements: 4-7 words, about 34 characters, so they hold two lines at the live size. Captions: 1-4
 // words, 22 characters at most. In flight the script shows each caption as a flat tag of constant size
 // (div.fly__tags, aria-hidden) riding its card's inner top corner: it comes in as the card reaches
-// reading size, is fully on by the time its statement does, and leaves as the card grows past reading
-// size (or nears the screen edge), so a passing ghost is picture only and no label is ever louder than
-// the statement. The figcaption stays in the card for screen readers and the finished composition.
+// reading size and leaves as the card grows past it (or nears the screen edge), so a passing ghost is
+// picture only and no label is ever louder than the statement. Statement k takes over as card k's tag is
+// fully on, or as card k-1 leaves if that is sooner, so a statement never outlives its picture. The
+// figcaption stays in the card for screen readers and the finished composition.
 // The backdrop needs its vanishing point on the vertical centre line at --fly-vp (56% of the stage by
 // default; set it to where the picture's own lines meet) and a calm, low-detail band above it for the
-// statement. With a still picture the script lays a copy of it over the ground (everything below the
-// vanishing point) and runs the camera over it: the ground streams toward the reader along the lines that
-// meet at the vanishing point, while the far scene holds. That suits a jetty, road, runway, rail line or
-// floor; set run 0 for a picture whose lower half is not ground.
+// statement. Tell the scene how wide its focal object is (--fly-focus-w, the half-width at dolly 1: a plain
+// number is a share of the picture's width, a length is taken as it is) and where it stands (--fly-ground):
+// on a wide stage the cards fly beside it on alternating sides, and a far card is held just outside it
+// until it has grown clear, so no card crosses the boathouse, mast or doorway the picture is about. On a
+// tall stage (a phone, a tablet held upright) the focal object fills the width, so the cards fly the low
+// path instead: each comes out at its foot, grows to about 72vw whole and on screen just below
+// --fly-ground, and leaves through the bottom as a big pass. A card comes in solid under a haze that lifts
+// as it nears, and leaves solid: it fades only once less than 15% of it is left on screen, and if its own
+// course would not take it off the screen it veers out over the last part of its flight. With a still picture the camera dollies toward the focal object, and the script lays a copy of
+// the picture over the ground (everything below the vanishing point, or below --fly-ground when the focal
+// object stands on the ground below it) and runs the camera over it: the ground streams toward the reader
+// along the lines that meet at the vanishing point, while the far scene holds. That suits a jetty, road,
+// runway, rail line or floor; set run 0 for a picture whose lower half is not ground.
 // A <video> backdrop is scrubbed instead (currentTime = progress x duration): a 6-10 s muted forward
 // move, encoded with a keyframe on every frame so it seeks cleanly
 // (ffmpeg -i in.mp4 -an -vf scale=1920:-2 -c:v libx264 -g 1 -crf 24 -movflags +faststart out.mp4),
@@ -63,27 +74,33 @@
 //   sideX       how far out the cards fly, as a share of the stage width. 0.32                (0.28-0.38)
 //   endScale    how large a card is when it leaves. 4 = the bold ghost pass at the edge,      (2.5-5)
 //               2.5 = a calm drift. The phone keeps 2.5 at most.
-//   yaw         inward turn in degrees: the cards stand as the walls of a corridor. 8;        (0-14)
+//   yaw         inward turn in degrees: the cards stand as the walls of a corridor. 8;        (0-10)
 //               0 = flat cards facing the camera. A turned card straightens as it passes, so
-//               its outer edge never comes nearer than 0.8 x perspective; above 8 degrees a
-//               passing ghost is fainter, as a turned ghost covers more of the frame.
+//               its outer edge never comes nearer than 0.8 x perspective; a ghost turned further
+//               than 10 degrees would cover so much of the frame that it could not pass solid.
 //   perspective camera lens in px; lower is wider and faster at the edges. 300                (240-600)
 //   title       how much larger statement one stands at the start, as the scene's title. It  (1-1.6)
 //               settles to statement size as the first card reaches reading size, and never
 //               grows wider than the stage. 1.3; 1 = no change
-//   dolly       backdrop scale as the camera moves in. 1.35 for a still, 1.08 for a video     (1-1.6)
-//               (a phone uses 60% of the move)
+//   dolly       backdrop scale as the camera moves in: how far it travels toward the focal     (1-1.8)
+//               object. 1.5 for a still, 1.08 for a video (a phone uses 80% of the move). Serve
+//               a still at 1.5 x the stage width or more (2400 px for 1440) so the end of the
+//               move stays sharp
 //   run         how far the camera runs over the ground of a still backdrop: the share of     (0-0.7)
 //               the way to the ground at the bottom edge. 0.45; 0 = the dolly alone
-//   arrive      pull back and lift in the last 10%, a short arrival beat. true
+//   arrive      in the last 10% the camera settles back a little and lifts, a short arrival   (true)
+//               beat before the stage lets go. true
 //   haze        fog left on a card at its nearest, to pull the photos into one grade. 0      (0-0.3)
 //   count       show "3 of 7" under the statement. true
 //   phone       'same' (the fly-through with phone numbers) | 'rest' (the finished composition). 'same'
 //   phoneMax    more cards than this and a phone gets the finished composition. 9              (3-12)
-//   phoneSideX  how far out the cards fly on a phone. 0.33; never less than half a card, so     (0.22-0.45)
-//               the passing card and the next one stay on their own sides of the centre line
-//   phoneDy     drop below the vanishing point on a phone, in vh. 6                           (0-30)
-//   phoneYaw    inward turn on a phone. 3                                                     (0-12)
+//   phoneSideX  the farthest out the cards fly on the low path (a phone, a tablet held          (0.1-0.45)
+//               upright). 0.33; within it each card flies just as far out as keeps it whole on
+//               screen with its outer edge on the gutter at reading size
+//   phoneDy     drop below the vanishing point on a phone, in vh. Left out, each card drops    (0-40)
+//               so its top edge sits on --fly-ground at reading size and reaches the bottom of
+//               the screen as its flight fades, so a passing card goes out solid
+//   phoneYaw    inward turn on a phone. 3                                                     (0-10)
 // The script adds a visually hidden copy of the statements (ol.fly__sr) so a screen reader hears all of
 // them while only one is on screen; the visible list is aria-hidden only while the flight runs.
 // Page tokens it takes: --ink (statement), --font-display. Set per backdrop on the section (plain
@@ -91,7 +108,9 @@
 //   --fly-stage (the backdrop's horizon colour; the ground of the finished wall), --fly-fog (haze
 //   colour, defaults to --fly-stage), --fly-ink (statement colour on the photo; must reach 4.5:1 on the
 //   band behind it), --fly-shade / --fly-scrim (a flat fill over the whole backdrop when white text needs
-//   it), --fly-vp / --fly-focus / --fly-lift (where the vanishing point sits; see the CSS),
+//   it), --fly-vp / --fly-focus / --fly-lift (where the vanishing point sits; see the CSS), --fly-ground and
+//   --fly-focus-w (where the focal object stands and how wide it is), --fly-rest-vp / --fly-rest-ground (the
+//   same two in the finished opening),
 //   --fly-card-w, --fly-size (statement size), --fly-copy-top and --fly-copy-w (the statement box; see
 //   the CSS for how wide it may go).
 (() => {
@@ -162,17 +181,27 @@
     // The ground the camera runs over: a copy of the still backdrop, clipped to below the vanishing
     // point. A forward move maps the ground's picture by (x, y) / (1 - k·y) about the vanishing point
     // (one matrix3d), so the planks stream outward along their own lines while the horizon holds.
+    // The scrim over a still is drawn into the picture's own layers (a span in the backdrop, painted under
+    // the ground, and one in the ground), so while the flight runs no separate full-screen translucent
+    // layer is blended over the stage on every frame; the page's .fly__scrim stays for the finished
+    // composition. A video keeps the page's scrim.
+    const shade = () => { const s = document.createElement('span'); s.className = 'fly__shade'; s.setAttribute('aria-hidden', 'true'); return s; };
+    if (still && !video && !backdrop.querySelector(':scope > .fly__shade')) still.after(shade());
+    if (still && !video) root.classList.add('fly--shaded');
     let ground = null;
     if (runOpt > 0) {
       ground = backdrop.querySelector('.fly__ground');
       if (!ground) {
-        ground = still.cloneNode(false);
+        ground = document.createElement('div');
         ground.className = 'fly__ground';
-        ground.alt = '';
         ground.setAttribute('aria-hidden', 'true');
-        ground.removeAttribute('fetchpriority');
-        ground.removeAttribute('id');
-        still.after(ground);
+        const pic = still.cloneNode(false);
+        pic.className = 'fly__ground-img';
+        pic.alt = '';
+        pic.removeAttribute('fetchpriority');
+        pic.removeAttribute('id');
+        ground.append(pic, shade());
+        backdrop.append(ground);
       }
     }
 
@@ -204,9 +233,9 @@
         card.style.removeProperty('will-change'); card.style.removeProperty('z-index');
         for (const el of card.querySelectorAll('.fly__fog, .fly__cap')) el.style.removeProperty('opacity');
       }
-      for (const l of lines) for (const p of ['opacity', 'visibility', 'transform', 'translate']) l.style.removeProperty(p);
+      for (const l of lines) for (const p of ['opacity', 'visibility', 'transform', 'translate', 'will-change']) l.style.removeProperty(p);
       for (const t of tags) { t.style.removeProperty('transform'); t.style.removeProperty('opacity'); }
-      if (copy) copy.style.removeProperty('transform');
+      if (copy) { copy.style.removeProperty('transform'); copy.style.removeProperty('will-change'); }
       if (ground) ground.style.removeProperty('transform');
       if (list) list.removeAttribute('aria-hidden');
       if (field) field.style.removeProperty('perspective');
@@ -219,34 +248,44 @@
     const build = (tl, ctx) => {
       const phone = ctx.phone;
       const stage = ctx.stage;
-      const { c, S, F } = phone ? mob : desk;
+      const { S, F } = phone ? mob : desk;
       const P = num(opts.perspective, 300, 240, 600);
       const sEnd = Math.min(phone ? 2.5 : 5, num(opts.endScale, 4, 2.5, 5));
       const zStart = -2 * P;                    // scale 1/3: a faint chip at the vanishing point
       const zEnd = P * (1 - 1 / sEnd);          // 0.8P at most: a card's centre never reaches the camera
       const zSafe = 0.8 * P;                    // nor does any point of it, the turned outer edge included
-      const sideX = phone ? num(opts.phoneSideX, 0.33, 0.22, 0.45) : num(opts.sideX, 0.32, 0.28, 0.38);
-      const yaw = phone ? num(opts.phoneYaw, 3, 0, 12) : num(opts.yaw, 8, 0, 14);
+      const sideX = phone ? num(opts.phoneSideX, 0.33, 0.1, 0.45) : num(opts.sideX, 0.32, 0.28, 0.38);
+      // at most 10 degrees: a ghost turned further covers so much of the frame that it would have to pass
+      // half-transparent, and a see-through card over another reads as a double exposure
+      const yaw = phone ? num(opts.phoneYaw, 3, 0, 10) : num(opts.yaw, 8, 0, 10);
       const sinYaw = Math.sin(yaw / DEG);
-      // a turned ghost covers more of the frame on its way out: above 8 degrees it passes fainter
-      const ghostDim = 0.35 * clamp((yaw - 8) / 6, 0, 1);
       const haze = num(opts.haze, 0, 0, 0.3);
-      const D = num(opts.dolly, video ? 1.08 : 1.35, 1, 1.6);
-      const dolly = phone ? 1 + (D - 1) * 0.6 : D;
+      const D = num(opts.dolly, video ? 1.08 : 1.5, 1, 1.8);
+      const dolly = phone ? 1 + (D - 1) * 0.8 : D;
       const run = runOpt * (phone ? 0.85 : 1);
       const arrive = opts.arrive !== false;
       const titleOpt = num(opts.title, 1.3, 1, 1.6);
       const settle = gsap.parseEase('power2.inOut');
-      // within one flight t (0-1): fade in, fog lifts, the caption tag shows as the card reaches reading
-      // size (S_READ, in card scale), fade out as the card passes the edge. The tag leaves again as the
-      // card grows past reading size (CAP_OUT), so a ghost passes as picture only.
-      const IN = 0.2, FOG = 0.45, CAP_LEN = phone ? 0.06 : 0.1, OUT = phone ? 0.84 : 0.78;
-      const S_READ = phone ? 0.68 : 0.57;
+      // the backdrop's scale at progress p (the dolly below, worked out here so the cards can keep clear
+      // of the focal object as it grows)
+      const backAt = (p) => (!arrive ? 1 + (dolly - 1) * p : p < 0.9 ? 1 + ((dolly - 1) * p) / 0.9 : dolly - (dolly - 1) * 0.12 * settle((p - 0.9) / 0.1));
+      // within one flight t (0-1): a far card comes in solid, under a haze that lifts as it nears (fog, not
+      // transparency: a half-transparent card reads as a double exposure); the caption tag shows as the card
+      // reaches reading size (S_READ, in card scale) and leaves again as it grows past it (CAP_OUT), so a
+      // ghost passes as picture only. The card stays solid while it sweeps past the edge and fades only as
+      // its last strip leaves the screen.
+      const IN = 0.02, FOG = 0.45, FOG0 = 0.82, CAP_LEN = phone ? 0.06 : 0.1, OUT = 0.96;
+      const S_READ = phone ? 0.56 : 0.57;
       const CAP_OUT = phone ? [1.3, 1.55] : [1.15, 1.35];
+      const S_LOW = 0.92;                        // the low path lays a card out whole at this scale
       const tAt = (s) => (P * (1 - 1 / s) - zStart) / (zEnd - zStart);   // flight time at which a card reaches scale s
-      // statement k comes in as card k's caption is fully on, so the reader meets each statement with its
-      // picture labelled; it holds until card k+1's caption is
+      // a turned card's outer edge is nearer than its centre: straighten it as it passes, so no point of
+      // the card comes closer than 0.8P (behind the camera a card flips or vanishes)
+      const turnAt = (z, half) => (yaw && half && zSafe - z < half * sinYaw ? Math.asin(clamp((zSafe - z) / half, 0, 1)) * DEG : yaw);
+      // statement k comes in as card k's caption is fully on, or as card k-1 leaves if that is sooner, so
+      // a statement never outlives its picture; it holds until statement k+1 takes over the same way
       const CAP = clamp(tAt(S_READ), 0.3, 0.7), tSwap = CAP + CAP_LEN;
+      const swOff = Math.min(OUT * F - S, tSwap * F);
       let title = 1, titleEnd = 0.12;
 
       clean();
@@ -258,22 +297,72 @@
         const side = ds === 1 || ds === -1 ? ds : (i % 2 ? 1 : -1);
         card.dataset.side = String(side);
         const raw = parseFloat(getComputedStyle(card).getPropertyValue('--dy'));
-        const dy = phone ? num(opts.phoneDy, 6, 0, 30) : clamp(Number.isFinite(raw) ? raw : DY[i % DY.length], 0, 8);
+        // a phone's cards fly low and leave through the bottom edge (measure() works out the drop unless
+        // phoneDy sets it), so a passing card never hangs half-transparent over the picture
+        const dy = phone && opts.phoneDy !== undefined ? num(opts.phoneDy, 20, 0, 40) : clamp(Number.isFinite(raw) ? raw : DY[i % DY.length], 0, 8);
         card.style.zIndex = String(N - i);       // the earlier card is always the nearer one
         const tag = tags[i] && tags[i].textContent ? tags[i] : null;
-        return { card, fog: card.querySelector('.fly__fog'), tag, side, dy, a: S * i - 0.12 * F, half: 0, halfH: 0, ox: 0, tagW: 0, tagH: 0, vis: null, o: -1, f: -1, k: -1 };
+        return { card, fog: card.querySelector('.fly__fog'), tag, side, dy, a: S * i - 0.12 * F, half: 0, halfH: 0, ox: 0, x1: 0, y0: 0, y1: 0, tL: 1, tagW: 0, tagH: 0, vis: null, o: -1, f: -1, k: -1 };
       });
 
-      let W = 0, H = 0, VP = 0, gk = -1, ts = -1;
+      // Two paths. On a wide stage the cards fly beside the focal object (the boathouse, the mast) on
+      // alternating sides, and a far card is held just outside it (--fly-focus-w) until it has grown clear,
+      // so no card ever crosses the thing the picture is about. On a tall stage (a phone, a tablet held
+      // upright) the focal object fills the width, so the cards fly low instead: each comes out at its foot,
+      // grows to nearly the stage width just below the ground line (--fly-ground), whole and on screen, and
+      // leaves through the bottom as a big pass.
+      let W = 0, H = 0, VP = 0, GH = 1, GY = 0, FW = 0, low = false, gk = -1, ts = -1;
       const measure = () => {
         W = stage.clientWidth || window.innerWidth; H = stage.clientHeight || window.innerHeight;
         VP = field ? parseFloat(getComputedStyle(field).perspectiveOrigin.split(' ')[1]) : NaN;
         if (!Number.isFinite(VP)) VP = H * 0.56;
+        low = phone || H > 1.15 * W;
+        // --fly-focus-w: the focal object's half-width at dolly 1, as a length, or as a plain number for a
+        // share of the picture's width (it then follows the picture's crop at any screen size).
+        // --fly-ground: where the focal object stands, from the top of the stage.
+        const cs = getComputedStyle(root);
+        const fwRaw = cs.getPropertyValue('--fly-focus-w').trim();
+        const probe = document.createElement('div');
+        probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;height:var(--fly-ground,0px);width:' + (fwRaw && !/^[\d.]+$/.test(fwRaw) ? fwRaw : '0px');
+        stage.appendChild(probe);
+        const lift = backdrop ? Math.max(0, backdrop.offsetHeight - H) : 0;
+        GY = probe.offsetHeight || VP;
+        FW = probe.offsetWidth;
+        probe.remove();
+        if (/^[\d.]+$/.test(fwRaw) && backdrop) {
+          const media = still || video;
+          const nw = (media && (media.naturalWidth || media.videoWidth)) || +(media && media.getAttribute('width')) || 16;
+          const nh = (media && (media.naturalHeight || media.videoHeight)) || +(media && media.getAttribute('height')) || 10;
+          FW = clamp(+fwRaw, 0, 0.4) * nw * Math.max(backdrop.offsetWidth / nw, (H + lift) / nh);
+        }
+        // the streaming ground runs from its own line (--fly-ground, the vanishing point unless the focal
+        // object stands below it) to the bottom edge
+        if (ground) {
+          const o = parseFloat(getComputedStyle(ground).transformOrigin.split(' ')[1]);
+          GH = Math.max(1, (ground.offsetHeight || H) - (Number.isFinite(o) ? o : VP));
+        }
+        // Every card is off the screen by the time its flight fades (OUT), so no card ever fades in view
+        // over another: if its own course would not take it out, it veers out over the last part of the
+        // flight, through the side on the wide path and through the bottom on the low path.
+        const gutter = W < 768 ? 14 : 0.03 * W, zOut = zStart + (zEnd - zStart) * OUT, sOut = P / (P - zOut);
         for (const g of geo) {
           g.half = g.card.offsetWidth / 2; g.halfH = g.card.offsetHeight / 2;
-          // on a phone a card's inner edge never crosses the centre line, so the passing card and the
-          // next one, on the other side, never overlap
-          g.ox = phone ? Math.max(sideX * W, g.half * 1.06) : sideX * W;
+          if (!low) {
+            g.ox = sideX * W; g.y0 = g.y1 = (g.dy * H) / 100;
+            // the inner edge as projected at OUT, turn included (a turned card's inner edge stands back)
+            const yo = turnAt(zOut, g.half) / DEG, spIn = P / (P - (zOut - g.half * Math.sin(yo)));
+            g.x1 = Math.max(g.ox, (W / 2 + 4) / spIn + g.half * Math.cos(yo));
+            g.tL = clamp(tAt(1), 0, OUT - 0.05);
+          } else {
+            // the low path: whole and on screen at S_LOW, its outer edge on the gutter and its top edge on
+            // the ground line (which the dolly lowers as it grows); after that it drops a little faster, so
+            // its top edge reaches the bottom of the screen as the flight fades
+            g.ox = g.x1 = clamp((W / 2 - gutter) / S_LOW - g.half, 0, sideX * W);
+            g.tL = clamp(tAt(S_LOW), 0, OUT - 0.05);
+            const BL = backAt(clamp(g.a + g.tL * F, 0, 1));
+            g.y0 = phone && opts.phoneDy !== undefined ? (g.dy * H) / 100 : g.halfH + (Math.max(0, (GY - VP) * BL) + 0.01 * H) / S_LOW;
+            g.y1 = Math.max(g.y0, g.halfH + (H - VP + 4) / sOut);
+          }
           if (g.tag) { g.tagW = g.tag.offsetWidth; g.tagH = g.tag.offsetHeight; }
         }
         // the title: statement one larger at the start, never wider than the stage less its gutters
@@ -288,10 +377,11 @@
         gk = -1; ts = -1;
       };
       // the camera's run over the ground: linear (constant speed) to 0.9, then it eases back a little
-      // as the camera pulls back and lifts for the arrival
+      // as the camera settles and lifts for the arrival
       const runAt = (p) => (!arrive ? run * p : p < 0.9 ? (run * p) / 0.9 : run * (1 - 0.2 * settle((p - 0.9) / 0.1)));
 
       const render = (p) => {
+        const fwB = FW * backAt(p), soft = 0.02 * W;
         for (const g of geo) {
           const t = (p - g.a) / F;
           if (t <= 0 || t >= 1) {
@@ -302,17 +392,33 @@
           if (g.vis !== true) { g.card.style.visibility = 'visible'; g.card.style.willChange = 'transform, opacity'; g.vis = true; }
           const z = zStart + (zEnd - zStart) * t; // linear z = constant camera speed; perspective does the rest
           const s = P / (P - z);
-          const x = g.side * g.ox, y = (g.dy * H) / 100;
-          // a turned card's outer edge is nearer than its centre: straighten it as it passes, so no
-          // point of the card comes closer than 0.8P (behind the camera a card flips or vanishes)
-          let yw = yaw;
-          if (yaw && g.half && (zSafe - z) < g.half * sinYaw) yw = Math.asin(clamp((zSafe - z) / g.half, 0, 1)) * DEG;
+          const e = t > g.tL ? Math.min(1, (t - g.tL) / (OUT - g.tL)) ** 2 : 0;
+          let x = g.side * (g.ox + (g.x1 - g.ox) * e);
+          const y = g.y0 + (g.y1 - g.y0) * e;
+          const yw = turnAt(z, g.half);
+          // the card's inner edge on screen, projected as the card is (turn included)
+          const a = (-g.side * yw) / DEG, cx = -g.side * g.half;
+          let X = x + cx * Math.cos(a);
+          const Z = z - cx * Math.sin(a), sp = P / (P - Z);
+          // beside the focal object: hold the inner edge outside it (its half-width grows with the dolly)
+          // until the card has grown clear of it; a soft max, so the card eases off its edge with no kink
+          if (!low && FW > 0) {
+            const d = fwB - g.side * X * sp;
+            const push = (d + Math.sqrt(d * d + soft * soft)) / 2 / sp;
+            x += g.side * push; X += g.side * push;
+          }
+          const sx = W / 2 + X * sp;
           g.card.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${z.toFixed(2)}px)` + (yw ? ` rotateY(${(-g.side * yw).toFixed(2)}deg)` : '');
-          const u = t > OUT ? 1 - (t - OUT) / (1 - OUT) : 1;
-          const dim = ghostDim ? 1 - ghostDim * clamp((s - 1.2) / 0.8, 0, 1) : 1;
-          const o = r3(Math.min(1, t / IN) * u * dim);
+          // on its way out the card stays solid while it sweeps past the side (or, on the low path, the
+          // bottom) and fades only once less than 15% of it is left on screen (10% of the screen at most);
+          // the time fade at the very end of the flight is the backstop
+          const top = VP + (y - g.halfH) * s;
+          const fadeW = Math.min(0.3 * g.half * s, 0.1 * W), fadeH = Math.min(0.3 * g.halfH * s, 0.1 * H);
+          const edge = s > 1 ? Math.min(clamp((g.side < 0 ? sx : W - sx) / fadeW, 0, 1), clamp((H - top) / fadeH, 0, 1)) : 1;
+          const u = (t > OUT ? 1 - (t - OUT) / (1 - OUT) : 1) * edge;
+          const o = r3(Math.min(1, t / IN) * u);
           if (o !== g.o) { g.card.style.opacity = String(o); g.o = o; }
-          const f = r3(haze + (0.7 - haze) * Math.max(0, 1 - t / FOG));
+          const f = r3(haze + (FOG0 - haze) * Math.max(0, 1 - t / FOG));
           if (g.fog && f !== g.f) { g.fog.style.opacity = String(f); g.f = f; }
           // the caption tag: on at reading size, off again as the card grows past it. It sits on the card's
           // inner top corner, projected as the card is (turn included), and runs outward along the top
@@ -321,9 +427,7 @@
             let k = clamp((t - CAP) / CAP_LEN, 0, 1) * clamp((CAP_OUT[1] - s) / (CAP_OUT[1] - CAP_OUT[0]), 0, 1);
             let tx = 0, ty = 0;
             if (k > 0) {
-              const a = (-g.side * yw) / DEG, cx = -g.side * g.half;
-              const X = x + cx * Math.cos(a), Z = z - cx * Math.sin(a), sp = P / (P - Z);
-              const sx = W / 2 + X * sp, sy = VP + (y - g.halfH) * sp;
+              const sy = VP + (y - g.halfH) * sp;
               tx = g.side < 0 ? sx - g.tagW : sx; ty = sy - g.tagH;
               // near the screen edge a long tag slides up to 16px in along the card's top edge, then fades
               const room = g.side < 0 ? tx - 8 : W - 8 - tx - g.tagW;
@@ -332,38 +436,41 @@
             }
             k = r3(k);
             if (k !== g.k) { g.tag.style.opacity = String(k); g.k = k; }
-            if (k > 0) g.tag.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0)`;
+            if (k > 0) g.tag.style.transform = `translate3d(${Math.round(tx)}px, ${Math.round(ty)}px, 0)`;   // whole pixels keep the type sharp
           }
         }
         if (copy) {
           const v = title > 1 ? r3(1 + (title - 1) * (1 - clamp(p / titleEnd, 0, 1))) : 1;
-          if (v !== ts) { copy.style.transform = v === 1 ? '' : `scale(${v})`; ts = v; }
+          // its own layer only while the title settles (no repaint per frame), then drawn sharp again
+          if (v !== ts) { copy.style.transform = v === 1 ? '' : `scale(${v})`; copy.style.willChange = v === 1 ? '' : 'transform'; ts = v; }
         }
         if (ground) {
-          const k = Math.round((runAt(p) / Math.max(1, H - VP)) * 1e8) / 1e8;
+          const k = Math.round((runAt(p) / GH) * 1e8) / 1e8;
           if (k !== gk) { ground.style.transform = `matrix3d(1,0,0,0,0,1,0,${-k},0,0,1,0,0,0,0,1)`; gk = k; }
         }
         if (video) seek(p);
       };
 
-      // statements: a state change, never a scrubbed crossfade. Statement k comes in as card k's caption
-      // is fully on (tSwap into its flight), and holds until card k+1's is.
+      // statements: a state change, never a scrubbed crossfade. Statement k takes over at a_k + swOff:
+      // as card k's caption is fully on, or as card k-1 leaves if that comes first.
       let cur = -1, lastP = 0, countCall = null;
       const last = Math.max(0, lines.length - 1);
-      const lineAt = (p) => clamp(Math.floor(p / S - (tSwap - 0.12) * c + 1e-6), 0, last);
+      const lineAt = (p) => clamp(Math.floor((p + 0.12 * F - swOff) / S + 1e-6), 0, last);
       const setCount = (k) => { if (countNow) countNow.textContent = String(k + 1); };
       const force = (k) => {          // set the line with no animation (a load, a refresh, a jump)
         if (!lines.length) return;
         cur = k;
-        lines.forEach((l, i) => { gsap.killTweensOf(l); gsap.set(l, { autoAlpha: i === k ? 1 : 0, yPercent: 0 }); });
+        lines.forEach((l, i) => { gsap.killTweensOf(l); gsap.set(l, { autoAlpha: i === k ? 1 : 0, yPercent: 0 }); l.style.willChange = ''; });
         if (countCall) countCall.kill();
         setCount(k);
       };
+      // a line is its own layer only while it moves, so a swap is drawn once rather than every frame
+      const lift = (l) => { l.style.willChange = 'transform, opacity'; return () => { l.style.willChange = ''; }; };
       const show = (k, dir) => {
         const prev = cur; cur = k;
         lines.forEach((l, i) => { if (i !== k && i !== prev && +gsap.getProperty(l, 'opacity') > 0) gsap.to(l, { autoAlpha: 0, duration: 0.2, overwrite: true }); });
-        gsap.to(lines[prev], { yPercent: -40 * dir, autoAlpha: 0, duration: 0.3, ease: 'power2.in', overwrite: true });
-        gsap.fromTo(lines[k], { yPercent: 50 * dir, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.55, ease: 'power3.out', delay: 0.08, overwrite: true });
+        gsap.to(lines[prev], { yPercent: -40 * dir, autoAlpha: 0, duration: 0.3, ease: 'power2.in', overwrite: true, onComplete: lift(lines[prev]) });
+        gsap.fromTo(lines[k], { yPercent: 50 * dir, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.55, ease: 'power3.out', delay: 0.08, overwrite: true, onComplete: lift(lines[k]) });
         if (countCall) countCall.kill();
         countCall = gsap.delayedCall(0.3, () => setCount(k));
       };
@@ -380,7 +487,8 @@
       if (backdrop) {
         if (arrive) {
           tl.fromTo(backdrop, { scale: 1, yPercent: 0 }, { scale: dolly, duration: 0.9, ease: 'none' }, 0);
-          tl.fromTo(backdrop, { scale: dolly, yPercent: 0 }, { scale: 1 + (dolly - 1) * 0.57, yPercent: -2, duration: 0.1, ease: 'power2.inOut', immediateRender: false }, 0.9);
+          // the arrival: the camera eases back a little and lifts, a settle rather than a retreat
+          tl.fromTo(backdrop, { scale: dolly, yPercent: 0 }, { scale: 1 + (dolly - 1) * 0.88, yPercent: -2, duration: 0.1, ease: 'power2.inOut', immediateRender: false }, 0.9);
         } else {
           tl.fromTo(backdrop, { scale: 1, yPercent: 0 }, { scale: dolly, duration: 1, ease: 'none' }, 0);
         }
@@ -403,7 +511,7 @@
           const g = geo[i++];
           if (g.vis === true) { requestAnimationFrame(step); return; }   // already flying
           g.card.style.willChange = 'transform, opacity';
-          g.card.style.transform = `translate(-50%, -50%) translate3d(${(g.side * g.ox).toFixed(1)}px, ${((g.dy * H) / 100).toFixed(1)}px, 0px)`;
+          g.card.style.transform = `translate(-50%, -50%) translate3d(${(g.side * g.ox).toFixed(1)}px, ${g.y0.toFixed(1)}px, 0px)`;
           g.card.style.opacity = '0.01'; g.card.style.visibility = 'visible'; g.vis = 'warm';
           requestAnimationFrame(() => requestAnimationFrame(() => {
             if (g.vis === 'warm') { g.card.style.visibility = 'hidden'; g.card.style.opacity = '0'; g.card.style.willChange = 'auto'; g.vis = false; g.o = -1; }

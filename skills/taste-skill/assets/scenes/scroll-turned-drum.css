@@ -11,6 +11,14 @@
    screens). Without the script, pictures are keyed on the <img>.
    Page tokens: --ground, --ink, --accent (count number, accent highlight), --font-display. */
 
+/* What the script changes every frame: the drums' turn, each face's opacity, each caption's lit state. Not
+   inherited, so writing one restyles that one element and not everything inside it. */
+@property --drum-turn { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@property --drum-o { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --drum-lit { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --drum-cap { syntax: '<number>'; inherits: false; initial-value: 1; }
+@property --drum-no { syntax: '<number>'; inherits: false; initial-value: 1; }
+
 [data-scene="scroll-turned-drum"] {
   --drum-ground: var(--ground, #f3f2ee);
   --drum-ink: var(--ink, #121212);
@@ -170,7 +178,13 @@
 
 /* ---------- the live drum ---------- */
 
-.scene.is-live[data-scene="scroll-turned-drum"] > .scene-stage { background: var(--drum-ground); }
+.scene.is-live[data-scene="scroll-turned-drum"] > .scene-stage {
+  background: var(--drum-ground);
+  /* The shared stage writes the scroll progress (--p) on the section on every frame. Nothing in this scene
+     reads it (the script writes every moving value itself), and a custom property that changes restyles
+     every element that inherits it, so it stops here: a frame restyles only what moved. */
+  --p: initial;
+}
 
 .scene.is-live[data-scene="scroll-turned-drum"] .drum-head {
   position: absolute;
@@ -180,8 +194,9 @@
   margin: 0 auto;
   z-index: 3;
 }
-.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-head { text-align: left; }
-.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-title { max-width: min(20ch, var(--drum-names-w, 50vw)); margin: 0; }
+/* reel: the statement, the names and the closing share one centred column left of the pictures */
+.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-head { right: auto; width: var(--drum-names-w, 46vw); margin: 0; }
+.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-title { max-width: min(20ch, var(--drum-names-w, 50vw)); }
 .scene.is-live[data-scene="scroll-turned-drum"][data-layout="stack"] .drum-head { top: 4svh; }
 
 /* perspective lives here, not on the sticky stage (Safari flickers otherwise) */
@@ -207,12 +222,13 @@
   height: calc(var(--drum-y, 50svh) * 2);
   margin: 0;
   transform-style: preserve-3d;
-  transform: translateZ(calc(var(--drum-r, 450px) * -1)) rotateX(var(--drum-rotate, 0deg));
+  transform: translateZ(calc(var(--drum-r, 450px) * -1)) rotateX(var(--drum-turn, 0deg));
   will-change: transform;
 }
 
-/* each name is centred on the drum axis by top/margin (not by translate), then set on the face; each name
-   fades on its own (--drum-opacity, written by the script); the drum itself never fades */
+/* each name is centred on the drum axis by top/margin (not by translate), then set on the face; each face
+   fades on its own (--drum-o, written by the script; the face is its own layer, so a fade never repaints
+   the name); the drum itself never fades */
 .scene.is-live[data-scene="scroll-turned-drum"] .drum-item {
   position: absolute;
   left: 0;
@@ -226,11 +242,15 @@
   white-space: nowrap;
   text-align: center;
   transform: rotateX(calc(var(--i, 0) * var(--drum-step, 18deg) * -1)) translateZ(var(--drum-r, 450px));
+  opacity: var(--drum-o, 0);
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
-.scene.is-live[data-scene="scroll-turned-drum"] .drum-name { opacity: var(--drum-opacity, 0); }
-.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-item { text-align: left; }
+/* a faint name carries part of its fade on its own text (--drum-no, 0.29 or 1), the rest on its face */
+.scene.is-live[data-scene="scroll-turned-drum"] .drum-name { opacity: var(--drum-no, 1); }
+/* reel: each name is centred in the column (the drum is seen from over the column's middle, so a name above
+   or below the front narrows evenly to both sides, never leaning like a slanted face) */
+.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-item { padding-right: calc(100% - var(--drum-names-w, 46vw) - var(--drum-gutter)); }
 /* the accent highlight: the front name turns to the accent while it is lit */
 .scene.is-live[data-scene="scroll-turned-drum"][data-highlight="accent"] .drum-name {
   color: color-mix(in srgb, var(--drum-accent) calc(var(--drum-lit, 0) * 100%), var(--drum-ink));
@@ -246,6 +266,8 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* (never painted, so a face coming into view never decodes its hidden picture) */
+.scene.is-live[data-scene="scroll-turned-drum"] .drum-item :is(img, picture) { opacity: 0; }
 
 /* side: the count and detail sit on the face beside the front name, a fixed gap from the widest name,
    on its baseline, and show only while it is lit, so they ride and change with it */
@@ -304,10 +326,7 @@
   perspective-origin: var(--pic-x, 75%) var(--pic-y, 50%);
 }
 /* stack: the drum turns behind a full-width window, one picture tall, that starts under the statement and
-   opens up to the top of the screen as the statement leaves (--pic-open, 0 -> 1, set by the script) */
-.scene.is-live[data-scene="scroll-turned-drum"][data-layout="stack"] .drum-pics {
-  clip-path: inset(calc(var(--pic-clip-t, 0px) * (1 - var(--pic-open, 1))) 0 var(--pic-clip-b, 0px) 0);
-}
+   opens up to the top of the screen as the statement leaves (a clip-path the script writes) */
 .scene.is-live[data-scene="scroll-turned-drum"] .drum-reel {
   position: absolute;
   left: var(--pic-x, 75%);
@@ -315,7 +334,7 @@
   width: 0;
   height: 0;
   transform-style: preserve-3d;
-  transform: translateZ(calc(var(--pic-r, 600px) * -1)) rotateX(var(--drum-rotate, 0deg));
+  transform: translateZ(calc(var(--pic-r, 600px) * -1)) rotateX(var(--drum-turn, 0deg));
   will-change: transform;
 }
 .scene.is-live[data-scene="scroll-turned-drum"] .drum-card {
@@ -325,10 +344,13 @@
   width: var(--pic-w, 480px);
   height: var(--pic-h, 320px);
   margin: 0;
-  opacity: var(--drum-opacity, 0);
+  opacity: var(--drum-o, 0);
   transform: rotateX(calc(var(--i, 0) * var(--pic-step, 36deg) * -1)) translateZ(var(--pic-r, 600px));
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+  /* the picture slides inside its face as the face turns away (the script holds the slide to the part past
+     the edge of view); the face is a leaf of the drum, so clipping it flattens nothing */
+  overflow: clip;
 }
 .scene.is-live[data-scene="scroll-turned-drum"] .drum-card:not(.is-ready),
 .scene.is-live[data-scene="scroll-turned-drum"] .drum-card.is-away { visibility: hidden; }
@@ -337,9 +359,12 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  will-change: transform;
 }
-/* reel: the count and detail sit in a notch cut from the front picture's lower-left corner, in the ground
-   colour, so they read on a flat ground and their foot lines up with the picture's foot */
+/* reel: the count and detail sit in a notch cut from each picture's lower-left corner, in the ground colour,
+   so they read on a flat ground and their foot lines up with the picture's foot. The notch is part of its
+   picture and shows while the picture faces the front (--drum-cap, written by the script): it goes as its
+   picture turns away, so only the front picture carries one. */
 .scene.is-live[data-scene="scroll-turned-drum"] .drum-card-cap { display: none; }
 .scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-card-cap {
   display: flex;
@@ -357,9 +382,32 @@
   font-weight: 500;
   line-height: 1.15;
   white-space: nowrap;
-  opacity: var(--drum-lit, 0);
+  opacity: var(--drum-cap, 1);
 }
 .scene.is-live[data-scene="scroll-turned-drum"] .drum-card-count { font-variant-numeric: tabular-nums; }
+
+/* the two ends (picture drum beside the names): the first and the last picture again, shown while open and
+   while their picture sits still at the front (where, closed, they cover it exactly). The script opens each
+   to the full height of the screen with a clip-path, its picture easing up to its full size inside. */
+[data-scene="scroll-turned-drum"] .drum-end { display: none; }
+.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-end {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  visibility: hidden;
+}
+.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-end.is-on { visibility: visible; }
+.scene.is-live[data-scene="scroll-turned-drum"] .drum-end-window { position: absolute; inset: 0; }
+.scene.is-live[data-scene="scroll-turned-drum"] .drum-end-pic {
+  position: absolute;
+  display: block;
+  max-width: none;
+  margin: 0;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
 
 /* the closing takes the lower half: centred under a centred drum, at the left edge beside the pictures */
 .scene.is-live[data-scene="scroll-turned-drum"] .drum-close {
@@ -374,8 +422,7 @@
   text-align: center;
 }
 .scene.is-live[data-scene="scroll-turned-drum"] .drum-close-line { margin-inline: auto; }
-.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-close { left: var(--drum-gutter); right: auto; margin: 0; text-align: left; }
-.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-close-line { margin-inline: 0; }
+.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-close { left: var(--drum-gutter); right: auto; width: var(--drum-names-w, 46vw); max-width: none; margin: 0; }
 .scene.is-live[data-scene="scroll-turned-drum"][data-layout="stack"] .drum-close { top: calc(var(--drum-y, 66svh) + var(--drum-fs, 58px) * 0.95); }
 
 @media (max-width: 767px) {

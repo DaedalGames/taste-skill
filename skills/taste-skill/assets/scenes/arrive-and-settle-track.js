@@ -31,7 +31,7 @@
 // use a plain heading instead.
 // Longest word: about 11 characters keeps the full size (17vw). A longer word still fits: the whole
 // line is set smaller until that word fits between the margins (a 14-character word such as
-// "extraordinary?" takes the line from 245px to about 200px at 1440x900), and on the phone the line
+// "extraordinary?" takes the line from 245px to about 190px at 1440x900), and on the phone the line
 // shrinks until its widest word fits the column. Above 16 characters in one word, rewrite the line.
 //
 // ── DOM, preset "stair" (testimonials; 5-7 cards read best, 3-12 work) ──────────────────────────
@@ -99,7 +99,8 @@
 // letters land. As the first section it keeps a whole first screen, its first word reads level at
 // once, its button shows from the start, and the first scroll assembles the rest. Cards rise 16vh.
 // Reduced motion and no script: the finished composition (no split, nothing hidden), also when reduced
-// motion is switched on while the page is open.
+// motion is switched on while the page is open. The line breaks into two lines at most, set as large
+// as two lines allow when script runs (min(14vw, 26vh) at most), min(11vw, 22vh) without script.
 (() => {
   const ID = 'arrive-and-settle-track';
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -655,12 +656,19 @@
     };
 
     // ── the finished composition: reduced motion, a phone set to rest, a failed script ───────────
+    // The line is set as large as it can be in two lines (up to 20vw on the phone, min(14vw, 26vh)
+    // above), so the still composition keeps the scale of the moving one. Without any script the CSS
+    // size, min(11vw, 22vh), holds instead.
     const toRest = () => {
       reset();
       S.mode = 'rest';
       S.map = null; S.focus = null;
       unsplit(line);
-      S.measure = () => { if (line) fitLines(line, 2, 34, Stage.phone ? Math.round(0.2 * innerWidth) : 0); };
+      S.measure = () => {
+        if (!line) return;
+        const ceil = Stage.phone ? 0.2 * innerWidth : Math.min(0.14 * innerWidth, 0.26 * innerHeight);
+        fitLines(line, 2, 34, Math.round(ceil));
+      };
       S.measure();
     };
     // Leaving a live layout for the finished one, whoever asks. The stage's matchMedia only runs its
@@ -736,6 +744,9 @@
       rest: () => toRest(),
     };
     let mm = Stage.scene(root, plan);
+    // Reduced motion from the first load on a desktop: none of the stage's matchMedia conditions match,
+    // so it never calls back and nothing marks the finished composition. Do it here.
+    if (mm && Stage.reduced && !root.classList.contains('is-live')) leave();
     // Reduced motion on: the finished composition, on every screen. Off again: gsap.matchMedia drops a
     // context for good once none of its conditions match, so on a desktop the stage never comes back
     // by itself; start the scene again (the phone's context is still listening and comes back alone).

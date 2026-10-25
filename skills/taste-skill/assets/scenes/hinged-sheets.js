@@ -54,7 +54,9 @@
 //   </section>
 // The script makes the ground wash, the turn shades and the headline's blurred copy (an empty
 // <span class="hs-title-soft" aria-hidden="true"> whose words are generated content from data-soft)
-// itself. Give every front the same amount of copy: tickets keep a 1:1.414 shape.
+// itself, and while live it gives each face and shade its paper, ink or shade as a bitmap background
+// with the perforation punched through, so a moving ticket needs no mask. Give every front the same
+// amount of copy: tickets keep a 1:1.414 shape.
 //
 // Options (data-options JSON; defaults in brackets):
 //   hold     1.2-4             [0.9 + 0.5 x tickets: 2.4 for three]  screens the stage is held
@@ -66,14 +68,16 @@
 //   lean     0-18 (degrees)    [16]    starting rotationX
 //   lift     0-120 (px)        [120]   how far each ticket comes towards the viewer at mid-turn
 //   tip      0-28 (degrees)    [24]    how far the headline tips back; 0 keeps it flat (it still softens)
-//   soften   0-12 (px)         [7]     blur of the headline's soft copy
+//   soften   0-12 (px)         [6]     blur of the headline's soft copy
 //   phone    'flip' | 'rest'   ['flip']  the phone's per-ticket turn, or the finished composition
 //
 // Page tokens: --accent (the one ink: the backs and every word, #b62118), --paper (#fafaf9),
 // --font-display, --font-text. Scene tokens on the section: --hs-ground-a and --hs-ground-b (the ground
 // at the start and at the end, a tint of a hue that sets off the ink; b clearly lighter, so the stage
-// brightens as the tickets land) and --hs-soft (the colour of the soft headline: a deeper tone of the
-// ground, so it reads as mist behind the row). Timeline positions are fractions of the scene (0-1).
+// brightens as the tickets land), --hs-soft (the colour of the soft headline: a deeper tone of the
+// ground, so it reads as mist behind the row; the sharp words go grey at its lightness before they
+// fade, so ink never mixes with the ground) and --hs-shade-paper (what a front greys to as it turns
+// away: a cool dark, never the ink). Timeline positions are fractions of the scene (0-1).
 //
 // Scenes['hinged-sheets'](root, opts) returns a handle: { mm (the live gsap.matchMedia), revert() }.
 // revert() stops the scene for good and leaves the finished composition.
@@ -88,6 +92,36 @@
   const SHADE = 0.42;     // darkest a face gets, edge-on
   const MIN_W = 296;      // narrowest ticket the deal runs with (its text is 14px there)
 
+  // Any CSS colour as sRGB numbers, through a 1px canvas (it reads oklch() and color-mix() results).
+  let pen = null;
+  const rgbOf = (css) => {
+    try {
+      pen = pen || Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d', { willReadFrequently: true });
+      pen.clearRect(0, 0, 1, 1);
+      pen.fillStyle = '#010203';
+      pen.fillStyle = css;
+      if (pen.fillStyle === '#010203') return null; // a colour this browser's canvas cannot read
+      pen.fillRect(0, 0, 1, 1);
+      const d = pen.getImageData(0, 0, 1, 1).data;
+      return [d[0], d[1], d[2]];
+    } catch { return null; }
+  };
+  const luma = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b; // the grey saturate(0) leaves of a colour
+  const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const enc = (y) => 255 * (y <= 0.0031308 ? 12.92 * y : 1.055 * y ** (1 / 2.4) - 0.055);
+  const seen = ([r, g, b]) => enc(0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)); // the grey that looks as light
+  // Two brightness steps for the headline's sharp words, as multiples of the grey saturate(0) leaves of
+  // the ink: [as light as the ink looks, as light as the mist looks]. The words lose their colour
+  // without getting lighter first (a red paled before it is grey reads pink), then go to the mist's
+  // lightness, so the sharp words hand over to the soft copy at the same tone, on any ink and ground.
+  const greySteps = (sharp, soft) => {
+    const ink = sharp && rgbOf(getComputedStyle(sharp).color);
+    const mist = soft && rgbOf(getComputedStyle(soft, '::before').color);
+    if (!ink || !mist) return [1.4, 2.3];
+    const g = Math.max(8, luma(ink));
+    return [+clamp(seen(ink) / g, 1, 4).toFixed(3), +clamp(seen(mist) / g, 1, 4).toFixed(3)];
+  };
+
   const make = (tag, cls, parent, first) => {
     const el = document.createElement(tag);
     el.className = cls;
@@ -96,33 +130,31 @@
     return el;
   };
 
-  // The perforation while live: a clip-path (an SVG clipPath in the ticket's own 0-1 box: two notches
-  // and a row of punched holes at 70% of its height), not the mask the finished composition uses. Under
-  // a moving 3D transform Chrome repaints a masked face, photo and all, on every frame; a path clip
-  // repaints nothing. Built once per document, from the same geometry as the CSS mask (a 1000 x 1414
-  // box), so the two look the same.
-  const perforate = () => {
-    if (document.getElementById('hs-perf')) return;
-    const W = 1000, H = 1414, Y = 990, f = (v) => +v.toFixed(5);
-    const hole = (cx, r) => { const rx = f(r / W), ry = f(r / H), x = f(cx / W), y = f(Y / H); return `M${f(x - rx)} ${y}a${rx} ${ry} 0 1 0 ${f(2 * rx)} 0a${rx} ${ry} 0 1 0 ${f(-2 * rx)} 0z`; };
-    let d = 'M0 0H1V1H0z' + hole(0, 26) + hole(W, 26);
-    for (let x = 75; x <= 925; x += 34) d += hole(x, 8);
-    const NS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('width', '0');
-    svg.setAttribute('height', '0');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.setAttribute('focusable', 'false');
-    svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
-    const clip = document.createElementNS(NS, 'clipPath');
-    clip.id = 'hs-perf';
-    clip.setAttribute('clipPathUnits', 'objectBoundingBox');
-    const path = document.createElementNS(NS, 'path');
-    path.setAttribute('clip-rule', 'evenodd');
-    path.setAttribute('d', d);
-    clip.append(path);
-    svg.append(clip);
-    document.body.append(svg);
+  // The perforation while live. The finished composition cuts it with a CSS mask; a moving 3D face
+  // must not have a mask or a clip-path: Chrome draws such a layer through a mask texture the size of
+  // its projection, rebuilt as it turns, and a ticket lifted towards the viewer at mid-turn needs one of
+  // several screens of pixels on every frame. Nor an SVG picture: on a moving 3D layer Chrome records
+  // it again on every frame. So while live each surface (paper, ink and the two turn shades) is a
+  // bitmap, drawn once at the ticket's size and the screen's density, with the holes already punched
+  // out: a row of 26 holes and two edge notches on the line at 70% of the ticket, in the same
+  // 1000 x 1414 box as the mask. The holes stay real (they show whatever is behind the ticket).
+  const punched = (rgb, w, h) => {
+    const k = Math.min(2, window.devicePixelRatio || 1);
+    const c = document.createElement('canvas');
+    c.width = Math.max(10, Math.round(w * k));
+    c.height = Math.max(14, Math.round(h * k));
+    const g = c.getContext('2d');
+    g.fillStyle = `rgb(${rgb.join(',')})`;
+    g.fillRect(0, 0, c.width, c.height);
+    g.globalCompositeOperation = 'destination-out';
+    const s = c.width / 1000, y = (990 / 1414) * c.height;
+    const hole = (cx, r) => { g.moveTo((cx + r) * s, y); g.arc(cx * s, y, r * s, 0, 2 * Math.PI); };
+    g.beginPath();
+    hole(0, 26);
+    hole(1000, 26);
+    for (let x = 75; x <= 925; x += 34) hole(x, 8);
+    g.fill();
+    return `url("${c.toDataURL('image/png')}")`;
   };
 
   Scenes[ID] = (root, opts = {}) => {
@@ -171,10 +203,36 @@
         else if (!on && el.dataset.print != null) { el.textContent = el.dataset.print; delete el.dataset.print; }
       }
     };
-    if (Stage.live) perforate();
+    // The punched surfaces, in the page's own colours (read from the scene's tokens on every build).
+    // Until they are set, or if a colour cannot be read, the faces stay solid, without holes. Each
+    // face and shade gets its bitmap as its own inline background, never through a custom property: the
+    // stage sets --p on the section on every frame, a background that reads a variable is resolved again
+    // each time, and every face would be repainted on every frame.
+    const surfaces = sheets.flatMap((sheet) => [...sheet.querySelectorAll(':scope > .hs-face')].flatMap((face) => {
+      const front = face.classList.contains('hs-face--front');
+      return [[face, front ? '--hs-paper' : '--hs-ink'], [face.querySelector(':scope > .hs-shade'), front ? '--hs-shade-paper' : '--hs-shade']];
+    })).filter(([el]) => el);
+    let cutW = 0;
+    const unpunch = () => { for (const [el] of surfaces) el.style.removeProperty('background'); cutW = 0; };
+    const punch = () => {
+      const w = sheets[0].offsetWidth, h = sheets[0].offsetHeight;
+      if (!w || !h) return;
+      const probe = make('span', 'hs-probe', stage);
+      probe.style.display = 'none';
+      const pics = {};
+      for (const token of ['--hs-paper', '--hs-ink', '--hs-shade-paper', '--hs-shade']) {
+        probe.style.color = `var(${token})`;
+        const rgb = rgbOf(getComputedStyle(probe).color);
+        pics[token] = rgb && punched(rgb, w, h);
+      }
+      probe.remove();
+      if (Object.values(pics).some((p) => !p)) return; // a colour this browser cannot read: solid faces
+      for (const [el, token] of surfaces) el.style.background = `${pics[token]} 0 0 / 100% 100% no-repeat`;
+      cutW = w;
+    };
     slots.forEach((s, i) => s.style.setProperty('--i', i));
     if (N <= 4) root.style.setProperty('--n', N);
-    if (opts.soften != null) root.style.setProperty('--hs-soften', opt(opts.soften, 7, 0, 12) + 'px');
+    if (opts.soften != null) root.style.setProperty('--hs-soften', opt(opts.soften, 6, 0, 12) + 'px');
     root.querySelectorAll('img').forEach((img) => { if (img.decode) img.decode().catch(() => {}); }); // decoded before they move
 
     const o = {
@@ -204,6 +262,7 @@
     };
     const untouched = () => {
       sheets.forEach((sheet, i) => { delete sheet.dataset.face; shades[i].last = 0; for (const el of shades[i]) el.style.opacity = ''; });
+      unpunch();
       row.removeAttribute('data-shut');
       root.classList.remove('hs-moving');
     };
@@ -229,6 +288,7 @@
     function deal(tl, { stage: st }) {
       root.classList.remove('hs-flow');
       untouched();
+      punch();
       asPrint(true);
       const ends = sheets.map((_, i) => 0.40 + i * o.stagger);
       const last = ends[N - 1];
@@ -252,15 +312,20 @@
         tl.to(sheet, { z: 0, ease: 'sine.in', duration: fd / 2 }, fs + fd / 2);
       });
 
-      // The headline lays down first and softens after: it tips back on its bottom edge from 0.20 to
-      // 0.42 while the sharp words are still nearly whole (above 0.7 until about 0.37), then the sharp
-      // words fade (0.30-0.48) under a soft copy in a deeper tone of the ground (0.34-0.54), so the
-      // overlap reads as the words going out of focus and into the distance, not as a halo.
+      // The headline lays down first and softens after. It tips back on its bottom edge from 0.20 to
+      // 0.42. While it tips, the sharp words lose their colour at full strength (0.25-0.31, at the
+      // lightness the ink has), lighten to the mist's tone (0.31-0.37; colour matrices only, never a
+      // blur), and only then fade (0.36-0.46) under the soft copy (0.34-0.54). Ink at part strength over
+      // the ground would mix into a third colour (a red over a blue reads as lilac); a grey over the
+      // ground only goes paler, so the words go ink -> grey -> mist, distance taking the colour of the air.
       if (title) {
         gsap.set(title, { transformOrigin: '50% 100%', transformPerspective: 1200 });
         if (o.tip) tl.fromTo(title, { rotationX: 0, y: 0, scale: 1 }, { rotationX: o.tip, y: -28, scale: 0.94, ease: 'power1.inOut', duration: 0.22 }, 0.20);
-        tl.fromTo(sharp, { opacity: 1 }, { opacity: 0, ease: 'power1.inOut', duration: 0.18 }, 0.30);
-        tl.fromTo(soft, { opacity: 0 }, { opacity: 0.9, ease: 'power1.inOut', duration: 0.20 }, 0.34);
+        const [even, mist] = greySteps(sharp, soft);
+        tl.fromTo(sharp, { filter: 'saturate(1) brightness(1)' }, { filter: `saturate(0) brightness(${even})`, ease: 'power1.in', duration: 0.06 }, 0.25);
+        tl.fromTo(sharp, { filter: `saturate(0) brightness(${even})` }, { filter: `saturate(0) brightness(${mist})`, ease: 'power1.inOut', duration: 0.06, immediateRender: false }, 0.31);
+        tl.fromTo(sharp, { opacity: 1 }, { opacity: 0, ease: 'power1.inOut', duration: 0.10 }, 0.36);
+        tl.fromTo(soft, { opacity: 0 }, { opacity: 1, ease: 'power1.inOut', duration: 0.20 }, 0.34);
       }
       if (lead) tl.fromTo(lead, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.10 }, last - 0.06);
       if (note) tl.fromTo(note, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.10 }, last - 0.02);
@@ -287,6 +352,7 @@
     function flow(tl, { phone }) {
       root.classList.add('hs-flow');
       untouched();
+      punch();
       asPrint(false);
       current = null;
       const colOf = (i) => { let c = 0; for (let k = i - 1; k >= 0 && slots[k].offsetTop === slots[i].offsetTop; k--) c++; return c; };
@@ -309,10 +375,12 @@
     }
 
     // A refresh (resize, fonts, pictures, another scene) renders every timeline at its new progress
-    // with events muted, so the shades and data-face are brought up to date after each one.
+    // with events muted, so the shades and data-face are brought up to date after each one; and when
+    // the tickets changed size, their punched surfaces are drawn again at the new size.
     const refreshed = () => {
       if (!root.classList.contains('is-live')) return;
       if (current) current.update(); else for (let i = 0; i < N; i++) turn(i);
+      if (Math.abs(sheets[0].offsetWidth - cutW) > 2) punch();
     };
 
     let mm = null, dealing = null, timer = 0;

@@ -36,9 +36,12 @@
     .intro p { margin: 0; font-size: 20px; line-height: 1.4; max-width: 30ch; color: var(--dim); }
     .intro .act { margin-top: 28px; }
 
-    /* The scene, set to its backdrop: a jetty running out to a lit boathouse at night. The picture's
-       lines meet on the horizon at 72% of its height, so the vanishing point sits there; with the cards
-       that low the statement can be larger and wider than the scene's default. The flat scrim cools the
+    /* The scene, set to its backdrop: a jetty running out to a lit boathouse at night, and the camera
+       walks the jetty to its door. The picture's lines meet on the horizon at 72% of its height, so the
+       vanishing point sits there; the boathouse stands on the water below it, so the streaming ground
+       starts at its base (78%). The boathouse, eaves included, is 18% of the picture's width, so its
+       half-width with a little air is .1 of the picture: the cards keep outside it. With the cards that
+       low, the cards and the statement can be larger than the scene's defaults. The flat scrim cools the
        night sky toward blue-black. */
     .fly {
       --fly-stage: #14161c;
@@ -48,15 +51,22 @@
       --fly-scrim: .36;
       --fly-vp: 72svh;
       --fly-focus: 72%;
+      --fly-ground: 78svh;
+      --fly-focus-w: .1;
       --fly-rest-vp: 72svh;
-      --fly-size: clamp(2.5rem, 1rem + 4vw, 6rem);
+      --fly-card-w: min(40vw, 62vh);
+      --fly-size: clamp(2.5rem, min(1rem + 4vw, 9.5svh), 6rem);
       --fly-copy-w: min(50vw, 17ch);
     }
+    /* held upright (a phone, a tablet): the picture lifted 42.9svh puts its vanishing point at 60svh
+       (-42.9 + 72% of 142.9) and the boathouse's foot at 68.6svh, so the statement, the boathouse and the
+       cards flying low over the jetty share the height with no empty band of sky */
     @media (min-width: 768px) and (orientation: portrait) {
-      .fly { --fly-lift: 43svh; --fly-vp: 60svh; --fly-card-w: min(46vw, 32svh); --fly-copy-top: 21svh; --fly-copy-w: min(64vw, 17ch); }
+      .fly { --fly-lift: 42.9svh; --fly-vp: 60svh; --fly-ground: 68.6svh; --fly-card-w: min(56vw, 36svh); --fly-copy-top: 14svh; --fly-copy-w: min(64vw, 17ch); }
     }
+    /* the phone's finished opening (80svh) shows the picture unlifted: vanishing point 57.6svh, foot 62.4svh */
     @media (max-width: 767px) {
-      .fly { --fly-lift: 0svh; --fly-vp: 72svh; --fly-rest-vp: 57.6svh; --fly-copy-top: 30svh; --fly-size: 2rem; --fly-copy-w: calc(100vw - 32px); }
+      .fly { --fly-lift: 42.9svh; --fly-vp: 60svh; --fly-ground: 68.6svh; --fly-rest-vp: 57.6svh; --fly-rest-ground: 62.4svh; --fly-card-w: min(78vw, 36svh); --fly-copy-top: 14svh; --fly-size: 2.25rem; --fly-copy-w: calc(100vw - 32px); }
     }
 
     .close { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--pad); row-gap: 48px; padding: 200px var(--pad) 160px; }
@@ -100,7 +110,7 @@
       </div>
     </section>
 
-    <section class="scene fly" id="approach" data-scene="depth-card-flythrough" data-options='{"inAir":3}' aria-label="The approach to Varrick Sound">
+    <section class="scene fly" id="approach" data-scene="depth-card-flythrough" data-options='{"inAir":3,"sideX":0.35,"dolly":1.6}' aria-label="The approach to Varrick Sound">
       <div class="scene-stage fly__stage">
         <div class="fly__backdrop"><img class="fly__backdrop-img" src="https://picsum.photos/id/594/2400/1500" alt="" width="2400" height="1500" fetchpriority="high"></div>
         <div class="fly__scrim" aria-hidden="true"></div>
@@ -111,9 +121,9 @@
             <figcaption class="fly__cap">Pilot launch Tern</figcaption>
           </figure>
           <figure class="fly__card" style="--dy:0">
-            <img class="fly__img" src="https://picsum.photos/id/716/1200/800" alt="Deep blue open sea rolling in short waves" width="1200" height="800" decoding="async">
+            <img class="fly__img" src="https://picsum.photos/id/473/1200/800" alt="A man in dark clothes stands on wet planks, facing mist on the water and dark hills beyond" width="1200" height="800" decoding="async">
             <span class="fly__fog" aria-hidden="true"></span>
-            <figcaption class="fly__cap">Off the outer roads</figcaption>
+            <figcaption class="fly__cap">On the quay at five</figcaption>
           </figure>
           <figure class="fly__card" style="--dy:4">
             <img class="fly__img" src="https://picsum.photos/id/483/1200/800" alt="Dark sea cliffs and broken rocks with white surf below, seen from above" width="1200" height="800" decoding="async">
@@ -126,17 +136,17 @@
             <figcaption class="fly__cap">Fells above the Neck</figcaption>
           </figure>
           <figure class="fly__card" style="--dy:5">
-            <img class="fly__img" src="https://picsum.photos/id/870/1200/800" alt="A white lighthouse with its lamp lit against a starry blue sky" width="1200" height="800" decoding="async">
+            <img class="fly__img" src="https://picsum.photos/id/171/1200/800" alt="Rain on a window at night, with red and amber lights blurred beyond it" width="1200" height="800" decoding="async">
             <span class="fly__fog" aria-hidden="true"></span>
-            <figcaption class="fly__cap">The Holm light</figcaption>
+            <figcaption class="fly__cap">From the wheelhouse</figcaption>
           </figure>
           <figure class="fly__card" style="--dy:0">
-            <img class="fly__img" src="https://picsum.photos/id/385/1200/800" alt="A calm sea running to a thin glowing horizon at dusk" width="1200" height="800" decoding="async">
+            <img class="fly__img" src="https://picsum.photos/id/765/1200/800" alt="A dark sea under a night sky with a last band of orange light along the horizon" width="1200" height="800" decoding="async">
             <span class="fly__fog" aria-hidden="true"></span>
             <figcaption class="fly__cap">The roads at dusk</figcaption>
           </figure>
           <figure class="fly__card" style="--dy:3">
-            <img class="fly__img" src="https://picsum.photos/id/612/1200/800" alt="A wave bursting white over dark rocks" width="1200" height="800" decoding="async">
+            <img class="fly__img" src="https://picsum.photos/id/614/1200/800" alt="White surf washing over dark rocks, seen from above" width="1200" height="800" decoding="async">
             <span class="fly__fog" aria-hidden="true"></span>
             <figcaption class="fly__cap">The Skerries</figcaption>
           </figure>
@@ -147,7 +157,7 @@
             <li class="fly__line">We board in any sea, at any hour.</li>
             <li class="fly__line">Every rock learnt by heart.</li>
             <li class="fly__line">Ninety metres wide at the Neck.</li>
-            <li class="fly__line">The Holm light turns all night.</li>
+            <li class="fly__line">In fog, we steer by radar alone.</li>
             <li class="fly__line">Ships wait here for the tide.</li>
             <li class="fly__line">No keel on rock since 1987.</li>
           </ol>
@@ -170,7 +180,7 @@
 
   <footer class="foot">
     <p class="name">Varrick Sound Pilots</p>
-    <p class="credit">An invented pilot station, made to show a scroll scene. Photographs from Unsplash through Lorem Picsum, by Aurélien Bellanger, Marcelo Quinan, Matthew Kosloski, Paulo Simões Mendes, Martin Staněk, Joshua Hibbert, Griffin Keller and Justin Leibow.</p>
+    <p class="credit">An invented pilot station, made to show a scroll scene. Photographs from Unsplash through Lorem Picsum, by Aurélien Bellanger, Marcelo Quinan, Todd Quackenbush, Paulo Simões Mendes, Martin Staněk, Riley Briggs, Grant McIver and Josefa Holland-Merten.</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>

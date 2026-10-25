@@ -29,12 +29,18 @@
 // forgot it, but then the first paint shows the finished composition), one flat ground colour (--ground)
 // shared with the section after the scene, and the word in .ws-sr (or data-word on .ws-word).
 //
-// The word: capitals (or numerals) read best, with a straight letter (I, l, 1) that is not the first or
+// The word: set it in capitals (or numerals), with a straight letter (I, l, 1) that is not the first or
 // last; with none, a square full stop is added after the word (in the front copy only) and falls instead.
-// Mixed case works: letters that rise above the capitals (b d f h k l t, the dot of i) get taller ground
-// plates of their own, so their bands keep the rhythm, and the word keeps its clearance under the top row.
-// A first or last letter whose outer side is mostly open (E F K L Z, A R C at the end) gets a wider plate
-// on that side, so the echo there steps only through its top bands instead of leaving a dotted trail.
+// Capitals are what the echo is drawn for: every letter has ink on the cap line, so each copy behind
+// steps out as one even row of bands across the word. Mixed case runs, but reads thinner: letters that
+// rise above the capitals (b d f h k l t, the dot of i) get plates tall enough to hide their own bands
+// (an ascender's band would float over the word as a loose block), and x-height letters have none, so
+// only the capitals and the side strips echo. Use mixed case only when the name is never written in
+// capitals.
+// A first or last letter whose outer side is mostly open (E F K L Z, A R C at the end), or whose stem is
+// set in from its outer edge far enough to peek out beside the copy in front (T, Y, J), gets a wider
+// plate on that side, so the echo there steps only through its top bands instead of leaving a dotted
+// trail or a hairline sliver of stem.
 //
 // CSS custom properties a page can set on the section (all optional):
 //   --ws-chars   5       letters in the word. Only used when no script runs at all, to size the word from
@@ -58,9 +64,10 @@
 //                       the button sits under it from the start and the echo takes the whole hold
 //   letter     auto     0-based index of the letter that falls
 //   size       [300,64] landed button on desktop, px (240-360 x 56-72); phoneSize [240,52]
-//   radius     0        landed corner radius, px (0-8), rounded only after the handoff
+//   radius     0        landed corner radius, px (0-8); the letter stays square, the bar rounds from 66%
 //   accent     ''       a colour the button takes as it lands (keep 4.5:1 against the ground-coloured label)
-//   reveal     'wipe'   how the label appears on the falling bar: 'wipe' (written left to right) or 'fade'
+//   reveal     'wipe'   how the label appears on the falling bar: 'wipe' (written left to right, whole
+//                       characters at a time) or 'fade'; either starts once the bar has cleared the word
 //   fill       0.92     width of the word's ink as a share of the stage width (0.8-0.96)
 //   maxHeight  0.42     limit on the word's cap height as a share of the stage height (0.3-0.45)
 //   stretch    'normal' font-stretch of the word on desktop ('extra-condensed' to 'expanded')
@@ -69,19 +76,23 @@
 //
 // Progress map (desktop): 0-5% still; 5-16% crushed to 90% height; 16-28% springs back past 100%;
 // 16-52% the echo opens (front copy to 61.5%). The copies behind never fade: each one steps out at full
-// ink, nearest first, the moment its edge is 6px or more — first its side strips (from about 33%), then
-// its top band (about 36-40%) — so the echo grows outward from the word and never shows a hairline.
-// 52% the straight letter becomes a bar of the same size; 52-60% it loosens (tilts 8 degrees, sags);
-// from 57% it drops with gravity before it turns (about 18 degrees at 70%, flat at 80%). It swings on
-// a hinge on its own axis, and the hinge and the side it tips to are chosen by moving the bar along
-// each candidate path over the word and keeping the one that touches the other letters least (a high
-// hinge keeps the part still inside the word in its own slot while its foot swings out below the
-// baseline), so it never fuses with a neighbour; it drifts to its landing point late, once it has
-// dropped. It stays the size of the letter while it crosses the word
-// and stretches into the button as it clears it; 72-80% the label is written along it; 80-88% it lands
-// with a squash; 84% clickable; 88-100% held. It lands under the word's centre (on desktop, straight
-// under its slot when the letter came from near one end of the word). With drop: false the echo opens
-// over 16-85%, fast first, and is complete by half the hold.
+// ink, nearest first and one at a time, the moment its edge is 6px or more — first its side strips
+// (from about 33%), then its top band (about 36-40%) — so the echo grows outward from the word and
+// never shows a hairline. 52% the straight letter becomes a bar of the same size; 52-60% it loosens
+// (tilts up to 8 degrees and sags); from 55-57% it drops with gravity, slipping out of its slot, and
+// turns once it is out (from 60-75%, flat at 80%). It swings on a hinge on its own axis. Its path (the
+// side it tips to, the hinge, the loosening tilt, when it turns, how it drops, whether it first eases
+// off the closer neighbour) is chosen when the scene is measured: each candidate is moved over a 1:1
+// drawing of the word in 0.005 steps, and only a path that keeps at least 4px of ground between the bar
+// and every letter (or, for a letter set tighter than that, its own gap at rest) is taken, the most
+// natural of those first; bar and letters are one ink, so a touch would fuse them. A letter with little
+// room at rest (a condensed face on the phone) loosens less or not at all and drops straight before it
+// turns. It drifts to its landing point late, stays the size of the letter while it crosses the word and
+// stretches into the button as it clears it; the label is written on it once it is below the word's ink
+// and big enough to carry it (about 74-82%); 80-88% it lands with a squash; 84% clickable; 88-100% held.
+// It lands under the word's centre (on desktop, straight under its slot when the letter came from near
+// one end of the word). With drop: false the echo opens over 16-85%, fast first, and is complete by half
+// the hold.
 // Eases: the studied progress map is quadratic where it says power2 (0.979 at 10%, e = 0.778 at 40%),
 // and GSAP's power2 is cubic, so the curves here are one GSAP step lower (power1 for power2, power2 for
 // power3). Ease 'none' everywhere else; back.out only for the spring and the landing, as the spec asks.
@@ -164,7 +175,8 @@
   };
   // When each copy behind the front one steps out, in echo time (0-1): show = its side strips are MIN
   // px wide (its band is still clipped away), full = its band is MIN px thick too. Nearest copy first,
-  // each at least 0.008 of the hold after the one in front of it, so the echo visibly grows outward.
+  // and one at a time: a copy steps out only once the copy in front of it is whole (at least 0.008 of
+  // the hold later), because a clipped copy's plate is clipped with it and would bare the copy behind.
   const schedule = (p, h0, half, echo) => {
     const st = p.step, sf = p.shift / 100, py = p.py / 100, X = p.xr * half, inv = INV[echo.ease];
     const du = 0.008 / echo.dur, show = [], full = [];
@@ -172,25 +184,36 @@
       const eb = (py + MIN / h0) / (sf + st + py * (j + 1) * st);
       const es = p.strips ? (X + MIN) / (st * (half + X * (j + 1))) : eb;
       let us = inv(Math.min(1, es)), uf = inv(Math.min(1, Math.max(eb, es)));
-      if (j < p.n - 2) { us = Math.max(us, show[j + 1] + du); uf = Math.max(uf, full[j + 1] + du); }
+      if (j < p.n - 2) { us = Math.max(us, full[j + 1] + du); uf = Math.max(uf, us); }
       show[j] = Math.min(1, us); full[j] = Math.min(1, Math.max(uf, us));
       if (!p.strips) show[j] = full[j];
     }
     return { show, full };
   };
-  const choose = (o, phone, h0, stageH, half, strips, echo, deadline) => {
+  // Which outer sides of the word get a plate wide enough to hide that side's strips: a side whose
+  // letter is mostly open (open()), and a side whose letter has a stem set in from its outer edge (T,
+  // Y, J) that the copy in front's plate would not cover, because a stem peeking out beside that
+  // plate is a long sliver that grows from 0px, a hairline. m in em, p a plan.
+  const wides = (m, p) => {
+    if (!m || p.n < 2) return { l: !!(m && m.openL), r: !!(m && m.openR) };
+    const half = (m.R - m.L) / 2, X = (p.xr || 0) * half, st = p.step, sb = 1 - (p.n - 2) * st;
+    const peek = (stems) => (stems || []).some((d) => (half + X) * st - (d + X) * sb > -0.006);
+    return { l: m.openL || peek(m.stemsL), r: m.openR || peek(m.stemsR) };
+  };
+  const choose = (o, phone, h0, stageH, half, m, echo, deadline) => {
     let best = null;
     for (const base of plans(o, phone)) {
       if (base.minH && h0 < base.minH * stageH) continue;
       const sf = 1 - (base.n - 1) * base.step;
       // the side overflow keeps the ground gaps between the strips open
       const xr = Math.max(base.xr, (MIN + 1) / (sf * half));
+      const w = wides(m, { ...base, xr });
       // a shorter word needs a taller plate overflow to keep the ground gaps between its bands open;
       // a lower plate lets the bands appear sooner, so it is lowered (down to that limit) when the echo
       // would otherwise be complete too late
       const low = (100 * (MIN + 0.5)) / (h0 * sf);
       for (let py = Math.max(base.py, low); py >= low - 1e-6; py -= 0.5) {
-        const p = { ...base, xr, py, strips };
+        const p = { ...base, xr, py, strips: !(w.l && w.r), wl: w.l, wr: w.r };
         if (thinnest(p, h0, half) < MIN) continue;
         const done = ECHO_AT + schedule(p, h0, half, echo).full[0] * echo.dur;
         if (done <= deadline) return p;
@@ -199,7 +222,7 @@
         if (py - 0.5 < low) py = low + 0.5;
       }
     }
-    return best ? best.p : { n: 1, step: 0, shift: 0, py: phone ? 9 : 5, xr: 0, strips: false };
+    return best ? best.p : { n: 1, step: 0, shift: 0, py: phone ? 9 : 5, xr: 0, strips: false, wl: false, wr: false };
   };
 
   // Ink box of one glyph at the element's font, relative to its pen position and baseline: l and r are
@@ -246,8 +269,26 @@
         const span = yb + 1 - ya;
         return { cover: inked / span, runs: runs.map(([a, b]) => [a / span, b / span]) };
       };
+      // stems set in from an outer edge: runs of rows, a quarter of the cap height or longer, whose first
+      // ink sits at one depth (within 1.5px) more than 2px in from that edge; their depths, in px
+      const stems = (left) => {
+        const ya = Math.round(by - cap), yb = Math.round(by), need = 0.25 * (yb - ya), out = [];
+        let a = -1, d0 = 0, n = 0;
+        const close = () => { if (a >= 0 && n >= need) out.push(d0); a = -1; n = 0; };
+        for (let y = ya; y <= yb; y++) {
+          let d = -1;
+          if (left) { for (let x = x0; x <= x1; x++) if (px[(y * W + x) * 4 + 3] > 127) { d = x - x0; break; } }
+          else for (let x = x1; x >= x0; x--) if (px[(y * W + x) * 4 + 3] > 127) { d = x1 - x; break; }
+          if (d > 2 && a >= 0 && Math.abs(d - d0) <= 1.5) { n++; continue; }
+          close();
+          if (d > 2) { a = y; d0 = d; n = 1; }
+        }
+        close();
+        return out;
+      };
       const z = Math.max(1, Math.round(zone));
       edge = { l: side(x0, Math.min(x1, x0 + z)), r: side(Math.max(x0, x1 - z), x1) };
+      edge.l.stems = stems(true); edge.r.stems = stems(false);
     }
     return { l: left - bx, r: right - bx, a: by - topE, d: bottom - by, w: m.width, fa: m.fontBoundingBoxAscent, fd: m.fontBoundingBoxDescent, edge };
   };
@@ -354,7 +395,10 @@
       S.plan = p;
       const s = root.style;
       const off = S.list.length - p.n;
-      S.list.forEach((el, i) => { el.style.display = i < off ? 'none' : ''; el.style.setProperty('--i', Math.max(0, i - off)); });
+      // a new plan maps the echo's steps onto other copies: forget what each step showed, so the next
+      // frame sets every copy afresh (a copy the old plan left out would otherwise show whole)
+      S.state = [];
+      S.list.forEach((el, i) => { el.style.display = i < off ? 'none' : ''; el.style.setProperty('--i', Math.max(0, i - off)); el.style.visibility = S.live && i < S.list.length - 1 ? 'hidden' : ''; el.style.clipPath = ''; });
       s.setProperty('--ws-n', p.n);
       s.setProperty('--ws-step', p.step.toFixed(5));
       s.setProperty('--ws-shift', p.shift);
@@ -376,14 +420,15 @@
       const cols = chars.map((ch, i) => {
         const r = charBox(S.front, i);
         const x = r ? r.left - box.left : 0;
-        if (!ch.trim()) return { x: x / 100, l: null, r: null, rise: 0, edge: null };
+        if (!ch.trim()) return { x: x / 100, l: null, r: null, rise: 0, edge: null, adv: 0 };
         const g = ink(ch, S.front, i === first || i === last ? 0.07 * 100 : 0, cap);
         const adv = r ? r.width - ls : 0;
         // a canvas without font-stretch draws another width of the face: scale to the page's advance
         const k = g.w > 0 && adv > 0 && Math.abs(adv / g.w - 1) > 0.015 ? adv / g.w : 1;
         // round overshoots stay on the cap line; only real ascenders rise
         const rise = g.a - cap > 0.04 * cap ? g.a - cap : 0;
-        return { x: x / 100, l: (x + g.l * k) / 100, r: (x + g.r * k) / 100, rise: rise / 100, edge: g.edge };
+        if (g.edge) for (const s of [g.edge.l, g.edge.r]) s.stems = s.stems.map((d) => (d * k) / 100);
+        return { x: x / 100, l: (x + g.l * k) / 100, r: (x + g.r * k) / 100, rise: rise / 100, edge: g.edge, adv: adv / 100 };
       });
       const inked = cols.slice(0, real).filter((c) => c.l !== null);
       const L = inked.length ? Math.min(...inked.map((c) => c.l)) : 0;
@@ -395,6 +440,8 @@
         rise: Math.max(0, ...rises), riseMin: rises.length ? Math.min(...rises) : 0,
         openL: first >= 0 && open(cols[first].edge && cols[first].edge.l),
         openR: last >= 0 && open(cols[last].edge && cols[last].edge.r),
+        stemsL: first >= 0 && cols[first].edge ? cols[first].edge.l.stems : [],
+        stemsR: last >= 0 && cols[last].edge ? cols[last].edge.r.stems : [],
       };
     };
 
@@ -408,23 +455,55 @@
       const X = p.n > 1 ? p.xr * half : 0.01;
       // wide enough that no strip ever shows: step * half / (front scale), plus a margin
       const wide = p.n > 1 ? p.step * half / (1 - (p.n - 1) * p.step) + 0.03 : X;
-      const Xl = m.openL ? Math.max(X, wide) : X, Xr = m.openR ? Math.max(X, wide) : X;
+      const w = p.wl === undefined ? wides(m, p) : { l: p.wl, r: p.wr };
+      const Xl = w.l ? Math.max(X, wide) : X, Xr = w.r ? Math.max(X, wide) : X;
       s.setProperty('--ws-plate-l', em(Xl - m.L));
       s.setProperty('--ws-plate-r', em(Xr - (m.w - m.R)));
-      s.setProperty('--ws-plate-t', em((p.py / 100) * m.cap + m.rise));
       s.setProperty('--ws-ink-c', em((m.L + m.R) / 2 - m.w / 2));
       s.setProperty('--ws-ink-shift', em(m.w / 2 - (m.L + m.RAll) / 2));
       s.setProperty('--ws-asc', em(m.rise));
-      // letters taller than the capitals get a taller plate of their own: the plate's top is a skyline
+      // Letters taller than the capitals (b d f h k l t, the dot of i) get a plate of their own, tall
+      // enough to hide their own bands: an ascender's band would float over the word as a loose block,
+      // out of step with the bands of the capitals (copy j's top shows over copy j + 1's plate by
+      // h * step + shift - q * s, h the letter's height, q its plate's reach, s the front copy's scale).
+      // The plate's top is a skyline.
       const cols = m.cols.slice(0, real);
-      if (m.rise > 0 && cols.some((c) => c.rise !== m.rise)) {
-        const pl = Xl - m.L;
-        const pts = [`0em 100%`, `0em ${em(m.rise - cols[0].rise)}`];
-        for (let i = 1; i < cols.length; i++) {
-          const x = em(cols[i].x + pl);
-          pts.push(`${x} ${em(m.rise - cols[i - 1].rise)}`, `${x} ${em(m.rise - cols[i].rise)}`);
+      const sf = 1 - (p.n - 1) * p.step;
+      const reach = cols.map((c) => {
+        const base = (p.py / 100) * m.cap + c.rise;
+        if (!(c.rise > 0) || p.n < 2) return base;
+        const hide = ((m.cap + c.rise) * p.step + (p.shift / 100) * m.cap) / sf + 0.01;
+        return Math.max(base, c.rise + hide);
+      });
+      const T = Math.max((p.py / 100) * m.cap + m.rise, ...reach);
+      s.setProperty('--ws-plate-t', em(T));
+      if (reach.some((r) => Math.abs(r - T) > 1e-4)) {
+        // Each letter's column of the skyline is widened to cover the same letter of the copy behind:
+        // that copy is larger and scales about the ink's centre (c0), so its letters sit further out, by
+        // up to the scale ratio of the front pair (rmax). Without this the edge of a tall letter behind
+        // peeks past the step down to its lower neighbour as a thin upright sliver.
+        const pl = Xl - m.L, hi = m.w + (Xr - (m.w - m.R));
+        const c0 = (m.L + m.R) / 2, rmax = p.n > 1 ? (1 - (p.n - 2) * p.step) / sf : 1;
+        const spans = cols.map((c, i) => {
+          let a = i ? c.x : -1e9, b = i < cols.length - 1 ? cols[i + 1].x : 1e9;
+          if (c.l !== null && p.n > 1) { a = Math.min(a, c0 + (c.l - c0) * rmax - 0.01); b = Math.max(b, c0 + (c.r - c0) * rmax + 0.01); }
+          return [a, b];
+        });
+        const xs = [...new Set(spans.flat().map((x) => clamp(x, -pl, hi)).concat([-pl, hi]))].sort((a, b) => a - b);
+        const steps = [];
+        for (let k = 0; k < xs.length - 1; k++) {
+          if (xs[k + 1] - xs[k] < 1e-6) continue;
+          const mid = (xs[k] + xs[k + 1]) / 2;
+          let h = 0;
+          spans.forEach(([a, b], i) => { if (mid >= a && mid <= b) h = Math.max(h, reach[i]); });
+          if (steps.length && Math.abs(steps[steps.length - 1][2] - h) < 1e-6) steps[steps.length - 1][1] = xs[k + 1];
+          else steps.push([xs[k], xs[k + 1], h]);
         }
-        pts.push(`100% ${em(m.rise - cols[cols.length - 1].rise)}`, '100% 100%');
+        const pts = ['0em 100%'];
+        steps.forEach(([a, b, h], k) => {
+          pts.push(`${k ? em(a + pl) : '0em'} ${em(T - h)}`, `${k === steps.length - 1 ? '100%' : em(b + pl)} ${em(T - h)}`);
+        });
+        pts.push('100% 100%');
         s.setProperty('--ws-sky', `polygon(${pts.join(', ')})`);
       } else s.removeProperty('--ws-sky');
     };
@@ -481,15 +560,20 @@
     const land = (h) => Math.max(S.land * h, S.btn[1] / 2 + S.gap);
 
     // The bar's whole path from the handoff to the landing, as one function of the progress p, so the
-    // timeline and the overlap test below move exactly the same bar. x, y: centre in stage px; r: degrees;
-    // sx, sy: scale of the landed button's local box (thickness, length).
+    // timeline and the clearance test below move exactly the same bar. x, y: centre in stage px; r:
+    // degrees; sx, sy: scale of the landed button's local box (thickness, length).
     // It turns about a hinge on its own axis, lam of the way from its centre to its top end (0 = the
-    // centre): the hinge drops with gravity and drifts late, the bar swings about it. A high hinge keeps
-    // the part of the bar still inside the word in the slot's own column while its foot swings out below
-    // the baseline, so it falls out of the word instead of through its neighbours.
+    // centre): it loosens (tilts by `tilt` and sags), the hinge drops with gravity (`fall`), drifts to
+    // the landing point late and may first ease `nudge` px away from the closer neighbour; the bar
+    // swings about it from t0, flat at 0.80. A high hinge keeps the part of the bar still inside the word
+    // in the slot's own column while its foot swings out below the baseline; a late t0 lets it drop clear
+    // of the word before it turns.
+    const FALLS = { g: [0.57, 0.23, 2], q: [0.55, 0.25, 1.6] };
     const bar = (p, g, v = g.v) => {
       const seg = (a, d) => clamp((p - a) / d, 0, 1);
-      const dir = v.dir, lam = v.lam;
+      const { dir, lam } = v;
+      const tilt = v.tilt == null ? 8 : v.tilt, t0 = v.t0 || 0.6, nudge = v.nudge || 0;
+      const [fa, fd, fe] = FALLS[v.fall] || FALLS.g;
       // the size of the letter while it crosses the word, then thickness (power2.in) and length (power3.in)
       let sx = g.kx + (1 - g.kx) * seg(0.66, 0.14) ** 3;
       let sy = g.ky + (1 - g.ky) * seg(0.69, 0.11) ** 4;
@@ -497,10 +581,12 @@
       const aEnd = (lam * S.btn[0]) / 2;
       const hy0 = g.sy - (lam * g.h0) / 2, hxE = g.tx + aEnd * dir;          // hinge at the handoff, landed
       const sag = sine(seg(0.52, 0.05)) * 0.03 * g.H0;                       // loosen: it sags
-      const fall = seg(0.57, 0.23);                                            // then drops (power1.in)
-      const hy = hy0 + sag + (g.ty - hy0 - 0.03 * g.H0) * fall * fall;
-      const hx = g.sx + (hxE - g.sx) * seg(0.62, 0.18) ** 3;                  // drifts late (power2.in)
-      const r = dir * (8 * sine(seg(0.52, 0.08)) + 82 * seg(0.6, 0.2) ** 3);   // tilts late (power2.in)
+      const hy = hy0 + sag + (g.ty - hy0 - 0.03 * g.H0) * seg(fa, fd) ** fe;  // then drops
+      const side = nudge ? nudge * sine(seg(0.56, 0.12)) : 0;                 // eases off the neighbour
+      const td = Math.max(0.62, t0);
+      const hx = g.sx + side + (hxE - g.sx - side) * seg(td, 0.8 - td) ** 3;  // drifts late (power2.in)
+      const turn = seg(t0, 0.8 - t0) ** (t0 < 0.65 ? 3 : 2);
+      const r = dir * (tilt * sine(seg(0.52, 0.08)) + (90 - tilt) * turn);   // turns late
       const th = (r * Math.PI) / 180;
       const x = hx - a * Math.sin(th), y = hy + a * Math.cos(th);
       if (p > 0.8) {
@@ -519,51 +605,186 @@
       return -R * (1 - EASE['power1.inOut']((p - 0.63) / 0.05));
     };
 
-    // Which way the bar tips and where its hinge sits. Each choice is moved along its path over a drawing
-    // of the word at its final echo state; the bar takes the one that overlaps the other letters least,
-    // and of close ones the one whose hinge travels least sideways (it reads as falling, not sliding).
-    // g.cross is the chosen path's worst overlap from 62% to 78%, as a length of bar.
-    let simA = null, simB = null;
-    const tipping = (g, f, size) => {
-      const k = Math.min(0.4, 560 / g.stageW);
-      const W = Math.max(1, Math.ceil(g.stageW * k)), Hc = Math.max(1, Math.ceil(g.stageH * k));
-      simA = simA || document.createElement('canvas'); simB = simB || document.createElement('canvas');
-      simA.width = simB.width = W; simA.height = simB.height = Hc;
-      const a = simA.getContext('2d'), b = simB.getContext('2d', { willReadFrequently: true });
+    // How the bar falls. The other letters of the front copy are drawn at 1:1 in their final echo state
+    // and turned into a distance field (px from the nearest ink). Each candidate path (which way it tips,
+    // where its hinge sits, how far it loosens, when it turns, how it drops, whether it first eases off
+    // the closer neighbour) is moved over it in 0.005 steps from the handoff to the landing, the word's
+    // recoil included, and its rows are tested against that field. Bar and letters are one ink, so a bar
+    // that only touches a stem fuses with it: a path is clean only if at least `hard` px of ground (4,
+    // or a little less than the gap the letter has at rest) stay between the bar and every letter all the
+    // way down. Of the clean paths the bar takes the most natural one (the full 8 degree loosening, the
+    // earliest turn, tipping toward the stage centre, no side step) that also keeps the wider `soft` gap;
+    // with none, the first clean one; with no clean path at all, the one that touches least of those
+    // that fall straight down before they turn.
+    // Also finds when the bar has cleared the word and is long and thick enough to carry its label.
+    let simA = null;
+    const field = (g, f, size) => {
+      const W = Math.max(1, Math.ceil(g.stageW));
+      const top = Math.floor(g.base - g.s * (g.H0 + S.m.rise * size) - 16);
+      const Hb = Math.max(1, Math.ceil(g.base + g.s * 0.35 * size + 16) - top);
+      simA = simA || document.createElement('canvas');
+      simA.width = W; simA.height = Hb;
+      const a = simA.getContext('2d', { willReadFrequently: true });
       const { font, stretch } = fontOf(S.front);
-      a.setTransform(k * g.s, 0, 0, k * g.s, k * g.ox * (1 - g.s), k * (g.oy * (1 - g.s) + (g.base - g.oy)));
       a.font = font; if ('fontStretch' in a) a.fontStretch = stretch;
       a.fillStyle = '#000'; a.textBaseline = 'alphabetic'; a.textAlign = 'left';
-      chars.forEach((ch, i) => { if (i !== slotAt && ch.trim()) a.fillText(ch, f.x + S.m.cols[i].x * size, g.oy); });
+      chars.forEach((ch, i) => {
+        if (i === slotAt || !ch.trim()) return;
+        const c = S.m.cols[i], mw = a.measureText(ch).width;
+        // a canvas without font-stretch draws another width of the face: scale to the page's advance
+        const kx = c.adv > 0 && mw > 0 && Math.abs((c.adv * size) / mw - 1) > 0.015 ? (c.adv * size) / mw : 1;
+        const x = f.x + c.x * size;
+        a.setTransform(g.s * kx, 0, 0, g.s, g.ox + (x - g.ox) * g.s, g.base - top);
+        a.fillText(ch, 0, 0);
+      });
+      a.setTransform(1, 0, 0, 1, 0, 0);
+      const px = a.getImageData(0, 0, W, Hb).data, N = W * Hb;
+      const dist = new Float32Array(N);
+      let low = -1;
+      for (let i = 0; i < N; i++) { if (px[i * 4 + 3] >= 128) { dist[i] = 0; low = Math.floor(i / W); } else dist[i] = 1e6; }
+      const D = Math.SQRT2;
+      for (let y = 0; y < Hb; y++) for (let x = 0, i = y * W; x < W; x++, i++) {
+        let v = dist[i];
+        if (x && dist[i - 1] + 1 < v) v = dist[i - 1] + 1;
+        if (y) { if (dist[i - W] + 1 < v) v = dist[i - W] + 1; if (x && dist[i - W - 1] + D < v) v = dist[i - W - 1] + D; if (x < W - 1 && dist[i - W + 1] + D < v) v = dist[i - W + 1] + D; }
+        dist[i] = v;
+      }
+      for (let y = Hb - 1; y >= 0; y--) for (let x = W - 1, i = y * W + x; x >= 0; x--, i--) {
+        let v = dist[i];
+        if (x < W - 1 && dist[i + 1] + 1 < v) v = dist[i + 1] + 1;
+        if (y < Hb - 1) { if (dist[i + W] + 1 < v) v = dist[i + W] + 1; if (x < W - 1 && dist[i + W + 1] + D < v) v = dist[i + W + 1] + D; if (x && dist[i + W - 1] + D < v) v = dist[i + W - 1] + D; }
+        dist[i] = v;
+      }
+      return { W, Hb, top, dist, low: low < 0 ? g.base : top + low + 1 };
+    };
+    // the pixel rows a pose covers, each as [row, first px, last px] (pixel centres inside the bar)
+    // (only rows from ya to yb, when given)
+    const rows = (s, fn, ya = -1e9, yb = 1e9) => {
       const [bw, bh] = S.btn;
-      const run = (v) => {
-        let total = 0, worst = 0;
-        for (let p = 0.53; p <= 0.8001; p += 0.01) {
-          const s = bar(p, g, v), ry = recoilAt(p, g);
-          const hw = (bh * s.sx) / 2, hh = (bw * s.sy) / 2, c = Math.cos((s.r * Math.PI) / 180), n = Math.sin((s.r * Math.PI) / 180);
-          const pts = [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]].map(([u, v]) => [(s.x + u * c - v * n) * k, (s.y + u * n + v * c) * k]);
-          const xs = pts.map((q) => q[0]), ys = pts.map((q) => q[1]);
-          const x0 = clamp(Math.floor(Math.min(...xs)), 0, W - 1), x1 = clamp(Math.ceil(Math.max(...xs)), 1, W);
-          const y0 = clamp(Math.floor(Math.min(...ys)), 0, Hc - 1), y1 = clamp(Math.ceil(Math.max(...ys)), 1, Hc);
-          if (x1 <= x0 || y1 <= y0) continue;
-          b.globalCompositeOperation = 'copy';
-          b.drawImage(simA, 0, ry * k);
-          b.globalCompositeOperation = 'destination-in';
-          b.beginPath(); pts.forEach((q, i) => (i ? b.lineTo(q[0], q[1]) : b.moveTo(q[0], q[1]))); b.closePath(); b.fill();
-          const d = b.getImageData(x0, y0, x1 - x0, y1 - y0).data;
-          let sum = 0;
-          for (let i = 3; i < d.length; i += 4) sum += d[i];
-          const area = sum / 255 / (k * k);
-          total += area;
-          if (p >= 0.615 && p <= 0.785) worst = Math.max(worst, area / Math.max(1, bh * s.sx));
-        }
-        return { v, total, worst, slide: Math.abs(g.tx + (v.lam * bw * v.dir) / 2 - g.sx) };
+      const th = (s.r * Math.PI) / 180, c = Math.cos(th), n = Math.sin(th);
+      const hw = (bh * s.sx) / 2, hh = (bw * s.sy) / 2, ext = hw * Math.abs(n) + hh * Math.abs(c);
+      const ac = Math.abs(c) > 1e-9, an = Math.abs(n) > 1e-9;
+      for (let y = Math.max(ya, Math.floor(s.y - ext)), y1 = Math.min(yb, Math.ceil(s.y + ext)); y <= y1; y++) {
+        const dy = y + 0.5 - s.y;
+        // { dx : |dx * c + dy * n| <= hw } and { dx : |dy * c - dx * n| <= hh }
+        let lo = -1e9, hi = 1e9;
+        const q = dy * n, r = dy * c;
+        if (ac) { const u = (-hw - q) / c, w = (hw - q) / c; lo = Math.min(u, w); hi = Math.max(u, w); } else if (Math.abs(q) > hw) continue;
+        if (an) { const u = (r - hh) / n, w = (r + hh) / n; lo = Math.max(lo, Math.min(u, w)); hi = Math.min(hi, Math.max(u, w)); } else if (Math.abs(r) > hh) continue;
+        if (hi < lo) continue;
+        const xa = Math.ceil(s.x + lo - 0.5), xb = Math.floor(s.x + hi - 0.5);
+        if (xb >= xa) fn(y, xa, xb);
+      }
+    };
+    const P0 = 0.52, P1 = 0.82, DP = 0.005;
+    const path = (g, f, size) => {
+      const F = field(g, f, size), { W, Hb, top, dist } = F;
+      // the least gap of a pose to the letters, in px of ground between them
+      const gapAt = (s, ry) => {
+        let m = 1e6;
+        rows(s, (y, xa, xb) => {
+          const r = y - ry - top;
+          if (r < 0 || r >= Hb) return;
+          for (let x = Math.max(0, xa), e = Math.min(W - 1, xb), i = r * W + x; x <= e; x++, i++) if (dist[i] < m) m = dist[i];
+        });
+        return m - 1;
       };
-      const runs = [];
-      for (const lam of [0, 0.5, 0.9]) for (const dir of [1, -1]) runs.push(run({ dir, lam }));
-      const least = Math.min(...runs.map((q) => q.total));
-      const pick = runs.filter((q) => q.total <= Math.max(least * 1.15, least + 300)).sort((q, w) => q.slide - w.slide)[0];
-      return { v: pick.v, dir: pick.v.dir, cross: pick.worst, other: Math.max(...runs.map((q) => q.worst)) };
+      const v0 = { dir: g.dir, lam: 0, tilt: 0, t0: 0.6 };
+      const rest = gapAt(bar(P0, g, v0), 0);
+      const hard = clamp(rest - 1, 1, 4), soft = clamp(rest - 0.5, hard, 8);
+      // pixels nearer than `hard` and `soft`, summed along each row
+      const sums = (lim) => {
+        const P = new Int32Array((W + 1) * Hb);
+        for (let r = 0; r < Hb; r++) { let acc = 0; const o = r * (W + 1), d = r * W; for (let x = 0; x < W; x++) { if (dist[d + x] < lim + 1) acc++; P[o + x + 1] = acc; } }
+        return P;
+      };
+      const PH = sums(hard), PS = sums(soft);
+      const hits = (P, s, ry) => {
+        let h = 0;
+        rows(s, (y, xa, xb) => {
+          const o = (y - ry - top) * (W + 1);
+          const a = xa < 0 ? 0 : xa > W ? W : xa, b = xb + 1 < 0 ? 0 : xb + 1 > W ? W : xb + 1;
+          if (b > a) h += P[o + b] - P[o + a];
+        }, top + ry, top + ry + Hb - 1);
+        return h;
+      };
+      // the poses, coarse ones first, so a path that touches is usually found out in a few
+      const poses = [];
+      for (let p = P0; p <= P1 + 1e-9; p += DP) poses.push([p, Math.round(recoilAt(p, g))]);
+      poses.sort((a, b) => [0, 3, 2, 3][Math.round((a[0] - P0) / DP) % 4] - [0, 3, 2, 3][Math.round((b[0] - P0) / DP) % 4]);
+      // a pose that rules a path out goes to the front: the next, similar path is tested there first
+      const run = (v, quit) => {
+        let over = 0, near = 0;
+        for (let i = 0; i < poses.length; i++) {
+          const [p, ry] = poses[i];
+          const s = bar(p, g, v), h = hits(PH, s, ry);
+          if (h) {
+            over += h;
+            if (quit) { if (i) poses.unshift(poses.splice(i, 1)[0]); return null; }
+          }
+          if ((!quit || !near) && hits(PS, s, ry)) near++;
+        }
+        return { v, over, near };
+      };
+      const [bw] = S.btn;
+      const step = clamp(rest - hard, 2, 12);
+      const cands = [];
+      [8, 5, 2.5, 0].forEach((tilt, ti) => [0.6, 0.63, 0.66, 0.69, 0.72, 0.75].forEach((t0, k) => ['g', 'q'].forEach((fall) =>
+        [0.9, 0.45, 0, -0.45, -0.9].forEach((lam, li) => [g.dir, -g.dir].forEach((dir) => [0, step, -step].forEach((nudge) => {
+          const slide = Math.abs(g.tx + (lam * bw * dir) / 2 - g.sx);
+          cands.push({ v: { dir, lam, tilt, t0, fall, nudge }, cost: ti + 0.9 * k + (fall === 'q' ? 0.7 : 0) + (nudge ? 1.4 : 0) + (dir !== g.dir ? 0.4 : 0) + [0, 0.1, 0.2, 0.5, 0.6][li] + slide / 200 });
+        }))))));
+      cands.sort((a, b) => a.cost - b.cost);
+      let pick = null, first = null;
+      for (const c of cands) {
+        const r = run(c.v, true);
+        if (!r) continue;
+        if (!first) first = r;
+        if (!r.near) { pick = r; break; }
+      }
+      pick = pick || first;
+      if (!pick) {
+        // nothing clears the letters: of the paths that drop straight before they turn, the one that
+        // touches least
+        let best = null;
+        for (const c of cands) if (!c.v.tilt && !c.v.nudge) { const r = run(c.v, false); if (!best || r.over < best.over) best = r; }
+        pick = best;
+      }
+      const v = pick.v;
+      let gap = 1e6;
+      for (const [p, ry] of poses) gap = Math.min(gap, gapAt(bar(p, g, v), ry));
+      // the label is written once the bar is below the word's ink and can hold it whole
+      let at = 0.82;
+      const lw = label ? label.offsetWidth : 0, lf = label ? parseFloat(getComputedStyle(label).fontSize) || 16 : 16;
+      for (let p = 0.72; p <= 0.82; p += 0.0025) {
+        const s = bar(p, g, v), [bw2, bh2] = S.btn;
+        let y0 = 1e6;
+        rows(s, (y) => { if (y < y0) y0 = y; });
+        if (y0 >= F.low + 2 && bh2 * s.sx >= 1.3 * lf && bw2 * s.sy >= lw + 16) { at = p; break; }
+      }
+      return { v, dir: v.dir, gap: +gap.toFixed(1), rest: +rest.toFixed(1), hard, soft, clean: !pick.over, near: pick.near, write: [at, Math.min(0.86, Math.max(at + 0.05, 0.8))] };
+    };
+    // Where each character of the label ends, in px of its own box, so the label is written whole
+    // characters at a time (a glyph cut in half reads as debris on a moving bar).
+    const letters = () => {
+      if (!label) return null;
+      const text = label.textContent, cps = [...text];
+      const cs = getComputedStyle(label);
+      pen.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      if ('fontStretch' in pen) pen.fontStretch = STRETCH[parseFloat(cs.fontStretch)] || 'normal';
+      const ls = parseFloat(cs.letterSpacing) || 0, lw = label.offsetWidth;
+      const full = pen.measureText(text).width + ls * cps.length;
+      const k = full > 0 && lw > 0 ? lw / full : 1;
+      const cut = [lw + 8];
+      for (let i = 1; i < cps.length; i++) {
+        const pre = cps.slice(0, i).join(''), m = pen.measureText(pre), nx = pen.measureText(cps[i]);
+        const adv = m.width + ls * i;
+        // between the ink of the last character shown and the ink of the next one
+        const a = Math.max(m.actualBoundingBoxRight, 0), b = adv - nx.actualBoundingBoxLeft;
+        cut.push(Math.max(-4, lw - ((a < b ? (a + b) / 2 : adv) * k)));
+      }
+      cut.push(-4);
+      return { n: cps.length, cut, text };
     };
 
     // Geometry for the handoff, the echo's steps and the landing, measured with the stack and the front
@@ -581,7 +802,7 @@
       // the echo's origin: the ink's centre on the baseline
       const H = f.h, ox = f.x + f.w / 2 + ((S.m.L + S.m.R) / 2 - S.m.w / 2) * size, oy = f.y + f.h;
       const s = 1 - (p.n - 1) * p.step, sh = ((p.n - 1) * p.shift) / 100;
-      const g = { stageW, stageH: base.height, H0: H, ox, oy, s, base: oy + sh * H, dir: 1, sx: ox, sy: oy, w0: 1, h0: 1, kx: 1, ky: 1, tx: ox, ty: oy, cross: 0 };
+      const g = { stageW, stageH: base.height, H0: H, ox, oy, s, base: oy + sh * H, dir: 1, sx: ox, sy: oy, w0: 1, h0: 1, kx: 1, ky: 1, tx: ox, ty: oy };
       // when each copy behind the front one steps out (echo time), and the plate line its band hides under
       // until then (in the copy's own height: the cap letters' plate top)
       const half = ((S.m.R - S.m.L) / 2) * size;
@@ -608,8 +829,22 @@
         const floor = meta ? rel(meta, base).y - bh / 2 : base.height - bh;
         g.ty = Math.round(Math.min(g.base + land(H), floor));
         g.dir = g.sx <= ox ? 1 : -1;
-        g.v = { dir: g.dir, lam: 0 };
-        if (S.live) Object.assign(g, tipping(g, f, size));
+        g.v = { dir: g.dir, lam: 0, tilt: 8, t0: 0.6 };
+        g.write = [0.74, 0.82];
+        if (S.live) {
+          // the same geometry gives the same path: a refresh that changed nothing reuses it
+          const pk = [g.stageW, g.stageH, size, g.sx, g.sy, g.tx, g.ty, g.base, g.s, S.btn, f.x, label ? label.offsetWidth : 0].join('|');
+          if (S.pk !== pk) {
+            if (S.defer && S.pv) {
+              // while the window is being resized the bar keeps the path it had (moved to the new
+              // geometry) and the path is chosen afresh once the size has settled
+              clearTimeout(S.later);
+              S.later = setTimeout(() => { if (S.live) { S.key = ''; G(); sync(); } }, 180);
+            } else { const t = performance.now(); S.pv = path(g, f, size); S.pv.ms = Math.round(performance.now() - t); S.pk = pk; }
+          }
+          Object.assign(g, S.pv);
+          g.label = letters();
+        }
       }
       root.style.setProperty('--dir', g.dir);
       return g;
@@ -623,9 +858,9 @@
       if (k !== S.key || !S.geo) {
         S.key = k;
         const r = fit();
-        const q = choose(o, S.phone, r.h0, r.stageH, r.half, !(S.m.openL && S.m.openR), ECHO, ECHO.due);
+        const q = choose(o, S.phone, r.h0, r.stageH, r.half, S.m, ECHO, ECHO.due);
         const P = S.plan;
-        if (q.n !== P.n || q.step !== P.step || q.shift !== P.shift || q.py !== P.py || q.xr !== P.xr || q.strips !== P.strips) { applyPlan(q); fit(); }
+        if (['n', 'step', 'shift', 'py', 'xr', 'strips', 'wl', 'wr'].some((k) => q[k] !== P[k])) { applyPlan(q); fit(); }
         S.geo = measure();
       }
       return S.geo;
@@ -666,6 +901,22 @@
         if (label) {
           const lt = `translate(-50%, -50%) rotate(${-90 * g.dir}deg) scale(${(1 / b.sy).toFixed(4)}, ${(1 / b.sx).toFixed(4)})`;
           if (label.style.transform !== lt) label.style.transform = lt;
+          // written once the bar has cleared the word, whole characters at a time (or faded in)
+          const [wa, wb] = g.write, fr = clamp((t - wa) / (wb - wa), 0, 1);
+          if (o.reveal === 'fade') {
+            const op = fr.toFixed(3);
+            if (label.style.opacity !== op) label.style.opacity = op;
+          } else if (g.label) {
+            const k = Math.round(fr * g.label.n);
+            const cp = k >= g.label.n ? 'none' : `inset(-4px ${g.label.cut[k].toFixed(1)}px -4px -4px)`;
+            if (label.style.clipPath !== cp) label.style.clipPath = cp;
+          }
+        }
+        // corners round only once the letter has become the bar, kept round on screen while it scales
+        if (o.radius) {
+          const q = o.radius * clamp((t - 0.66) / 0.1, 0, 1);
+          const br = q ? `${(q / b.sx).toFixed(2)}px / ${(q / b.sy).toFixed(2)}px` : '';
+          if (drop.style.borderRadius !== br) drop.style.borderRadius = br;
         }
       }
     };
@@ -673,8 +924,8 @@
     const clear = () => {
       S.list.forEach((el) => { el.style.visibility = ''; el.style.clipPath = ''; });
       S.state = [];
-      if (drop) drop.style.transform = '';
-      if (label) label.style.transform = '';
+      if (drop) { drop.style.transform = ''; drop.style.borderRadius = ''; }
+      if (label) { label.style.transform = ''; label.style.clipPath = ''; label.style.opacity = ''; }
     };
 
     const prepare = (phone) => {
@@ -714,8 +965,8 @@
       if (dropOn) {
         const recoil = c.phone ? 0.03 : 0.02;
         gsap.set(drop, { opacity: 0, pointerEvents: 'none' });
-        if (label) gsap.set(label, o.reveal === 'fade' ? { opacity: 0 } : { clipPath: 'inset(0% 100% 0% 0%)' });
-        // T5 the bar takes the slot glyph's exact place (its path, T6-T13, is bar() above, set in sync())
+        // T5 the bar takes the slot glyph's exact place (its path, T6-T13, is bar() above, set in sync(),
+        // and so are the label's writing (T12) and the rounding of the corners (T11))
         tl.set(drop, { opacity: 1 }, 0.52)
           .set(S.slot, { visibility: 'hidden' }, 0.52)
           // T7 the word recoils as the letter lets go
@@ -723,12 +974,6 @@
           .to(stack, { y: 0, duration: 0.05, ease: 'power1.inOut' }, 0.63)
           // the timeline spans the whole fall and landing
           .to({}, { duration: 0.36 }, 0.52);
-        if (o.radius) tl.fromTo(drop, { borderRadius: 0 }, { borderRadius: o.radius, duration: 0.1, immediateRender: false }, 0.68);
-        // T12 the label is written along the bar while it falls, complete before it lands
-        if (label) {
-          if (o.reveal === 'fade') tl.to(label, { opacity: 1, duration: 0.06 }, 0.74);
-          else tl.to(label, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.08 }, 0.72);
-        }
         // T14 then it is a button
         tl.set(drop, { pointerEvents: 'auto' }, 0.84);
         if (o.accent) tl.to(drop, { backgroundColor: o.accent, duration: 0.04 }, 0.8);
@@ -762,12 +1007,12 @@
 
     // Fonts that arrive late and resizes refit the word at once; a live scene also re-measures its timeline.
     let wait = 0, last = '';
-    const refit = (force) => {
+    const refit = (force, resizing) => {
       const k = key();
       if (!force && k === last) return;
       last = k;
       if (root.classList.contains('is-rest') || !(window.Stage && Stage.live)) rest({ phone: window.matchMedia('(max-width: 767px)').matches });
-      else if (S.live) { S.key = ''; G(); sync(); }
+      else if (S.live) { S.key = ''; S.defer = !!resizing; G(); S.defer = false; sync(); }
     };
     if (document.fonts) {
       document.fonts.addEventListener('loadingdone', () => {
@@ -776,10 +1021,14 @@
         wait = setTimeout(() => { refit(true); if (S.live && window.ScrollTrigger) ScrollTrigger.refresh(); }, 80);
       });
     }
-    if (window.ResizeObserver) new ResizeObserver(() => refit(false)).observe(stage);
+    if (window.ResizeObserver) new ResizeObserver(() => refit(false, true)).observe(stage);
+    // A refresh (load, fonts, resize, a reload that lands mid-scene) moves the timeline with its events
+    // suppressed, so onUpdate never runs: set the echo's copies and the bar to the new time afterwards.
+    if (window.ScrollTrigger) ScrollTrigger.addEventListener('refresh', () => sync());
 
     const scrub = o.scrub !== null ? o.scrub : (window.Stage && Stage.lenis ? true : 0.8);
-    // for test pages: the live geometry (overlap of the falling bar, the echo's schedule)
+    // for test pages: the live geometry (the fall's path and its least gap to the letters, the label's
+    // timing, the echo's schedule)
     root.wsGeometry = () => S.geo;
     if (!window.Stage) return null;
     const mm = Stage.scene(root, {

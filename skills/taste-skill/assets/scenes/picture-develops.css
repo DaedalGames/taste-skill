@@ -64,7 +64,6 @@
 [data-scene="picture-develops"] .pd-art {
   position: relative;
   min-height: 0;
-  transform-origin: 50% 100%;
 }
 [data-scene="picture-develops"] .pd-art img,
 [data-scene="picture-develops"] .pd-art canvas {
@@ -77,7 +76,7 @@
   object-fit: contain;
   object-position: 50% 100%;
 }
-[data-scene="picture-develops"] .pd-art canvas { display: none; }
+[data-scene="picture-develops"] .pd-art canvas { display: none; pointer-events: none; }
 /* set by the script when the ink is lighter than the paper (a dark page); a no-script page may set it */
 [data-scene="picture-develops"].pd-invert .pd-art img { filter: invert(1); }
 /* the caption sits over the sheet's lower edge: the camera's close-up is clipped at the art box, never
@@ -103,16 +102,26 @@ html.js .scene[data-scene="picture-develops"]:not(.is-live):not(.is-rest) .pd-ar
   html.js .scene[data-scene="picture-develops"]:not(.is-live):not(.is-rest) .pd-art img { opacity: 1; animation: none; }
 }
 
-/* live: the canvas draws, the img keeps the alt text; the note rises in by masked lines. Once the
-   drawing is complete (.pd-done, from 0.70) the crisp img takes over and the canvas is hidden. */
+/* live: the canvas draws (the camera lives inside it), the img keeps the alt text at opacity 0; the
+   note rises in by masked lines. With the 2D fallback the img takes over once the drawing is complete
+   (.pd-done, from 0.70) and the canvas is hidden; the GPU canvas keeps the stage to the end. */
 .scene.is-live[data-scene="picture-develops"] > .scene-stage { min-height: 0; }
-.scene.is-live[data-scene="picture-develops"] .pd-art { will-change: transform; }
 .scene.is-live[data-scene="picture-develops"] .pd-art img { opacity: 0; }
 .scene.is-live[data-scene="picture-develops"] .pd-art canvas { display: block; }
 .scene.is-live.pd-done[data-scene="picture-develops"] .pd-art img { opacity: 1; }
 .scene.is-live.pd-done[data-scene="picture-develops"] .pd-art canvas { visibility: hidden; }
 [data-scene="picture-develops"] .pd-line { display: block; overflow: clip; }
 [data-scene="picture-develops"] .pd-line-in { display: block; will-change: transform, opacity; }
+
+/* short, wide screens (a phone held sideways, a small laptop window): a smaller head, the note beside
+   the title in short lines, no caption, so the drawing keeps most of the height */
+@media (min-width: 768px) and (max-height: 540px) {
+  [data-scene="picture-develops"] > .scene-stage { padding: 4svh var(--pd-gutter) 2svh; }
+  [data-scene="picture-develops"] .pd-title { grid-column: 1 / span 6; max-width: 14ch; font-size: clamp(26px, 8.5svh, 44px); }
+  [data-scene="picture-develops"] .pd-note { grid-column: 7 / -1; max-width: 52ch; font-size: 14px; line-height: 1.4; }
+  [data-scene="picture-develops"] .pd-frame { margin-top: 2svh; }
+  [data-scene="picture-develops"] .pd-caption { display: none; }
+}
 
 @media (max-width: 767px) {
   [data-scene="picture-develops"] > .scene-stage {

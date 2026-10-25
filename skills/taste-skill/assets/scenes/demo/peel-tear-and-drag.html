@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Skerry Air Freight · peel, tear and drag</title>
-<meta name="description" content="Demo of the peel-tear-and-drag scroll scene: cloud closes over the sea and a cargo jet drags the next page in behind it.">
+<meta name="description" content="Demo of the peel-tear-and-drag scroll scene: cloud closes over the sea and a cargo jet drags the next page in behind it (mode drag); at the end the paper tears and rolls away from the footer (mode tear).">
 <script>document.documentElement.classList.add('js')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -112,10 +112,12 @@
   .next__times { grid-column: 2 / 5; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4%; margin: 14svh 0 0; padding: 0; list-style: none; }
   .next__times li { background: #e9e9e4; padding: 28px 28px 32px; }
   .next__times b { display: block; font-family: var(--font-display); font-weight: 800; font-stretch: 112%; font-size: clamp(19px, 1.7vw, 27px); letter-spacing: -.01em; line-height: 1.2; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
-  .foot { background: var(--drag-dark); color: #fff; padding: 12svh 8% 40px; }
+  /* the end of the page: the paper tears and the dark footer shows below it (the same scene, mode "tear") */
+  .tear-line { position: absolute; left: 8%; top: 12svh; max-width: 8em; margin: 0; font-family: var(--font-display); font-size: clamp(40px, 5.6vw, 96px); font-weight: 800; font-stretch: 112%; line-height: .95; letter-spacing: -.035em; text-wrap: balance; }
+  .foot__inner { position: absolute; left: 8%; right: 8%; bottom: 5svh; }
   .foot__name { margin: 0; font-family: var(--font-display); font-weight: 800; font-stretch: 112%; font-size: clamp(44px, 9vw, 170px); line-height: .9; letter-spacing: -.045em; white-space: nowrap; }
-  .foot__small { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 40px; margin-top: 64px; font-size: 16px; line-height: 1.5; }
-  .foot__small p { margin: 0; max-width: 36em; }
+  .foot__small { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 40px; margin-top: 48px; font-size: 16px; line-height: 1.5; }
+  .foot__small p { margin: 0; max-width: 40em; }
 
   @media (max-width: 767px) {
     .hero { grid-template-columns: 16px minmax(0, 1fr) 16px; grid-template-rows: auto 38svh auto auto 6svh; }
@@ -128,8 +130,10 @@
     .next h2, .next__body, .next__times { grid-column: 2; }
     .next h2 { font-stretch: 100%; }
     .next__times { grid-template-columns: 1fr; gap: 12px; margin-top: 32px; }
-    .foot { padding: 10svh 16px 32px; }
-    .foot__name { white-space: normal; font-size: 15vw; font-stretch: 100%; }
+    .tear-line { left: 20px; right: 20px; top: 10svh; font-size: clamp(32px, 9.4vw, 40px); font-stretch: 100%; }
+    .foot__inner { left: 16px; right: 16px; bottom: 4svh; }
+    .foot__name { white-space: normal; font-size: 13vw; font-stretch: 100%; }
+    .foot__small { margin-top: 24px; gap: 12px; font-size: 15px; }
   }
 </style>
 </head>
@@ -155,13 +159,13 @@
         <div class="drag-old__tint"></div>
         <p class="drag-old__line">We fly when the ferries can't.</p>
         <div class="drag-veil" aria-hidden="true">
-          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-1.webp" alt="" width="1200" height="1023">
-          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-5.webp" alt="" width="1000" height="1173">
-          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-6.webp" alt="" width="1000" height="1259">
-          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-2.webp" alt="" width="1300" height="731">
-          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-7.webp" alt="" width="1150" height="980">
-          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-8.webp" alt="" width="1000" height="971">
-          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-3.webp" alt="" width="1200" height="805">
+          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-1.webp" alt="" width="1200" height="1000">
+          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-5.webp" alt="" width="1000" height="913">
+          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-6.webp" alt="" width="1000" height="917">
+          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-2.webp" alt="" width="1300" height="780">
+          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-7.webp" alt="" width="1150" height="1284">
+          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-8.webp" alt="" width="1000" height="789">
+          <img class="drag-veil__piece" src="media/peel-tear-and-drag/cloud-3.webp" alt="" width="1200" height="877">
         </div>
       </div>
       <div class="drag-new">
@@ -201,11 +205,20 @@
   </section>
 </main>
 
-<footer class="foot">
+<footer class="scene foot" id="contact" data-scene="peel-tear-and-drag" data-options='{"mode":"tear","at":0.48,"phoneAt":0.42}'>
+  <div class="scene-stage">
+    <div class="tear-old">
+      <p class="tear-line">The 06:10 is loading.</p>
+    </div>
+    <div class="tear-new">
+      <div class="foot__inner">
   <p class="foot__name">Skerry Air Freight</p>
   <div class="foot__small">
-    <p>An invented carrier for a scroll-scene demo. Photographs from Unsplash via Picsum: Marcelo Quinan, Mickey O'neil, Julien Lavallée. The freighter: <a href="https://commons.wikimedia.org/w/index.php?curid=195299108">“LX-VCE - Boeing 747-8R7F underside”</a> by Steve Knight, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, modified (cut out, turned, toned, markings removed, fin recoloured). The cloud: <a href="https://www.flickr.com/photos/49169223@N00/53403959972">“Clouds from Above 2”</a> by daryl_mitchell, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>, modified (cut out and toned; the cut-outs share that licence).</p>
+    <p>An invented carrier for a scroll-scene demo. Photographs from Unsplash via Picsum: Marcelo Quinan, Mickey O'neil, Julien Lavallée. The freighter: <a href="https://commons.wikimedia.org/w/index.php?curid=195299108">“LX-VCE - Boeing 747-8R7F underside”</a> by Steve Knight, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, modified (cut out, turned, toned, markings and fin removed, nose retouched). The cloud: <a href="https://www.flickr.com/photos/31007250@N03/7322479590">“Cumulus cloud from above”</a> by rpieket and <a href="https://www.flickr.com/photos/30682900@N00/9997120">“Clouds from above”</a> by transreal, both <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>, modified (cut out, turned and toned).</p>
     <p>Fjarholm hangar, open 05:00 to 21:00</p>
+  </div>
+      </div>
+    </div>
   </div>
 </footer>
 

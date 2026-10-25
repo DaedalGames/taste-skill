@@ -2,20 +2,22 @@
 //
 // A held stage shows one hero object going through one change of state (raw to finished, closed to
 // open, lifted and handed over) as a frame sequence drawn on a canvas and scrubbed by the scroll. Around
-// it the page moves in step: the ground opens from the page colour to the after colour as a hard-edged
-// disc from the object's centre (first a halo around the object, then, once the title has lifted away,
-// the whole stage), the "before" context (a cut-out the object came from) slides out to the right while
-// a pre-blurred copy of it fades in (a rack focus without an animated filter), the before statement lifts
-// away word by word, a receiver cut-out (the plinth, shelf, pad or trailer the object ends on) rises from
-// below, the object settles onto it, then callouts, the after line and one action land. Use it only when
-// you have 80-250 rendered or filmed frames with alpha of the object changing; never fake it by rotating
-// one still. Frame the footage tight: the object should fill most of the frame (the box is large).
+// it the page moves in step: a camera that starts pushed in on the raw object pulls back while the change
+// begins, the ground opens from the page colour to the after colour as a hard-edged disc from the
+// object's centre (first a halo around the object, then, once the title has lifted away, the whole
+// stage), the "before" context (a cut-out the object came from) slides out to the right while a
+// pre-blurred copy of it fades in (a rack focus without an animated filter), the before statement lifts
+// away word by word, the camera glides the object to the centre of the stage while a receiver cut-out
+// (the plinth, shelf, pad or trailer the object ends on) rises under it, the object settles onto it,
+// callouts land, and the camera steps back aside for the after line and one action. Use it only when you
+// have 80-250 rendered or filmed frames with alpha of the object changing; never fake it by rotating one
+// still. Frame the footage tight: the object should fill most of the frame (the box is large).
 //
 // Needs gsap + ScrollTrigger (+ SplitText for the word moves; without it the words are split by stage.js), stage.js,
 // then this file. Read the CSS file's header for colours and placement.
 //
-// Markup (the phone's callout stack and, if missing, the blurred copy of the before context are made by
-// this file; do not write them):
+// Markup (the camera wrapper, the phone's callout stack and, if missing, the blurred copy of the before
+// context are made by this file; do not write them):
 //
 //   <section class="scene" data-scene="scrubbed-transformation-sequence" aria-labelledby="xf-title"
 //            data-options='{"frames":"media/xf/d/####.webp","count":120,
@@ -25,18 +27,21 @@
 //         <div class="xf-ground__after"></div><div class="xf-ground__before"></div>
 //       </div>
 //       <div class="xf-prop xf-prop--back" aria-hidden="true">              optional: what it came from
-//         <img src="…/before-context.webp" alt="" width="678" height="522">
-//         <img class="xf-prop__soft" src="…/before-context-soft.webp" alt="">   optional: the same picture
-//       </div>                                                    blurred ~4px (else it is made here)
+//         <img data-src="…/before-context.webp" alt="" width="678" height="522">
+//         <img class="xf-prop__soft" data-src="…/before-context-soft.webp" alt="">  optional: the same
+//       </div>                                          picture blurred ~4px (else it is made here)
 //       <div class="xf-receiver" aria-hidden="true">                       optional: what it ends on
 //         <img src="…/receiver.webp" alt="">
 //         <img class="xf-receiver__contact" src="…/receiver-contact.webp" alt="">   optional: the same
 //       </div>                                       picture with the object's contact shade, faded in as it lands
 //       <figure class="xf-object">
 //         <img class="xf-still" src="…/d/0119.webp" srcset="…/m/0059.webp 720w, …/d/0119.webp 1200w"
-//              sizes="(max-width: 767px) 100vw, 62vw" alt="[the object, finished]" width="1200" height="1200">
+//              sizes="(max-width: 767px) min(125vw, 58svh), min(92svh, 62vw)"
+//              alt="[the object, finished]" width="1200" height="1200">
 //         <div class="xf-before">                                         the finished composition only
-//           <img src="…/m/0000.webp" alt="[the object before]"><p>Where it started</p>
+//           <img data-src="…/m/0000.webp" alt="[the object before]">      data-src: loaded only there
+//           <noscript><img src="…/m/0000.webp" alt="[the object before]"></noscript>   (no script)
+//           <p>Where it started</p>
 //         </div>
 //         <canvas class="xf-canvas" aria-hidden="true"></canvas>
 //         <ul class="xf-callouts">                                         0-6 callouts, 3 is right
@@ -47,7 +52,7 @@
 //         </ul>
 //       </figure>
 //       <div class="xf-copy">
-//         <h2 class="xf-statement" id="xf-title">It starts as a lump of clay</h2>   the before; ≤ 2 lines
+//         <h2 class="xf-statement" id="xf-title">It starts as a lump of clay</h2>   the before: see below
 //         <p class="xf-closing">Fired once, kept for life.</p>                      the after; 3-6 words
 //         <a class="xf-cta" href="#next">See the vases</a>                          2-3 words
 //       </div>
@@ -57,17 +62,34 @@
 // --x / --y place each callout's marker as a fraction of the object box: put markers on the silhouette
 // edge of the LAST frame (look at it; never guess), labels on the side away from the object, none of
 // them over the receiver (above ~0.8 of the box in the demo), and the first one ~160px below the stage
-// top (the nav). The still keeps the markup's picture (the last
-// frame) until the canvas has drawn a frame; a phone gets its 720px frame through srcset. Do not put
-// loading="lazy" on the scene's pictures: some are hidden in one mode, never load, and Stage.ready()
-// (which waits for every picture in a scene) would never resolve.
+// top (the nav). A laptop shows at most six callouts on the object (the rest stay in the document for
+// screen readers); a phone lists at most four under the object. Two guards keep a label readable when a
+// marker is placed badly: a label whose text would sit on the object (the last frame's alpha says where)
+// slides out beside it, away from the object, as far as the stage allows; one that would sit on an
+// earlier label or another marker is moved up or down beside its own marker, the shorter way.
+//
+// The statement is the live headline and keeps to two lines: at full size (4.4vw, 63px at 1440) that is
+// about 26 characters (5-6 words). A longer one is set smaller, down to 40px (28px on a phone), which
+// holds about 36 characters at 1440 wide and 28 at 1024; past that it runs to three lines and the
+// console says so. So write the before in about 5-7 words, 36 characters at most.
+//
+// The still is the markup's picture (the last frame) for the finished composition. Live, it stands in
+// for the canvas until the canvas draws: it shows frame 0 (the last frame when the page opens past the
+// middle of the scene), the URL the frame set fetches first, and nothing while that loads, so the
+// finished object never shows at the start. Its src, srcset and sizes come back with the finished
+// composition. Give the before context's pictures data-src, not src: they are only shown live on a
+// laptop, and this file loads them there; the "where it started" tile is the other way round (data-src
+// plus a <noscript> copy). Do not put loading="lazy" on the scene's pictures: Stage.ready() waits for
+// every picture in a scene, and a lazy one that is hidden in one mode never loads.
 //
 // Footage: frames are squares with alpha, the object filling most of the frame (about 65% of its width
 // at the start, 85% of its height at the end) with its foot at the same place at the end, so the
-// receiver lines up. Desktop 1200px, about 120 frames (80-250); phone a second set at 720px, every
-// second frame. "####" in the pattern is the zero-padded frame index (any run of #). The before context
-// and the receiver are rendered by the cameras of the first and last frames and placed in box units
-// (--xf-px/py/pw, --xf-rx/ry/rw in the CSS).
+// receiver lines up. Export each set at about twice the box's CSS size, so a 2x screen draws them 1:1:
+// the laptop box is up to ~830px (frames 1600-1700px, WebP quality ~80, 40-50 KB each), the phone box
+// ~490px (frames ~1000px, every second frame). Smaller sets work (the demo ships 1200 and 720px) but
+// look soft on 2x screens. About 120 frames (80-250). "####" in the pattern is the zero-padded frame
+// index (any run of #). The before context and the receiver are rendered by the cameras of the first
+// and last frames and placed in box units (--xf-px/py/pw, --xf-rx/ry/rw in the CSS).
 //
 // Options (data-options JSON, or the second argument), with defaults and ranges:
 //   frames       desktop frame URL pattern                  required (else canvas[data-frames]); none, a
@@ -82,24 +104,33 @@
 //   split        share of the frames played linearly        0.85  (0.5-0.95); the rest ease out over 0.62-0.86
 //   ground       "iris" | "none"                            "iris"; "none" keeps the page colour (light pages)
 //   irisAt       [x, y] where the disc grows from, in box   [0.5, 0.54]: the object's centre in its first
-//                fractions                                  frames
+//                fractions                                  frames (also the camera's pivot)
+//   push         how far the camera starts pushed in        1.25  (1-1.4); on a laptop it is lowered until
+//                                                          the first frame's object keeps 56px off the title
+//   firstBox     [x0, y0, x1, y1] the object's outline in   [0.17, 0.3, 0.83, 0.81] (the demo's lump):
+//                the first frame, in box fractions          what that 56px is measured from
+//   centre       glide the object to the stage's centre     true (laptop only; the phone is centred)
+//                while the title is away (0.46-0.60, back
+//                over 0.76-0.88)
 //
 // Timeline (fractions of the hold; all scrubbed, so scrolling back un-builds it exactly):
-//   0.00-0.06  object scale 0.94 → 1, yPercent 4 → 0 as the pin catches (phone: see below)
+//   0.00-0.40  the camera pulls back from `push` to 1 (power1.inOut) around the object's centre
 //   0.04-0.62  frames 0 → split × last, linear;  0.62-0.86  → last frame, power1.out
-//   0.08-0.25  ground: an after-colour disc grows to a halo around the object, its edge kept clear of
-//              the statement;  0.25-0.44 it holds (growing a little);  0.44-0.56 it fills the stage
+//   0.08-0.25  ground: an after-colour disc grows to a halo around the object, its edge kept 44px clear
+//              of the statement's words;  0.25-0.44 it holds (growing a little);  0.44-0.56 it fills the stage
 //              (power2.in), reaching the statement's words only as they finish lifting away (~0.48)
 //   0.30-0.62  before context leaves past the right edge (scale 0.86, opacity 0.5); its blurred copy
 //              fades in over 0.30-0.50 and the sharp one out over 0.46-0.56 (not on phones)
 //   0.40-0.48  statement words lift away (yPercent -70, 4deg, fading out; no masks, so no word is ever cut)
-//   0.52-0.70  receiver rises from below the stage;  0.62-0.78  object settles onto it (its contact
+//   0.46-0.60  the camera glides the object to the stage's centre (laptop)
+//   0.48-0.66  receiver rises from below the stage;  0.62-0.78  object settles onto it (its contact
 //              shade fades in over 0.68-0.78)
 //   0.66-0.84  callouts: marker pops and focuses, its label rises word by word (0.05 apart)
+//   0.76-0.88  the camera glides back, clearing the left for the after line (laptop)
 //   0.84-0.92  after line rises into the statement's slot;  0.88-0.93  the action fades up
 //   0.92-1.00  hold, then the page scrolls on
 // Phone (< 768px): the same fractions on the phone frames; the box is wider than the screen and centred
-// higher, the object starts at scale 1.12 and eases to 1 over 0.04-0.40, the after line takes a top
+// higher, the camera starts at 1.12 and eases to 1 over 0.04-0.40, no glide, the after line takes a top
 // slot, callout labels become a stack (at most four rows) in the bottom slot, the markers on the object
 // and the before context are hidden, no blur.
 // Reduced motion, no script, a failed CDN, data-saving visitors and frames that will not load get the
@@ -107,6 +138,7 @@
 (() => {
   if (!window.Stage) return;
   const ID = 'scrubbed-transformation-sequence';
+  const MAX_CALLOUTS = 6, CLEAR = 56;
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const num = (v, d, a, b) => { const n = v === '' || v == null ? NaN : Number(v); return Number.isFinite(n) ? clamp(n, a, b) : d; };
   const frameUrl = (pattern, i) => pattern.replace(/#+/, (m) => String(i).padStart(m.length, '0'));
@@ -114,6 +146,9 @@
     const c = navigator.connection;
     return !!(c && (c.saveData || /(^|-)(2g|3g)$/.test(c.effectiveType || '')));
   };
+  // an element's layout position inside an ancestor (offsets ignore transforms, so a refresh mid-scene
+  // measures the resting layout)
+  const posIn = (el, anc) => { let x = 0, y = 0; for (let e = el; e && e !== anc; e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop; } return [x, y]; };
 
   // A frame set. Frames are fetched first, last, then binary midpoints, six at a time, so a fast scroll
   // always has a near frame to show. Each arrives as a small compressed blob. Only the frames around
@@ -125,7 +160,60 @@
   // back to decoded <img> elements. If the first and the last frame both fail, onFail() is called.
   const WINDOW = 16, KEEP = 24, JOBS = 2;
   const bitmaps = typeof createImageBitmap === 'function';
-  function FrameSet(pattern, count, onFail) {
+  // The decoding itself runs in one small worker shared by every frame set on the page: it turns a
+  // compressed frame into a bitmap at the canvas's size and hands it back (a transfer, not a copy).
+  // Scaling a frame as it decodes runs on the thread that asked for it; on the main thread that cost
+  // about a frame's budget per frame, and wheeling through the scene dropped frames. Without a worker
+  // (a content policy that blocks blob: workers, an old browser) frames decode on the page at their own
+  // size, which costs memory rather than time; only frames over twice the canvas's size are scaled.
+  const WORKER = 'onmessage=(e)=>{const d=e.data,o={premultiplyAlpha:"premultiply"};'
+    + 'if(d.w)Object.assign(o,{resizeWidth:d.w,resizeHeight:d.h,resizeQuality:"high"});'
+    + 'createImageBitmap(d.blob,o).catch(()=>createImageBitmap(d.blob))'
+    + '.then((b)=>postMessage({id:d.id,b},[b]),()=>postMessage({id:d.id}))}';
+  const decode = (() => {
+    let worker = null, seq = 0, heard = false;
+    const waiting = new Map();
+    const here = (blob, want, natural) => (want && natural && natural[0] > 2 * want[0]
+      ? createImageBitmap(blob, { resizeWidth: want[0], resizeHeight: want[1], resizeQuality: 'low', premultiplyAlpha: 'premultiply' })
+      : createImageBitmap(blob, { premultiplyAlpha: 'premultiply' })).catch(() => createImageBitmap(blob));
+    // the worker would not start (or died): everything it holds is decoded here instead
+    const fallBack = () => {
+      if (worker) worker.terminate();
+      worker = false;
+      waiting.forEach((j) => here(j.blob, j.want, j.natural).then(j.res, j.rej));
+      waiting.clear();
+    };
+    const start = () => {
+      if (worker !== null) return worker;
+      worker = false;
+      if (typeof Worker !== 'function' || !window.URL || !URL.createObjectURL) return worker;
+      try {
+        worker = new Worker(URL.createObjectURL(new Blob([WORKER], { type: 'text/javascript' })));
+        worker.onmessage = (e) => {
+          heard = true;
+          const j = waiting.get(e.data.id);
+          if (!j) return;
+          waiting.delete(e.data.id);
+          if (e.data.b) j.res(e.data.b);
+          else here(j.blob, j.want, j.natural).then(j.res, j.rej);
+        };
+        worker.onerror = fallBack;
+        // a worker that never answers (blocked without an error) is given up after 4s
+        setTimeout(() => { if (!heard && worker) fallBack(); }, 4000);
+      } catch { worker = false; }
+      return worker;
+    };
+    return (blob, want, natural) => {
+      const w = start();
+      if (!w) return here(blob, want, natural);
+      return new Promise((res, rej) => {
+        const id = ++seq;
+        waiting.set(id, { blob, want, natural, res, rej });
+        w.postMessage({ id, blob, w: want ? want[0] : 0, h: want ? want[1] : 0 });
+      });
+    };
+  })();
+  function FrameSet(pattern, count, onFail, onLast) {
     const blobs = new Array(count).fill(null);
     const bmps = new Array(count).fill(null);
     const bmpGen = new Array(count).fill(-1);
@@ -144,10 +232,9 @@
       making.add(i);
       jobs++;
       const g = gen;
-      const want = natural && size ? [Math.min(size[0], natural[0]), Math.min(size[1], natural[1])] : null;
-      const job = want
-        ? createImageBitmap(blobs[i], { resizeWidth: want[0], resizeHeight: want[1], resizeQuality: 'medium', premultiplyAlpha: 'premultiply' }).catch(() => createImageBitmap(blobs[i]))
-        : createImageBitmap(blobs[i], { premultiplyAlpha: 'premultiply' }).catch(() => createImageBitmap(blobs[i]));
+      // at the canvas's backing size, never above the frame's own
+      const want = natural && size && size[0] < natural[0] ? [size[0], Math.round((size[0] * natural[1]) / natural[0])] : null;
+      const job = decode(blobs[i], want, natural);
       const done = () => { jobs--; if (g === gen) making.delete(i); pumpDecode(); };
       job.then((b) => {
         if (!natural) natural = [b.width, b.height];
@@ -192,13 +279,13 @@
       const img = new Image();
       img.decoding = 'async';
       img.src = frameUrl(pattern, i);
-      return img.decode().then(() => { imgs[i] = img; emit(i); }, () => lost(i));
+      return img.decode().then(() => { imgs[i] = img; if (i === count - 1 && onLast) onLast(img); emit(i); }, () => lost(i));
     }
     function fetchOne(i) {
       if (!bitmaps || !window.fetch) return viaImage(i);
       return fetch(frameUrl(pattern, i))
         .then((r) => { if (!r.ok) throw new Error(r.status); return r.blob(); })
-        .then((b) => { blobs[i] = b; if (Math.abs(i - centre) <= WINDOW) schedule(); }, () => viaImage(i));
+        .then((b) => { blobs[i] = b; if (i === count - 1 && onLast) onLast(b); if (Math.abs(i - centre) <= WINDOW) schedule(); }, () => viaImage(i));
     }
     const order = () => {
       const out = [0, count - 1], seen = new Set(out), spans = [[0, count - 1]];
@@ -267,14 +354,14 @@
   }
 
   // words as inline blocks (SplitText, the full text kept for screen readers). Unmasked on purpose: a
-  // word is never half cut off by a mask mid-move; it travels a short way and fades instead.
+  // word is never half cut off by a mask mid-move; it travels a short way and fades instead. Split in
+  // every build (the split is reverted with the build's matchMedia context); the last split is kept on
+  // the element for measuring.
   function words(el) {
     if (!el) return [];
-    if (window.SplitText) {
-      const s = SplitText.create(el, { type: 'words', aria: 'auto' });
-      return s.words;
-    }
-    return Stage.split(el, 'words');
+    const out = window.SplitText ? SplitText.create(el, { type: 'words', aria: 'auto' }).words : Stage.split(el, 'words');
+    el.__xfWords = out;
+    return out;
   }
 
   window.Scenes = window.Scenes || {};
@@ -291,6 +378,7 @@
     const cta = root.querySelector('.xf-cta');
     const copy = root.querySelector('.xf-copy');
     const callouts = [...root.querySelectorAll('.xf-callout')];
+    const still = obj.querySelector('.xf-still');
 
     // ---- options ----
     const pattern = opts.frames || (canvas && canvas.dataset.frames) || '';
@@ -303,6 +391,9 @@
     const split = num(opts.split, 0.85, 0.5, 0.95);
     const irisOn = opts.ground !== 'none' && !!iris;
     const irisAt = Array.isArray(opts.irisAt) ? [num(opts.irisAt[0], 0.5, 0, 1), num(opts.irisAt[1], 0.54, 0, 1)] : [0.5, 0.54];
+    const push = num(opts.push, 1.25, 1, 1.4);
+    const fb = Array.isArray(opts.firstBox) && opts.firstBox.length === 4 ? opts.firstBox.map((v, i) => num(v, [0.17, 0.3, 0.83, 0.81][i], 0, 1)) : [0.17, 0.3, 0.83, 0.81];
+    const centreOn = opts.centre !== false;
     const contact = receiver && receiver.querySelector('.xf-receiver__contact');
     if (!irisOn) root.setAttribute('data-xf-ground', 'none');
     if (!pattern && canvas) console.warn(`[${ID}] no frames given: showing the finished composition`);
@@ -321,6 +412,12 @@
     }
     const sharp = prop && prop.querySelector('img:not(.xf-prop__soft)');
     let soft = prop && prop.querySelector('.xf-prop__soft');
+    // its pictures load only where they are shown (live, on a laptop)
+    const loadProp = () => {
+      if (!prop || getComputedStyle(prop).display === 'none') return false;
+      prop.querySelectorAll('img[data-src]').forEach((img) => { img.src = img.dataset.src; img.removeAttribute('data-src'); });
+      return true;
+    };
     // no blurred copy in the markup: paint one once (a blurred canvas, never an animated filter)
     function makeSoft() {
       if (soft || !sharp || !window.CanvasRenderingContext2D || !('filter' in CanvasRenderingContext2D.prototype)) return;
@@ -338,6 +435,17 @@
         g.drawImage(sharp, 0, 0);
       };
       (sharp.decode ? sharp.decode() : Promise.resolve()).then(paint, () => {});
+    }
+
+    // ---- the camera: the before context, the receiver and the object move as one. A plain wrapper
+    //      (display: contents in the finished composition, so nothing there changes) ----
+    let camera = root.querySelector('.xf-camera');
+    if (!camera) {
+      const members = [prop, receiver, obj].filter(Boolean);
+      camera = document.createElement('div');
+      camera.className = 'xf-camera';
+      members[0].before(camera);
+      camera.append(...members);
     }
 
     // ---- the phone's callout stack (labels leave the object and line up in the bottom slot) ----
@@ -359,25 +467,180 @@
     }
     const rows = stack ? [...stack.children] : [];
 
+    // ---- the still: the markup's picture (the last frame) is the finished composition's. Live, it stands
+    //      in for the canvas until the canvas draws, showing the frame the set fetches first that is
+    //      nearest the playhead (frame 0 from the top), and nothing while that frame loads, so the
+    //      finished object never shows at the start. The markup's src, srcset and sizes come back with
+    //      the finished composition. ----
+    const STILL = ['srcset', 'sizes', 'src'];
+    const stillMarkup = still ? STILL.map((k) => still.getAttribute(k)) : [];
+    function stillBack() {
+      root.classList.remove('xf-wait');
+      if (!still) return;
+      STILL.forEach((k, i) => {
+        const v = stillMarkup[i];
+        if (v == null) still.removeAttribute(k);
+        else if (still.getAttribute(k) !== v) still.setAttribute(k, v);
+      });
+    }
+    function stillAs(url) {
+      if (!still || (!still.hasAttribute('srcset') && still.getAttribute('src') === url)) return;
+      root.classList.add('xf-wait');
+      still.removeAttribute('srcset');
+      still.removeAttribute('sizes');
+      still.setAttribute('src', url);
+      const shown = () => { if (still.getAttribute('src') === url) root.classList.remove('xf-wait'); };
+      if (still.decode) still.decode().then(shown, () => {});
+      else still.addEventListener('load', shown, { once: true });
+    }
+
+    // ---- the statement is the live headline: two lines at most. A longer one is set smaller, 2px at a
+    //      time, down to 40px on a laptop (28px on a phone); past that it runs on, so keep it short ----
+    function fitStatement(floor) {
+      if (!statement) return;
+      statement.style.removeProperty('font-size');
+      if (!statement.offsetParent) return;
+      let size = parseFloat(getComputedStyle(statement).fontSize) || 0;
+      const lh = () => { const v = parseFloat(getComputedStyle(statement).lineHeight); return v > 0 ? v : size * 1.1; };
+      const lines = () => Math.round(statement.offsetHeight / lh());
+      while (size - 2 >= floor && lines() > 2) {
+        size -= 2;
+        statement.style.fontSize = `${size}px`;
+      }
+      if (lines() > 2 && !fitStatement.warned) {
+        fitStatement.warned = true;
+        console.warn(`[${ID}] the statement needs ${lines()} lines even at ${Math.round(size)}px: shorten it (two lines hold about 36 characters at 1440px wide, 28 at 1024)`);
+      }
+    }
+
+    // ---- callout labels stay readable. A label whose text would sit on the object (the last frame's
+    //      silhouette, read once at 64 x 64 from its alpha) slides out beside it, away from the object,
+    //      as far as the stage allows; a label that would touch an earlier label or another marker then
+    //      moves up or down beside its own marker, whichever is the shorter way ----
+    let mask = null, masking = false;
+    function readMask(src) {
+      if (mask || masking || !src || !window.HTMLCanvasElement) return;
+      masking = true;
+      // (the still only while it shows the last frame, in the finished composition)
+      const got = src instanceof Blob ? createImageBitmap(src) : (src.decode ? src.decode() : Promise.resolve()).then(() => {
+        if (src === still && root.classList.contains('is-live')) throw new Error('live');
+        return src;
+      });
+      got.then((img) => {
+        const M = 64, c = document.createElement('canvas');
+        c.width = c.height = M;
+        const g = c.getContext('2d', { willReadFrequently: true });
+        g.drawImage(img, 0, 0, M, M);
+        if (img.close) img.close();
+        const d = g.getImageData(0, 0, M, M).data;   // throws for another origin without CORS: no mask
+        const a = new Uint8Array(M * M);
+        for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3] > 160 ? 1 : 0;
+        mask = { M, a };
+        guardLabels();
+      }).catch(() => { masking = false; });
+    }
+    // the silhouette cells a box (object-box px) covers
+    function onObject(x, y, w, h) {
+      const B = obj.offsetWidth;
+      if (!mask || !B) return 0;
+      const { M, a } = mask, k = M / B;
+      const x0 = Math.max(0, Math.floor((x + 2) * k)), x1 = Math.min(M - 1, Math.ceil((x + w - 2) * k) - 1);
+      const y0 = Math.max(0, Math.floor((y + 2) * k)), y1 = Math.min(M - 1, Math.ceil((y + h - 2) * k) - 1);
+      let n = 0;
+      for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) n += a[j * M + i];
+      return n;
+    }
+    function guardLabels() {
+      const boxes = [];
+      for (const c of callouts) {
+        const l = c.querySelector('.xf-label');
+        if (l) l.style.removeProperty('translate');
+        const m = c.querySelector('.xf-mark');
+        if (m && m.offsetWidth) boxes.push({ x: c.offsetLeft + m.offsetLeft, y: c.offsetTop + m.offsetTop, w: m.offsetWidth, h: m.offsetHeight, own: c });
+      }
+      const ox = posIn(obj, stage)[0], SW = stage.clientWidth;
+      for (const c of callouts) {
+        const l = c.querySelector('.xf-label');
+        if (!l || l.offsetWidth < 4 || getComputedStyle(l).position !== 'absolute') continue;
+        // the text's own extent across (the label box is wider than short text)
+        const r = l.getBoundingClientRect(), s = r.width / l.offsetWidth || 1;
+        const range = document.createRange();
+        range.selectNodeContents(l);
+        let a = Infinity, b = -Infinity;
+        for (const q of range.getClientRects()) if (q.width) { a = Math.min(a, q.left); b = Math.max(b, q.right); }
+        const x0 = c.offsetLeft + l.offsetLeft + (a < b ? (a - r.left) / s : 0);
+        const w = a < b ? (b - a) / s : l.offsetWidth;
+        const y = c.offsetTop + l.offsetTop, h = l.offsetHeight, GAP = 16;
+        // off the object: outward in 4px steps, never past the stage's 16px edge
+        let dx = 0;
+        if (onObject(x0, y, w, h)) {
+          const out = c.dataset.side === 'left' ? -1 : 1;
+          for (let t = 4; ; t += 4) {
+            const xt = x0 + out * (t + 12);
+            if (ox + xt < 16 || ox + xt + w > SW - 16) break;
+            if (!onObject(x0 + out * t, y, w, h)) { dx = out * (t + 12); break; }
+          }
+        }
+        const x = x0 + dx;
+        const hits = (dy) => boxes.find((o) => o.own !== c && x < o.x + o.w + GAP && x + w + GAP > o.x && y + dy < o.y + o.h + GAP && y + dy + h + GAP > o.y);
+        let dy = 0;
+        for (let i = 0, o; i < 8 && (o = hits(dy)); i++) {
+          const down = o.y + o.h + GAP - y, up = o.y - GAP - h - y;
+          const [near, far] = Math.abs(down) <= Math.abs(up) ? [down, up] : [up, down];
+          dy = !hits(near) || hits(far) ? near : far;
+        }
+        if (dx || dy) l.style.translate = `${Math.round(dx)}px ${Math.round(dy)}px`;
+        boxes.push({ x, y: y + dy, w, h, own: c });
+      }
+    }
+    let guardT = 0;
+    window.addEventListener('resize', () => { clearTimeout(guardT); guardT = setTimeout(guardLabels, 120); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(guardLabels);
+
     // ---- drawing ----
     const sets = {};
     const D = { set: null, want: 0, drawn: -1, ctx: null, off: null };
-    const G = { box: 0, cx: 0, cy: 0, R: 0, H: 0, recTop: 0, dText: Infinity };
+    const G = { W: 0, H: 0, box: 0, ox: 0, oy: 0, cx: 0, cy: 0, R: 0, recTop: 0, text: null, dText: Infinity };
+    // the statement's words as laid out (no transforms), in stage coordinates
+    function textRect() {
+      if (!statement || !statement.offsetParent) return null;
+      const split = (statement.__xfWords || []).filter((w) => w.isConnected && statement.contains(w));
+      const ws = split.length ? split : [statement];
+      let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+      for (const w of ws) {
+        const [x, y] = posIn(w, stage);
+        l = Math.min(l, x); t = Math.min(t, y); r = Math.max(r, x + w.offsetWidth); b = Math.max(b, y + w.offsetHeight);
+      }
+      return r > l ? { l, t, r, b } : null;
+    }
     function measure() {
       const W = stage.clientWidth, H = stage.clientHeight;
-      G.box = obj.offsetWidth;
-      G.cx = obj.offsetLeft + obj.offsetWidth * irisAt[0];
-      G.cy = obj.offsetTop + obj.offsetHeight * irisAt[1];
-      G.R = Math.ceil(Math.hypot(Math.max(G.cx, W - G.cx), Math.max(G.cy, H - G.cy))) + 4;
+      G.W = W;
       G.H = H;
-      G.recTop = receiver ? receiver.offsetTop : H;
+      G.box = obj.offsetWidth;
+      [G.ox, G.oy] = posIn(obj, stage);
+      G.cx = G.ox + obj.offsetWidth * irisAt[0];
+      G.cy = G.oy + obj.offsetHeight * irisAt[1];
+      G.R = Math.ceil(Math.hypot(Math.max(G.cx, W - G.cx), Math.max(G.cy, H - G.cy))) + 4;
+      G.recTop = receiver ? posIn(receiver, stage)[1] : H;
       // how far the disc may grow before its edge touches the statement
+      G.text = textRect();
       G.dText = Infinity;
-      if (statement && statement.offsetParent) {
-        const s = statement.getBoundingClientRect(), st = stage.getBoundingClientRect();
-        const x = clamp(G.cx, s.left - st.left, s.right - st.left), y = clamp(G.cy, s.top - st.top, s.bottom - st.top);
+      if (G.text) {
+        const x = clamp(G.cx, G.text.l, G.text.r), y = clamp(G.cy, G.text.t, G.text.b);
         G.dText = Math.hypot(G.cx - x, G.cy - y);
       }
+    }
+    // the largest push-in (≤ max) that keeps the first frame's object CLEAR px off the title
+    function pushScale(max) {
+      if (!G.text || max <= 1) return max;
+      const bx0 = G.ox + fb[0] * G.box, by0 = G.oy + fb[1] * G.box, bx1 = G.ox + fb[2] * G.box, by1 = G.oy + fb[3] * G.box;
+      for (let s = max; s > 1; s -= 0.01) {
+        const L = G.cx + s * (bx0 - G.cx), T = G.cy + s * (by0 - G.cy), R = G.cx + s * (bx1 - G.cx), B = G.cy + s * (by1 - G.cy);
+        const dx = Math.max(G.text.l - R, L - G.text.r, 0), dy = Math.max(G.text.t - B, T - G.text.b, 0);
+        if (Math.hypot(dx, dy) >= CLEAR) return +s.toFixed(2);
+      }
+      return 1;
     }
     function sizeCanvas() {
       if (!canvas) return;
@@ -413,12 +676,19 @@
       ScrollTrigger.addEventListener('refresh', () => { if (D.set) { sizeCanvas(); draw(true); } });
     }
 
-    // the after-colour disc: a stage-sized flat layer cut by a circular clip-path centred on the object.
-    // (A scaled disc would be a ~2000px layer re-rastered at every scale; the clip repaints one flat
-    // colour inside the stage.) Radii are measured on every refresh.
-    const disc = (r) => `circle(${Math.max(0, Math.round(r))}px at ${Math.round(G.cx)}px ${Math.round(G.cy)}px)`;
+    // the after-colour disc: a flat circle of the stage's full reach (radius R, centred on the object),
+    // scaled on the compositor. It is painted once; growing it repaints nothing (a clip-path circle would
+    // repaint the whole stage, the title included, at every step). Its size is set on every refresh.
+    const placeDisc = () => {
+      measure();
+      const s = iris.style;
+      s.left = `${Math.round(G.cx - G.R)}px`;
+      s.top = `${Math.round(G.cy - G.R)}px`;
+      s.width = s.height = `${2 * G.R}px`;
+    };
+    const discScale = (r) => Math.max(0, r) / Math.max(1, G.R);
     // the halo: around the object, its edge at least `gap` px short of the statement
-    const halo = (grow, gap) => () => { measure(); return disc(Math.min(G.box * 0.56 * grow, G.dText - gap)); };
+    const halo = (grow, gap) => () => { placeDisc(); return discScale(Math.min(G.box * 0.56 * grow, G.dText - gap)); };
 
     // ---- frames that will not load: give up and show the finished composition ----
     let mm = null, gaveUp = false;
@@ -438,7 +708,7 @@
     // ---- the timeline ----
     const build = (tl, ctx) => {
       const phone = ctx.phone;
-      const set = phone ? (sets.m || (sets.m = FrameSet(pPattern, pCount, giveUp))) : (sets.d || (sets.d = FrameSet(pattern, count, giveUp)));
+      const set = phone ? (sets.m || (sets.m = FrameSet(pPattern, pCount, giveUp))) : (sets.d || (sets.d = FrameSet(pattern, count, giveUp, readMask)));
       Object.values(sets).forEach((s) => { if (s !== set) s.release(); });
       D.set = set;
       D.want = 0;
@@ -449,13 +719,27 @@
         if (D.drawn === D.want) return;
         if (D.drawn < 0 || Math.abs(i - D.want) < Math.abs(D.drawn - D.want)) draw(false);
       });
+      // the statement at a size that keeps it to two lines (again on every refresh: the column's width
+      // follows the window); the matchMedia cleanup gives back its CSS size and the markup's still
+      const floor = phone ? 28 : 40;
+      const refit = () => fitStatement(floor);
+      fitStatement(floor);
+      if (window.ScrollTrigger) ScrollTrigger.addEventListener('refreshInit', refit);
+      gsap.context(() => () => {
+        if (window.ScrollTrigger) ScrollTrigger.removeEventListener('refreshInit', refit);
+        if (statement) statement.style.removeProperty('font-size');
+        stillBack();
+      });
+      // words first: the camera and the disc measure the statement's words as they are laid out
+      const sw = words(statement);
       measure();
       sizeCanvas();
       // fetch the frames once the scene is within three screens
       if (root.getBoundingClientRect().top < window.innerHeight * 3) set.start();
       else ScrollTrigger.create({ trigger: root, start: 'top 300%', once: true, onEnter: () => set.start() });
-      [sharp, soft && soft.tagName === 'IMG' ? soft : null, receiver && receiver.querySelector('img')].forEach((img) => { if (img && img.decode) img.decode().catch(() => {}); });
-      if (!phone) makeSoft();
+      const propOn = !phone && loadProp();
+      [propOn ? sharp : null, propOn && soft && soft.tagName === 'IMG' ? soft : null, receiver && receiver.querySelector('img')].forEach((img) => { if (img && img.src && img.decode) img.decode().catch(() => {}); });
+      if (propOn) makeSoft();
 
       // a staggered fromTo renders only its first target up front: set every target's start state first.
       // Words and markers move in 2D (force3D off): scrubbing back and forth across their windows would
@@ -463,16 +747,30 @@
       const tween = (targets, from, to, at) => { gsap.set(targets, from); return tl.fromTo(targets, from, { ...to, force3D: false }, at); };
 
       const N = set.count, mid = Math.round(split * (N - 1));
+      // the still stands in with the first or the last frame, whichever is nearer the playhead now
+      const r0 = root.getBoundingClientRect();
+      const p0 = clamp(-r0.top / Math.max(1, r0.height - window.innerHeight), 0, 1);
+      const f0 = p0 <= 0.04 ? 0 : p0 <= 0.62 ? (mid * (p0 - 0.04)) / 0.58 : N - 1;
+      stillAs(frameUrl(phone ? pPattern : pattern, f0 > (N - 1) / 2 ? N - 1 : 0));
+      // a layer only while it fades: kept for the whole scene, every layer costs every frame
+      const layerDuring = (els, a, b) => {
+        tl.fromTo(els, { willChange: 'auto' }, { willChange: 'opacity', duration: 0.001, immediateRender: false }, a);
+        tl.to(els, { willChange: 'auto', duration: 0.001 }, b);
+      };
       const seq = { f: 0 };
       const step = () => want(seq.f);
+      const pivot = () => { measure(); return `${Math.round(G.cx)}px ${Math.round(G.cy)}px`; };
+      // how far the camera glides to centre the object (laptop; 0 when it is centred already)
+      const glides = !phone && centreOn;
+      const glide = () => { measure(); return glides ? Math.round(G.W / 2 - (G.ox + G.box / 2)) : 0; };
 
-      // 1. the object settles as the pin catches (a phone starts closer in and eases back while the
-      //    object grows tall, so the wide first frames fill the narrow screen)
+      // 1. the camera starts pushed in on the raw object and pulls back while it changes (a laptop keeps
+      //    the first frame's object clear of the title); the object settles as the pin catches
       if (phone) {
         tl.fromTo(obj, { yPercent: 4 }, { yPercent: 0, duration: 0.06, ease: 'power2.out' }, 0);
-        tl.fromTo(obj, { scale: 1.12 }, { scale: 1, duration: 0.36, ease: 'power1.inOut' }, 0.04);
+        tl.fromTo(camera, { scale: 1.12, transformOrigin: pivot }, { scale: 1, transformOrigin: pivot, duration: 0.36, ease: 'power1.inOut' }, 0.04);
       } else {
-        tl.fromTo(obj, { scale: 0.94, yPercent: 4 }, { scale: 1, yPercent: 0, duration: 0.06, ease: 'power2.out' }, 0);
+        tl.fromTo(camera, { scale: () => { measure(); return pushScale(push); }, transformOrigin: pivot }, { scale: 1, transformOrigin: pivot, duration: 0.4, ease: 'power1.inOut' }, 0);
       }
       // 2-3. the frames: linear, then the last stretch eases in
       tl.fromTo(seq, { f: 0 }, { f: mid, duration: 0.58, ease: 'none', onUpdate: step }, 0.04);
@@ -480,31 +778,42 @@
       // 4. the ground: a halo around the object while the title is read, then the whole stage once it
       //    has lifted away (power2.in: the edge reaches the title's words only as they finish leaving)
       if (irisOn) {
-        tl.fromTo(iris, { clipPath: () => { measure(); return disc(0); } }, { clipPath: halo(1, 28), duration: 0.17, ease: 'power2.out' }, 0.08);
-        tl.to(iris, { clipPath: halo(1.05, 20), duration: 0.19, ease: 'none' }, 0.25);
-        tl.to(iris, { clipPath: () => { measure(); return disc(G.R); }, duration: 0.12, ease: 'power2.in' }, 0.44);
+        // the disc exists only while it grows (0.08-0.562): outside that it is not drawn at all
+        tl.fromTo(iris, { display: 'none' }, { display: 'block', duration: 0.001 }, 0.079);
+        tl.fromTo(iris, { scale: () => { placeDisc(); return 0; } }, { scale: halo(1, 44), duration: 0.17, ease: 'power2.out' }, 0.08);
+        tl.to(iris, { scale: halo(1.05, 36), duration: 0.19, ease: 'none' }, 0.25);
+        tl.to(iris, { scale: 1, duration: 0.12, ease: 'power2.in' }, 0.44);
         // once the disc covers the stage, it and the before colour step aside for the ground's own flat
-        // after colour (no visible change, and nothing left to repaint)
-        tl.fromTo([iris, groundBefore], { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.001, immediateRender: false }, 0.562);
+        // after colour (no visible change, and nothing left to composite)
+        tl.to([iris, groundBefore], { display: 'none', duration: 0.001 }, 0.562);
       }
       // 5. the before context leaves; on a laptop its blurred copy fades in over it (a rack focus)
       if (prop) {
-        tl.fromTo(prop, { x: 0, yPercent: 0, scale: 1, opacity: 1 }, { x: () => stage.clientWidth - prop.offsetLeft + 24, yPercent: 6, scale: 0.86, opacity: 0.5, duration: 0.32, ease: 'power1.inOut' }, 0.3);
-        if (!phone && soft && sharp) {
+        tl.fromTo(prop, { x: 0, yPercent: 0, scale: 1, opacity: 1 }, { x: () => G.W - posIn(prop, stage)[0] + 24 + Math.max(0, -glide()), yPercent: 6, scale: 0.86, opacity: 0.5, duration: 0.32, ease: 'power1.inOut' }, 0.3);
+        if (propOn && soft && sharp) {
+          layerDuring([soft, sharp], 0.299, 0.561);
           tl.fromTo(soft, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'none' }, 0.3);
           tl.fromTo(sharp, { opacity: 1 }, { opacity: 0, duration: 0.1, ease: 'none' }, 0.46);
         }
       }
       // 6. the before statement lifts out
-      const sw = words(statement);
       if (sw.length) tween(sw, { yPercent: 0, rotation: 0, autoAlpha: 1 }, { yPercent: -70, rotation: 4, autoAlpha: 0, duration: 0.04, ease: 'power2.in', stagger: { amount: 0.04 } }, 0.4);
-      // 7. the receiver rises from below the stage; 8. the object settles onto it
-      if (receiver) tl.fromTo(receiver, { y: () => { measure(); return Math.max(0, G.H - G.recTop) + 8; } }, { y: 0, duration: 0.18, ease: 'power3.out' }, 0.52);
+      // 7. while the title is away the camera glides the object to the centre of the stage (laptop)
+      if (glides) {
+        tl.fromTo(camera, { x: 0 }, { x: glide, duration: 0.14, ease: 'power2.inOut' }, 0.46);
+        tl.to(camera, { x: 0, duration: 0.12, ease: 'power2.inOut' }, 0.76);
+      }
+      // 8. the receiver rises from below the stage; 9. the object settles onto it
+      if (receiver) tl.fromTo(receiver, { y: () => { measure(); return Math.max(0, G.H - G.recTop) + 8; } }, { y: 0, duration: 0.18, ease: 'power3.out' }, 0.48);
       tl.fromTo(obj, { y: 0 }, { y: () => obj.offsetWidth * (parseFloat(getComputedStyle(root).getPropertyValue('--xf-settle')) || 0), duration: 0.16, ease: 'power2.inOut' }, 0.62);
-      if (contact) tl.fromTo(contact, { opacity: 0 }, { opacity: 1, duration: 0.1, ease: 'power1.in' }, 0.68);
-      // 9. callouts: the marker pops and focuses, its label rises (on a phone: its row in the stack)
-      const n = callouts.length, gap = n > 1 ? Math.min(0.05, 0.13 / (n - 1)) : 0;
-      callouts.forEach((c, i) => {
+      if (contact) {
+        layerDuring(contact, 0.679, 0.781);
+        tl.fromTo(contact, { opacity: 0 }, { opacity: 1, duration: 0.1, ease: 'power1.in' }, 0.68);
+      }
+      // 10. callouts: the marker pops and focuses, its label rises (on a phone: its row in the stack)
+      const shown = phone ? callouts : callouts.slice(0, MAX_CALLOUTS);
+      const n = shown.length, gap = n > 1 ? Math.min(0.05, 0.13 / (n - 1)) : 0;
+      shown.forEach((c, i) => {
         const t0 = 0.66 + gap * i;
         const mark = c.querySelector('.xf-mark');
         if (phone) {
@@ -518,11 +827,12 @@
         const lw = words(c.querySelector('.xf-label'));
         if (lw.length) tween(lw, { yPercent: 60, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.04, ease: 'power3.out', stagger: { amount: 0.02 } }, t0 + 0.02);
       });
-      // 10. the after line rises into the slot the statement left; 11. the action
+      if (!phone) guardLabels();
+      // 11. the after line rises into the slot the statement left; 12. the action
       const cw = words(closing);
       if (cw.length) tween(cw, { yPercent: 70, rotation: -4, autoAlpha: 0 }, { yPercent: 0, rotation: 0, autoAlpha: 1, duration: 0.05, ease: 'power3.out', stagger: { amount: 0.03 } }, 0.84);
       if (cta) tl.fromTo(cta, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.05, ease: 'power2.out' }, 0.88);
-      // 12. hold to the end
+      // 13. hold to the end
       tl.set({}, {}, 1);
       step();
     };
@@ -532,7 +842,13 @@
       Object.values(sets).forEach((s) => s.release());
       if (D.off) { D.off(); D.off = null; }
       root.classList.remove('xf-drawn');
-      if (iris) iris.style.removeProperty('clip-path');
+      if (iris) ['left', 'top', 'width', 'height'].forEach((k) => iris.style.removeProperty(k));
+      stillBack();
+      // the "where it started" tile is the finished composition's only: it loads here, never live
+      obj.querySelectorAll('.xf-before img[data-src]').forEach((img) => { img.src = img.dataset.src; img.removeAttribute('data-src'); });
+      guardLabels();
+      // the still is the last frame again: its silhouette keeps the labels off the object
+      if (still) readMask(still);
     }
 
     mm = Stage.scene(root, {
@@ -542,6 +858,17 @@
       phone: off ? 'rest' : { hold: phoneHold, build },
       rest,
     });
+    // The stage calls rest() from a gsap.matchMedia whose conditions are "motion allowed" and "phone",
+    // and gsap calls nothing while none of them match: a laptop with reduced motion. The CSS already
+    // shows the finished composition there; what it lacks (the "where it started" tile) is loaded here,
+    // also when reduced motion is switched on later (after the stage has taken the live layout down).
+    const calm = Stage.live && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce) and (min-width: 768px)');
+    if (calm) {
+      const settle = () => { if (calm.matches) setTimeout(() => { if (!root.classList.contains('is-live')) rest(); }, 60); };
+      settle();
+      if (calm.addEventListener) calm.addEventListener('change', settle);
+      else if (calm.addListener) calm.addListener(settle);
+    }
     return mm;
   };
 })();

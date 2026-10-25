@@ -266,13 +266,16 @@
   Stage.smooth(); Stage.init();
   // the page's own bar: solid ground while the opening is under it, solid night once the closing is
   // (both match what the scene shows at its two ends, so neither change can be seen)
+  // (either section may be missing, e.g. with the scene as the first section: then that half is skipped)
   (() => {
     const bar = document.querySelector('.bar'), opening = document.querySelector('.opening'), closing = document.querySelector('.closing');
+    if (!bar || (!opening && !closing)) return;
     let raf = 0;
     const check = () => {
       raf = 0;
-      bar.classList.toggle('is-solid', opening.getBoundingClientRect().bottom > bar.offsetHeight);
-      bar.classList.toggle('is-solid-night', closing.getBoundingClientRect().top < bar.offsetHeight);
+      const h = bar.offsetHeight;
+      bar.classList.toggle('is-solid', !!opening && opening.getBoundingClientRect().bottom > h);
+      bar.classList.toggle('is-solid-night', !!closing && closing.getBoundingClientRect().top < h);
     };
     addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(check); }, { passive: true });
     check();

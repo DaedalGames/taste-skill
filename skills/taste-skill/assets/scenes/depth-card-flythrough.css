@@ -23,38 +23,46 @@
   --fly-vp: 56svh;                            /* vanishing point, from the top of the stage */
   --fly-focus: 56%;                           /* the picture's own vanishing point height (object-position) */
   --fly-lift: 0svh;                           /* live backdrop extends this far above the stage, raising the picture */
+  --fly-ground: var(--fly-vp);                /* where the streaming ground starts: the base of a focal object that
+                                                 stands below the vanishing point (a house at a jetty's end) */
+  --fly-focus-w: .06;                         /* the focal object's half-width at dolly 1: far cards are held outside
+                                                 it until they have grown clear. A plain number is a share of the
+                                                 picture's width (follows the crop); a length is taken as it is */
   --fly-rest-vp: 57.5svh;                     /* where the vanishing point sits in the finished opening (no lift) */
+  --fly-rest-ground: calc(var(--fly-rest-vp) + 4svh);   /* the focal object's foot in the finished opening */
   --fly-card-w: min(34vw, 54vh);              /* card width at scale 1; the 54vh cap keeps cards out of the copy */
   --fly-size: clamp(1.75rem, .9rem + 2.2vw, 3.5rem);   /* statement: 46px at 1440, 56px from 1940 */
   --fly-copy-top: 12svh;                      /* top of the statement box */
   --fly-copy-w: min(32vw, 21ch);              /* statement box: 16vw each side of the axis stays clear of cards */
 }
-/* a tall screen (a tablet held upright): larger cards and a lower statement close the band of empty sky
-   between them; the box widens so the statement keeps to two lines */
+/* a tall screen (a tablet held upright): the cards fly the low path (see the script), so they can be
+   larger; the box widens so the statement keeps to two lines */
 @media (min-width: 768px) and (orientation: portrait) {
   :where(.scene[data-scene="depth-card-flythrough"]) {
-    --fly-card-w: min(46vw, 34svh);
-    --fly-copy-top: 17svh;
+    --fly-card-w: min(56vw, 36svh);
+    --fly-copy-top: 14svh;
     --fly-copy-w: min(56vw, 18ch);
   }
 }
+/* a phone: the statement high, the vanishing point a little below the middle, and cards that reach about
+   72vw at reading size on the low path (see the script) */
 @media (max-width: 767px) {
   :where(.scene[data-scene="depth-card-flythrough"]) {
-    --fly-vp: 46svh;
-    --fly-lift: 23svh;                        /* raises the picture's vanishing point (56% of the box) to 46svh */
-    --fly-rest-vp: 45svh;                     /* the same picture in the 80svh finished opening */
-    --fly-card-w: min(60vw, 30svh);
+    --fly-vp: 56svh;
+    --fly-rest-vp: 44.8svh;                   /* the same picture in the 80svh finished opening */
+    --fly-card-w: min(78vw, 36svh);
     --fly-size: 1.75rem;
-    --fly-copy-top: 16svh;
+    --fly-copy-top: 14svh;
   }
 }
 
 .scene[data-scene="depth-card-flythrough"] { background: var(--fly-stage); color: var(--fly-ink); font-family: var(--fly-font); }
 .scene[data-scene="depth-card-flythrough"] .fly__backdrop { overflow: hidden; }
-.scene[data-scene="depth-card-flythrough"] :is(.fly__backdrop-img, .fly__backdrop-video, .fly__ground) {
+.scene[data-scene="depth-card-flythrough"] :is(.fly__backdrop-img, .fly__backdrop-video, .fly__ground-img) {
   display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% var(--fly-focus);
 }
-.scene[data-scene="depth-card-flythrough"] .fly__ground { display: none; }   /* the script's copy of the ground; live only */
+/* the script's copy of the ground and its scrim spans: live only */
+.scene[data-scene="depth-card-flythrough"] :is(.fly__ground, .fly__shade) { display: none; }
 .scene[data-scene="depth-card-flythrough"] .fly__scrim {
   background: rgb(var(--fly-shade) / var(--fly-scrim)); pointer-events: none;
 }
@@ -111,12 +119,12 @@
   position: absolute; z-index: 1;
   grid-area: auto; margin: 0;
   width: calc(var(--fly-card-w) * .78);
-  left: calc(50% - 24.2vw - var(--fly-card-w) * .39);
+  left: calc(50% - 27vw - var(--fly-card-w) * .39);
   top: calc(var(--fly-rest-vp) - var(--fly-card-w) * .26);
 }
 .scene[data-scene="depth-card-flythrough"]:not(.is-live) .fly__card.is-portrait:first-child {
   width: calc(var(--fly-card-w) * .44);
-  left: calc(50% - 24.2vw - var(--fly-card-w) * .22);
+  left: calc(50% - 27vw - var(--fly-card-w) * .22);
   top: calc(var(--fly-rest-vp) - var(--fly-card-w) * .275);
 }
 .scene[data-scene="depth-card-flythrough"]:not(.is-live) .fly__card:first-child .fly__fog { opacity: 0; }
@@ -158,15 +166,24 @@
 .scene[data-scene="depth-card-flythrough"].is-live .fly__backdrop {
   position: absolute; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--fly-lift));
   transform-origin: 50% calc(var(--fly-vp) + var(--fly-lift));   /* the dolly aims at the vanishing point */
+  will-change: transform;                    /* one layer, drawn once: the dolly never re-rasters the picture */
+  background: var(--fly-stage);              /* an opaque layer, so the stage colour under it is never drawn */
 }
 /* the ground below the vanishing point, which the script maps as the camera runs over it */
 .scene[data-scene="depth-card-flythrough"].is-live .fly__ground {
   display: block; position: absolute; inset: 0;
-  clip-path: inset(calc(var(--fly-vp) + var(--fly-lift)) 0 0 0);
-  transform-origin: 50% calc(var(--fly-vp) + var(--fly-lift));
+  clip-path: inset(calc(var(--fly-ground) + var(--fly-lift)) 0 0 0);
+  transform-origin: 50% calc(var(--fly-ground) + var(--fly-lift));
   backface-visibility: hidden;
 }
 .scene[data-scene="depth-card-flythrough"].is-live .fly__scrim { position: absolute; inset: 0; }
+/* over a still the scrim lives inside the picture's layers (the script's .fly__shade spans), so the
+   stage never blends a full-screen translucent layer per frame */
+.scene[data-scene="depth-card-flythrough"].is-live .fly__shade {
+  display: block; position: absolute; inset: 0; pointer-events: none;
+  background: rgb(var(--fly-shade) / var(--fly-scrim));
+}
+.scene[data-scene="depth-card-flythrough"].is-live.fly--shaded .fly__scrim { display: none; }
 .scene[data-scene="depth-card-flythrough"].is-live .fly__field {
   position: absolute; inset: 0;
   perspective: 300px; perspective-origin: 50% var(--fly-vp);   /* never preserve-3d: plain z-index order */
@@ -180,7 +197,8 @@
   transform: translate(-50%, -50%) translateZ(-600px);
 }
 .scene[data-scene="depth-card-flythrough"].is-live .fly__card.is-portrait { width: calc(var(--fly-card-w) * .735); }
-.scene[data-scene="depth-card-flythrough"].is-live .fly__fog { opacity: .7; }
+/* the haze is its own flat layer, so lifting it never repaints the card's picture */
+.scene[data-scene="depth-card-flythrough"].is-live .fly__fog { opacity: .7; will-change: opacity; }
 /* in flight the caption is drawn by the tag layer; the figcaption stays for screen readers */
 .scene[data-scene="depth-card-flythrough"].is-live .fly__cap { opacity: 0; }
 /* the caption tags: one flat layer above the cards and below the statement; the script puts each tag on
@@ -197,6 +215,7 @@
   letter-spacing: -.005em;
   background: var(--fly-chip); color: var(--fly-chip-ink);
   white-space: nowrap; opacity: 0;
+  will-change: transform, opacity;           /* seven small layers that ride their cards without re-rastering */
 }
 .scene[data-scene="depth-card-flythrough"].is-live .fly__copy {
   position: absolute; top: var(--fly-copy-top); left: 0; right: 0; z-index: 20;
@@ -231,11 +250,13 @@
   .scene[data-scene="depth-card-flythrough"]:not(.is-live) .fly__line:first-child {
     top: var(--fly-copy-top); left: 16px; right: 16px; width: auto; line-height: 1.1;
   }
+  /* the opening's first card stands small at the left edge below the focal object's foot, as a card
+     that has just come out of the picture, so the picture keeps its subject */
   .scene[data-scene="depth-card-flythrough"]:not(.is-live) .fly__card:first-child,
   .scene[data-scene="depth-card-flythrough"]:not(.is-live) .fly__card.is-portrait:first-child {
-    left: 16px; width: 56vw; top: calc(var(--fly-rest-vp) - 18vw);
+    left: 16px; width: 38vw; top: calc(var(--fly-rest-ground) + 4.6svh);
   }
-  .scene[data-scene="depth-card-flythrough"]:not(.is-live) .fly__card.is-portrait:first-child { width: 34vw; top: calc(var(--fly-rest-vp) - 30vw); }
+  .scene[data-scene="depth-card-flythrough"]:not(.is-live) .fly__card.is-portrait:first-child { width: 24vw; }
   .scene[data-scene="depth-card-flythrough"]:not(.is-live) :is(.fly__card, .fly__line):nth-child(3n + 2) { --fly-pct: 1; }
   .scene[data-scene="depth-card-flythrough"]:not(.is-live) :is(.fly__card, .fly__line):nth-child(3n) { --fly-pct: .84; }
   .scene[data-scene="depth-card-flythrough"]:not(.is-live) :is(.fly__card, .fly__line):nth-child(3n + 4) { --fly-pct: .68; }

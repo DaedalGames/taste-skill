@@ -40,18 +40,27 @@
 //       </div>
 //     </div>
 //   </section>
+// While live the script adds <div class="sw-frame"> with four .sw-bar inside the shutter: from the
+// moment the bar closes, they draw the one merged window in place of the halves, so the push is pure
+// compositing (a page that styles .sw-half differently is copied onto them).
 //
 // Props: two things that belong in the place (foliage, a lamp, a chair), standing in front of the
 // shutter in the bottom corners and thrown outward during the push. They are the scene's foreground
 // plane: without them the first half is two pictures on a flat ground. The prop on the high window's
 // side is the tall one (62% of the stage height), the other 46%; both bleed off the bottom and outer
-// edges, and neither may reach the title or the caption. Either
+// edges. Neither may reach the title or the caption: when the page's sizes would put one over them
+// (a narrower screen, a longer title), the scene slides that prop outward until its solid parts clear
+// both by 16px. Either
 //   - a transparent cut-out (WebP or PNG with alpha, about 1000px tall), used as it is, or
 //   - a photograph of something dark against a bright, plain sky (a fir against fog), keyed into a
 //     cut-out by the script: add data-key="lo hi" (luminance 0-1: at or below lo a pixel is kept, at or
 //     above hi it is clear; default "0.2 0.45"), optionally data-crop="left top right bottom" (fractions
-//     of the photo; keep its inner edges on open sky) and data-flip (mirror it). The photo must be served
-//     with CORS (picsum.photos is; add crossorigin="anonymous"); if it is not, the prop is left out.
+//     of the photo; every edge that shows on screen must lie on open sky, or it shows as a straight
+//     cut), data-flip (mirror it) and data-tone (a CSS filter baked in once, such as
+//     "saturate(.45) brightness(.75)", so a prop shot in warm light sits in a cold picture). The photo
+//     must be served with CORS (picsum.photos is; add crossorigin="anonymous"); if it is not, the prop
+//     is left out. Two props cut from one photograph read as twins: crop them differently (one whole,
+//     one nearer and cut by the screen edge).
 // Props are live-only: the finished composition hides them.
 //
 // Two geometries: "wide" (the default) and "narrow" (any width under 768px, or any screen narrower than
@@ -101,7 +110,7 @@
   const NARROW = '(max-width: 767px), (max-aspect-ratio: 11/10)';
   // the share of the title (or caption) a window's edge has wiped before the rest fades out, so the wipe
   // never ends on a sliver of letter tops (title) or an orphaned last line (caption)
-  const TITLE_FADE = [0.5, 0.8], CAPTION_FADE = [0.35, 0.75];
+  const TITLE_FADE = [0.35, 0.65], CAPTION_FADE = [0.35, 0.7];
   // the bar closes on the first 80% of the merge (power2.inOut reaches 0.8 at 70% of its time, so 0.41
   // of the hold), leaving a clean still beat with no lingering hairline
   const BAR_CLOSE = 0.8;
@@ -109,6 +118,17 @@
   // Key a photograph of something dark against a bright plain sky into a cut-out (see Props above):
   // alpha from luminance between lo and hi, the edge colour un-mixed from the sky so no light fringe
   // shows over the photo, cropped and mirrored as asked. Once per image; the result is a PNG blob URL.
+  // A coarse map of where a cut-out is solid (40 cells across), so the scene can keep it off the type.
+  const maskOf = (a, w, h) => {
+    const gw = 40, gh = clamp(Math.round((40 * h) / w), 1, 160), n = new Uint32Array(gw * gh);
+    for (let y = 0; y < h; y++) {
+      const row = ((y * gh) / h | 0) * gw;
+      for (let x = 0; x < w; x++) if (a[(y * w + x) * 4 + 3] > 128) n[row + ((x * gw) / w | 0)]++;
+    }
+    const per = (w / gw) * (h / gh), cells = new Uint8Array(gw * gh);
+    for (let k = 0; k < cells.length; k++) cells[k] = n[k] > per * 0.03 ? 1 : 0;
+    return { gw, gh, cells };
+  };
   const nums = (s, d) => { const a = String(s ?? '').trim().split(/[\s,]+/).map(Number); return a.length === d.length && a.every((v) => isFinite(v)) ? a : d; };
   const keyProp = (img) => {
     if (img.dataset.keyed) return;
@@ -135,23 +155,38 @@
         let r = 0, g = 0, b = 0, n = 0;
         for (let i = 0; i < a.length; i += 4) if (L(a, i) >= hi) { r += a[i]; g += a[i + 1]; b += a[i + 2]; n++; }
         if (n) { r /= n; g /= n; b /= n; } else r = g = b = 255;
+        // an un-mixed edge pixel is never lighter than the solid subject (luminance lo): without this
+        // cap the thin, half-clear edges come out pale yellow and glow over a dark photograph
+        const cap = Math.max(0.04, lo);
         for (let i = 0; i < a.length; i += 4) {
           const t = clamp((hi - L(a, i)) / span, 0, 1);
           if (t > 0 && t < 1) {
             const u = 1 / Math.max(t, 0.2);
             a[i] = clamp(r + (a[i] - r) * u, 0, 255); a[i + 1] = clamp(g + (a[i + 1] - g) * u, 0, 255); a[i + 2] = clamp(b + (a[i + 2] - b) * u, 0, 255);
+            const l = L(a, i);
+            if (l > cap) { const f = cap / l; a[i] *= f; a[i + 1] *= f; a[i + 2] *= f; }
           }
           a[i + 3] = Math.round(t * 255);
         }
         x.putImageData(d, 0, 0);
-        return new Promise((res, rej) => cv.toBlob((blob) => (blob ? res(blob) : rej(new Error('toBlob'))), 'image/png'));
+        img._swMask = maskOf(a, w, h);
+        // data-tone: a CSS filter baked into the cut-out once, so a prop shot in other light sits in the
+        // world's (a browser without canvas filters keeps the plain cut-out)
+        let outCv = cv;
+        const tone = (img.dataset.tone || '').trim();
+        if (tone && 'filter' in x) {
+          const tc = document.createElement('canvas'); tc.width = w; tc.height = h;
+          const tx = tc.getContext('2d'); tx.filter = tone; tx.drawImage(cv, 0, 0);
+          outCv = tc;
+        }
+        return new Promise((res, rej) => outCv.toBlob((blob) => (blob ? res(blob) : rej(new Error('toBlob'))), 'image/png'));
       })
       .then((blob) => {
         img.removeAttribute('srcset');
         img.src = URL.createObjectURL(blob);
         return img.decode().catch(() => {});
       })
-      .then(() => { img.dataset.keyed = 'done'; img.classList.add('is-keyed'); })
+      .then(() => { img.dataset.keyed = 'done'; img.classList.add('is-keyed'); img.dispatchEvent(new Event('sw-keyed')); })
       .catch(() => { img.dataset.keyed = 'failed'; img.classList.add('is-off'); });
   };
 
@@ -219,6 +254,63 @@
       };
       // photographs keyed into cut-outs (once per image; they stay hidden until keyed)
       for (const el of [propL, propR]) if (el && el.hasAttribute('data-key')) keyProp(el);
+
+      // Props never cover the title or the caption: each one is nudged outward (left prop left, right
+      // prop right) until its solid cells clear both boxes by PAD px. A ready-made cut-out is mapped
+      // here; one from another origin without CORS cannot be read, and is placed as the page put it.
+      const PAD = 16;
+      const plainMask = (el) => {
+        if (el._swMask !== undefined || el.hasAttribute('data-key') || !el.complete || !el.naturalWidth) return;
+        try {
+          const w = 200, h = Math.max(1, Math.round((200 * el.naturalHeight) / el.naturalWidth));
+          const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+          const x = cv.getContext('2d', { willReadFrequently: true });
+          x.drawImage(el, 0, 0, w, h);
+          el._swMask = maskOf(x.getImageData(0, 0, w, h).data, w, h);
+        } catch { el._swMask = false; }
+      };
+      const guard = () => {
+        if (dead) return;
+        const boxes = [intro, caption].filter((el) => el && el.offsetWidth > 0)
+          .map((el) => ({ l: el.offsetLeft - PAD, t: el.offsetTop - PAD, r: el.offsetLeft + el.offsetWidth + PAD, b: el.offsetTop + el.offsetHeight + PAD }));
+        for (const [el, dir] of [[propL, -1], [propR, 1]]) {
+          if (!el) continue;
+          plainMask(el);
+          const m = el._swMask;
+          if (!m || !el.offsetWidth || !boxes.length) { el.style.removeProperty('translate'); continue; }
+          const x0 = el.offsetLeft, y0 = el.offsetTop, cw = el.offsetWidth / m.gw, ch = el.offsetHeight / m.gh;
+          const hits = (s) => {
+            for (const b of boxes) {
+              for (let j = 0; j < m.gh; j++) {
+                const ty = y0 + j * ch;
+                if (ty + ch <= b.t || ty >= b.b) continue;
+                for (let i = 0; i < m.gw; i++) {
+                  const tx = x0 + s + i * cw;
+                  if (m.cells[j * m.gw + i] && tx + cw > b.l && tx < b.r) return true;
+                }
+              }
+            }
+            return false;
+          };
+          let s = 0;
+          while (Math.abs(s) < el.offsetWidth && hits(s)) s += 8 * dir;
+          if (s) el.style.translate = `${s}px 0`; else el.style.removeProperty('translate');
+        }
+      };
+      const onProp = () => guard();
+      for (const el of [propL, propR]) if (el) { el.addEventListener('load', onProp); el.addEventListener('sw-keyed', onProp); }
+
+      // The push is drawn by four flat bars of ground around the merged window, not by the halves:
+      // a clip-pathed half has to be repainted and re-rasterised on every frame of the scale, which
+      // is what dropped frames, while a plain filled box on its own layer is scaled by the compositor
+      // with crisp edges and no raster at all. Once the bar has closed (merge 1) the window is one
+      // rectangle, so the swap is invisible; scrolling back before it brings the halves back.
+      const frame = document.createElement('div');
+      frame.className = 'sw-frame';
+      frame.setAttribute('aria-hidden', 'true');
+      const bars = [0, 1, 2, 3].map(() => frame.appendChild(document.createElement('div')));
+      for (const b of bars) b.className = 'sw-bar';
+      halfR.after(frame);
 
       // The title is as wide as one window (wide) or both (narrow): step its size down until it sits on
       // two lines, so a long title never runs to three or four.
@@ -290,11 +382,25 @@
         // the caption hangs under the high window against the bar (its outer side is the prop's)
         const capW = Math.min(0.22 * W, holeW);
         set('--sw-cap-w', px(capW)); set('--sw-cap-x', px(highRight ? cx + m / 2 : cx - m / 2 - capW));
+        // the four bars around the merged window x0-x3 by y0-y1; each overlaps its neighbours by 2px and
+        // runs EDGE px past the stage, so no seam or photo edge can show at any scale
+        const box = (el, l, t, w, h) => { el.style.left = px(l); el.style.top = px(t); el.style.width = px(w); el.style.height = px(h); };
+        box(bars[0], -EDGE, -EDGE, W + 2 * EDGE, y0 + EDGE);
+        box(bars[1], -EDGE, y1, W + 2 * EDGE, H - y1 + EDGE);
+        box(bars[2], -EDGE, y0 - 2, x0 + EDGE, y1 - y0 + 4);
+        box(bars[3], x3, y0 - 2, W - x3 + EDGE, y1 - y0 + 4);
+        // the bars wear whatever the page gave the halves (a grain texture costs them their free scaling)
+        const hs = getComputedStyle(halfL);
+        for (const b of bars) {
+          b.style.backgroundColor = hs.backgroundColor;
+          if (hs.backgroundImage !== 'none') Object.assign(b.style, { backgroundImage: hs.backgroundImage, backgroundSize: hs.backgroundSize, backgroundRepeat: hs.backgroundRepeat, backgroundAttachment: hs.backgroundAttachment });
+        }
         last.clear();
         fitTitle();
         if (intro) { g.introBottom = intro.offsetTop + intro.offsetHeight; g.introH = intro.offsetHeight; }
         if (caption) { g.capTop = caption.offsetTop; g.capH = caption.offsetHeight; }
         fitWord();
+        guard();
       };
 
       // Every frame: both halves as the same 11-point evenodd polygon (the zero-width slit runs only
@@ -310,6 +416,11 @@
         const mg = Math.min(1, p.merge / BAR_CLOSE);
         const lR = cx - m / 2 + (m / 2 + 2) * mg, rL = cx + m / 2 - (m / 2) * mg;
         const R = px(W + 2 * EDGE), B = px(H + 2 * EDGE);
+        // one window: the bars take over from the halves (see the frame above)
+        const one = p.level >= 0.9999 && p.merge >= BAR_CLOSE - 0.0001;
+        write(frame, 'visibility', one ? 'visible' : '');
+        write(halfL, 'visibility', one ? 'hidden' : '');
+        write(halfR, 'visibility', one ? 'hidden' : '');
         write(halfL, 'clipPath', `polygon(evenodd, 0 0, ${X(C)} 0, ${X(C)} ${X(lT)}, ${X(lR)} ${X(lT)}, ${X(x0)} ${X(lT)}, ${X(x0)} ${X(lB)}, ${X(lR)} ${X(lB)}, ${X(lR)} ${X(lT)}, ${X(C)} ${X(lT)}, ${X(C)} ${B}, 0 ${B})`);
         write(halfR, 'clipPath', `polygon(evenodd, ${R} 0, ${X(cx)} 0, ${X(cx)} ${X(rT)}, ${X(rL)} ${X(rT)}, ${X(x3)} ${X(rT)}, ${X(x3)} ${X(rB)}, ${X(rL)} ${X(rB)}, ${X(rL)} ${X(rT)}, ${X(cx)} ${X(rT)}, ${X(cx)} ${B}, ${R} ${B})`);
         const s = 1 + (g.S - 1) * p.push;
@@ -410,7 +521,10 @@
           tl.eventCallback('onUpdate', null);
           if (document.fonts) document.fonts.removeEventListener('loadingdone', onFonts);
           if (io) io.disconnect();
+          for (const el of [propL, propR]) if (el) { el.removeEventListener('load', onProp); el.removeEventListener('sw-keyed', onProp); el.style.removeProperty('translate'); }
           for (const el of [halfL, halfR, intro, caption]) if (el) el.style.removeProperty('clip-path');
+          for (const el of [halfL, halfR]) el.style.removeProperty('visibility');
+          frame.remove();
           for (const el of [intro, caption]) if (el) { el.style.removeProperty('opacity'); el.style.removeProperty('visibility'); }
           shutter.style.removeProperty('transform'); shutter.style.removeProperty('transform-origin');
           if (word) { word.style.removeProperty('font-size'); word.style.removeProperty('top'); }

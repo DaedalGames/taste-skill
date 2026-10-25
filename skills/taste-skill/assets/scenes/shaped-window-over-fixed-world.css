@@ -93,7 +93,7 @@
   position: absolute;
   left: 4%;
   width: 92%;
-  top: calc(37.6% - var(--sw-cap-gap));
+  top: calc(40% - var(--sw-cap-gap));
   margin: 0;
   font-family: var(--font-display, inherit);
   font-weight: 800;
@@ -107,15 +107,22 @@
   text-align: center;
   color: var(--sw-light, var(--ground, #f4f3ef));
 }
-/* flat translucent fills with soft edges (a blurred flat band, never a gradient) */
+/* flat translucent fills with soft edges (a blurred flat band, never a gradient). The band is drawn by
+   ::before, so while the scrim fades only its opacity changes and the blur is drawn once, not per frame */
 [data-scene="shaped-window-over-fixed-world"] .sw-scrim {
   position: absolute;
   left: -10%;
   right: -10%;
-  filter: blur(40px);
 }
-[data-scene="shaped-window-over-fixed-world"] .sw-scrim--top { top: 30%; height: 40%; background: rgb(16 13 10 / 0.38); }
-[data-scene="shaped-window-over-fixed-world"] .sw-scrim--bottom { bottom: -12%; height: 46%; background: rgb(16 13 10 / 0.55); }
+[data-scene="shaped-window-over-fixed-world"] .sw-scrim::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--sw-scrim-fill, rgb(16 13 10 / 0.38));
+  filter: blur(var(--sw-scrim-blur, 40px));
+}
+[data-scene="shaped-window-over-fixed-world"] .sw-scrim--top { top: 30%; height: 40%; }
+[data-scene="shaped-window-over-fixed-world"] .sw-scrim--bottom { bottom: -12%; height: 46%; --sw-scrim-fill: rgb(16 13 10 / 0.55); }
 [data-scene="shaped-window-over-fixed-world"] .sw-lede {
   position: absolute;
   left: 6%;
@@ -218,11 +225,16 @@ html.js .scene[data-scene="shaped-window-over-fixed-world"].is-live > .scene-sta
   bottom: auto;
 }
 
+/* the merged window during the push: four flat bars of ground the script adds and places, each on its
+   own layer so the compositor scales them with crisp edges and nothing is repainted per frame */
+[data-scene="shaped-window-over-fixed-world"] .sw-frame { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
+[data-scene="shaped-window-over-fixed-world"] .sw-bar { position: absolute; background: var(--ground, #f4f3ef); will-change: transform; }
+
 /* the word is promoted by the script only while it moves (0.5-0.885), so it is sharp at rest */
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-word { left: 4%; width: 92%; }
 /* layers that first appear late in the push are promoted from the start, so their first raster
    happens at load and not mid-scroll (flat blurred fills and a paragraph: no visible softening) */
-[data-scene="shaped-window-over-fixed-world"].is-live .sw-scrim { opacity: 0; filter: blur(40px); will-change: opacity; }
+[data-scene="shaped-window-over-fixed-world"].is-live .sw-scrim { opacity: 0; will-change: opacity; }
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-lede { will-change: transform, opacity; }
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-scrim--top { top: -20%; height: 62%; }
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-scrim--bottom { bottom: -20%; height: 62%; }
@@ -237,6 +249,9 @@ html.js .scene[data-scene="shaped-window-over-fixed-world"].is-live > .scene-sta
   max-width: none;
   pointer-events: none;
   user-select: none;
+  /* their own layers: the push scales and throws them every frame, and repainting two large cut-outs
+     inside the shutter on each of those frames is what made the push drop frames */
+  will-change: transform;
 }
 /* a page sizes and places them with --sw-prop-l-h, --sw-prop-l-x, --sw-prop-l-y (height, left, bottom)
    and the same for -r- (right), on the section; a tall prop may run past the top of the stage */
@@ -275,10 +290,9 @@ html.js .scene[data-scene="shaped-window-over-fixed-world"].is-live > .scene-sta
   [data-scene="shaped-window-over-fixed-world"].is-live .sw-title { font-size: min(10.6vw, 6.4svh, 84px); }
   [data-scene="shaped-window-over-fixed-world"].is-live .sw-caption { display: none; }
   [data-scene="shaped-window-over-fixed-world"].is-live .sw-word { left: 7%; width: 86%; }
-  [data-scene="shaped-window-over-fixed-world"].is-live .sw-scrim { filter: blur(40px); }
   /* the top band ends well above the horizon and fades out slowly, so its edge never reads as a
      lighter stripe over the peaks */
-  [data-scene="shaped-window-over-fixed-world"].is-live .sw-scrim--top { top: -14%; height: 40%; filter: blur(60px); }
+  [data-scene="shaped-window-over-fixed-world"].is-live .sw-scrim--top { top: -14%; height: 40%; --sw-scrim-blur: 60px; }
   [data-scene="shaped-window-over-fixed-world"].is-live .sw-scrim--bottom { bottom: -10%; height: 52%; }
   /* the stage is 100lvh: lift the lede by the toolbar's share so it always sits above the toolbar */
   [data-scene="shaped-window-over-fixed-world"].is-live .sw-lede {

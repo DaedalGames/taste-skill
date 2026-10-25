@@ -126,12 +126,12 @@ html.js .ott.is-live > .scene-stage,
 }
 .ott.is-live .ott-half,
 .ott.is-live .ott-object { will-change: transform; }
-.ott.is-live .ott-line { will-change: opacity; }
 
 /* the break (exit 'break'): each half of a breaking line carries a copy of its letters, one span per
    letter laid exactly over its own glyph. While the line is broken the half's own text hides and the
    letters show and fly; outside the break they are hidden and the line is plain text again. No
-   will-change on the letters: two of them swell to giant size and must be drawn sharp at that size. */
+   will-change on the letters, so each is drawn sharp at the size it flies at; the two giants are set at
+   their swollen size by the script and scaled down to their glyph at rest. */
 .ott-half { position: relative; }
 .ott-chs {
   position: absolute;

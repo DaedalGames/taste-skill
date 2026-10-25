@@ -6,9 +6,10 @@
 // at a time, until the item in hand sits under the pointer in the accent. The name stands huge on the
 // horizon. Below it the whole width of the stage is the item's ground, and its picture stands in front
 // of the foot of the name. At each beat the next picture rises from the bottom of the screen in front
-// of the last one, which sinks back; its ground surges up behind it on a full-width scan line, washes
-// over the name while the letters are swapped, and falls back to the horizon as the new letters jump
-// up; the scale climbs to the new reading and the number rolls in on the new ground. Built on
+// of the last one, which sinks back, and overshoots up in front of the lower half of the name that is
+// leaving; its ground surges up behind it on a full-width scan line, washes over the name while the
+// letters are swapped, and falls back to the horizon with the picture as the new letters jump up; the
+// scale climbs to the new reading and the number rolls in on the new ground. Built on
 // stage.js. The finished composition (reduced motion, no script) shows every item as a small stage of
 // its own: its note, its name standing on its ground, its picture, its number and its reading.
 //
@@ -56,12 +57,16 @@
 //   phone  'same' (the dial with phone numbers) or 'rest' (the finished composition) ['same']
 //
 // Page tokens it takes: --ink, --ground (or --bg), --accent, --font-display, --font-text.
+// stage.js's --p (the scene's progress) is readable on the section only: the live stage stops it from
+// inheriting into the split letters, which would re-style them all on every frame.
 (() => {
   const ID = 'instrument-dial-stage';
   const NS = 'http://www.w3.org/2000/svg';
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   // how far letters roll out of their masks (yPercent): names, numbers (their commas hang low), lines
   const WR = 125; const VR = 135; const RR = 120;
+  // where a new name's letters start under the falling ground: just below their masks
+  const WI = 100;
   const num = (v, d) => (v === null || v === undefined || v === '' || typeof v === 'boolean' || !Number.isFinite(+v) ? d : +v);
   const r1 = (n) => Math.round(n * 10) / 10;
   const r2 = (n) => Math.round(n * 100) / 100;
@@ -443,7 +448,13 @@
     D.base[0].setAttribute('d', minor.join('')); D.base[1].setAttribute('d', major.join(''));
     live.scale = { count: 2 * steps + 1, minor, major };
     live.n = -1;
-    D.pins.forEach((e, i) => e.setAttribute('d', tri(g, rPinA, rPinB, S.pinW, -tS + D.fr[i] * 2 * tS)));
+    // each pin pops in about its own centre (the render writes its scale about pinC, so a pin that
+    // lands after a resize pops where it now stands)
+    const pinC = D.pins.map((e, i) => {
+      const deg = -tS + D.fr[i] * 2 * tS;
+      e.setAttribute('d', tri(g, rPinA, rPinB, S.pinW, deg));
+      return pt(g, (rPinA + rPinB) / 2, deg);
+    });
     D.ptr.setAttribute('d', tri(g, rPtrA, rPtrB, S.ptrW, 0));
 
     // the bezel: a band with notches and one sector per item, turning inside a wedge about 12 o'clock
@@ -464,7 +475,10 @@
 
     // where the first picture waits before the intro stands it up: on its ground, under the horizon
     const p0 = clamp(1 - Math.max(0, fz[0] + clamp(Math.round(H * 0.02), 12, 20) - pic) / (H - pic + 40), 0, 1);
-    live.geo = { W, H, hz, fz, pk, pic, bh, g, p0 };
+    // how far a rising picture overshoots its place during a change: up in front of the lower half of
+    // the name that is leaving, before it settles with its ground
+    const lift = Math.round(0.45 * cap);
+    live.geo = { W, H, hz, fz, pk, pic, bh, g, p0, lift, pinC };
   }
 
   // Pictures lean toward a fine pointer on desktop (perspective 1200, lerped on the ticker).
@@ -544,7 +558,9 @@
       const w = Math.min(0.03, 0.12 / hold);     // half of a change, in progress; about a quarter screen
       const u = w / 0.03;
       const Tk = (k) => 0.1 + (0.84 * k) / N;
-      const IR = { immediateRender: false };
+      // 2D transforms: letters and lines roll inside their name's layer instead of each being promoted
+      // (and dropped again) by a 3D transform at every change
+      const IR = { immediateRender: false, force3D: false };
       // the scrubbed state the render below turns into grounds, pictures, ticks and the bezel's clicks
       // p: the picture rising, r: the ground rising, s: the ground settling on the horizon.
       // The first item is in place from the start.
@@ -564,7 +580,9 @@
         it.fy = null; it.ea = null; it.bt = null; it.vis = null;
       });
       gsap.set(D.labels, { yPercent: RR });
-      gsap.set(D.pins, { opacity: 0, scale: 1.6, transformOrigin: '50% 50%' });
+      // each pin's pop, 0 → 1: its opacity, and its scale from 1.6 to 1 (written by the render)
+      const pinA = its.map(() => ({ a: 0 }));
+      live.pa = its.map(() => null);
       gsap.set(D.secs, { opacity: 0 });
       gsap.set(D.doneG, { opacity: 0 });
       live.deg = start;
@@ -589,7 +607,7 @@
       tl.fromTo(D.labels[0], { yPercent: RR }, { yPercent: 0, duration: 0.02, ease: 'power3.out', ...IR }, 0.07);
       tl.fromTo(D.secs[0], { opacity: 0 }, { opacity: 1, duration: 0.01, ...IR }, 0.075);
       tl.fromTo(fill, { f: -0.05 }, { f: D.fr[0], duration: 0.055, ...IR }, 0.05);
-      tl.fromTo(D.pins[0], { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.012, ease: 'power3.out', ...IR }, 0.1);
+      tl.fromTo(pinA[0], { a: 0 }, { a: 1, duration: 0.012, ease: 'power3.out', ...IR }, 0.1);
 
       // BEATS: the next picture rises from below the stage in front of the last one, which sinks back.
       // Its ground surges up behind it on the scan line. With wash the ground runs on over the name
@@ -599,17 +617,20 @@
       // the note, the number and the reading roll over.
       for (let k = 1; k < N; k++) {
         const T = Tk(k); const a = its[k - 1]; const b = its[k];
-        tl.fromTo(plates[k], { p: 0 }, { p: 1, duration: 0.03 * u, ease: 'power3.out', ...IR }, T - 0.03 * u);
+        tl.fromTo(plates[k], { p: 0 }, { p: 1, duration: (o.wash ? 0.026 : 0.03) * u, ease: 'power3.out', ...IR }, T - 0.03 * u);
         enter(b, T - 0.03 * u, 0.06 * u);
         // the last note and number roll out before the new picture and ground pass over them
-        if (a.code) tl.fromTo(a.code, { yPercent: 0 }, { yPercent: -RR, duration: 0.01 * u, ease: 'power2.in', ...IR }, T - 0.032 * u);
-        if (a.value.chars.length) tl.fromTo(a.value.chars, { yPercent: 0 }, { yPercent: -VR, duration: 0.01 * u, ease: 'power2.in', stagger: { amount: 0.004 * u }, ...IR }, T - 0.032 * u);
-        if (a.caption) tl.fromTo(a.caption, { yPercent: 0 }, { yPercent: -RR, duration: 0.01 * u, ease: 'power2.in', ...IR }, T - 0.03 * u);
+        // (quick, all gone by T - 0.022, so no letter is caught half out while the new picture rises)
+        if (a.code) tl.fromTo(a.code, { yPercent: 0 }, { yPercent: -RR, duration: 0.007 * u, ease: 'power2.in', ...IR }, T - 0.03 * u);
+        if (a.value.chars.length) tl.fromTo(a.value.chars, { yPercent: 0 }, { yPercent: -VR, duration: 0.006 * u, ease: 'power2.in', stagger: { amount: 0.002 * u }, ...IR }, T - 0.03 * u);
+        if (a.caption) tl.fromTo(a.caption, { yPercent: 0 }, { yPercent: -RR, duration: 0.007 * u, ease: 'power2.in', ...IR }, T - 0.029 * u);
         if (o.wash) {
           tl.fromTo(plates[k], { r: 0 }, { r: 1, duration: 0.032 * u, ease: 'power2.in', ...IR }, T - 0.032 * u);
           tl.fromTo(a.word.chars, { yPercent: 0 }, { yPercent: -WR, duration: 0.0003 * u, ...IR }, T - 0.0002 * u);
-          tl.fromTo(plates[k], { s: 0 }, { s: 1, duration: 0.024 * u, ease: 'power3.out', ...IR }, T);
-          tl.fromTo(b.word.chars, { yPercent: WR }, { yPercent: 0, duration: 0.016 * u, ease: 'power3.out', stagger: { amount: 0.008 * u }, ...IR }, T + 0.0003 * u);
+          // the fall is short and the letters start just under their masks, so the stage is without
+          // a readable name for under 0.01 of progress
+          tl.fromTo(plates[k], { s: 0 }, { s: 1, duration: 0.018 * u, ease: 'power3.out', ...IR }, T);
+          tl.fromTo(b.word.chars, { yPercent: WI }, { yPercent: 0, duration: 0.013 * u, ease: 'power3.out', stagger: { amount: 0.006 * u }, ...IR }, T + 0.0003 * u);
         } else {
           tl.fromTo(plates[k], { r: 0 }, { r: 1, duration: 0.05 * u, ease: 'power3.inOut', ...IR }, T - 0.03 * u);
           tl.fromTo(a.word.chars, { yPercent: 0 }, { yPercent: -WR, duration: 0.016 * u, ease: 'power3.in', stagger: { amount: 0.012 * u }, ...IR }, T - 0.026 * u);
@@ -624,7 +645,7 @@
         if (b.code) tl.fromTo(b.code, { yPercent: RR }, { yPercent: 0, duration: 0.018 * u, ease: 'power3.out', ...IR }, T);
         valueIn(b, T + 0.004 * u);
         tl.fromTo(fill, { f: D.fr[k - 1] }, { f: D.fr[k], duration: 0.05 * u, ...IR }, T - 0.02 * u);
-        tl.fromTo(D.pins[k], { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.01 * u, ease: 'power3.out', ...IR }, T + 0.02 * u);
+        tl.fromTo(pinA[k], { a: 0 }, { a: 1, duration: 0.01 * u, ease: 'power3.out', ...IR }, T + 0.02 * u);
       }
 
       // DRIFT: each picture keeps rolling slowly while it is on stage, so no hold is dead
@@ -661,18 +682,32 @@
             const ea = pl.r > 0 && pl.r < 1 && pl.s <= 0 ? (clamp((y - g.hz - 4) / 64, 0, 1) * clamp(pl.r / 0.04, 0, 1)).toFixed(2) : '0';
             if (ea !== it.ea) { it.edge.style.opacity = ea; it.ea = ea; }
             if (it.box) {
+              // rising: from under the stage to above its place (with wash), then down with its ground;
+              // the one before sinks back behind it
               const out = k + 1 < N ? plates[k + 1].p : 0;
-              const ty = r1((1 - pl.p) * (g.H - g.pic + 40) + out * 0.06 * g.bh);
-              const sc = (1 - 0.08 * out).toFixed(4);
+              const lift = k > 0 && o.wash ? g.lift : 0;
+              const ty = r1((1 - pl.p) * (g.H - g.pic + 40) - lift * pl.p * (1 - pl.s) + out * 0.1 * g.bh);
+              const sc = (1 - 0.1 * out).toFixed(4);
               const bt = ty + '|' + sc;
               if (bt !== it.bt) { it.box.style.translate = `0 ${ty}px`; it.box.style.scale = sc; it.bt = bt; }
             }
-            if (pl.r >= 1 && (peak === fzk || pl.s >= 1)) top = k;
+            // once a ground has crested it covers every earlier item (and the earlier ground must not
+            // show as a strip under it when the new name stands a pixel or two lower)
+            if (pl.r >= 1 && (peak === fzk || pl.s > 0)) top = k;
           }
           // items wholly covered by a later settled one, or not yet risen, are not painted
           for (let k = 0; k < N; k++) {
             const v = k < top || (plates[k].p <= 0 && plates[k].r <= 0) ? 'hidden' : '';
             if (v !== its[k].vis) { its[k].fig.style.visibility = v; its[k].vis = v; }
+          }
+          // the pins: opacity, and a scale about each pin's own centre
+          for (let i = 0; i < N; i++) {
+            const a = clamp(pinA[i].a, 0, 1).toFixed(3);
+            if (a === live.pa[i] || !g.pinC[i]) continue;
+            live.pa[i] = a;
+            const sc = 1.6 - 0.6 * a; const [cx, cy] = g.pinC[i];
+            D.pins[i].setAttribute('opacity', a);
+            D.pins[i].setAttribute('transform', `matrix(${r2(sc)} 0 0 ${r2(sc)} ${r2(cx * (1 - sc))} ${r2(cy * (1 - sc))})`);
           }
         }
         const S = live.scale;
@@ -691,8 +726,12 @@
         for (let k = 1; k < N; k++) if (pr >= Tk(k)) beat = k;
         if (root.dataset.beat !== String(beat)) root.dataset.beat = String(beat);
       };
+      // after a refresh every tween is invalidated and would read its start values lazily, at the first
+      // change a reader scrolls into; read them all now instead, then come back to where the page is
+      live.warm = () => { const pr = tl.progress(); tl.progress(1, true); tl.progress(pr, true); };
       live.render = () => {
         live.n = -1;
+        live.pa = its.map(() => null);
         for (const it of its) { it.fy = null; it.ea = null; it.bt = null; it.vis = null; }
         render();
         if (live.rot) { live.rot(live.deg, live.deg); live.bz.a = live.deg; paintBz(); }
@@ -712,7 +751,7 @@
       if (!root.__idlRefresh) {
         root.__idlRefresh = true;
         ScrollTrigger.addEventListener('refreshInit', () => { if (root.classList.contains('is-live')) measure(root, root.__idlDom, o, live); });
-        ScrollTrigger.addEventListener('refresh', () => { if (root.classList.contains('is-live') && live.render) live.render(); });
+        ScrollTrigger.addEventListener('refresh', () => { if (root.classList.contains('is-live') && live.render) { if (live.warm) live.warm(); live.render(); } });
       }
       tilt(root, D, live);
     };

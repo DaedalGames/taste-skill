@@ -149,6 +149,10 @@ html.js [data-scene="instrument-dial-stage"].is-live > .scene-stage {
      measures the rest (the name size, the dial, the picture box) from here */
   --hz: 48cqh;
   --idl-gap: clamp(12px, 2cqh, 20px);
+  /* stage.js writes --p on the section on every scroll update. Inherited, it re-styles every split
+     letter and every path below (about 4 ms a frame); the stage stops it here. Read --p on the
+     section itself. */
+  --p: initial;
 }
 
 [data-scene="instrument-dial-stage"].is-live .idl-head {
@@ -183,7 +187,7 @@ html.js [data-scene="instrument-dial-stage"].is-live > .scene-stage {
 [data-scene="instrument-dial-stage"] .idl-pin { fill: var(--idl-accent); }
 [data-scene="instrument-dial-stage"] .idl-bz-band { fill: none; stroke: color-mix(in srgb, var(--idl-ink) 11%, transparent); }
 [data-scene="instrument-dial-stage"] .idl-bz-notch { fill: none; stroke: color-mix(in srgb, var(--idl-ink) 34%, transparent); stroke-width: 2px; }
-[data-scene="instrument-dial-stage"] .idl-bz-sec { fill: none; stroke: color-mix(in srgb, var(--idl-ink) 30%, transparent); }
+[data-scene="instrument-dial-stage"] .idl-bz-sec { fill: none; stroke: color-mix(in srgb, var(--idl-ink) 22%, transparent); }
 [data-scene="instrument-dial-stage"] .idl-bz-sec--lit { stroke: var(--idl-accent); }
 [data-scene="instrument-dial-stage"] .idl-ptr { fill: var(--idl-accent); }
 [data-scene="instrument-dial-stage"] .idl-dial {
@@ -229,8 +233,8 @@ html.js [data-scene="instrument-dial-stage"].is-live > .scene-stage {
   /* clipped to the letters' own ink (measured by the script), a little wider than the letter */
   clip-path: inset(var(--idl-ct, 0px) -0.25em var(--idl-cb, 0px) -0.25em);
 }
-[data-scene="instrument-dial-stage"].is-live .idl-word .idl-c,
-[data-scene="instrument-dial-stage"].is-live .idl-value .idl-c { will-change: transform; }
+/* the letters are not promoted one by one: fifty-odd small layers cost the compositor more on every
+   frame than repainting a name during its short roll */
 
 /* each item: its ground, the full width under the horizon, laid out from the wash's crest (--idl-pt)
    and slid by the script; and its picture, standing in front of the foot of the name. Each item stacks

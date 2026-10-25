@@ -9,6 +9,7 @@
    photograph, #fff), --on-sky (the tagline, --on-mist by default), --ground (the ground the scene lands
    on; the next section uses it), --on-ground (statement), --font-display, --font-text, --above-pos and
    --below-pos (object-position of the two photographs), --title-stretch (font-stretch of the title),
+   --wx-letters (letters in the title, 10 by default: sizes the title when there is no script),
    --tagline-top / --phone-tagline-top (46svh / 54svh: put the tagline on the calmest part of the sky).
    No gradients: every soft edge is a keyed photograph of cloud or a blurred flat fill. */
 
@@ -79,7 +80,9 @@
   font-family: var(--wx-display);
   font-weight: 700;
   font-stretch: var(--title-stretch, 75%);
-  font-size: var(--wx-title-size, clamp(96px, 17.5vw, 300px));
+  /* the script fits the word to the width (--wx-title-size); without it the size is worked out from
+     --wx-letters (the word's length, 10 by default, so any 4-10 letter word fits inside 94vw) */
+  font-size: var(--wx-title-size, min(300px, calc(94vw / (var(--wx-letters, 10) * 0.72))));
   line-height: 0.82;
   letter-spacing: -0.01em;
   text-transform: uppercase;
@@ -226,7 +229,10 @@
 }
 
 /* the title: the soft and lost copies sit exactly over the word, fixed blur, opacity only. They are
-   generated content on aria-hidden spans, so the heading's text stays the one word. */
+   generated content on aria-hidden spans, so the heading's text stays the one word. The blur sits on
+   the generated text inside each copy, not on the copy whose opacity changes: it is drawn once into the
+   copy's own layer, and the compositor only fades that layer (a filter on the fading layer itself would
+   be blurred again on every frame). */
 [data-scene="descend-through-weather"].is-live .wx-title__ghost {
   display: block;
   position: absolute;
@@ -235,20 +241,28 @@
   visibility: hidden;
   pointer-events: none;
 }
-[data-scene="descend-through-weather"].is-live .wx-title__ghost::before { content: attr(data-word); }
-[data-scene="descend-through-weather"].is-live .wx-title__ghost.is-soft { filter: blur(calc(var(--wx-blur) * 0.36)); }
-[data-scene="descend-through-weather"].is-live .wx-title__ghost.is-lost { filter: blur(var(--wx-blur)); }
+[data-scene="descend-through-weather"].is-live .wx-title__ghost::before { content: attr(data-word); display: block; }
+[data-scene="descend-through-weather"].is-live .wx-title__ghost.is-soft::before { filter: blur(calc(var(--wx-blur) * 0.36)); }
+[data-scene="descend-through-weather"].is-live .wx-title__ghost.is-lost::before { filter: blur(var(--wx-blur)); }
 
 /* soft flat fills: haze over the top of the place below, ground band over its foot. Each runs about
-   three blur radii past the sides of the screen, no further: the blur is drawn every frame they show. */
+   three blur radii past the sides of the screen, no further. As with the title copies, the blur sits on
+   the fill inside the layer that fades, so it is drawn once, not on every frame. */
 [data-scene="descend-through-weather"].is-live .wx-haze,
 [data-scene="descend-through-weather"].is-live .wx-ground {
   left: -30svh;
   width: calc(100% + 60svh);
+}
+[data-scene="descend-through-weather"].is-live :is(.wx-haze, .wx-ground)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   filter: blur(9svh);
 }
-[data-scene="descend-through-weather"].is-live .wx-haze { top: -20svh; height: 62svh; background: var(--wx-mist); }
-[data-scene="descend-through-weather"].is-live .wx-ground { top: 75svh; height: 70svh; background: var(--wx-ground); opacity: 0; }
+[data-scene="descend-through-weather"].is-live .wx-haze { top: -20svh; height: 62svh; }
+[data-scene="descend-through-weather"].is-live .wx-haze::before { background: var(--wx-mist); }
+[data-scene="descend-through-weather"].is-live .wx-ground { top: 75svh; height: 70svh; opacity: 0; }
+[data-scene="descend-through-weather"].is-live .wx-ground::before { background: var(--wx-ground); }
 
 /* cloud layers: canvases of keyed cloud, wide enough that their feathered ends never come on screen */
 [data-scene="descend-through-weather"] .wx-cloud { display: none; }
@@ -321,7 +335,7 @@
     left: 16px;
     right: 16px;
     bottom: 12svh;
-    font-size: var(--wx-title-size, 22vw);
+    font-size: var(--wx-title-size, calc((100vw - 32px) / (var(--wx-letters, 10) * 0.72)));
   }
   [data-scene="descend-through-weather"] .wx-tagline {
     left: 16px;

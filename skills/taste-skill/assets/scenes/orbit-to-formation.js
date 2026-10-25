@@ -8,7 +8,11 @@
 // DOM (the classes are the contract, the tags are free):
 //   <section class="scene" data-scene="orbit-to-formation" style="--n:14" data-options='{"hold":5}'>
 //     <div class="scene-stage">
-//       <h2 class="orbit-lede">The statement: two lines, about 45 characters at most</h2>
+//       <h2 class="orbit-lede">The statement, 8-16 words (90 characters or fewer)</h2>
+//                     it is the title at progress 0, so it is fitted to the screen under the arch: a
+//                     statement that would run past the bottom edge is set smaller (40px at the least,
+//                     28px on phones), then the arch rises; about 45 characters keep the full display
+//                     size down to a 1280x640 laptop
 //       <div class="orbit-wheel" role="list" aria-label="…">
 //         <figure class="orbit-card" role="listitem" style="--i:0">
 //           <img class="orbit-img" src="…" alt="…" width="560" height="560" decoding="async">
@@ -34,11 +38,15 @@
 //   hold        5        screens the stage is held on desktop (4-7)
 //   phoneHold   4        screens the stage is held on phones (3-6)
 //   scrub       auto     true when Lenis smooths the wheel, else 0.6 (seconds of catch-up)
-//   radius      1        arch radius as a share of the stage width: 0.7 (steep, 5 cards) - 1.6 (flat, 8 cards)
+//   radius      1        arch radius as a share of the stage width: 0.7 (steep, 5 cards) - 1.6 (flat, 8 cards).
+//                        It shapes the wide stage; a tall stage (phone, portrait tablet) uses 0.9 at the
+//                        least, since a steeper arch there closes into a full ring under the statement
 //   crest       0.24     height of the arch's top card, share of the stage height (0.18-0.30); the
 //                        statement is placed a fixed gap under the arch's lowest edge, wherever that is
+//                        (and the arch rises toward 0.18 only if the statement at 40px still would not fit)
 //   phoneCrest  'auto'   tall stages (phones, portrait tablets): 'auto' centres the arch and the statement
-//                        together on the screen; or a share of the height (0.14-0.44)
+//                        together on the screen; or a share of the height (0.14-0.44). Either way the
+//                        arch rises when the statement would not fit under it on a short screen
 //   ring        0.46     the locked ring's width as a share of the stage width (0.36-0.48), its height
 //                        in proportion (0.42H at 0.46). At 0.44 and up the ring spills past the frame and
 //                        the side and top cards crop at the screen edges. Under a fixed or sticky bar at
@@ -50,7 +58,8 @@
 //   tilt        1        1: faces follow the wheel (upside down at the bottom); 0.2-0.9: faces stay
 //                        near upright and swing at most tilt x 90deg
 //   dim         0.4      opacity of a figure row away from the reading line (0.4-0.8)
-//   count       false    true: each figure counts up from 0 as it reaches the reading line
+//   count       false    true: each figure counts up from 0 as it reaches the reading line (until then
+//                        the row shows its label only, so a waiting row never reads a false 0)
 //   phone       'same'   'same': the phone version (ring, then the wheel sinks); 'rest': the finished
 //                        composition on phones
 //   phoneCards  10       cards used on phones, the first ones (6-14)
@@ -66,10 +75,13 @@
 // out with the hub and shrinks with the wheel, so no card reaches it, and fades before the screen edge
 // would cut it. 0.69-0.93 the column of figures rises into its place beside the turning half-wheel (on a
 // tall stage, out from behind the sunk wheel) while a reading line runs down it: the row on the line is
-// lit, the others wait at the dim value; a row only shows where no card is under it and when it is
-// whole on screen. 0.925-0.97 every row lights and the column holds until the pin releases. Text layers
+// lit, the others wait at the dim value; a row only shows where no card is under it and once it is
+// 16px clear of the bottom edge. 0.925-0.97 every row lights and the column holds until the pin releases. Text layers
 // only fade, so they stay in the accessibility tree; a layer under 2% opacity gets .orbit-faded, which
 // clips it to nothing so it never catches the pointer, a text selection or a hit test.
+// Cost per frame: one style write per card on the stage (a card that stays off the stage is not
+// restyled), plus the text layers that changed; no layout is read or written while scrolling, and the
+// CSS keeps the stage's --p from restyling the whole scene on every frame.
 (() => {
   if (!window.Stage) return;
   const TAU = Math.PI * 2;
@@ -189,6 +201,8 @@
       const tall = phone || H > 1.1 * W;
       if (root.classList.contains('orbit-tall') !== tall) root.classList.toggle('orbit-tall', tall);
       const bar = barBottom(root);
+      // the column of figures starts below a fixed bar at the top of the window (CSS reads --orbit-bar)
+      root.style.setProperty('--orbit-bar', bar.toFixed(0) + 'px');
       let sA, RA, crest, B, C, rC, roll;
       if (!tall) {
         sA = clamp(0.16 * W, 160, 280);
@@ -203,11 +217,15 @@
       } else {
         // big cards: on a phone the crest photograph is more than half the screen wide
         sA = phone ? clamp(0.64 * W, 104, 260) : clamp(0.4 * W, 104, 220);
-        RA = 1.1 * o.radius * W;
+        // a steeper arch than 0.9 closes into a full ring on a tall screen (its loop seam would come up
+        // from below the fold), and that ring's lower half would run under the statement: tall stages
+        // keep the radius at 0.9 or more
+        RA = 1.1 * Math.max(o.radius, 0.9) * W;
         crest = (o.phoneCrest === 'auto' ? 0.36 : o.phoneCrest) * H;
         const ring = bar ? Math.min(o.ring, 0.4) : o.ring;
         B = { cx: 0.5 * W, cy: 0.5 * H + bar / 2, rx: 0.913 * ring * W, ry: 0.74 * ring * H };
-        rC = 0.58 * W;
+        // the sunk wheel is smaller on a short phone, so its cap leaves the column of figures room
+        rC = Math.min(0.58 * W, 0.36 * H);
         C = { cx: 0.5 * W, cy: 1.04 * H, rx: rC, ry: rC };
         roll = 0.15;
       }
@@ -247,18 +265,55 @@
       };
       spread();
       const gapL = (tall ? 0.045 : 0.07) * H;
-      // on a tall stage the arch and the statement are one block, centred on the screen (and clear of a bar)
-      if (tall && lede) {
-        if (o.phoneCrest === 'auto') {
-          const below = archLow() - crest + gapL + lede.offsetHeight;
-          crest = clamp((H - (sA / 2 + below)) / 2 + sA / 2, 0.14 * H, 0.44 * H);
+      const crest0 = crest;
+      const setCrest = (c) => { crest = c; A.cy = crest + RA; spread(); };
+      const ledeAt = (min) => clamp(archLow() + gapL, min * H, 0.72 * H);
+      // the highest the arch may rise to make room for the statement
+      const crestTop = Math.max((tall ? 0.14 : 0.18) * H, bar ? bar + 8 + sA / 2 : 0);
+      // the statement sits a fixed gap under the arch's lowest edge; on a tall stage the arch and the
+      // statement are one block, centred on the screen (and clear of a bar)
+      const placeLede = () => {
+        setCrest(crest0);
+        if (tall) {
+          if (o.phoneCrest === 'auto') {
+            const below = archLow() - crest + gapL + lede.offsetHeight;
+            setCrest(clamp((H - (sA / 2 + below)) / 2 + sA / 2, 0.14 * H, 0.44 * H));
+          }
+          if (crest < bar + 8 + sA / 2) setCrest(bar + 8 + sA / 2);
         }
-        crest = Math.max(crest, bar + 8 + sA / 2);
-        A.cy = crest + RA;
-        spread();
-      }
+        // an arch set so low (a high crest value on a short screen) that the statement could not sit
+        // under it rises until it can
+        const low = archLow() + gapL - 0.72 * H;
+        if (low > 0 && crest > crestTop) setCrest(Math.max(crestTop, crest - low));
+        G.ledeTop = ledeAt(tall ? 0.3 : 0.36);
+      };
       if (lede) {
-        G.ledeTop = clamp(archLow() + gapL, (tall ? 0.3 : 0.36) * H, 0.72 * H);
+        // The statement is the title at progress 0, so it is fitted to the screen: when it would run past
+        // the bottom edge (24px to spare), its size steps down to the largest that fits, to 40px at the
+        // least (28px on a tall stage); if it still does not fit there, the arch rises (its crest to 0.18
+        // of the height at the highest, 0.14 on a tall stage) and the statement with it.
+        lede.style.fontSize = '';
+        placeLede();
+        const room = H - 24;
+        // the text's real extent: with a line height under 1 the glyph boxes reach past the block
+        const rg = document.createRange();
+        const extent = () => {
+          rg.selectNodeContents(lede);
+          const top = lede.getBoundingClientRect().top;
+          let b = lede.offsetHeight;
+          for (const q of rg.getClientRects()) if (q.height > 1) b = Math.max(b, q.bottom - top);
+          return b;
+        };
+        const fits = () => G.ledeTop + extent() <= room;
+        if (!fits()) {
+          const fs0 = parseFloat(getComputedStyle(lede).fontSize) || 40;
+          let lo = Math.min(fs0, tall ? 28 : 40), hi = fs0;
+          const trial = (fs) => { lede.style.fontSize = fs.toFixed(1) + 'px'; if (tall) placeLede(); return fits(); };
+          if (trial(lo)) for (let k = 0; k < 8 && hi - lo > 0.5; k++) { const mid = (lo + hi) / 2; if (trial(mid)) lo = mid; else hi = mid; }
+          trial(lo);
+          const over = G.ledeTop + extent() - room;
+          if (over > 0 && crest > crestTop) { setCrest(Math.max(crestTop, crest - over)); G.ledeTop = ledeAt(tall ? 0.24 : 0.28); }
+        }
         root.style.setProperty('--orbit-lede-top', G.ledeTop.toFixed(1) + 'px');
       }
       // ring cards at about 0.8 of the arch size, never closer than about a quarter card apart
@@ -284,30 +339,42 @@
         const fits = (s) => { const ri = B.rx - f * s - 8, rj = B.ry - f * s - 8; return ri > 0 && rj > 0 && (ab.w / 2 / ri) ** 2 + (ab.h / 2 / rj) ** 2 <= 1; };
         while (sB > 0.5 * sA && !fits(sB)) sB -= 2;
       }
-      // the half-wheel's cards grow a little as it comes to the edge (and never crowd its circle)
-      const sC = Math.min(0.9 * sA, Math.round((0.8 * TAU * rC) / n));
-      // on a wide tall stage the sunk wheel is big: keep its top cap below the figures (they end at 0.64H)
-      if (tall && !phone) C.cy = Math.max(C.cy, 0.72 * H + 0.71 * sC + rC);
-      Object.assign(G, { sA, A, B, C, sB, sC, roll, tall, bar, ab });
-      // the figure's room inside the locked ring, so render() can shrink it with the wheel
-      G.in0x = Math.max(1, B.rx - 0.5 * sB - 8);
-      G.in0y = Math.max(1, B.ry - 0.5 * sB - 8);
-      G.aRoom = ab ? Math.min(B.cx - ab.w / 2, W - B.cx - ab.w / 2, B.cy - ab.h / 2, H - B.cy - ab.h / 2) : 0;
       // The column of figures: each row's text box and centre where it rests; the column rises Y0 into that
       // place while the reading line runs from the first row to the last.
       G.rows = null;
+      // a counting figure keeps the width of its final value, so its label never shifts as digits are added
+      if (counts) {
+        for (const c of counts) {
+          if (!c) continue;
+          const el = c.f.el, cur = el.textContent;
+          el.style.minWidth = '';
+          el.textContent = c.f.text;
+          el.style.minWidth = el.offsetWidth + 'px';
+          el.textContent = cur;
+        }
+      }
       if (statsEl && rows.length) {
         const L = statsEl.offsetLeft, T = statsEl.offsetTop;
+        // the glyph boxes too: big figures set at a line height under 1 reach past their layout box
+        // (read relative to the column, so its current transform cancels out)
+        const sr = statsEl.getBoundingClientRect(), rg = document.createRange();
         G.rows = rows.map((r) => {
           const kids = [...r.children].filter((k) => k.offsetParent);
           const box = kids.length ? kids : [r];
-          return {
+          const R = {
             l: L + Math.min(...box.map((k) => k.offsetLeft)),
             t: T + Math.min(...box.map((k) => k.offsetTop)),
             r: L + Math.max(...box.map((k) => k.offsetLeft + k.offsetWidth)),
             b: T + Math.max(...box.map((k) => k.offsetTop + k.offsetHeight)),
             c: T + r.offsetTop + r.offsetHeight / 2,
           };
+          rg.selectNodeContents(r);
+          for (const q of rg.getClientRects()) {
+            if (q.width < 1 || q.height < 1) continue;
+            R.t = Math.min(R.t, T + q.top - sr.top); R.b = Math.max(R.b, T + q.bottom - sr.top);
+            R.l = Math.min(R.l, L + q.left - sr.left); R.r = Math.max(R.r, L + q.right - sr.left);
+          }
+          return R;
         });
         const m = G.rows.length;
         G.pitch = m > 1 ? (G.rows[m - 1].c - G.rows[0].c) / (m - 1) : 0.2 * H;
@@ -316,7 +383,21 @@
         G.L1 = G.rows[m - 1].c;
         G.gap = tall ? Math.max(16, 0.02 * H) : Math.max(24, 0.025 * W);
       }
+      // the half-wheel's cards grow a little as it comes to the edge (and never crowd its circle)
+      const sC = Math.min(0.9 * sA, Math.round((0.8 * TAU * rC) / n));
+      // on a tall stage the wheel sinks until its top cap (a card turned 45deg at most) clears the last row
+      // of figures by the clearance render() asks for, so every row ends lit, on any phone height
+      if (tall) {
+        const end = G.rows ? G.rows[G.rows.length - 1].b + G.gap : 0.72 * H;
+        C.cy = Math.max(C.cy, end + 0.71 * sC + rC);
+      }
+      Object.assign(G, { sA, A, B, C, sB, sC, roll, tall, bar, ab });
+      // the figure's room inside the locked ring, so render() can shrink it with the wheel
+      G.in0x = Math.max(1, B.rx - 0.5 * sB - 8);
+      G.in0y = Math.max(1, B.ry - 0.5 * sB - 8);
+      G.aRoom = ab ? Math.min(B.cx - ab.w / 2, W - B.cx - ab.w / 2, B.cy - ab.h / 2, H - B.cy - ab.h / 2) : 0;
       root.style.setProperty('--sa', sA.toFixed(1) + 'px');
+      shown.fill(1);
       curlTiming();
       return true;
     };
@@ -465,8 +546,12 @@
       if (cache[k] !== s) { cache[k] = s; el.style.opacity = s; }
     };
     const box = new Float32Array(n * 4); // each card's screen box (rotation included)
-    const rowOp = [], misc = [];
-    let colT = '', anchorT = '';
+    // A card that stays off the stage is not restyled: its last transform already put it off the stage
+    // (by half a card at least), and every style write costs a style recalc on the next frame. Cleared
+    // whenever the stage is measured, so a resize writes every card again.
+    const shown = new Uint8Array(n).fill(1);
+    const rowOp = [], misc = [], figOp = [];
+    let colT = '', anchorT = '', counts = null;
     const at = {};
     const render = () => {
       if (!G.W && !measure()) return;
@@ -476,9 +561,11 @@
       const h = sA / 2;
       for (let i = 0; i < n; i++) {
         const { x, y, rot, size } = place(i, S, m1, m2, at);
-        cards[i].style.transform = `translate3d(${(x - h).toFixed(2)}px,${(y - h).toFixed(2)}px,0) rotate(${rot.toFixed(2)}deg) scale(${(size / sA).toFixed(4)})`;
         const r = rot / DEG, e = (size / 2) * (Math.abs(Math.cos(r)) + Math.abs(Math.sin(r)));
         box[i * 4] = x - e; box[i * 4 + 1] = y - e; box[i * 4 + 2] = x + e; box[i * 4 + 3] = y + e;
+        const vis = x + e > -h && x - e < W + h && y + e > -h && y - e < H + h;
+        if (vis || shown[i]) cards[i].style.transform = `translate3d(${(x - h).toFixed(2)}px,${(y - h).toFixed(2)}px,0) rotate(${rot.toFixed(2)}deg) scale(${(size / sA).toFixed(4)})`;
+        shown[i] = vis ? 1 : 0;
       }
       // the figure blooms inside the closing ring (never larger than the curl leaves room for), rides with
       // the hub and shrinks with the wheel's inner room, so no card reaches it; it fades before the screen
@@ -517,8 +604,8 @@
             const lit = 1 - smoothstep((Math.abs(R.c + yc - line) / G.pitch - 0.3) / 0.45);
             op = w.sIn * lerp(o.dim + (1 - o.dim) * lit, 1, w.all);
             const top = R.t + yc, bot = R.b + yc;
-            // whole on screen: a row comes up past the bottom edge before it shows
-            op *= smoothstep((H - 6 - bot) / (0.035 * H));
+            // whole on screen: a row is 16px clear of the bottom edge before it starts to show
+            op *= smoothstep((H - 16 - bot) / (0.035 * H));
             if (op > 0.001) {
               // clear of every card: a row shows only where no card is under it
               let sep = Infinity;
@@ -539,6 +626,14 @@
           best = Math.max(best, op);
         }
         layerOf(statsEl).v = best;
+        if (counts) {
+          for (let k = 0; k < counts.length; k++) {
+            const c = counts[k];
+            if (!c) continue;
+            writeFigure(c.f, c.f.value * (1 - (1 - c.t) * (1 - c.t)));
+            setOpacity(c.f.el, smoothstep(c.t / 0.3), figOp, k);
+          }
+        }
       }
       if (lede) { const v = lede.style.opacity; layerOf(lede).v = v === '' ? 1 : +v; }
       for (const L of layers) {
@@ -564,9 +659,10 @@
         if (statsEl) statsEl.style.transform = '';
         rows.forEach((r) => { r.style.opacity = ''; });
         layers.forEach((L) => L.el.classList.remove('orbit-faded'));
-        figs.forEach((f) => { if (f) f.el.textContent = f.text; });
+        figs.forEach((f) => { if (f) { f.el.textContent = f.text; f.el.style.opacity = ''; f.el.style.minWidth = ''; } });
+        if (lede) lede.style.fontSize = '';
         if (nAttr) root.style.setProperty('--n', nAttr); else root.style.removeProperty('--n');
-        ['--sa', '--orbit-lede-top', '--orbit-inner-w', '--orbit-rows'].forEach((p) => root.style.removeProperty(p));
+        ['--sa', '--orbit-lede-top', '--orbit-inner-w', '--orbit-rows', '--orbit-bar'].forEach((p) => root.style.removeProperty(p));
         root.classList.remove('orbit-tall');
         if (root.__orbit === inst) root.__orbit = null;
       },
@@ -601,13 +697,15 @@
         tl.fromTo(w, { col: 0 }, { col: 1, duration: COL_END - COL_AT, ...later }, COL_AT);
         tl.fromTo(w, { all: 0 }, { all: 1, duration: ALL, ease: 'power1.inOut', ...later }, ALL_AT);
         if (o.count) {
+          // each figure stays hidden until its count starts as the reading line nears its row (a waiting
+          // row never shows a false 0), then fades in counting up; render() writes both
           const m = rows.length;
-          figs.forEach((f, k) => {
-            if (!f) return;
-            const p = { v: 0 };
-            writeFigure(f, 0);
+          counts = figs.map((f, k) => {
+            if (!f) return null;
+            const c = { f, t: 0 };
             const on = COL_AT + (COL_END - COL_AT) * (m > 1 ? k / (m - 1) : 0);
-            tl.fromTo(p, { v: 0 }, { v: f.value, duration: 0.04, ease: 'power2.out', onUpdate: () => writeFigure(f, p.v), ...later }, Math.max(STATS_AT, on - 0.035));
+            tl.fromTo(c, { t: 0 }, { t: 1, duration: 0.04, ...later }, Math.max(STATS_AT, on - 0.035));
+            return c;
           });
         }
       }

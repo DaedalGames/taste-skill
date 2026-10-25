@@ -122,8 +122,11 @@
   .night-plan figure img { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: 20% 50%; }
   .night-plan figcaption { margin-top: 14px; font-size: 16px; color: #8a93a8; }
 
-  /* the close, back on the paper */
-  .close { padding: clamp(96px, 16svh, 200px) var(--gutter) clamp(32px, 5svh, 56px); container-type: inline-size; }
+  /* the way in looks up at the sky: the summit stays low in the frame */
+  #nights { --portal-focus: 50% 0%; }
+
+  /* the close, back on the paper (the scene's own dwell already gives the pause before it) */
+  .close { padding: clamp(40px, 7svh, 80px) var(--gutter) clamp(32px, 5svh, 56px); container-type: inline-size; }
   .close .cols {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 32rem);
@@ -210,8 +213,8 @@
       <h2 class="portal-title portal-title--out" id="nights-title"><span class="portal-line">Lights off,</span> <span class="portal-line">eyes up</span></h2>
       <div class="portal-world">
         <picture>
-          <source media="(max-width: 767px)" srcset="https://picsum.photos/id/765/900/1600" width="900" height="1600">
-          <img class="portal-media" src="https://picsum.photos/id/765/2000/1250" alt="The night sky deepening above a dark horizon, the last orange light along it and a thin moon high up" width="2000" height="1250">
+          <source media="(max-width: 767px)" srcset="https://picsum.photos/id/869/900/1600" width="900" height="1600">
+          <img class="portal-media" src="https://picsum.photos/id/869/2000/1800" alt="The Milky Way over the ridge, with the summit just catching the last of the light below it" width="2000" height="1800">
         </picture>
         <div class="portal-scrim" aria-hidden="true"></div>
         <div class="portal-tint" aria-hidden="true"></div>
@@ -269,7 +272,7 @@
       </div>
     </div>
     <p class="name">Skarfjell</p>
-    <p class="credit">Photographs by Samuel Zeller, Caleb Ralston, Hide Obara and Grant McIver, from Unsplash via Lorem Picsum. Skarfjell Observatory is invented for this demo.</p>
+    <p class="credit">Photographs by Samuel Zeller, Caleb Ralston and Hide Obara, from Unsplash via Lorem Picsum. Skarfjell Observatory is invented for this demo.</p>
   </footer>
 </main>
 

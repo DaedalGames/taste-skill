@@ -2,8 +2,9 @@
    Without .is-live (no script, a failed CDN, reduced motion, phone: 'rest') this is the finished
    composition: the statement, a still ring of the photographs with the figure in its middle, and the
    figures in a row. With .is-live the stage is held and orbit-to-formation.js places every card.
-   Takes the page's tokens: --ground, --ink, --font-display, --font-text, and --orbit-accent for the
-   lit figures (the ink by default). */
+   Takes the page's tokens: --ground, --ink, --font-display, --font-text, and --orbit-lit for the
+   lit figures (the ink by default). The live stage does not pass the shared stage's --p down to its
+   children (see below), so style this scene's content from the script's classes, not from --p. */
 
 [data-scene="orbit-to-formation"] {
   --orbit-ground: var(--ground, #0f0e0c);
@@ -178,6 +179,10 @@ html.js .scene.is-live[data-scene="orbit-to-formation"] > .scene-stage {
   display: block;
   padding: 0;
   background: var(--orbit-ground);
+  /* The shared stage writes the scroll progress (--p) on the section on every frame. Nothing in this
+     scene reads it (the script writes every moving value itself), and a custom property that changes
+     restyles every element that inherits it, so the stage stops it here: a frame restyles only what moved. */
+  --p: initial;
 }
 
 /* (the finished layout centres these as grid items; absolutely positioned, they must stretch) */
@@ -242,10 +247,12 @@ html.js .scene.is-live[data-scene="orbit-to-formation"] > .scene-stage {
 .scene.is-live[data-scene="orbit-to-formation"] .orbit-caption { margin-top: clamp(14px, 2.4svh, 24px); max-width: 36ch; }
 
 /* the column of figures: big rows, one lit at a time as the column rises past the reading line */
+/* (--orbit-bar: the height of a fixed bar at the top of the window, which the script finds; the column
+   stays below it) */
 .scene.is-live[data-scene="orbit-to-formation"] .orbit-stats {
   position: absolute;
   z-index: 2;
-  top: 0;
+  top: var(--orbit-bar, 0px);
   bottom: 5%;
   left: 46%;
   right: 5%;
@@ -287,8 +294,9 @@ html.js .scene.is-live[data-scene="orbit-to-formation"] > .scene-stage {
 }
 
 /* a tall stage (phones, portrait tablets; the script sets .orbit-tall): the wheel sinks to the bottom edge
-   and the column of figures rises out from behind it into the space above, from 0.06H to 0.62H */
-.scene.is-live.orbit-tall[data-scene="orbit-to-formation"] .orbit-stats { top: 6%; bottom: 38%; left: max(16px, 6%); right: max(16px, 6%); justify-content: space-between; }
+   and the column of figures rises out from behind it into the space above, from 0.06H (below a fixed
+   bar) to 0.62H; the script sinks the wheel until its cap clears the last row */
+.scene.is-live.orbit-tall[data-scene="orbit-to-formation"] .orbit-stats { top: calc(6% + var(--orbit-bar, 0px)); bottom: 38%; left: max(16px, 6%); right: max(16px, 6%); justify-content: space-between; }
 .scene.is-live.orbit-tall[data-scene="orbit-to-formation"] .orbit-stat { flex: 0 0 auto; }
 .scene.is-live.orbit-tall[data-scene="orbit-to-formation"] .orbit-stat-figure { min-width: 2.6ch; font-size: min(clamp(56px, 22vw, 128px), 10.5svh, calc(42svh / var(--orbit-rows, 4))); }
 .scene.is-live.orbit-tall[data-scene="orbit-to-formation"] .orbit-stat-label { font-family: inherit; font-size: clamp(17px, 4.8vw, 32px); line-height: 1.15; letter-spacing: 0; max-width: 14ch; }

@@ -7,21 +7,24 @@
 // out of its masks. A signature hero exit for travel, hospitality, outdoor, architecture or wellness pages
 // with two strong pictures.
 //
-// The clouds are real photographs of cloud, keyed to transparency when the scene starts: bright cloud
-// stays, darker sky or ground drops out, and the cloud whites are graded to --mist exactly so they meet
-// the flat mist of the deck without a seam. The cutting runs in a Worker (OffscreenCanvas), so the page
-// never stalls while it is scrolled; the finished art is handed to the layers one per frame, and the
-// deck's art is swapped in only while the scene is still or the deck is off screen. Without Worker
-// support it runs on the main thread in small slices. Give it one photograph of a cloud sea seen from
-// above (tops) and one of fog drifting over darker ground (wisps). Their pixels are read, so they must be
-// same-origin or served with CORS (Access-Control-Allow-Origin). Without them it cuts its cloud from the
-// lower part of the first photograph. If pixels cannot be read, the deck still rises as a soft flat wall
-// of mist and nothing breaks. No gradients anywhere: soft edges are keyed photographs or blurred flat fills.
+// The cloud. By default the scene grows its own: warped fractal noise gathered into rounded billows,
+// laid on a plane in perspective, lit from above, solid toward the deck and graded to --mist exactly so
+// it meets the flat mist of the deck without a seam. It needs no files and never picks anything up from
+// the pictures. For a real cloud, give it a photograph of a cloud sea seen from above (`tops`, with a
+// `topsCrop` on clean cloud: no rock, people or horizon in the crop) and, if you have one, fog drifting
+// over darker ground (`wisps`); they are keyed to transparency (bright cloud stays, darker sky or ground
+// drops out). Their pixels are read, so they must be same-origin or served with CORS
+// (Access-Control-Allow-Origin). The cutting runs in a Worker (OffscreenCanvas), so the page never stalls
+// while it is scrolled; the finished art is handed to the layers one per frame, and the deck's art is
+// swapped in only while the scene is still or the deck is off screen. Without Worker support it runs on
+// the main thread in small slices. If a cloud photograph cannot be read, the scene falls back to its own
+// cloud; if nothing can be drawn, the deck still rises as a soft flat wall of mist and nothing breaks.
+// No gradients anywhere: soft edges are cloud art or blurred flat fills.
 //
 // DOM. The script builds the title copies, cloud layers, deck, haze and ground band itself.
 //
 //   <section class="scene" data-scene="descend-through-weather" aria-label="Skarven, from the ridge to the sound"
-//            data-options='{"tops": "cloud-sea.jpg", "wisps": "fog.jpg"}'>
+//            data-options='{"tops": "cloud-sea.jpg", "topsCrop": [0, 0.3, 1, 0.9]}'>   (optional)
 //     <div class="scene-stage">
 //       <figure class="wx-above"><img src="above.jpg" alt="…" width="2400" height="1600" fetchpriority="high"></figure>
 //       <header class="wx-hero">
@@ -51,7 +54,7 @@
 // the title on the first photograph), --on-sky (--on-mist: the tagline, set in the calm sky), --ground
 // (#12201e, sample it from the dark bottom of the second photograph; the next section uses it),
 // --on-ground (#f4f1ea, the statement), --font-display, --font-text. A dusk or smoke variant: a dark
-// --mist (#15120f) with --on-mist white; the keyed cloud takes the dark tone.
+// --mist (#15120f) with --on-mist white; the cloud, grown or keyed, takes the dark tone.
 //
 // Options (data-options JSON). Default, then range:
 //   hold         3        screens the stage is held on desktop (2.4-4)
@@ -59,14 +62,19 @@
 //   phone        'same'   'same' runs the phone plan (smaller numbers, a narrower far cloud); 'rest'
 //                         shows the finished composition on phones
 //   scrub        auto     true when Lenis smooths the page, else 0.8 (seconds of catch-up)
-//   tops         photo A  URL of a cloud-sea photograph seen from above (keyed into the far cloud, the
-//                         deck's top edge and, turned over, the cloud ceiling below)
-//   topsCrop     [0,0,1,1]   part of it to use, as fractions [left, top, right, bottom]
-//                         (without `tops`: [0, 0.5, 1, 1] of photo A)
-//   wisps        tops     URL of fog over darker ground (keyed into the near veil)
+//   tops         none     URL of a cloud-sea photograph seen from above (keyed into the far cloud and
+//                         the deck's edges; the ceiling below is always grown, unless art is 'alpha').
+//                         Without it the scene grows its own cloud (see above); never point it at a
+//                         picture with rock, people or buildings in the crop: whatever is bright there is
+//                         keyed into the cloud
+//   topsCrop     [0,0,1,1]   part of it to use, as fractions [left, top, right, bottom]: aim it at
+//                         clean cloud
+//   wisps        tops     URL of fog over darker ground (keyed into the near veil); without either,
+//                         a grown veil
 //   wispsCrop    [0,0,1,1]
 //   art          'key'    'key' keys ordinary photographs; 'alpha' takes ready-made transparent cloud art
 //                         as it is (still read through CORS)
+//   seed         7        the grown cloud's shapes (any whole number)
 //   fill         0.86     share of the width the title is fitted to (0.6-0.94); held under 36% of the
 //                         height, so very wide screens keep the word inside the bottom band. Phones fit
 //                         it 0.1 wider (up to 0.98).
@@ -82,23 +90,25 @@
 // Progress map (desktop, hold 3): 0 photo A still, the white title sharp at about 66-95svh over the dark
 // foot of the picture, tagline read in the sky, a 4svh cloud lip below the title. 0-50% photo A zooms 1
 // to 1.12 and drifts up 8svh; the title rises 42svh (0.28x). 10-20% a 5px copy of the title fades in over
-// it and 17-25% the sharp copy leaves (soft, still read to about 24%); 28-40% the 14px copy takes over;
-// 30-48% the word fades to a ghost and out. 14-22% the tagline leaves. Far cloud 96 to 14svh (0.55x),
-// near veil 118 to -30svh (1.07x, scale 1.25). 24-48% the deck rises 100 to -60svh (power1.in) and the
+// it and 17-25% the sharp copy leaves (soft, still read to about 24%); 28-40% the 14px copy takes over
+// and 40-48% fades to a ghost and out. 14-22% the tagline leaves. Far cloud 96 to 14svh (0.55x), near
+// veil 118 to -30svh (1.07x, scale 1.25). 24-48% the deck rises 100 to -60svh (power1.in) and the
 // frame is mist from 48%; 42-58% the note rises 14 to -14svh through the mist (read 45-55%). 50% photo
 // A, title and clouds are switched off under the deck; photo B settles 1.2 to 1 (to 100%, power2.out).
 // 41-48% photo A pales to 0.4 into the mist. 52-78% the deck leaves upward (power1.out) and the frame
-// clears from the bottom through thinning, pale cloud; 54-86% a cloud ceiling with grey undersides lifts
-// off the top behind it (a 64svh layer, 6 to -64svh, its dense part held in the top third); 58-84% the
-// haze clears; 66-80% the ground band darkens the bottom; 74-85% the statement rises line by line;
-// 85-100% held.
-// Phone (hold 2.2): the far cloud on a narrower layer (100 to 8svh); the near veil 112 to -30svh, scale
-// 1.15, no sideways drift; the title fitted to 0.96 of the width, rising 30svh with a 10px lost copy;
-// deck feathers of 40svh (180svh deck); ceiling 5 to -50svh; photo B settles from 1.12. Same fractions.
+// clears from the bottom through thinning, pale cloud; 54-86% a cloud ceiling with grey-blue undersides
+// behind it (a 64svh layer, 6 to -64svh, power2.in): it lingers, its dense part in the top quarter of
+// the frame to about 72%, then lifts away; 58-84% the haze clears; 66-80% the ground band darkens the
+// bottom; 74-85% the statement rises line by line; 85-100% held.
+// Phone (hold 2.2): the far cloud on a narrower layer (114 to 10svh) and the near veil 122 to -30svh
+// (scale 1.15, no sideways drift), both starting lower so the word is still read at 24%; the title fitted
+// to 0.96 of the width, rising 30svh with a 10px lost copy, each blur step 0.03 later; deck feathers of
+// 40svh (180svh deck); ceiling 4 to -50svh; photo B settles from 1.12. Same fractions otherwise.
 //
 // Finished composition (no script, reduced motion, phone 'rest'): photo A with the title, a seam of
 // mist carrying the note, photo B with the statement. With the script present the seam's edges are the
-// keyed cloud (cloud tops above, the turned-over cloud below); without it, a soft flat band.
+// cloud art (cloud tops above, the turned-over cloud below); without it, a soft flat band. Without the
+// script the title is sized from --wx-letters (the word's length, 10 by default) so it never clips.
 (() => {
   const ID = 'descend-through-weather';
   const num = (v, d, a, b) => (typeof v === 'number' && isFinite(v) ? clamp(v, a, b) : d);
@@ -116,6 +126,7 @@
       topsCrop: box(o.topsCrop, null),
       wispsCrop: box(o.wispsCrop, null),
       art: o.art === 'alpha' ? 'alpha' : 'key',
+      seed: num(o.seed, 7, 1, 1e6) | 0,
       fill: num(o.fill, 0.86, 0.6, 0.94),
       blur: num(o.blur, 14, 8, 16),
       feather: num(o.feather, 60, 40, 80),
@@ -130,10 +141,13 @@
   function ss(a, b, x) { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
 
   // The part of the picture to draw into a w x h canvas: trimmed at the sides when it is wider than
-  // needed, a band out of its height when it is much taller (clouds may stretch sideways up to 1.8x).
-  function cropRect(iw, ih, crop, w, h) {
+  // needed, a band out of its height when it is much taller (clouds may stretch sideways up to `max`,
+  // 1.8x by default). `zoom` below 1 uses only that share of the crop's width, around its middle, so a
+  // small canvas keeps the cloud's shapes large instead of squeezing the whole crop into it.
+  function cropRect(iw, ih, crop, w, h, max, zoom) {
     let sx = crop[0] * iw, sy = crop[1] * ih, sw = Math.max(1, (crop[2] - crop[0]) * iw), sh = Math.max(1, (crop[3] - crop[1]) * ih);
-    const A = w / h, C = sw / sh, MAX = 1.8;
+    if (zoom && zoom < 1) { const nw = sw * zoom; sx += (sw - nw) / 2; sw = nw; }
+    const A = w / h, C = sw / sh, MAX = max || 1.8;
     if (C > A) { const nw = sh * A; sx += (sw - nw) / 2; sw = nw; }
     else if (C < A / MAX) { const nh = sw / (A / MAX); sy += (sh - nh) / 2; sh = nh; }
     return [Math.round(sx), Math.round(sy), Math.max(1, Math.round(sw)), Math.max(1, Math.round(sh))];
@@ -193,6 +207,94 @@
     keyRows(p, lum, w, k, keyPlan(w, h, k, hist), 0, h);
   }
 
+  // The grown cloud. Warped fractal noise, partly billowed (rounded puffs meeting in creases), on a plane
+  // in perspective: smaller and flatter toward the soft edge, larger toward the solid border. Near the
+  // soft edge only the densest crests show; deeper in the threshold falls until the cloud is solid, so it
+  // closes along its own shapes. Lit by the density difference toward the light (denser toward the light
+  // means in shadow), graded from shade to --mist. Two passes over rows (density, then light), so the
+  // main-thread fallback can give frames back between slices. g.edge: 'top', 'bottom' or 'all' (a veil).
+  function genTables(seed) {
+    let s = (seed * 2654435761) >>> 0 || 1;
+    const rnd = () => { s = (Math.imul(s ^ (s >>> 15), 2246822519) + 0x9e3779b9) >>> 0; return s / 4294967296; };
+    const perm = new Uint8Array(512), gx = new Float32Array(256), gy = new Float32Array(256);
+    for (let i = 0; i < 256; i++) perm[i] = i;
+    for (let i = 255; i > 0; i--) { const j = (rnd() * (i + 1)) | 0; const t = perm[i]; perm[i] = perm[j]; perm[j] = t; }
+    for (let i = 0; i < 256; i++) { perm[i + 256] = perm[i]; const a = rnd() * 6.2831853; gx[i] = Math.cos(a); gy[i] = Math.sin(a); }
+    return { perm, gx, gy };
+  }
+  function genDensity(g, w, h, T, D, y0, y1) {
+    const { perm, gx, gy } = T;
+    const noise = (x, y) => {
+      const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+      const X = xi & 255, Y = yi & 255;
+      const a = perm[X + perm[Y]], b = perm[X + 1 + perm[Y]], c = perm[X + perm[Y + 1]], d = perm[X + 1 + perm[Y + 1]];
+      const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10), v = yf * yf * yf * (yf * (yf * 6 - 15) + 10);
+      const n00 = gx[a] * xf + gy[a] * yf, n10 = gx[b] * (xf - 1) + gy[b] * yf;
+      const n01 = gx[c] * xf + gy[c] * (yf - 1), n11 = gx[d] * (xf - 1) + gy[d] * (yf - 1);
+      const p = n00 + u * (n10 - n00), q = n01 + u * (n11 - n01);
+      return (p + v * (q - p)) * 1.4;
+    };
+    // octaves turned about 37 degrees each, so no grid shows; `bil` mixes in the billowed form
+    const fbm = (x, y, oct, bil) => {
+      let f = 0, a = 0.5, n = 0;
+      for (let o = 0; o < oct; o++) {
+        const s = noise(x, y);
+        f += a * (bil ? (1 - bil) * s + bil * (Math.abs(s) * 2 - 0.6) : s);
+        n += a;
+        const nx = x * 1.6 - y * 1.2 + 5.3;
+        y = x * 1.2 + y * 1.6 + 1.7; x = nx; a *= 0.5;
+      }
+      return f / n;
+    };
+    // (settings read into locals once: in a worker `g` arrives as a cloned object, and reading its
+    // properties inside the pixel loop is several times slower)
+    const A = w / h, all = g.edge === 'all', top = g.edge === 'top';
+    const scale = +g.scale, squash = +g.squash, z0 = +g.z0, warp = +g.warp, oct = g.oct | 0, billow = +g.billow;
+    for (let y = y0; y < y1; y++) {
+      const v = y / (h - 1);
+      const e = top ? v : 1 - v;                              // distance from the soft edge
+      const s = all ? 1 : 1 / (z0 + (1 - z0) * e);            // perspective: smaller toward the soft edge
+      const Y0 = all ? v * scale * squash : scale * squash * s;
+      const kx = A * scale * s;
+      for (let x = 0, j = y * w; x < w; x++, j++) {
+        const X0 = (x / (w - 1) - 0.5) * kx;
+        const X = X0 + fbm(X0 * 0.6 + 7.1, Y0 * 0.6 + 2.9, 3, 0) * warp;
+        const Y = Y0 + fbm(X0 * 0.6 + 1.3, Y0 * 0.6 + 8.2, 3, 0) * warp;
+        D[j] = fbm(X, Y, oct, billow);
+      }
+    }
+  }
+  function genShade(g, w, h, D, p, y0, y1) {
+    const all = g.edge === 'all', top = g.edge === 'top';
+    const [sr, sg, sb] = g.shade, [lr, lg, lb] = g.light, [mr, mg, mb] = g.mist;
+    const width = +g.width, contrast = +g.contrast, thick = +g.thick, side = +g.side;
+    const dy = Math.max(1, Math.round((g.lightLen * h) / 260));
+    const colZ = new Float32Array(w);
+    for (let x = 0; x < w; x++) { const u = x / (w - 1); colZ[x] = ss(0, side, u) * ss(0, side, 1 - u); }
+    for (let y = y0; y < y1; y++) {
+      const v = y / (h - 1);
+      const e = top ? v : 1 - v;
+      const thr = all ? g.thr : g.thr - g.fill * ss(0, g.soft, e);
+      const fade = (all ? ss(0, g.vside, v) * ss(0, g.vside, 1 - v) : ss(0, g.fade, e)) * g.alpha;
+      const solid = all ? 0 : ss(0.93, 1, e);
+      const mix = all ? 0 : ss(g.mistAt[0], g.mistAt[1], e);
+      const lo = thr - width, hi = thr + width;
+      // the light comes from above, for the tops and for the undersides of a ceiling alike
+      const ly = Math.max(0, y - dy);
+      for (let x = 0, j = y * w; x < w; x++, j++) {
+        const d = D[j], dl = D[ly * w + x];
+        let a = ss(lo, hi, d) * fade;
+        if (a < solid) a = solid;
+        a *= colZ[x];
+        const lit = clamp(0.62 + (d - dl) * contrast + (d - thr) * 0.9 - thick * clamp((d - thr) * 4, 0, 1), 0, 1);
+        let r = sr + (lr - sr) * lit, gg = sg + (lg - sg) * lit, b = sb + (lb - sb) * lit;
+        r += (mr - r) * mix; gg += (mg - gg) * mix; b += (mb - b) * mix;
+        const i = j * 4;
+        p[i] = r; p[i + 1] = gg; p[i + 2] = b; p[i + 3] = a * 255;
+      }
+    }
+  }
+
   // The worker: fetches and decodes the pictures, cuts every piece of art and sends it back as
   // ImageBitmaps (one per layer that shows it), so the main thread only hands them to the canvases.
   function workerMain() {
@@ -206,12 +308,35 @@
       }
       return pics.get(src);
     };
+    // grown cloud: drawn small, then scaled up softly to the layer's size
+    function grow(job) {
+      const { w, h } = job;
+      const gw = Math.max(32, Math.round(w * job.res)), gh = Math.max(16, Math.round(h * job.res));
+      const D = new Float32Array(gw * gh), img = new ImageData(gw, gh);
+      genDensity(job.gen, gw, gh, genTables(job.seed), D, 0, gh);
+      genShade(job.gen, gw, gh, D, img.data, 0, gh);
+      const small = new OffscreenCanvas(gw, gh);
+      small.getContext('2d').putImageData(img, 0, 0);
+      const c = new OffscreenCanvas(w, h);
+      const g = c.getContext('2d');
+      g.imageSmoothingQuality = 'high';
+      if (job.blur && 'filter' in g) g.filter = 'blur(' + job.blur.toFixed(2) + 'px)';
+      g.drawImage(small, 0, 0, w, h);
+      return c;
+    }
     async function cut(job) {
+      if (job.gen) {
+        const c = grow(job);
+        const out = [];
+        for (let i = 1; i < job.copies; i++) out.push(await createImageBitmap(c));
+        out.push(c.transferToImageBitmap());
+        return out;
+      }
       const img = await pic(job.src);
       const { w, h } = job;
       const c = new OffscreenCanvas(w, h);
       const g = c.getContext('2d', { willReadFrequently: !!job.k });
-      const r = cropRect(img.width, img.height, job.crop, w, h);
+      const r = cropRect(img.width, img.height, job.crop, w, h, job.max, job.zoom);
       let part = null;
       try { part = await createImageBitmap(img, r[0], r[1], r[2], r[3], { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' }); } catch (e) { part = null; }
       if (job.blur && 'filter' in g) g.filter = 'blur(' + job.blur.toFixed(2) + 'px)';
@@ -272,7 +397,7 @@
     if (worker || workerOff) return worker;
     if (!window.Worker || !window.OffscreenCanvas || !window.createImageBitmap || !window.Blob || !window.URL || !URL.createObjectURL) { workerOff = true; return null; }
     try {
-      const src = [clamp, ss, cropRect, keyLum, keyPlan, keyRows, keyAll, workerMain].map(String).join('\n') + '\nworkerMain();';
+      const src = [clamp, ss, cropRect, keyLum, keyPlan, keyRows, keyAll, genTables, genDensity, genShade, workerMain].map(String).join('\n') + '\nworkerMain();';
       const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
       worker = new Worker(url);
       setTimeout(() => URL.revokeObjectURL(url), 30000);
@@ -325,15 +450,35 @@
   };
   async function cutOnMain(jobs, alive) {
     const out = [];
+    const copiesOf = async (c, n) => { const a = []; for (let i = 0; i < n; i++) a.push(window.createImageBitmap ? await createImageBitmap(c) : c); return a; };
     for (const job of jobs) {
       if (!alive()) return out;
-      const img = await load(job.src);
       const { w, h } = job;
+      if (job.gen) {
+        const gw = Math.max(32, Math.round(w * job.res)), gh = Math.max(16, Math.round(h * job.res));
+        const D = new Float32Array(gw * gh), img = new ImageData(gw, gh), T = genTables(job.seed);
+        const rows = Math.max(4, Math.floor(24000 / gw));
+        for (let y = 0; y < gh; y += rows) { genDensity(job.gen, gw, gh, T, D, y, Math.min(gh, y + rows)); await breathe(); }
+        for (let y = 0; y < gh; y += rows) { genShade(job.gen, gw, gh, D, img.data, y, Math.min(gh, y + rows)); await breathe(); }
+        const small = document.createElement('canvas');
+        small.width = gw; small.height = gh;
+        small.getContext('2d').putImageData(img, 0, 0);
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const g = c.getContext('2d');
+        g.imageSmoothingQuality = 'high';
+        if (job.blur && 'filter' in g) g.filter = 'blur(' + job.blur.toFixed(2) + 'px)';
+        g.drawImage(small, 0, 0, w, h);
+        out.push(await copiesOf(c, job.copies));
+        await breathe();
+        continue;
+      }
+      const img = await load(job.src);
       const c = document.createElement('canvas');
       c.width = w; c.height = h;
       const g = c.getContext('2d', { willReadFrequently: !!job.k });
       const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
-      const r = cropRect(iw, ih, job.crop, w, h);
+      const r = cropRect(iw, ih, job.crop, w, h, job.max, job.zoom);
       let part = null;
       try { if (window.createImageBitmap) part = await createImageBitmap(img, r[0], r[1], r[2], r[3], { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' }); } catch { part = null; }
       if (job.blur && 'filter' in g) g.filter = 'blur(' + job.blur.toFixed(2) + 'px)';
@@ -498,14 +643,13 @@
 
   let warned = false;
   // mode: 'desktop' | 'phone' (the running scene) or 'rest' (the seam of the finished composition)
-  async function paint(r, o, mode, token) {
+  // grown: true draws every layer from the scene's own cloud (no `tops`, or the photograph failed)
+  async function paint(r, o, mode, token, grown) {
     const alive = () => token === r.token;
-    const aSrc = r.aImg ? r.aImg.currentSrc || r.aImg.src : '';
-    const topsSrc = abs(o.tops || aSrc);
-    const wispsSrc = abs(o.wisps || o.tops || aSrc);
-    if (!o.tops && !aSrc) throw new Error('no picture to cut the cloud from');
-    const topsCrop = o.topsCrop || (o.tops ? [0, 0, 1, 1] : [0, 0.5, 1, 1]);
-    const wispsCrop = o.wispsCrop || (o.wisps ? [0, 0, 1, 1] : o.tops ? topsCrop : [0, 0.35, 1, 1]);
+    const topsSrc = !grown && o.tops ? abs(o.tops) : '';
+    const wispsSrc = !grown && (o.wisps || o.tops) ? abs(o.wisps || o.tops) : '';
+    const topsCrop = o.topsCrop || [0, 0, 1, 1];
+    const wispsCrop = o.wispsCrop || (o.wisps ? [0, 0, 1, 1] : topsCrop);
     const mist = rgbOf(getComputedStyle(r.root).getPropertyValue('--wx-mist'), '#eef2f4');
     const tone = (m) => mist.map((c, i) => c * m[i]);
     const phone = mode === 'phone' || (mode === 'rest' && window.matchMedia('(max-width: 767px)').matches);
@@ -515,30 +659,47 @@
     const topsSize = rest ? sizeOf(r.deckTop, W * 1.7, H * 0.26, cap) : sizeOf(r.far, W * 1.8, H * 0.8, cap);
     const lowSize = sizeOf(r.deckBottom, W * 1.7, H * (rest ? 0.26 : 0.6), cap);
     const key = o.art === 'key';
+    // the grown cloud's settings for each layer (see genDensity / genShade)
+    const G = (edge, more) => ({ edge, scale: 0.7, squash: 3, z0: 0.5, warp: 0.25, oct: 6, billow: 0.7, thr: 0.3, fill: 0.9, soft: 0.5, width: 0.1, fade: 0.25, vside: 0.2, side: 0.08, mistAt: [0.5, 0.95], lightLen: 8, contrast: 6, thick: 0, alpha: 1, shade: tone([0.74, 0.79, 0.85]), light: mist, mist, ...more });
+    // (no blur on the grown art: it is soft already, and a blur would thin its solid border into a line)
+    const grow = (size, g, n, copies, res) => ({ gen: g, seed: o.seed * 4 + n, w: size[0], h: size[1], res: res || 0.5, blur: 0, copies });
+    // in the still seam of a phone the cloud keeps its shapes large (half the crop's width, no stretch)
+    // and is shaded lighter, so it reads as crests and not as a band of squeezed grey streaks
+    const seamZoom = rest && phone ? 0.5 : 0, seamMax = rest && phone ? 1 : 0;
     // tops: sunlit crests, solid toward the bottom (the far cloud and the deck's top edge). low: the same
     // sea turned over for the deck's lower edge, the part that lies over the land as the frame clears, so
     // it stays pale (shade close to the mist), is blurred further and fades over most of its height: it
     // thins out instead of drawing grey sheets with hard lower edges. under: the ceiling behind the deck,
-    // kept in the upper half of the frame, so it may carry the grey-blue undersides of real cloud.
+    // held in the top of the frame, so it carries the crisper grey-blue undersides of real cloud.
     // wisps: a veil, shaded deeper so it reads on pale ground too.
     const jobs = [
-      { src: topsSrc, crop: topsCrop, w: topsSize[0], h: topsSize[1], flip: false, blur: topsSize[0] / 1400, copies: rest ? 1 : 2,
-        // (in the still seam the cloud closes sooner and is shaded lighter: nothing there moves to explain
-        // the darker troughs, so they would read as smudges)
-        k: key ? { edge: 'top', soft: rest ? 0.4 : 0.5, crest: rest ? 0.1 : 0.18, fill: rest ? [0.35, 0.85] : [0.45, 0.9], fade: 0.3, gain: 1, side: 0.08, qLo: 0.1, qHi: 0.8, shade: tone(rest ? [0.87, 0.89, 0.915] : [0.8, 0.835, 0.875]), light: mist, mist } : null },
-      { src: topsSrc, crop: topsCrop, w: lowSize[0], h: lowSize[1], flip: true, blur: lowSize[0] / 340, copies: 1,
-        k: key ? { edge: 'bottom', soft: 0.72, crest: 0.32, fill: [0.5, 0.94], fade: 0.66, gain: 1, side: 0.08, qLo: 0.12, qHi: 0.82, shade: tone([0.93, 0.945, 0.96]), light: mist, mist } : null,
-        shade: key ? null : tone([0.94, 0.95, 0.96]) },
+      topsSrc
+        ? { src: topsSrc, crop: topsCrop, w: topsSize[0], h: topsSize[1], flip: false, blur: topsSize[0] / 1400, copies: rest ? 1 : 2, zoom: seamZoom, max: seamMax,
+          // (in the still seam the cloud closes sooner and is shaded lighter: nothing there moves to explain
+          // the darker troughs, so they would read as smudges)
+          k: key ? { edge: 'top', soft: rest ? 0.4 : 0.5, crest: rest ? (phone ? 0.04 : 0.1) : 0.18, fill: rest ? [0.35, 0.85] : [0.45, 0.9], fade: 0.3, gain: 1, side: 0.08, qLo: 0.1, qHi: 0.8, shade: tone(rest ? (phone ? [0.9, 0.915, 0.935] : [0.87, 0.89, 0.915]) : [0.8, 0.835, 0.875]), light: mist, mist } : null }
+        // (in the still seam the shapes are larger and softer: the band is short, and a crisp crest at
+        // that size reads as a torn edge)
+        : grow(topsSize, G('top', rest ? { scale: 0.42, width: 0.17, fade: 0.45, contrast: 4, shade: tone([0.84, 0.865, 0.9]) } : {}), 0, rest ? 1 : 2),
+      topsSrc
+        ? { src: topsSrc, crop: topsCrop, w: lowSize[0], h: lowSize[1], flip: true, blur: lowSize[0] / 340, copies: 1, zoom: seamZoom, max: seamMax,
+          k: key ? { edge: 'bottom', soft: 0.72, crest: 0.32, fill: [0.5, 0.94], fade: 0.66, gain: 1, side: 0.08, qLo: 0.12, qHi: 0.82, shade: tone([0.93, 0.945, 0.96]), light: mist, mist } : null,
+          shade: key ? null : tone([0.94, 0.95, 0.96]) }
+        : grow(lowSize, G('bottom', { scale: rest ? 0.42 : 0.7, soft: 0.6, fade: 0.6, width: 0.2, contrast: 3, shade: tone([0.9, 0.92, 0.94]) }), 1, 1),
     ];
     if (!rest) {
       const underSize = sizeOf(r.under, W * 2, H * 0.64, cap);
       const wispSize = sizeOf(r.near, W * 2.3, H * 1.4, cap);
+      // (the ceiling is always grown unless ready-made alpha art is given: a photograph of cloud tops
+      // turned over reads as haze, not as the undersides of a cloud deck)
       jobs.push(
-        { src: topsSrc, crop: topsCrop, w: underSize[0], h: underSize[1], flip: true, blur: underSize[0] / 600, copies: 1,
-          k: key ? { edge: 'bottom', soft: 0.55, crest: 0.2, fill: [0.45, 0.9], fade: 0.5, gain: 1, side: 0.08, qLo: 0.1, qHi: 0.8, shade: tone([0.84, 0.865, 0.9]), light: mist, mist } : null,
-          shade: key ? null : tone([0.86, 0.88, 0.91]) },
-        { src: wispsSrc, crop: wispsCrop, w: wispSize[0], h: wispSize[1], flip: false, blur: wispSize[0] / 1400, copies: 1,
-          k: key ? { edge: 'all', gain: 0.74, side: 0.14, vside: 0.2, qLo: 0.35, qHi: 0.97, shade: tone([0.78, 0.81, 0.85]), light: mist, mist } : null });
+        topsSrc && !key
+          ? { src: topsSrc, crop: topsCrop, w: underSize[0], h: underSize[1], flip: true, blur: underSize[0] / 1000, copies: 1, k: null, shade: tone([0.86, 0.88, 0.91]) }
+          : grow(underSize, G('bottom', { squash: 3.5, scale: 0.9, warp: 0.15, billow: 0.8, soft: 0.4, fade: 0.4, width: 0.07, contrast: 6, thick: 0.45, shade: tone([0.8, 0.84, 0.89]) }), 2, 1, 0.7),
+        wispsSrc
+          ? { src: wispsSrc, crop: wispsCrop, w: wispSize[0], h: wispSize[1], flip: false, blur: wispSize[0] / 1400, copies: 1,
+            k: key ? { edge: 'all', gain: 0.74, side: 0.14, vside: 0.2, qLo: 0.35, qHi: 0.97, shade: tone([0.78, 0.81, 0.85]), light: mist, mist } : null }
+          : grow(wispSize, G('all', { scale: 1.4, squash: 3.6, warp: 0.6, oct: 5, billow: 0, thr: 0.12, width: 0.22, vside: 0.22, side: 0.14, alpha: 0.72, contrast: 3, shade: tone([0.78, 0.81, 0.85]) }), 3, 1));
     }
     let arts;
     try { arts = await cutInWorker(jobs); }
@@ -582,10 +743,23 @@
   function cut(r, o, mode) {
     const token = ++r.token;
     r.root.classList.remove('wx-noart');
-    paint(r, o, mode, token).catch((err) => {
+    const fail = (err, what) => {
+      if (token !== r.token) return;
+      if (!warned) { warned = true; console.warn('[' + ID + '] ' + what + ': ' + err.message); }
+    };
+    // a cloud photograph that cannot be read (CORS, 404) falls back to the grown cloud; if even that
+    // cannot be drawn, the deck rises as the soft flat wall of mist
+    paint(r, o, mode, token, !o.tops && !o.wisps).catch((err) => {
+      if (token !== r.token) return;
+      if (o.tops || o.wisps) {
+        fail(err, 'cloud photograph unavailable, growing the cloud instead');
+        return paint(r, o, mode, token, true);
+      }
+      throw err;
+    }).catch((err) => {
       if (token !== r.token) return;
       r.root.classList.add('wx-noart');
-      if (!warned) { warned = true; console.warn('[' + ID + '] cloud art unavailable, using the soft mist wall: ' + err.message); }
+      fail(err, 'cloud art unavailable, using the soft mist wall');
     });
   }
 
@@ -603,10 +777,12 @@
     // keep the title fitted in every state (rest included): after fonts, on resize
     let raf = 0;
     const refit = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => fit(r, o, window.matchMedia('(max-width: 767px)').matches)); };
+    root.__wxRefit = refit;
     if (!root.__wxFit) {
       root.__wxFit = true;
-      window.addEventListener('resize', refit);
-      if (document.fonts) { document.fonts.ready.then(refit); document.fonts.addEventListener('loadingdone', refit); }
+      const call = () => root.__wxRefit();
+      window.addEventListener('resize', call);
+      if (document.fonts) { document.fonts.ready.then(call); document.fonts.addEventListener('loadingdone', call); }
     }
     refit();
 
@@ -657,24 +833,33 @@
         tl.fromTo(r.aImg, { scale: 1, y: 0 }, { scale: P ? 1.08 : 1.12, y: sv(P ? -5 : -8), duration: 0.5 }, 0)
           .fromTo(r.aImg, { opacity: 1 }, { opacity: 0.4, duration: 0.07 }, 0.41);
       }
-      if (r.above) tl.fromTo(r.above, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.01 }, 0.49);
+      // (photo A is held at 0.999, not 1: an opaque layer hides what lies under it from the browser, which
+      // then leaves photo B, the haze and the ground band unpainted until the moment they show; behind a
+      // not-quite-opaque photo they are painted while the hero is still read, before anything moves)
+      if (r.above) tl.fromTo(r.above, { autoAlpha: 0.999 }, { autoAlpha: 0, duration: 0.01 }, 0.49);
       if (r.title) {
         tl.fromTo(r.title, { y: 0 }, { y: sv(P ? -30 : -42), duration: 0.5 }, 0);
         // each blurrier copy fades in on top before the one under it leaves, so the word never dims or
         // doubles; autoAlpha hides what has faded out, so nothing invisible still counts as text on screen
-        tl.fromTo(r.soft, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.1 }, 0.1)
-          .fromTo(r.word, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.08 }, 0.17)
-          .fromTo(r.lost, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.12 }, 0.28)
-          .fromTo(r.soft, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.08, immediateRender: false }, 0.36);
-        tl.fromTo(r.title, { autoAlpha: 1 }, { autoAlpha: 0.55, duration: 0.14 }, 0.3)
-          .fromTo(r.title, { autoAlpha: 0.55 }, { autoAlpha: 0, duration: 0.04, immediateRender: false }, 0.44);
+        // (on the phone the word is smaller against the cloud, so each step comes 0.03 later)
+        const lag = P ? 0.03 : 0;
+        // The lost copy carries the word's fade to a ghost (to 0.55 by 0.44, gone by 0.48) on its own
+        // opacity: fading the whole heading would make the compositor draw the copies into a group
+        // first on every frame.
+        tl.fromTo(r.soft, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.1 }, 0.1 + lag)
+          .fromTo(r.word, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.08 }, 0.17 + lag)
+          .fromTo(r.lost, { autoAlpha: 0 }, { autoAlpha: 0.72, duration: 0.12 - lag }, 0.28 + lag)
+          .fromTo(r.soft, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.08 - lag, immediateRender: false }, 0.36 + lag)
+          .fromTo(r.lost, { autoAlpha: 0.72 }, { autoAlpha: 0.55, duration: 0.04, immediateRender: false }, 0.4)
+          .fromTo(r.lost, { autoAlpha: 0.55 }, { autoAlpha: 0, duration: 0.04, immediateRender: false }, 0.44);
       }
       if (r.tagline) tl.fromTo(r.tagline, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: sv(-3), duration: 0.08, ease: 'power1.in' }, P ? 0.16 : 0.14);
 
-      // clouds above the deck: the far sea of cloud tops and the near veil cross the word
-      tl.fromTo(r.far, { y: sv(P ? 100 : 96), x: 0 }, { y: sv(P ? 8 : 14), x: vw(P ? -10 : -6), duration: 0.5 }, 0)
+      // clouds above the deck: the far sea of cloud tops and the near veil cross the word (on the phone
+      // both start lower, so the cloud reaches the word's lower half only as the read window closes)
+      tl.fromTo(r.far, { y: sv(P ? 114 : 96), x: 0 }, { y: sv(P ? 10 : 14), x: vw(P ? -10 : -6), duration: 0.5 }, 0)
         .fromTo(r.far, { autoAlpha: 0.9 }, { autoAlpha: 0, duration: 0.01 }, 0.5);
-      tl.fromTo(r.near, { y: sv(P ? 112 : 118), x: 0, scale: 1 }, { y: sv(-30), x: P ? 0 : vw(8), scale: P ? 1.15 : 1.25, duration: 0.46 }, 0.04)
+      tl.fromTo(r.near, { y: sv(P ? 122 : 118), x: 0, scale: 1 }, { y: sv(-30), x: P ? 0 : vw(8), scale: P ? 1.15 : 1.25, duration: 0.46 }, 0.04)
         .fromTo(r.near, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.01 }, 0.5);
 
       // the deck: in with power1.in (it accelerates into the cloud), out with power1.out
@@ -689,17 +874,20 @@
           .fromTo(r.note, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.025, immediateRender: false }, 0.545);
       }
 
-      // the cloud ceiling behind the deck: slower than the deck's own edge (it is farther off), kept in
-      // the upper half of the frame while the land clears below it, gone by 0.86
+      // the cloud ceiling behind the deck: farther off than the deck's own edge, so it lingers. It drifts
+      // up slowly while the deck clears (its dense part held in the top quarter of the frame to about
+      // 0.72, so arriving under the cloud reads as an image), then lifts away faster, gone by 0.86
       tl.fromTo(r.under, { autoAlpha: 0 }, { autoAlpha: 0.92, duration: 0.01 }, 0.5)
-        .fromTo(r.under, { y: sv(P ? 5 : 6), x: 0 }, { y: sv(P ? -50 : -64), x: P ? 0 : vw(-5), duration: 0.32 }, 0.54);
+        .fromTo(r.under, { y: sv(P ? 4 : 6), x: 0 }, { y: sv(P ? -50 : -64), x: P ? 0 : vw(-5), duration: 0.32, ease: 'power2.in' }, 0.54);
 
       // photo B and the landing
       if (r.bImg) tl.fromTo(r.bImg, { scale: P ? Math.min(o.settle, 1.12) : o.settle, y: sv(P ? 4 : 6) }, { scale: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 0.5);
-      // the haze is a blurred fill, so it is not drawn at all while photo A covers it
-      tl.fromTo(r.haze, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01 }, 0.49)
-        .fromTo(r.haze, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.26, immediateRender: false }, 0.58)
-        .fromTo(r.ground, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.14 }, 0.66);
+      // the haze and the ground band are large blurred fills: they wait at a trace of opacity (0.002,
+      // invisible, under photo A) rather than hidden, so their blur is painted once while the hero is read
+      // and never on the frame they appear
+      tl.fromTo(r.haze, { opacity: 0.002 }, { opacity: 1, duration: 0.01 }, 0.49)
+        .fromTo(r.haze, { opacity: 1 }, { opacity: 0, duration: 0.26, immediateRender: false }, 0.58)
+        .fromTo(r.ground, { opacity: 0.002 }, { opacity: 1, duration: 0.14 }, 0.66);
       // one tween per line (a staggered fromTo only sets its first target before it starts); each line is
       // hidden while it waits in its mask and shown the moment it starts to rise
       r.lines.forEach((line, i) => {
@@ -732,16 +920,25 @@
     // Stage.scene calls rest() only when one of its media conditions matches; a desktop with reduced
     // motion matches neither, so the scene also watches reduced motion itself. It checks a frame later,
     // after GSAP has reverted the running scene, and then also clears what the timeline left on the root.
+    // The listeners belong to the root, not to this call: started again, the scene swaps in its new
+    // handlers instead of piling up another pair.
     const settle = () => requestAnimationFrame(() => { if (!root.classList.contains('is-live')) rest(false); });
     if (!root.classList.contains('is-live')) settle();
-    const rm = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const onMotion = () => settle();
-    if (rm.addEventListener) rm.addEventListener('change', onMotion); else if (rm.addListener) rm.addListener(onMotion);
     let rt = 0;
-    window.addEventListener('resize', () => {
-      clearTimeout(rt);
-      rt = setTimeout(() => { if (r.mode === 'rest' && !root.classList.contains('is-live') && r.restSize !== W()) rest(true); }, 300);
-    });
+    root.__wxOn = {
+      motion: () => settle(),
+      resize: () => {
+        clearTimeout(rt);
+        rt = setTimeout(() => { if (r.mode === 'rest' && !root.classList.contains('is-live') && r.restSize !== W()) rest(true); }, 300);
+      },
+    };
+    if (!root.__wxWatch) {
+      root.__wxWatch = true;
+      const rm = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const onMotion = () => root.__wxOn.motion();
+      if (rm.addEventListener) rm.addEventListener('change', onMotion); else if (rm.addListener) rm.addListener(onMotion);
+      window.addEventListener('resize', () => root.__wxOn.resize());
+    }
     return mm;
   };
 })();

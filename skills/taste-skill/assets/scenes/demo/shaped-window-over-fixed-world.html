@@ -76,17 +76,19 @@
   .opening .lead p { grid-column: 2; margin: 0; font-size: clamp(19px, 1.6vw, 24px); line-height: 1.4; text-wrap: pretty; }
 
   .scene-sw .sw-title { font-stretch: 87.5%; }
-  /* the firs stand either side of the windows, taller than the screen, as if the reader were still
-     among the trees at the treeline; the push carries them away */
+  /* the reader is still among the trees at the treeline: a whole fir stands a little way off on the
+     left, and the boughs of a nearer one hang in from the right edge over the low window's corner;
+     the push carries both away */
   .scene-sw {
-    --sw-prop-l-h: 96%; --sw-prop-l-x: -17%; --sw-prop-l-y: -2%;
-    --sw-prop-r-h: 118%; --sw-prop-r-x: -18%; --sw-prop-r-y: -2%;
+    --sw-prop-l-h: 92%; --sw-prop-l-x: -24lvh; --sw-prop-l-y: -2%;
+    --sw-prop-r-h: 130%; --sw-prop-r-x: -64lvh; --sw-prop-r-y: -5%;
   }
-  /* narrow screens: smaller, and further out, so they only brush the slim windows' outer corners */
+  /* narrow screens: the fir fills the empty ground under the high window and only its top crosses that
+     window's corner; the boughs only brush the low window's lower corner */
   @media (max-width: 767px), (max-aspect-ratio: 11/10) {
     .scene-sw {
-      --sw-prop-l-h: 46%; --sw-prop-l-x: -58%; --sw-prop-l-y: -2%;
-      --sw-prop-r-h: 54%; --sw-prop-r-x: -62%; --sw-prop-r-y: -2%;
+      --sw-prop-l-h: 52%; --sw-prop-l-x: -15.5lvh; --sw-prop-l-y: -2%;
+      --sw-prop-r-h: 48%; --sw-prop-r-x: -21lvh; --sw-prop-r-y: -5%;
     }
   }
 
@@ -189,11 +191,15 @@
         <header class="sw-intro"><h2 class="sw-title" id="sw-title">A week above the treeline</h2></header>
         <p class="sw-caption">Twelve beds in every hut, and a stove that is lit from six.</p>
         <!-- the foreground: firs at the treeline, photographed against fog and keyed into cut-outs by the
-             scene (data-key), standing in the bottom corners until the push throws them aside -->
+             scene (data-key), toned into the picture's cold light (data-tone), standing in the bottom
+             corners until the push throws them aside. One photograph, cut two ways so they never read as
+             twins: the whole tree on the left, the right one cropped below its top and mirrored -->
         <img class="sw-prop sw-prop--l" src="https://picsum.photos/id/925/2400/1600" crossorigin="anonymous"
-             data-key="0.3 0.52" data-crop="0.04 0 0.38 0.6" alt="" aria-hidden="true" width="816" height="960">
+             data-key="0.3 0.52" data-crop="0.04 0 0.38 0.56" data-tone="saturate(.45) brightness(.75) hue-rotate(20deg)"
+             alt="" aria-hidden="true" width="816" height="896">
         <img class="sw-prop sw-prop--r" src="https://picsum.photos/id/925/2400/1600" crossorigin="anonymous"
-             data-key="0.3 0.52" data-crop="0.04 0 0.38 0.6" data-flip alt="" aria-hidden="true" width="816" height="960">
+             data-key="0.3 0.52" data-crop="0.04 0.06 0.38 0.56" data-tone="saturate(.45) brightness(.75) hue-rotate(20deg)" data-flip
+             alt="" aria-hidden="true" width="816" height="800">
       </div>
     </div>
   </section>

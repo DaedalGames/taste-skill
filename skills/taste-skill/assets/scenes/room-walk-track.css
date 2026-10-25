@@ -11,11 +11,11 @@
   --rw-powder: var(--powder, #c9d5e4);
   --rw-stone: var(--stone, #8f8d88);
   --rw-clay: var(--clay, #d3c9ba);
-  --rw-coral: var(--coral, #e8573f);
+  --rw-coral: var(--coral, #e25a4e);
   --rw-display: var(--font-display, Georgia, "Times New Roman", serif);
   --rw-text: var(--font-text, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif);
   --rw-gut: clamp(20px, 5vw, 72px);
-  --rw-small: max(15px, 1.05vw);
+  --rw-small: max(16px, 1.1vw);
   position: relative;
   background: var(--rw-paper);
   color: var(--rw-ink);
@@ -39,6 +39,10 @@
 [data-scene="room-walk-track"] .rw-edge { display: none; }
 [data-scene="room-walk-track"] a { color: inherit; }
 [data-scene="room-walk-track"] a:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+/* the pills are ink with paper text, set on light blocks: their ring is ink, so it shows on the block. The
+   tile fills its card edge to edge (and the card clips), so its ring sits just inside it. */
+[data-scene="room-walk-track"] .rw-card__link:focus-visible { outline-color: var(--rw-ink); }
+[data-scene="room-walk-track"] .rw-stack__all:focus-visible { outline: 3px solid currentColor; outline-offset: -9px; }
 
 /* display type */
 [data-scene="room-walk-track"] .rw-h1,
@@ -73,15 +77,17 @@
 [data-scene="room-walk-track"] .rw-bleed { position: relative; height: 56svh; overflow: clip; }
 [data-scene="room-walk-track"] .rw-bleed img { width: 100%; height: 110%; object-fit: cover; }
 [data-scene="room-walk-track"] .rw-flip { position: relative; overflow: clip; }
+/* each layer clips its own picture, so a cropped or zoomed picture (scale, object-position) never spills
+   past its layer and keeps covering the frame after the layer has slid away */
 [data-scene="room-walk-track"] .rw-flip__a,
-[data-scene="room-walk-track"] .rw-flip__b { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+[data-scene="room-walk-track"] .rw-flip__b { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: clip; }
 [data-scene="room-walk-track"] .rw-flip__b { height: 112%; }
 [data-scene="room-walk-track"] .rw-flip img { width: 100%; height: 100%; object-fit: cover; }
 [data-scene="room-walk-track"] .rw-flip__a { visibility: hidden; }        /* finished: picture B */
 [data-scene="room-walk-track"].is-live .rw-flip__a { visibility: visible; }
 [data-scene="room-walk-track"] .rw-photo .rw-flip { width: 70vw; aspect-ratio: 3 / 2; margin: -12vw 0 0 auto; z-index: 1; }
 [data-scene="room-walk-track"] .rw-copy { padding: 36px var(--rw-gut) 0; display: grid; gap: 18px; }
-[data-scene="room-walk-track"] .rw-copy h3 { font-size: clamp(32px, 8.4vw, 64px); line-height: 1; }
+[data-scene="room-walk-track"] .rw-copy h3 { font-size: clamp(36px, 11vw, 72px); line-height: 1; }
 [data-scene="room-walk-track"] .rw-copy p { max-width: 30em; font-size: var(--rw-small); line-height: 1.5; }
 
 [data-scene="room-walk-track"] .rw-ink {
@@ -95,7 +101,8 @@
 [data-scene="room-walk-track"] .rw-pic { overflow: clip; aspect-ratio: 3 / 4; }
 [data-scene="room-walk-track"] .rw-pic img { width: 100%; height: 100%; object-fit: cover; }
 [data-scene="room-walk-track"] .rw-pic--b { margin-top: 28%; }
-[data-scene="room-walk-track"] .rw-read { grid-column: 1 / -1; margin-top: 28px; font-size: clamp(22px, 6.2vw, 34px); line-height: 1.28; letter-spacing: -0.015em; }
+/* a statement, not a headline: 30px at most in the column, so it may run its five lines */
+[data-scene="room-walk-track"] .rw-read { grid-column: 1 / -1; margin-top: 28px; font-size: clamp(22px, 6vw, 30px); line-height: 1.28; letter-spacing: -0.015em; }
 
 [data-scene="room-walk-track"] .rw-band {
   background: var(--rw-oat);
@@ -105,7 +112,9 @@
   display: flex;
   align-items: center;
 }
-[data-scene="room-walk-track"] .rw-band__col { display: flex; gap: 0.45em; white-space: nowrap; font-size: 15vw; line-height: 1; padding-left: var(--rw-gut); }
+/* one run of text ("Rules * Rules * …"), so it is one line in either direction */
+[data-scene="room-walk-track"] .rw-band__col { display: block; white-space: nowrap; word-spacing: 0.2em; font-size: 15vw; line-height: 1; padding-left: var(--rw-gut); }
+[data-scene="room-walk-track"] .rw-band__col > * { margin-inline-end: 0.45em; }   /* words written as spans, before the script joins them */
 
 [data-scene="room-walk-track"] .rw-values { background: var(--rw-powder); padding: 64px var(--rw-gut) 72px; overflow: clip; }
 [data-scene="room-walk-track"] .rw-vals { --rw-vs: 15vw; list-style: none; margin: 0; padding: 0; }
@@ -214,7 +223,7 @@
   [data-scene="room-walk-track"] .rw-bleed { height: 80svh; }
   [data-scene="room-walk-track"] .rw-photo .rw-flip { position: absolute; left: 45%; top: 58svh; width: 28vw; margin: 0; }
   [data-scene="room-walk-track"] .rw-copy { padding: 12svh 5vw 0 5vw; align-content: start; }
-  [data-scene="room-walk-track"] .rw-copy h3 { font-size: clamp(36px, 3.6vw, 64px); }
+  [data-scene="room-walk-track"] .rw-copy h3 { font-size: clamp(40px, 4.4vw, 80px); }
 
   [data-scene="room-walk-track"] .rw-ink { grid-template-columns: 24vw 17vw minmax(0, 1fr); gap: 2vw; align-items: center; padding: 12svh var(--rw-gut); }
   [data-scene="room-walk-track"] .rw-pic--b { margin-top: 40%; }
@@ -260,7 +269,7 @@ html.js [data-scene="room-walk-track"].is-live.rw-v > .scene-stage { position: r
 /* the stage writes --p on the section every frame; it is inherited, so without this stop every element
    in the walk (a few hundred, with the split letters) is restyled on every frame. Nothing here reads --p. */
 html.js [data-scene="room-walk-track"].is-live > .scene-stage { --p: 0; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk { --rw-small: max(15px, 1.05vw); --rw-slide: 17.5vw; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk { --rw-small: max(16px, 1.1vw); --rw-slide: 17.5vw; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk > .scene-stage { background: var(--rw-oat); }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-track {
   position: absolute; top: 0; left: 0; height: 100%;
@@ -273,29 +282,36 @@ html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-ground {
   position: absolute; inset: 0; z-index: 0; padding: 0;
   display: grid; place-items: center;
 }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-chrome { display: block; position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-chrome { display: block; position: absolute; inset: 0; z-index: 10; pointer-events: none; will-change: opacity; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge { display: block; }
+/* the moving parts that move for a while keep their own layers for the whole walk */
+html.js [data-scene="room-walk-track"].is-live.rw-walk :is(.rw-flip__a, .rw-flip__b, .rw-pic, .rw-pic img, .rw-stack__pic img, .rw-hold) { will-change: transform; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-read .rw-rl { will-change: opacity; }
 
 /* threshold, 80vw */
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-threshold { width: 80vw; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-h1 { --rw-hs: 7.2vw; position: absolute; left: 6vw; top: 23%; line-height: 0.95; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-h1 .rw-line { overflow: clip; padding-bottom: 0.22em; margin-bottom: -0.22em; will-change: transform; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-lede { position: absolute; left: 6vw; top: 61%; width: 25vw; min-width: 0; max-width: none; font-size: max(15px, 1.15vw); }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-lede { position: absolute; left: 6vw; top: 61%; width: 25vw; min-width: 0; max-width: none; font-size: max(16px, 1.15vw); }
 
-/* photo room, 90vw */
+/* photo room, 90vw: the picture bleeds 0-52vw, the framed pair overlaps its edge low down, and the
+   heading is set large on the paper beside it, its lines arriving behind the walk and settling */
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-photo { width: 90vw; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-bleed { position: absolute; left: 0; top: 0; width: 58vw; height: 100%; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-bleed img { position: absolute; left: 0; top: 0; width: 73vw; height: 100%; will-change: transform; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-photo .rw-flip { position: absolute; left: 50vw; top: auto; bottom: 9%; width: 30vw; margin: 0; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-copy { position: absolute; left: 62vw; top: 19%; width: 24vw; padding: 0; gap: 2.2vh; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-copy h3 { font-size: 3.3vw; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-copy .rw-line { overflow: clip; padding-bottom: 0.22em; margin-bottom: -0.22em; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-bleed { position: absolute; left: 0; top: 0; width: 52vw; height: 100%; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-bleed img { position: absolute; left: 0; top: 0; width: 67vw; height: 100%; will-change: transform; }
+/* both clamped by the height too, so on a wide short screen the frame never rises into the copy */
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-photo .rw-flip { position: absolute; left: 42vw; top: auto; bottom: 9%; width: min(30vw, 50vh); margin: 0; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-copy { position: absolute; left: 57vw; top: 14%; width: 30vw; padding: 0; gap: 4.4vh; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-copy h3 { --rw-cs: min(6vw, 10.5vh); font-size: calc(var(--rw-cs) * var(--rw-fit, 1)); line-height: 0.98; white-space: nowrap; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-copy .rw-line { overflow: clip; padding-bottom: 0.22em; margin-bottom: -0.22em; will-change: transform; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-copy .rw-line:nth-child(2n) { padding-left: 8vw; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-copy p { width: 23vw; }
 
 /* ink room, 90vw */
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-ink { width: 90vw; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-pic { position: absolute; margin: 0; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-pic--a { left: 4vw; top: 0; width: 29vw; height: 66%; aspect-ratio: auto; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-pic--b { left: 24vw; top: 49%; width: 18vw; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-pic--b { left: 24vw; top: 49%; width: min(18vw, 32vh); }   /* 3:4, so it ends above the bottom edge on wide short screens */
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-read { position: absolute; left: 49vw; top: 50%; width: 36vw; max-width: none; margin: 0; translate: 0 -50%; font-size: 1.95vw; line-height: 1.3; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-read .rw-rl { display: block; }
 
@@ -303,7 +319,7 @@ html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-read .rw-rl { display
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-band { width: 15vw; min-height: 0; display: block; position: relative; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-band__col {
   position: absolute; top: 0; left: 50%; translate: -50% 0;
-  writing-mode: vertical-rl; padding: 0; gap: 0.45em;
+  writing-mode: vertical-rl; padding: 0;
   font-size: 10.5vw; line-height: 1.2;
   will-change: transform;
 }
@@ -356,7 +372,7 @@ html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-question {
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-underlay { display: block; position: absolute; left: -1px; top: 0; width: calc(var(--rw-slide) + 3px); height: 100%; background: var(--rw-paper); will-change: transform; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-q { --rw-qs: 4.2vw; position: absolute; right: 4vw; top: 22%; width: calc(100vw - var(--rw-open, 60vw) + 11vw); white-space: nowrap; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-q .rw-line:nth-child(2n) { padding-left: 14vw; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-q__body { position: absolute; left: -1vw; top: 47%; width: calc(100vw - var(--rw-open, 60vw) - 3vw); max-width: none; font-size: clamp(14px, 1.05vw, 20px); }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-q__body { position: absolute; left: -1vw; top: 47%; width: calc(100vw - var(--rw-open, 60vw) - 3vw); max-width: none; font-size: var(--rw-small); }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-q__body .rw-rl { display: block; overflow: clip; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-q__body .rw-rl > .rw-in { display: block; }
 
@@ -365,40 +381,15 @@ html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-coral { width: 100vw;
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-window { position: absolute; left: 50%; top: 50%; width: min(64vw, 113.8vh); aspect-ratio: 16 / 9; translate: -50% -52%; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-window__pan { will-change: transform; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-cap { position: absolute; left: calc(50% - min(32vw, 56.9vh)); top: calc(48% + min(18vw, 32vh) + 2.4vh); width: min(64vw, 113.8vh); }
-/* the shade: six stacked flat translucent strips just outside the sheet's edge (no blur, no gradient),
-   darkest against the coral; nothing of it reaches onto the coral itself */
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge::before,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge::after,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge__in,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge__in::before,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge__in::after {
-  position: absolute; top: 0; height: 100%;
-  background: rgb(21 19 17 / 0.034);
-  pointer-events: none;
-}
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge { width: 4.4vw; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge::before,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge::after,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge__in::before,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge__in::after { content: ""; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge::before { width: 80%; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge::after { width: 61%; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge__in { width: 43%; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge__in::before { width: 63%; }     /* of the 43% */
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge__in::after { width: 30%; }
+/* the shade: fourteen stacked flat translucent strips just outside the sheet's edge (no blur, no
+   gradient), narrower ones nearer the coral, so it deepens toward the edge in steps too small to read
+   as stripes; nothing of it reaches onto the coral itself. The script adds the strips. */
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge { position: absolute; top: 0; height: 100%; width: 4.4vw; pointer-events: none; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge > i { position: absolute; top: 0; height: 100%; background: rgb(21 19 17 / 0.016); }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--l { right: 100%; will-change: opacity; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--l::before,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--l::after,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--l .rw-edge__in,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--l .rw-edge__in::before,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--l .rw-edge__in::after { right: 0; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--l > i { right: 0; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--r { left: 100%; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--r::before,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--r::after,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--r .rw-edge__in,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--r .rw-edge__in::before,
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--r .rw-edge__in::after { left: 0; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--r > i { left: 0; }
 
 /* the still stage under the track; its own layer, so the closing settle never repaints the headline */
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-exit { gap: 4.4vh; transform-origin: 50% 50%; will-change: transform; }
@@ -408,7 +399,7 @@ html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-exit__title { font-si
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-chip {
   position: absolute; pointer-events: auto; margin: 0;
   background: var(--rw-paper); color: var(--rw-ink);
-  font: 500 15px/1 var(--rw-text);
+  font: 500 16px/1 var(--rw-text);
   padding: 12px 14px; border-radius: 3px;
   text-decoration: none;
 }
@@ -416,6 +407,6 @@ html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-mark { top: 16px; lef
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-where { bottom: 16px; left: 16px; display: flex; align-items: center; gap: 12px; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-where__count { opacity: 0.62; font-variant-numeric: tabular-nums; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-bar { display: block; width: 56px; height: 4px; border-radius: 2px; background: rgb(21 19 17 / 0.14); overflow: hidden; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-bar > span { display: block; height: 100%; background: var(--rw-ink); transform-origin: 0 50%; transform: scaleX(0); }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-bar > span { display: block; height: 100%; background: var(--rw-ink); transform-origin: 0 50%; transform: scaleX(0); will-change: transform; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-skip { bottom: 16px; right: 16px; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-chip:hover { background: var(--rw-ink); color: var(--rw-paper); }

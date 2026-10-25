@@ -18,13 +18,14 @@
      --seg-arc-size     size of the words on the curve
      --seg-say-size     size of the statement in the arch (display face, two lines)
      --seg-say-top      where the statement sits in the arch, below its crown, as a share of the arch
-                        (default 0.62). On a phone the statement instead sits on the foot of the arch,
+                        (default 0.62 in the finished composition, 0.7 while live). On a phone the statement instead sits on the foot of the arch,
                         clear of the ends of the words on the narrower curve and still inside the arch,
                         so it has left the screen when the ground settles.
      --seg-flat-size    size of the heading when it is set straight instead of on the curve; the
                         statement under it is then set smaller than it, never larger
      --seg-title-size   size of the chapter title
-     --seg-inset-w      width of the 2:1 inset picture
+     --seg-inset-w      width of the inset picture
+     --seg-inset-ratio  its shape, default 2 / 1 (phone 4 / 3, so the end frame holds a picture, not a strip)
 
    The headline is set in --ink straight on the sky, with no scrim: that needs open, even sky behind it.
    For any other photograph put the class seg--band on the section (or pass hero: "band"): the headline
@@ -44,6 +45,7 @@
   --seg-flat-size: calc(var(--seg-arc-size) * 0.85);
   --seg-title-size: clamp(56px, 9.5vw, 148px);
   --seg-inset-w: clamp(240px, min(36vw, 52svh), 600px);
+  --seg-inset-ratio: 2 / 1;
   position: relative;
   background: var(--seg-ground);
   color: var(--seg-ink);
@@ -149,6 +151,22 @@
   pointer-events: none;
 }
 [data-scene="shaped-edge-ground-change"] .seg-arc__static { word-spacing: 0.8em; }
+/* With script the heading is set letter by letter (shaped-edge-ground-change.js): every letter is put
+   on the curve by a transform, so the spread costs no text layout and no repaint. The static SVG is
+   then hidden, and the letters show from their first measure on. */
+[data-scene="shaped-edge-ground-change"].seg--chars svg.seg-arc { display: none; }
+[data-scene="shaped-edge-ground-change"] .seg-arc-words { visibility: hidden; }
+[data-scene="shaped-edge-ground-change"].seg--arc-set .seg-arc-words { visibility: visible; }
+[data-scene="shaped-edge-ground-change"] .seg-arc__char,
+[data-scene="shaped-edge-ground-change"] .seg-arc__measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  line-height: 1;
+  white-space: pre;
+}
+[data-scene="shaped-edge-ground-change"] .seg-arc__measure { visibility: hidden; }
+[data-scene="shaped-edge-ground-change"] .seg-arc__base { display: inline-block; width: 0; height: 0; vertical-align: baseline; }
 
 /* The statement under the curve: a centred column, an optional emblem above it, the words in the
    display face on two lines, so the stretch where the arch fills the screen is a designed beat. */
@@ -198,7 +216,7 @@
 [data-scene="shaped-edge-ground-change"] .seg-inset {
   margin: clamp(32px, 6svh, 64px) auto 0;
   width: var(--seg-inset-w);
-  aspect-ratio: 2 / 1;
+  aspect-ratio: var(--seg-inset-ratio);
   overflow: hidden;
   background: var(--seg-ink);
 }
@@ -212,7 +230,7 @@
 /* No script: the cap is locked to 2:1 so the static SVG (viewBox 0 0 1440 720) lies on the arch. Its
    font size is in the SVG's own units, so it scales with the width. */
 html:not(.js) [data-scene="shaped-edge-ground-change"] { --seg-cap: 50vw; }
-html:not(.js) [data-scene="shaped-edge-ground-change"] .seg-arc { font-size: 60px; }
+html:not(.js) [data-scene="shaped-edge-ground-change"] svg.seg-arc { font-size: 60px; }
 
 /* A heading that cannot sit on the curve (no script on a phone, or more words than the curve
    holds) is set straight, centred, inside the arch, and it stays the larger of the two lines: the
@@ -262,11 +280,12 @@ html:not(.js) [data-scene="shaped-edge-ground-change"] .seg-arc { font-size: 60p
     --seg-focus: 50% 70%;
     --seg-hero-top: clamp(40px, 6svh, 72px);
     --seg-hero-size: clamp(32px, 9vw, 44px);
-    --seg-arc-size: 24px;
+    --seg-arc-size: 22px;
     --seg-say-size: 27px;
     --seg-flat-size: 32px;
     --seg-title-size: 15vw;
     --seg-inset-w: 84vw;
+    --seg-inset-ratio: 4 / 3;
   }
   [data-scene="shaped-edge-ground-change"] .seg-hero { left: 6vw; right: 6vw; width: auto; }
   [data-scene="shaped-edge-ground-change"].seg--band .seg-hero { max-width: none; margin-left: -16px; margin-right: -16px; padding: 18px 16px 20px; }
@@ -317,7 +336,15 @@ html:not(.js) [data-scene="shaped-edge-ground-change"] .seg-arc { font-size: 60p
 html.js .scene.is-live[data-scene="shaped-edge-ground-change"] {
   height: calc(2.25 * 100svh + 1.25 * var(--seg-cap));
 }
-.scene.is-live[data-scene="shaped-edge-ground-change"] > .scene-stage { background: var(--seg-ground); }
+/* stage.js writes the progress as --p on the section every frame. Inherited, that one write restyles
+   every element in the scene each frame (about 1 ms here, the largest main-thread cost while
+   scrolling); nothing in this scene reads it, so it stops at the stage. CSS on the section itself can
+   still read var(--p). */
+.scene.is-live[data-scene="shaped-edge-ground-change"] > .scene-stage { --p: initial; background: var(--seg-ground); }
+/* Live, the statement rides lower in the arch, so it is the middle of the screen in the stretch where
+   the arch fills it (0.52-0.64) and enters from below once the words on the curve have been read. */
+.scene.is-live[data-scene="shaped-edge-ground-change"] { --seg-say-top: 0.7; }
+.scene.is-live[data-scene="shaped-edge-ground-change"] .seg-arc__char { will-change: transform; }
 
 .scene.is-live[data-scene="shaped-edge-ground-change"] .seg-photo {
   position: absolute;

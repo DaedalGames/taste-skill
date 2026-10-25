@@ -1,11 +1,22 @@
 // tasteskill / scenes / peel-tear-and-drag.js — a physical object brings in the next section.
 //
-// DRAG (the mode this file builds). Cloud closes in over the old chapter until it is a deck, then a huge
+// Three modes (data-options "mode"), each at most once on a page, the scene itself at most twice:
+//   drag (default)  a plane drags the next chapter in behind it: for the middle of a page (below).
+//   peel            a sticker peels off the page and shows what it covered: for a hero or a footer.
+//   tear            the old chapter's ground rips along a ragged line and rolls away: for a chapter change.
+// Peel and tear are documented after the drag's options.
+//
+// DRAG. Cloud closes in over the old chapter until it is a deck, then a huge
 // photographed plane, seen from straight below or above, breaks out of it, crosses the held stage and pulls
 // the next page in behind it. The page arrives through a chevron clip whose point stays under the fuselage
 // and whose two slanted sides run under the two wings (measured from the cut-out's own pixels); the plane
-// casts a soft shadow, on the new page only. The clip and the plane are driven by the same number (--edge,
+// casts a soft shadow, on the new page only. The clip and the plane are driven by the same number (the edge,
 // the clip's point as a % of the stage) in the same linear tween window, so the seam never comes loose.
+// The cloud comes in as the view climbs: every piece slides in from outside the frame towards the middle,
+// shrinking as it comes, always at full opacity (no half-clear sheet ever lies over the photo), until the deck
+// closes. A piece placed in the right half comes in from the right and never crosses into the left one. The deck
+// keeps the shape it was composed for at any window shape (it covers the stage like a cover-fitted picture), so
+// it closes on a tall tablet as it does on a wide screen.
 //
 // On a phone (max-width 767px) the same idea turns vertical: the plane flies bottom to top, nose up, and
 // drags the page in from below. Reduced motion, no script, a failed CDN and very small screens (under
@@ -19,14 +30,12 @@
 //         <img class="drag-old__ground" src alt="">             top-down landscape photo (sea, coast, fields from altitude)
 //         <div class="drag-old__tint"></div>                    flat brand colour over it (--drag-dark)
 //         <p class="drag-old__line">We fly when the ferries can't.</p>       4-10 words
-//         <div class="drag-veil" aria-hidden="true">            optional, 0-7 pieces; the first two sit on the right
-//           <img class="drag-veil__piece" src="cloud-1.webp" alt="">        soft-edged alpha cut-outs of cloud seen
-//                                                                           from above (best: dense ones, 1000-1400px)
-//           <img class="drag-veil__piece" src="cloud.jpg" alt="" crossorigin="anonymous"
-//                data-key data-crop="0 .4 .7 .6" data-turn="180" data-flip>
-//              or an ordinary photo of bright cloud on a dark ground, keyed once into a cut-out in the browser;
-//              data-crop (x y w h, fractions) picks the cloud out of the frame, data-turn (90/180/270) and
-//              data-flip let one photo serve several pieces, data-key="lo hi" moves the key (default .56 .72)
+//         <div class="drag-veil" aria-hidden="true">            optional, 0-7 pieces (the phone uses the first 4);
+//           <img class="drag-veil__piece" src="cloud-1.webp" alt="">        the first two sit in the right half.
+//              Soft-edged alpha cut-outs of cloud seen from above, about 1000-1300px wide, with a solid core and
+//              their half-transparent edge pixels in the cloud's own colour (no dark fringe where one lies on
+//              another). The CSS places seven; give other pieces their own left/top/width, as shares of a
+//              1440 x 900 box (390 x 844 on the phone) that the scene fits over the stage.
 //         </div>
 //       </div>
 //       <div class="drag-new">                                  incoming page, light; same ground as the next section
@@ -53,7 +62,7 @@
 // Options (data-options JSON), name: values [default] what it does
 //   dir:       'ltr' | 'rtl'      ['ltr']   direction on desktop; 'rtl' for a second use on one page
 //   hold:      1.5-4              [3]       screens the stage is held (2 without a veil)
-//   phoneHold: 1.5-3.5            [2.6]
+//   phoneHold: 1.5-3.5            [2.2]     (keep the drag itself, 0.75 of it, at 1.5 screens or more)
 //   phone:     'vertical' | 'rest' ['vertical']  the phone flies bottom to top, or keeps the finished composition
 //   scrub:     true | seconds     [true with Lenis, else 0.6]
 //   object:    'jet' | 'none'     ['jet']   what to paint when the page has no .drag-object ('none': a bare wipe)
@@ -74,9 +83,53 @@
 // never crosses words being read and they arrive in reading order; the words lie above the shadow. The
 // picture along the bottom of the page shows from the first frame of the opening clip.
 // The new page has to fit one screen; where it does not (a long list in a short window) the scene keeps its
-// finished composition there, and goes live again when the window grows. The spec's PEEL and TEAR modes are
-// not in this file: they share no mechanism with the drag (both can be built from transform and clip-path
-// alone), and are proposed as scene ids of their own. This file is the DRAG mode.
+// finished composition there, and goes live again when the window grows.
+//
+// PEEL and TEAR share one mechanism: a fold sweeps across a sheet. Ahead of it the sheet lies flat; just behind
+// it a band of the sheet's back has rolled over (a tube: the back's colour mirrored across the fold, shaded by
+// flat bands blurred once, never a gradient), with a soft shadow; the rest has lifted away, and what was under
+// the sheet shows. Words the sheet covered land once the fold has passed them, in reading order.
+//
+//   PEEL DOM:
+//   <section class="scene" data-scene="peel-tear-and-drag" data-options='{"mode":"peel"}'
+//            style="--peel-left: 48%; --peel-top: 10svh; --peel-w: 46%">   where the sticker lies while it runs
+//     <div class="scene-stage">
+//       <div class="peel-page">…the page: a title that stays clear of the sticker, and words under it…</div>
+//       <figure class="peel-sticker">                         a photograph in a white border (CSS)
+//         <img class="peel-art" src alt="…">
+//         <img class="peel-art peel-art--b" src alt="">       optional: a second state of the same framing,
+//       </figure>                                             shown from 0.22 (calm, then reacting)
+//     </div>
+//   </section>
+//   Phone: --peel-phone-left / --peel-phone-top / --peel-phone-w. The finished composition sets the sticker
+//   after the page's words, never over them.
+//
+//   TEAR DOM:
+//   <section class="scene" data-scene="peel-tear-and-drag" data-options='{"mode":"tear"}'>  (or a <footer>)
+//     <div class="scene-stage">
+//       <div class="tear-old">…the old chapter: its words in the top third, above the tear…</div>  --tear-old ground
+//       <div class="tear-new">…the new chapter: its words in the bottom third, below it…</div>   --tear-new ground
+//     </div>
+//   </section>
+//   The part of the old ground below the tear is a copy that rolls away; above it, the old chapter stays, its
+//   torn edge a band of white paper fibre. The next section continues on the new ground.
+//
+//   Options (peel / tear):
+//   hold, phoneHold: 1-3           [1.5]     screens held (keep the sweep at 1 screen or more)
+//   angle:   degrees               [-34 / 163] the way the fold travels (peel: up and to the right; tear: to the
+//            left, tilted); phoneAngle [-58 / 163]
+//   band:    0.05-0.15             [0.09]    the rolled band, as a share of the sheet's extent
+//   from, to: 0-1                  [0.12-0.86 / 0.04-0.85]  the sweep, as fractions of the scene (the tear's
+//                                           gathers speed as it rips: power1.in)
+//   lift:    true | false          [true]    peel: the sticker lifts a little and turns as it comes away
+//   tilt:    degrees               [11.25]   tear: the tear's slant, rising to the right
+//   at, phoneAt: 0.3-0.7           [0.55 / 0.5]  tear: the height of the tear's middle, as a share of the stage
+//   seed:    any integer           [11]      tear: a different ragged edge
+//
+// Smoothness: only transform and opacity move, and nothing is repainted while a scene runs: the drag's new
+// page is a sheet with a fixed chevron edge moved by transform, and the fold modes' clips never change. Every
+// picture is decoded before the scene starts; layers are promoted (will-change) only while the scene is within
+// a screen of the viewport.
 //
 // Page tokens: --drag-dark (old chapter colour, #14204a), --ground (new page = next section), --ink,
 // --font-display. Timeline positions are fractions of the scene (0-1).
@@ -85,11 +138,16 @@
   if (!window.Stage) { console.warn(ID + ': load stage.js before this file'); return; }
 
   const DEFAULTS = {
-    dir: 'ltr', hold: null, phoneHold: 2.6, phone: 'vertical', scrub: null, object: 'jet',
+    dir: 'ltr', hold: null, phoneHold: 2.2, phone: 'vertical', scrub: null, object: 'jet',
     tint: 0.35, len: 0.8, phoneLen: 0.62, grow: 1.25, phoneGrow: 1.15, apex: null, sweep: null, bleed: true, shadow: true, veil: true,
   };
   const DPR = () => Math.min(2, window.devicePixelRatio || 1);
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  // scroll on to the end of a running scene (where every block of words has landed)
+  const toEnd = (st) => {
+    if (!st || st.progress > 0.999) return;
+    if (Stage.lenis) Stage.lenis.scrollTo(st.end); else window.scrollTo({ top: st.end, behavior: 'smooth' });
+  };
 
   // ---------------------------------------------------------------------------------------------------------
   // The fallback object: a white twin-engine freighter seen from straight above, nose right, drawn on a
@@ -104,6 +162,7 @@
   const flip = (d) => d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (m, x, y) => `${x} ${1000 - +y}`);
   const both = (d, a = '') => `<path d="${d}"${a}/><path d="${flip(d)}"${a}/>`;
   const JET_SPAN = 0.982;
+  const VEIL_DESK = 1440 / 900, VEIL_PHONE = 390 / 844;   // the shapes the cloud deck is composed for
   const SHADOW_PAD = 0.08;   // padding round the shadow, as a share of the object's length
   const jetSVG = (brand) => {
     const win = Array.from({ length: 26 }, (_, i) => `<rect x="${300 + i * 22}" y="${i % 9 === 4 ? 462 : 463}" width="9" height="${i % 9 === 4 ? 9 : 5}" rx="2"/>`).join('');
@@ -262,77 +321,8 @@
   };
 
   // ---------------------------------------------------------------------------------------------------------
-  // Cloud from ordinary photographs: bright, neutral pixels become cloud, dark and coloured ones clear, colour
-  // goes to a cool grey-white; towards the frame only the densest cloud survives, so a piece ends in cloud-
-  // shaped edges rather than a soft box. Done once, then handed back as a bitmap <img>. The photo must come
-  // with CORS (crossorigin="anonymous").
-  const smooth = (e0, e1, v) => { const t = clamp((v - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
-  const keyCloud = (img, piece) => {
-    const nw = img.naturalWidth, nh = img.naturalHeight;
-    if (!nw) return Promise.resolve();
-    const cr = (img.dataset.crop || '0 0 1 1').trim().split(/[\s,]+/).map(Number);
-    const [sx, sy, sw, sh] = cr.length === 4 && cr.every((v) => v >= 0 && v <= 1) ? [cr[0] * nw, cr[1] * nh, cr[2] * nw, cr[3] * nh] : [0, 0, nw, nh];
-    const kv = (img.dataset.key || '').trim().split(/[\s,]+/).map(Number);
-    const [lo, hi] = kv.length === 2 && kv.every((v) => v > 0 && v < 1.5) ? kv : [0.56, 0.72];
-    const turn = ((Math.round((+img.dataset.turn || 0) / 90) * 90) % 360 + 360) % 360;
-    const side = turn % 180 !== 0;
-    const w = 1100, h = Math.round(side ? (w * sw) / sh : (w * sh) / sw);
-    const c = document.createElement('canvas');
-    c.width = w; c.height = h;
-    piece.width = w; piece.height = h;
-    const x = c.getContext('2d', { willReadFrequently: true });
-    x.translate(w / 2, h / 2);
-    x.rotate((turn * Math.PI) / 180);
-    if (img.hasAttribute('data-flip')) x.scale(-1, 1);
-    const dw = side ? h : w, dh = side ? w : h;
-    x.drawImage(img, sx, sy, sw, sh, -dw / 2, -dh / 2, dw, dh);
-    let px;
-    try { px = x.getImageData(0, 0, w, h); } catch {
-      console.warn(ID + ': a cloud photo without CORS cannot be keyed; add crossorigin="anonymous" or use an alpha cut-out', img.src);
-      piece.hidden = true;
-      return Promise.resolve();
-    }
-    const d = px.data;
-    for (let j = 0; j < h; j++) {
-      const v = (j / (h - 1)) * 2 - 1, v4 = v * v * v * v;
-      for (let i = 0; i < w; i++) {
-        const u = (i / (w - 1)) * 2 - 1, q = (i + j * w) * 4;
-        const frame = 1 - smooth(0.78, 1, Math.pow(u * u * u * u + v4, 0.25));   // a rounded box
-        if (frame <= 0) { d[q + 3] = 0; continue; }
-        const R = d[q] / 255, G = d[q + 1] / 255, B = d[q + 2] / 255;
-        const L = 0.3 * R + 0.59 * G + 0.11 * B, sat = Math.max(R, G, B) - Math.min(R, G, B);
-        const lift = (1 - frame) * 0.45;
-        const a = smooth(lo + lift, hi + lift, L - 0.6 * sat) * smooth(0, 0.35, frame);
-        const t = smooth(0.38, 0.96, L);
-        d[q] = 150 + 105 * t; d[q + 1] = 160 + 95 * t; d[q + 2] = 178 + 77 * t; d[q + 3] = 255 * a;
-      }
-    }
-    // specks (roads, roofs, glints, noise in a sky) are not cloud: drop every patch smaller than 1/2500 of the piece
-    const N = w * h, lab = new Int32Array(N), sizes = [0], minArea = Math.round(N / 2500);
-    for (let s0 = 0; s0 < N; s0++) {
-      if (lab[s0] || d[s0 * 4 + 3] < 64) continue;
-      const id = sizes.length, st = [s0];
-      let n = 0;
-      lab[s0] = id;
-      while (st.length) {
-        const i = st.pop(), xx = i % w;
-        n++;
-        for (const k of [xx > 0 ? i - 1 : -1, xx < w - 1 ? i + 1 : -1, i - w, i + w]) if (k >= 0 && k < N && !lab[k] && d[k * 4 + 3] >= 64) { lab[k] = id; st.push(k); }
-      }
-      sizes.push(n);
-    }
-    for (let i = 0; i < N; i++) {
-      const big = lab[i] ? sizes[lab[i]] >= minArea : [i - 1, i + 1, i - w, i + w].some((k) => k >= 0 && k < N && lab[k] && sizes[lab[k]] >= minArea);
-      if (!big) d[i * 4 + 3] = 0;
-    }
-    x.setTransform(1, 0, 0, 1, 0, 0);
-    x.putImageData(px, 0, 0);
-    return toImg(c, piece);
-  };
-
-  // ---------------------------------------------------------------------------------------------------------
-  window.Scenes = window.Scenes || {};
-  window.Scenes[ID] = (root, opts = {}) => {
+  // DRAG
+  const dragScene = (root, opts = {}) => {
     const o = { ...DEFAULTS, ...opts };
     const stage = root.querySelector(':scope > .scene-stage');
     if (!stage) return null;
@@ -393,25 +383,15 @@
     };
     paintJet(0.8 * W() * 0.62, 1);
 
-    // cloud photographs keyed into cut-outs: each source photo is swapped for a bitmap of its cloud
-    if (veil) {
-      for (const img of veil.querySelectorAll('img.drag-veil__piece[data-key]')) {
-        const piece = new Image(1100, 690);
-        piece.className = 'drag-veil__piece drag-veil__piece--keyed';
-        piece.alt = '';
-        piece.src = BLANK;
-        img.replaceWith(piece);
-        const go = () => keyCloud(img, piece);
-        if (img.complete && img.naturalWidth) go(); else img.decode().then(go).catch(() => img.addEventListener('load', go, { once: true }));
-      }
-    }
     const pieces = veil && o.veil !== false ? [...veil.querySelectorAll(':scope > .drag-veil__piece')].slice(0, 7) : [];
     if (veil && o.veil === false) veil.hidden = true;
     const veilOn = pieces.length > 0;
+    const used = () => (geo.vertical ? pieces.slice(0, 4) : pieces);   // the phone uses the first four
     const hold = o.hold ?? (veilOn ? 3 : 2);
     const scrub = o.scrub ?? (Stage.lenis ? true : 0.6);
-    // everything that moves is composited for as long as the scene runs (stage.css: [data-move])
-    for (const el of [rig, srig, obj, shade, ground, veil, inner, line, ...pieces]) if (el) el.setAttribute('data-move', '');
+    // Every picture is decoded before it moves, so no frame of the scroll waits for a decode. Layers are promoted
+    // only while the scene is near (.is-near, see CSS), not for as long as the page is open.
+    for (const img of root.querySelectorAll('img')) if (img.decode && !img.src.startsWith('data:')) img.decode().catch(() => {});
 
     // The words of the new page land in the object's wake: each block of text appears once the object's
     // outline has passed it (the pictures it may cross), never before the block above it.
@@ -421,12 +401,21 @@
     const ink = words.map((b) => [b, ...b.querySelectorAll('*')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.nodeValue.trim())));
     // (an element inside another one that fades only switches, so the two opacities never multiply)
     const nested = ink.map((l) => l.map((e) => l.some((a) => a !== e && a.contains(e))));
+    // (each fading element gets its own layer while the scene is near, so a fade step is not a repaint)
+    ink.forEach((l, i) => l.forEach((e, k) => { if (!nested[i][k]) e.setAttribute('data-ink', ''); }));
     const shown = ink.map(() => -1);   // last value written, so an unchanged block is left alone
     const FADE = 0.05, GAP = 0.015;    // in drag progress: how long a block takes to land, and the step between blocks
+    // A block that takes keyboard focus before it has landed shows at once (CSS: [data-block]:focus-within), and
+    // the page scrolls on to the end of the scene, where it has landed.
+    words.forEach((b) => b.setAttribute('data-block', ''));
+    root.addEventListener('focusin', (e) => {
+      const i = words.findIndex((b) => b.contains(e.target));
+      if (i >= 0 && shown[i] < 1) toEnd(trig);
+    });
 
     // geometry, measured on every refresh: object length in px, the seam (point and the depth of each side),
-    // the --edge range in %, and when (in drag progress) each block of words may land
-    const geo = { L: 0, apex: 0.5, d1: 0, d2: 0, from: -60, to: 160, vertical: false, landAt: [] };
+    // the edge's range in %, and when (in drag progress) each block of words may land
+    const geo = { L: 0, apex: 0.5, d1: 0, d2: 0, from: -60, to: 160, vertical: false, landAt: [], enter: [] };
     const measure = () => {
       if (!root.classList.contains('is-live')) return;
       const v = geo.vertical, along = v ? H() : W(), across = v ? W() : H();
@@ -457,6 +446,49 @@
       if (obj) gsap.set(obj, { xPercent: -ax, transformOrigin: `${ax}% 50%` });
       if (shade) gsap.set(shade, { xPercent: -axS, transformOrigin: `${axS}% 50%` });
       paintJet(L, grow);
+      // the cut-out's box is mostly clear: clip it to a stepped hull of its outline (fixed, painted once), so the
+      // empty corners of the box lie over nothing, not even for hit-testing
+      if (obj && bands) {
+        const on = bands.map((bd, i) => {
+          const near = bands.slice(Math.max(0, i - 1), i + 2).filter((n) => n.runs.length);
+          return near.length ? [Math.min(...near.map((n) => n.runs[0][0])) - 0.015, Math.max(...near.map((n) => n.rear)) + 0.015, bd] : null;
+        }).filter(Boolean);
+        if (on.length) {
+          const X = (f) => (100 * (1 - clamp(f, 0, 1))).toFixed(2) + '%', Y = (g) => (100 * clamp(g + 0.5, 0, 1)).toFixed(2) + '%';
+          const last = on.length - 1, y0 = (i, bd) => (i === 0 ? bd.g0 - 0.015 : bd.g0), y1 = (i, bd) => (i === last ? bd.g1 + 0.015 : bd.g1);
+          const front = on.flatMap(([f, , bd], i) => [`${X(f)} ${Y(y0(i, bd))}`, `${X(f)} ${Y(y1(i, bd))}`]);
+          const rear = on.map((e, i) => [e, i]).reverse().flatMap(([[, r, bd], i]) => [`${X(r)} ${Y(y1(i, bd))}`, `${X(r)} ${Y(y0(i, bd))}`]);
+          obj.style.clipPath = `polygon(${[...front, ...rear].join(', ')})`;
+        }
+      }
+      // the cloud: its box keeps the shape the deck was composed for and covers the stage (cropped, never
+      // stretched), so the deck closes at any window shape. Each piece comes in from outside the frame, along the
+      // line from the middle of the stage through its own middle (the way things move as the view climbs), at
+      // full opacity and a little larger than it lands, so no frame shows a half-clear sheet over the photo; one
+      // placed in the right half comes in from the right and never crosses the closing line on the left.
+      const w0 = W(), h0 = H();
+      if (veilOn) {
+        const ar = v ? VEIL_PHONE : VEIL_DESK, bw = Math.max(w0, h0 * ar), bh = Math.max(h0, w0 / ar);
+        const bx = (w0 - bw) / 2, by = (h0 - bh) / 2;
+        Object.assign(veil.style, { left: bx.toFixed(1) + 'px', top: by.toFixed(1) + 'px', right: 'auto', bottom: 'auto', width: bw.toFixed(1) + 'px', height: bh.toFixed(1) + 'px' });
+        const s0 = v ? 1.4 : 1.5, m = 0.02 * Math.max(w0, h0);
+        geo.enter = used().map((p) => {
+          const hw = p.offsetWidth / 2, hh = p.offsetHeight / 2, cx = bx + p.offsetLeft + hw, cy = by + p.offsetTop + hh;
+          let ux = cx / w0 - 0.5, uy = cy / h0 - 0.5;
+          if (Math.hypot(ux, uy) < 0.08) { ux = 0; uy = -1; }   // a piece in the middle comes down from the top
+          ux *= w0; uy *= h0;
+          const n = Math.hypot(ux, uy) || 1;
+          ux /= n; uy /= n;
+          // how far along that line until its box (at the start scale) is clear of the stage on one side
+          const t = Math.min(...[
+            ux > 1e-3 ? (w0 + m - cx + hw * s0) / ux : Infinity,
+            ux < -1e-3 ? (cx + hw * s0 + m) / -ux : Infinity,
+            uy > 1e-3 ? (h0 + m - cy + hh * s0) / uy : Infinity,
+            uy < -1e-3 ? (cy + hh * s0 + m) / -uy : Infinity,
+          ]);
+          return { x: ux * t, y: uy * t, s: s0 };
+        });
+      }
       // each block: how far along the travel its words end, and the band across the travel they occupy, in px
       // of the stage, measured from the text's own line boxes against the page (so the tow cancels out)
       if (!inner) return;
@@ -527,8 +559,10 @@
       toRest();
     };
 
-    let liveEdge = null;
+    let liveEdge = null, trig = null;
+    const track = { u: 0 };   // the drag's progress, 0-1
     const drag = (vertical) => (tl) => {
+      trig = tl.scrollTrigger || null;
       geo.vertical = vertical;
       if (overflows()) { tooTall(); return; }
       fellBack = false;
@@ -544,11 +578,20 @@
       if (obj) gsap.set(obj, { x: 0, y: 0, yPercent: -50, rotation: vertical ? -90 : 0 });
       if (shade) gsap.set(shade, { yPercent: -50, rotation: vertical ? -90 : 0 });
       measure();
+      // the moving parts are promoted (will-change, see the CSS) from a screen before the scene until half a
+      // screen after it, so the layers are made and painted before the hold, and let go once it is past
+      ScrollTrigger.create({
+        trigger: root, start: () => 'top bottom+=' + H(), end: () => 'bottom top-=' + Math.round(H() / 2),
+        onToggle: (self) => root.classList.toggle('is-near', self.isActive),
+      });
       const s = rtl && !vertical ? -1 : 1;
       const grow = vertical ? o.phoneGrow : o.grow;
-      const t0 = veilOn ? (vertical ? 0.18 : 0.28) : 0.1, t1 = vertical ? 0.8 : 0.94, dur = t1 - t0;
+      // The drag's pace is linear on both (an eased plane visibly brakes or lurches mid-frame; the scrub gives the
+      // weight). Desktop: 0.66 of a 3-screen hold. Phone: 0.75 of a 2.2-screen hold (1.65 screens), ending at 0.92,
+      // so the words land just as the tail leaves and only a short still hold (0.18 screens) follows.
+      const t0 = veilOn ? (vertical ? 0.17 : 0.28) : 0.1, t1 = vertical ? 0.92 : 0.94, dur = t1 - t0;
       const tint0 = clamp(+o.tint || 0, 0, 0.7);
-      const at = (edge) => t0 + ((edge - geo.from) / (geo.to - geo.from)) * dur;   // when --edge reaches a value
+      const at = (edge) => t0 + clamp((edge - geo.from) / (geo.to - geo.from), 0, 1) * dur;   // when the edge reaches a value
 
       // the old chapter closes: the line leaves, the view climbs and darkens, cloud closes into a deck
       // (text and pages fade by opacity, never visibility, so they stay in the accessibility tree)
@@ -561,31 +604,38 @@
         tl.fromTo(ground, { opacity: 1 - tint0 }, { opacity: 0.25, duration: 0.26 }, 0.05);
       } else if (tint) tl.fromTo(tint, { opacity: tint0 }, { opacity: 0.75, duration: 0.26 }, 0.05);
       if (veilOn) {
-        const use = vertical ? pieces.slice(0, 4) : pieces;
-        const from = vertical ? [3, 2.6, 2.4, 2.2] : [4, 3.4, 3, 2.8, 2.6, 2.4, 2.2];
+        const use = used();
         if (pieces.length > use.length) gsap.set(pieces.slice(use.length), { autoAlpha: 0 });
-        // the first two (on the right) come while the line is still there; the rest once it has nearly gone;
-        // every piece ends fully opaque, so by the time the nose breaks out the frame is a deck of cloud
-        // (a piece settles in scale first and firms up after, so the frame is crisp cloud rather than a milky wash)
-        const when = vertical ? [0.05, 0.08, 0.11, 0.14] : [0.05, 0.08, 0.11, 0.13, 0.15, 0.17, 0.19];
+        // the first two (in the right half on a desktop, the bottom half on a phone) come while the line is still
+        // there; the rest once it is below 0.2. Each slides in from outside the frame at full opacity (see
+        // measure), decelerating into place; the deck is closed as the nose breaks out of it.
+        const when = vertical ? [0.03, 0.06, 0.105, 0.12] : [0.04, 0.07, 0.115, 0.13, 0.145, 0.16, 0.175];
+        const d = vertical ? 0.12 : 0.125;
         use.forEach((p, i) => {
-          const d = vertical ? 0.16 : 0.17;
-          tl.fromTo(p, { scale: from[i] }, { scale: 1, duration: d, ease: 'power1.out' }, when[i]);
-          tl.fromTo(p, { autoAlpha: 0 }, { autoAlpha: 1, duration: d, ease: 'power1.inOut' }, when[i]);
+          const e = (k) => () => (geo.enter[i] ? geo.enter[i][k] : k === 's' ? 1 : 0);
+          tl.fromTo(p, { x: e('x'), y: e('y'), scale: e('s') }, { x: 0, y: 0, scale: 1, duration: d, ease: 'power1.out' }, when[i] ?? when[when.length - 1]);
         });
         // the deck drifts back against the flight as the plane passes over it
-        tl.fromTo(veil, { scale: 1, xPercent: 0, yPercent: 0 }, vertical ? { scale: 0.88, yPercent: 10, duration: 0.56 } : { scale: 0.9, xPercent: -9 * s, duration: 0.58 }, vertical ? 0.3 : 0.36);
+        tl.fromTo(veil, { scale: 1, x: 0, y: 0 }, vertical ? { scale: 0.88, y: () => 0.1 * H(), duration: t1 - t0 - 0.08 } : { scale: 0.9, x: () => -0.09 * W() * s, duration: t1 - t0 - 0.08 }, t0 + 0.08);
       }
 
-      // THE DRAG. The clip reads --edge; both rigs move by the same number as a % of the stage, in the
-      // same window, linear (the scrub gives the weight). The object scales about the clip's point.
+      // THE DRAG. One number, the edge (the chevron's point as a % of the stage), places the object's rig and the
+      // new page's sheet: each is moved by it, by transform, in the same window at the same pace, so the seam
+      // never comes loose. The sheet's content moves back by the same amount and stays put. The object scales
+      // about the chevron's point.
       const rigPos = (e) => (vertical || rtl ? 100 - e : e);
-      const rigs = [rig, srig].filter(Boolean);
-      gsap.set(rigs, { x: 0, y: 0, xPercent: 0, yPercent: 0 });
+      const sheetPos = (e) => rigPos(e) - (vertical || rtl ? 0 : 100);   // the sheet's point is its far edge
+      const axis = vertical ? 'y' : 'x', along = () => (vertical ? H() : W());
+      gsap.set(rig, { x: 0, y: 0, xPercent: 0, yPercent: 0 });
       if (words.length) { gsap.set(ink.flat(), { opacity: 0 }); shown.fill(0); }
-      liveEdge = gsap.fromTo(newEl, { '--edge': () => geo.from }, { '--edge': () => geo.to, duration: dur, ease: 'none', onUpdate() { land(this.progress()); } });
+      // the words follow the drag's progress, kept on a plain object (a custom property tweened on the page
+      // would restyle the whole page every frame for nothing)
+      track.u = 0;
+      liveEdge = gsap.fromTo(track, { u: 0 }, { u: 1, duration: dur, ease: 'none', onUpdate: () => land(track.u) });
       tl.add(liveEdge, t0);
-      tl.fromTo(rigs, vertical ? { yPercent: () => rigPos(geo.from) } : { xPercent: () => rigPos(geo.from) }, vertical ? { yPercent: () => rigPos(geo.to), duration: dur } : { xPercent: () => rigPos(geo.to), duration: dur }, t0);
+      tl.fromTo(rig, vertical ? { yPercent: () => rigPos(geo.from) } : { xPercent: () => rigPos(geo.from) }, vertical ? { yPercent: () => rigPos(geo.to), duration: dur } : { xPercent: () => rigPos(geo.to), duration: dur }, t0);
+      tl.fromTo(newEl, { [axis]: () => (sheetPos(geo.from) / 100) * along() }, { [axis]: () => (sheetPos(geo.to) / 100) * along(), duration: dur }, t0);
+      if (inner) tl.fromTo(inner, { [axis]: () => (-sheetPos(geo.from) / 100) * along() }, { [axis]: () => (-sheetPos(geo.to) / 100) * along(), duration: dur }, t0);
       if (obj) tl.fromTo(obj, { scaleX: s, scaleY: 1 }, { scaleX: grow * s, scaleY: grow, duration: dur }, t0);
       if (shade) {
         tl.fromTo(shade,
@@ -595,9 +645,9 @@
       }
       // the new page lags and settles, as if towed
       if (inner) tl.fromTo(inner, vertical ? { yPercent: 5 } : { xPercent: -6 * s }, { xPercent: 0, yPercent: 0, duration: 0.5, ease: 'power2.out' }, t0 + 0.1);
-      // nothing is composited that cannot be seen: the new page waits for the clip's point, the old chapter
-      // goes once the clip is fully open (0.95 at the latest)
-      tl.fromTo(newEl, { opacity: 0 }, { opacity: 1, duration: 0.001 }, Math.max(t0, at(-2)));
+      // the new page needs no switch: until the clip's point enters, its polygon has no area (and the layers in
+      // it are painted ahead, so its first frame waits for nothing). The old chapter goes once the clip is fully
+      // open (0.95 at the latest), so its cloud is no longer composited.
       if (oldEl) tl.fromTo(oldEl, { opacity: 1 }, { opacity: 0, duration: 0.001 }, Math.min(0.95, at(100 + geo.dp) + 0.01));
       // a still hold on the finished page
       tl.to({}, { duration: 1 - t1 }, t1);
@@ -608,11 +658,12 @@
     const touched = [rig, srig, obj, shade, ground, tint, line, veil, oldEl, newEl, inner, ...pieces, ...ink.flat()].filter(Boolean);
     const own = touched.map((el) => el.getAttribute('style'));
     const clean = () => {
+      root.classList.remove('is-near');
       if (!Stage.live) return;
       gsap.set(touched, { clearProps: 'all' });
       touched.forEach((el, i) => (own[i] == null ? el.removeAttribute('style') : el.setAttribute('style', own[i])));
       shown.fill(-1);
-      liveEdge = null;
+      liveEdge = trig = null;
     };
     const built = (vertical) => { const b = drag(vertical); return (tl) => { clean(); b(tl); }; };
     const toRest = () => { root.classList.remove('is-live'); root.classList.add('is-rest'); root.style.removeProperty('--hold'); clean(); };
@@ -624,15 +675,17 @@
     });
     if (!Stage.live) return start();
 
-    // very small screens keep the finished composition; elsewhere the scene runs, and its listeners live
-    // exactly as long as it does
+    // very small screens and reduced motion keep the finished composition; elsewhere the scene runs, and its
+    // listeners live exactly as long as it does. (Reduced motion is settled here, not left to Stage.scene: its
+    // matchMedia only runs when one of its conditions matches, so on a desktop with reduced motion it never ran
+    // and the section was left with neither .is-live nor .is-rest.)
     const outer = gsap.matchMedia();
-    outer.add({ fits: '(min-width: 360px) and (min-height: 560px)', small: '(max-width: 359px), (max-height: 559px)' }, (c) => {
-      if (!c.conditions.fits) { toRest(); return () => root.classList.remove('is-rest'); }
+    outer.add({ fits: '(min-width: 360px) and (min-height: 560px)', small: '(max-width: 359px), (max-height: 559px)', still: '(prefers-reduced-motion: reduce)' }, (c) => {
+      if (!c.conditions.fits || c.conditions.still) { toRest(); return () => root.classList.remove('is-rest'); }
       let m = start();
       // a refresh (resize, fonts) re-renders the timeline without callbacks, so the words are set again after it
       const onRefreshInit = () => measure();
-      const onRefresh = () => { if (liveEdge && root.classList.contains('is-live')) { shown.fill(-1); land(liveEdge.progress()); } };
+      const onRefresh = () => { if (liveEdge && root.classList.contains('is-live')) { shown.fill(-1); land(track.u); } };
       // a window that has shrunk below the new page falls back to the finished composition, and one that has
       // grown enough for it gets the live scene back
       let wait = 0;
@@ -661,5 +714,333 @@
       };
     });
     return outer;
+  };
+
+  // =========================================================================================================
+  // PEEL and TEAR. A sheet comes off the page along a fold that sweeps across it. Ahead of the fold the sheet
+  // lies flat; just behind it a band of the sheet's back has rolled over (a tube: the back's colour, mirrored
+  // across the fold, shaded by flat bands that are blurred once, never a gradient); the rest has lifted away,
+  // and what was under the sheet shows. All of it is transform: the flat part sits in a frame turned to the
+  // fold, whose edge is the fold, moved along by transform with its content moved back by the same amount; the
+  // band is the same frame, mirrored. Every clip is static (painted once per size), so nothing is repainted.
+  const mk = (cls, parent) => { const e = document.createElement('div'); e.className = cls; e.setAttribute('aria-hidden', 'true'); if (parent) parent.appendChild(e); return e; };
+  // a copy of an element for the moving parts: hidden from assistive tech, no ids, no tab stops
+  const copyOf = (el, cls) => {
+    const c = el.cloneNode(true);
+    for (const e of [c, ...c.querySelectorAll('[id]')]) e.removeAttribute('id');
+    c.setAttribute('aria-hidden', 'true');
+    c.inert = true;
+    c.classList.add(cls);
+    return c;
+  };
+  // a seeded random, so a tear has the same edge on every visit and after every resize
+  const rnd = (seed) => () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  // paper grain, drawn once into a small tile (a bitmap, not a gradient)
+  let grainTile = '';
+  const grain = () => {
+    if (grainTile) return grainTile;
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const x = c.getContext('2d'), d = x.createImageData(128, 128), r = rnd(7);
+    for (let i = 0; i < d.data.length; i += 4) { const v = r() < 0.5 ? 40 : 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 10 + r() * 22; }
+    x.putImageData(d, 0, 0);
+    grainTile = `url("${c.toDataURL('image/png')}")`;
+    return grainTile;
+  };
+  const poly = (pts) => `polygon(${pts.map(([x, y]) => `${x.toFixed(1)}px ${y.toFixed(1)}px`).join(', ')})`;
+
+  // The fold rig, inside `host` (a full-stage box): the flat frame with `face` (the sheet as it lies), the band
+  // frame with `rear` (the sheet's back, which the frame mirrors), the tube's shading strips inside `rearShape`,
+  // the tube's own shade on the sheet inside `faceShape`, and the lifted part's shade inside `under` (a
+  // full-stage box clipped to where the sheet was). place(s) puts the fold at s along phi.
+  const TUBE = [[0, 0.12, 'rgb(0 0 0 / .3)'], [0.12, 0.3, 'rgb(0 0 0 / .1)'], [0.4, 0.62, 'rgb(255 255 255 / .65)'], [0.8, 1.04, 'rgb(0 0 0 / .16)']];
+  const foldRig = (host, { face, rear, faceShape, rearShape, under, edge }) => {
+    const F = mk('fold-frame', host), Fc = mk('fold-box', F);
+    const B = mk('fold-frame', host), Bc = mk('fold-box', B);
+    Fc.appendChild(face);
+    Bc.appendChild(rear);
+    const strips = TUBE.map(([u0, u1, c]) => { const e = mk('fold-strip', rearShape); e.style.background = c; return { e, u0, u1 }; });
+    const ahead = mk('fold-shade', faceShape);   // the tube's shadow, falling on the sheet ahead of it
+    // A sheet that reaches the stage's edges (a tear): the turned frame's edge is drawn soft where the screen cuts
+    // it, so a hairline of what lies below would show along the stage's sides and foot. Under the sheet, square to
+    // the screen, 3px strips of its ground follow the fold along those edges and fill that hairline.
+    const rims = edge ? ['l', 'r', 't', 'b'].map((k) => { const e = mk('fold-rim', under); e.style.background = edge; return { e, k }; }) : [];
+    const behind = mk('fold-shade', under);      // the lifted part's shadow, on what the sheet uncovers
+    const g = { L: 0, phi: 0, b: 0, fo: [0, 0], ro: [0, 0], W: 0, H: 0 };
+    const size = (W, H, phi, b, fo, ro) => {
+      Object.assign(g, { L: Math.ceil(W + H + 40), phi, b, fo, ro, W, H });
+      for (const { e, k } of rims) Object.assign(e.style, k === 'l' || k === 'r' ? { width: '3px', height: H + 'px', left: k === 'l' ? '0px' : W - 3 + 'px', top: '0px' } : { width: W + 'px', height: '3px', left: '0px', top: k === 't' ? '0px' : H - 3 + 'px' });
+      const L2 = 2 * g.L + 'px';
+      F.style.width = L2; F.style.height = L2;
+      B.style.width = b + 'px'; B.style.height = L2;
+      for (const c of [Fc, Bc]) { c.style.width = W + 'px'; c.style.height = H + 'px'; }
+      for (const st of strips) Object.assign(st.e.style, { width: Math.max(1, (st.u1 - st.u0) * b) + 'px', height: L2, filter: `blur(${(b * 0.05).toFixed(1)}px)` });
+      Object.assign(ahead.style, { width: b + 'px', height: L2, filter: `blur(${(b * 0.12).toFixed(1)}px)` });
+      Object.assign(behind.style, { width: b * 0.7 + 'px', height: L2, filter: `blur(${(b * 0.16).toFixed(1)}px)` });
+    };
+    const place = (s, shade = 1, shadeAhead = 1) => {
+      const { L, phi, b, fo, ro } = g;
+      ahead.style.opacity = shadeAhead;
+      const turn = `rotate(${phi}rad) translate(${s}px, ${-L}px)`;
+      F.style.transform = turn;
+      B.style.transform = turn;
+      Fc.style.transform = `translate(${-s}px, ${L}px) rotate(${-phi}rad)`;
+      Bc.style.transform = `translate(${s}px, ${L}px) scaleX(-1) rotate(${-phi}rad)`;
+      for (const st of strips) st.e.style.transform = `translate(${-ro[0]}px, ${-ro[1]}px) rotate(${phi}rad) translate(${s - st.u1 * b}px, ${-L}px)`;
+      ahead.style.transform = `translate(${-fo[0]}px, ${-fo[1] + b * 0.1}px) rotate(${phi}rad) translate(${s + b * 0.2}px, ${-L}px)`;
+      behind.style.transform = `rotate(${phi}rad) translate(${s - b * 0.7}px, ${-L}px)`;
+      behind.style.opacity = shade;
+      // each rim covers the part of its edge still ahead of the fold (where x cos + y sin > s)
+      const c = Math.cos(phi), sn = Math.sin(phi), { W, H } = g;
+      const run = (k, lin, at, len) => {   // ahead where lin * t > at, t along the edge (0..len)
+        if (Math.abs(lin) < 1e-6) return at < 0 ? 0 : len * 2;
+        const t0 = at / lin;
+        return lin > 0 ? Math.max(0, Math.min(len, t0)) : Math.max(-len, Math.min(0, t0 - len));
+      };
+      for (const { e, k } of rims) {
+        if (k === 'l') e.style.transform = `translate(0, ${run(k, sn, s, H)}px)`;
+        else if (k === 'r') e.style.transform = `translate(0, ${run(k, sn, s - W * c, H)}px)`;
+        else if (k === 't') e.style.transform = `translate(${run(k, c, s, W)}px, 0)`;
+        else e.style.transform = `translate(${run(k, c, s - H * sn, W)}px, 0)`;
+      }
+    };
+    return { size, place };
+  };
+
+  // The ragged line of a tear: a slow wave, then jitter at three scales (72, 144 and 288 steps across), so the
+  // edge reads as torn paper fibre at any size rather than a saw of straight teeth; tilted and centred at `at`.
+  const tearEdge = (W, H, o) => {
+    // (on a tall, narrow screen the wave and the jitter are smaller, so the edge stays paper, not a saw)
+    const r = rnd(o.seed), n = 72, sub = 4, vh = (H / 100) * clamp(W / H, 0.55, 1), tan = Math.tan(((+o.tilt || 0) * Math.PI) / 180);
+    const p1 = r() * 6.283, p2 = r() * 6.283, p3 = r() * 6.283, f1 = 0.8 + r() * 0.6, f2 = 2.4 + r() * 1.4;
+    // jitter at one scale: k values (-1..1) eased smoothly between, read at t in 0..1
+    const noise = (k) => { const v = Array.from({ length: k + 1 }, () => r() * 2 - 1); return (t) => { const f = t * k, i = Math.min(k - 1, Math.floor(f)), s = f - i, e = s * s * (3 - 2 * s); return v[i] + (v[i + 1] - v[i]) * e; }; };
+    const coarse = noise(n), mid = noise(n * 2), fibreDepth = noise(n), fibreMid = noise(n * 4);
+    const base = (t) => {
+      const x = -0.01 * W + t * 1.02 * W, u = x / W;
+      return [x, u, o.at * H - (x - W / 2) * tan + 1.6 * vh * Math.sin(6.283 * f1 * u + p1) + 0.9 * vh * Math.sin(6.283 * f2 * u + p2) + 0.62 * vh * coarse(t) + 0.3 * vh * mid(t)];
+    };
+    const A = [], Bf = [], N = n * sub;
+    for (let i = 0; i <= N; i++) {
+      const [x, , y] = base(i / N);
+      A.push([x, y + 0.14 * vh * (r() * 2 - 1)]);
+    }
+    // the torn fibre below it: 1-3.5vh deep, its own edge ragged at a finer grain than the tear (loose fibres,
+    // twice as many steps, each a hair long), never a row of teeth
+    for (let i = 0, N2 = N * 2; i <= N2; i++) {
+      const t = i / N2, [x, u, y] = base(t);
+      const depth = vh * (1 + 2.5 * (0.5 + 0.5 * Math.sin(6.283 * 1.7 * u + p3))) + 0.45 * vh * fibreDepth(t) + 0.2 * vh * fibreMid(t) + 0.2 * vh * r() * r();
+      Bf.push([x, y + Math.max(0.6 * vh, depth)]);
+    }
+    return { A, B: Bf };
+  };
+
+  // Both fold modes: the finished composition on reduced motion and very small screens, the live scene
+  // elsewhere, rebuilt from the page's own inline styles each time.
+  const FOLD_DEFAULTS = {
+    peel: { hold: 1.5, phoneHold: 1.5, angle: -34, phoneAngle: -58, band: 0.09, lift: true, from: 0.12, to: 0.86, ease: 'none', scrub: null },
+    tear: { hold: 1.5, phoneHold: 1.5, angle: 163, phoneAngle: 163, band: 0.09, tilt: 11.25, at: 0.55, phoneAt: 0.5, seed: 11, from: 0.04, to: 0.85, ease: 'power1.in', scrub: null },
+  };
+  const foldScene = (root, mode, opts) => {
+    const o = { ...FOLD_DEFAULTS[mode], ...opts };
+    const stage = root.querySelector(':scope > .scene-stage');
+    if (!stage) return null;
+    root.dataset.mode = mode;
+    const peel = mode === 'peel';
+    const page = stage.querySelector(peel ? ':scope > .peel-page' : ':scope > .tear-new');
+    const sheet = stage.querySelector(peel ? ':scope > .peel-sticker' : ':scope > .tear-old');
+    if (!page || !sheet) { console.warn(`${ID}: mode "${mode}" needs ${peel ? '.peel-page and .peel-sticker' : '.tear-new and .tear-old'} in the stage`); return null; }
+    const W = () => stage.clientWidth || window.innerWidth;
+    const H = () => stage.clientHeight || window.innerHeight;
+    for (const img of root.querySelectorAll('img')) if (img.decode) img.decode().catch(() => {});
+    const artB = peel ? sheet.querySelector('.peel-art--b') : null;
+
+    // the words the sheet covers land once the fold (and the shade behind it) has passed them; the
+    // outermost elements that hold text carry the fade
+    const holders = [...page.querySelectorAll('*')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.nodeValue.trim()));
+    const words = holders.filter((e) => !holders.some((a) => a !== e && a.contains(e)));
+    const touched = [sheet, page, ...words];
+    const own = touched.map((el) => el.getAttribute('style'));
+    const made = [];
+    let rig = null, faceEl = null, foldEl = null, foldTrig = null;
+    root.addEventListener('focusin', (e) => {
+      const i = words.findIndex((w) => w.contains(e.target));
+      if (rig && i >= 0 && geo.at[i] != null && shown[i] < 1) toEnd(foldTrig);
+    });
+    const geo = { s0: 0, s1: 1, b: 1, phi: 0, at: [], fade: 1 };
+    const k = { v: 0 };
+    const clean = () => {
+      root.classList.remove('is-near');
+      for (const e of made.splice(0)) e.remove();
+      touched.forEach((el, i) => (own[i] == null ? el.removeAttribute('style') : el.setAttribute('style', own[i])));
+      rig = faceEl = foldEl = foldTrig = null;
+    };
+    const shown = words.map(() => -1);
+    const update = () => {
+      if (!rig) return;
+      const s = geo.s0 + (geo.s1 - geo.s0) * k.v;
+      // the tube's shade grows with the tube (none before the fold reaches the sheet); the lifted part's
+      // shade fades over the last of the sweep
+      rig.place(s, 1 - Math.max(0, Math.min(1, (k.v - 0.82) / 0.16)), Math.max(0, Math.min(1, (s - geo.lo) / geo.b)));
+      geo.at.forEach((at, i) => {
+        if (at == null) return;
+        const v = Math.round(Math.max(0, Math.min(1, (s - at) / geo.fade)) * 100) / 100;
+        if (v !== shown[i]) { shown[i] = v; words[i].style.opacity = String(v); }
+      });
+    };
+
+    // geometry, on every refresh: the fold's direction, the sweep, the band, the clips and when each block lands
+    const measure = () => {
+      if (!rig) return;
+      const w = W(), h = H(), phone = Stage.phone;
+      const phi = ((phone ? +o.phoneAngle : +o.angle) * Math.PI) / 180, c = Math.cos(phi), sn = Math.sin(phi);
+      const along = ([x, y]) => x * c + y * sn;
+      const sr = stage.getBoundingClientRect();
+      let pts, fo = [0, 0], ro = [0, 0];
+      if (peel) {
+        const r = sheet.getBoundingClientRect(), x0 = r.left - sr.left, y0 = r.top - sr.top;
+        pts = [[x0, y0], [x0 + r.width, y0], [x0 + r.width, y0 + r.height], [x0, y0 + r.height]];
+        fo = ro = [x0, y0];
+        const rad = parseFloat(getComputedStyle(sheet).borderTopLeftRadius) || 0;
+        made[0].style.clipPath = `inset(${y0}px ${w - x0 - r.width}px ${h - y0 - r.height}px ${x0}px round ${rad}px)`;   // the 'under' box
+        gsap.set(foldEl, { transformOrigin: `${x0 + r.width / 2}px ${y0 + r.height / 2}px` });
+      } else {
+        // the tear runs between the old chapter's words and the new one's at any window size: its middle stays
+        // in that gap, and its slant flattens where the gap is too narrow for it (a short window)
+        const tr = document.createRange();
+        const textY = (el) => {
+          const ys = [];
+          for (const n of [el, ...el.querySelectorAll('*')].flatMap((x) => [...x.childNodes])) {
+            if (n.nodeType !== 3 || !n.nodeValue.trim()) continue;
+            tr.selectNodeContents(n);
+            for (const r of tr.getClientRects()) if (r.width) ys.push(r.top - sr.top, r.bottom - sr.top);
+          }
+          return ys;
+        };
+        const oy = textY(sheet), ny = textY(page), vh = h / 100;
+        const top = oy.length ? Math.max(...oy) + 2 * vh : 0, bottom = ny.length ? Math.min(...ny) - 2 * vh : h;
+        const swing = 3.3 * vh, fibre = 3.5 * vh;
+        const slant = Math.max(0, Math.min((w / 2) * Math.tan(((+o.tilt || 0) * Math.PI) / 180), (bottom - top - 2 * swing - fibre) / 2));
+        const lo2 = top + slant + swing, hi2 = bottom - slant - swing - fibre;
+        const want = (phone ? +o.phoneAt : +o.at) * h;
+        const mid = lo2 <= hi2 ? clamp(want, lo2, hi2) : (top + bottom - fibre) / 2;
+        const { A, B } = tearEdge(w, h, { ...o, at: mid / h, tilt: (Math.atan(slant / (w / 2)) * 180) / Math.PI });
+        pts = [...A, [w + 2, h + 2], [-2, h + 2]];
+        const flap = poly(pts);
+        sheet.style.clipPath = poly([[-2, -2], [w + 2, -2], ...A.slice().reverse()]);
+        // the flat flap reaches 2px over the tear, so the two halves of the same sheet show no seam while whole,
+        // and 24px past the stage's edges (a border in its own ground; its content box stays the stage), so the
+        // edge of its turned layer never draws a hairline inside the frame
+        const E = 24, xs = (x) => (x < 0 ? x - E : x > w ? x + E : x);
+        Object.assign(faceEl.style, { inset: -E + 'px', border: `${E}px solid ${getComputedStyle(sheet).backgroundColor}` });
+        faceEl.style.clipPath = poly([...A.map(([x, y]) => [xs(x) + E, y - 2 + E]), [w + 2 * E, h + 2 * E], [0, h + 2 * E]]);
+        for (const e of foldEl.querySelectorAll('.tear-back, .fold-under')) e.style.clipPath = flap;
+        foldEl.querySelector('.tear-fibre').style.clipPath = poly([...A, ...B.slice().reverse()]);
+      }
+      const a = pts.map(along), lo = Math.min(...a), hi = Math.max(...a), b = Math.max(24, o.band * (hi - lo));
+      // (a tear starts with its corner already curled, a hint of what is coming as the stage arrives)
+      Object.assign(geo, { phi, b, lo, hi, s0: peel ? lo - 0.02 * (hi - lo) : lo + 0.35 * b, s1: hi + b + 0.02 * (hi - lo), fade: 0.06 * (hi - lo + b) });
+      rig.size(w, h, phi, b, fo, ro);
+      // a block lands once all of it is behind the fold and past the shade there, and never before the block
+      // before it, so the words arrive in reading order
+      // (measured on the text's own line boxes, not the element's box; every covered block lands before the
+      // sweep ends, even one that reaches past the sheet)
+      let prev = -Infinity;
+      const gap = 0.015 * (geo.s1 - geo.s0), last = geo.s1 - geo.fade * 1.2;
+      const q = sheet.getBoundingClientRect(), rg = document.createRange();
+      geo.at = words.map((e) => {
+        const cs = [];
+        let under = !peel;
+        for (const n of [e, ...e.querySelectorAll('*')].flatMap((x) => [...x.childNodes])) {
+          if (n.nodeType !== 3 || !n.nodeValue.trim()) continue;
+          rg.selectNodeContents(n);
+          for (const r of rg.getClientRects()) {
+            const x0 = r.left - sr.left, y0 = r.top - sr.top;
+            cs.push([x0, y0], [x0 + r.width, y0], [x0, y0 + r.height], [x0 + r.width, y0 + r.height]);
+            if (peel && r.right > q.left && r.left < q.right && r.bottom > q.top && r.top < q.bottom) under = true;
+          }
+        }
+        if (!cs.length || !under) return null;
+        prev = Math.min(last, Math.max(Math.max(...cs.map(along)) + b * 0.8, prev + gap));
+        return prev;
+      });
+      shown.fill(-1);
+    };
+
+    const build = (tl) => {
+      clean();
+      // the rig: [under] [flat frame] [band frame] in a full-stage box above the page and the sheet
+      foldEl = mk('fold', stage);
+      made.push(foldEl);
+      const under = mk('fold-under', foldEl);
+      made.unshift(under);   // made[0]: the 'under' box (its clip is set in measure)
+      let face, rear, faceShape, rearShape;
+      if (peel) {
+        face = faceShape = copyOf(sheet, 'peel-sticker--face');
+        rear = mk('fold-box-inner');
+        rearShape = copyOf(sheet, 'peel-sticker--back');
+        rear.appendChild(rearShape);
+        const fs = mk('fold-box-inner');
+        fs.appendChild(face);
+        face = fs;
+        sheet.style.opacity = '0';   // the sticker itself stays in place for assistive tech; its copies move
+      } else {
+        foldEl.insertBefore(mk('tear-fibre'), under);
+        face = faceShape = copyOf(sheet, 'tear-old--face');
+        rear = mk('fold-box-inner');
+        rearShape = mk('tear-back', rear);
+        foldEl.querySelector('.tear-fibre').style.backgroundImage = grain();
+        rearShape.style.backgroundImage = grain();
+      }
+      faceEl = faceShape;
+      rig = foldRig(foldEl, { face, rear, faceShape, rearShape, under, edge: peel ? null : getComputedStyle(sheet).backgroundColor });
+      measure();
+      // (each covered block gets its own layer while the scene is near, so a fade step is not a repaint)
+      // (a covered block that takes keyboard focus first shows at once, CSS [data-block]:focus-within, and the
+      // page scrolls on to the end of the scene)
+      geo.at.forEach((at, i) => { if (at != null) { words[i].style.opacity = '0'; words[i].setAttribute('data-ink', ''); words[i].setAttribute('data-block', ''); } });
+      foldTrig = tl.scrollTrigger || null;
+      ScrollTrigger.create({
+        trigger: root, start: () => 'top bottom+=' + H(), end: () => 'bottom top-=' + Math.round(H() / 2),
+        onToggle: (self) => root.classList.toggle('is-near', self.isActive),
+      });
+      k.v = 0;
+      tl.fromTo(k, { v: 0 }, { v: 1, duration: o.to - o.from, ease: o.ease, onUpdate: update }, o.from);
+      if (peel && artB) {
+        const b2 = faceShape.querySelector('.peel-art--b');
+        if (b2) tl.fromTo(b2, { opacity: 0 }, { opacity: 1, duration: 0.001 }, 0.22);
+      }
+      // the sticker lifts a little and turns as it comes away (less on a phone, where words sit close above it)
+      if (peel && o.lift) tl.fromTo(foldEl, { y: 0, rotation: 0 }, { y: () => (Stage.phone ? -0.015 : -0.06) * H(), rotation: () => (Stage.phone ? 1.5 : 3), duration: o.to }, 0);
+      tl.to({}, { duration: 1 - o.to }, o.to);
+      update();
+    };
+    const toRest = () => { root.classList.remove('is-live'); root.classList.add('is-rest'); root.style.removeProperty('--hold'); clean(); };
+    const start = () => Stage.scene(root, { hold: o.hold, scrub: o.scrub ?? (Stage.lenis ? true : 0.6), build, phone: { hold: o.phoneHold, build }, rest: clean });
+    if (!Stage.live) return start();
+    const outer = gsap.matchMedia();
+    outer.add({ fits: '(min-width: 360px) and (min-height: 560px)', small: '(max-width: 359px), (max-height: 559px)', still: '(prefers-reduced-motion: reduce)' }, (c) => {
+      if (!c.conditions.fits || c.conditions.still) { toRest(); return () => root.classList.remove('is-rest'); }
+      const m = start();
+      const onRefreshInit = () => measure();
+      const onRefresh = () => update();   // a refresh re-renders the timeline without callbacks
+      ScrollTrigger.addEventListener('refreshInit', onRefreshInit);
+      ScrollTrigger.addEventListener('refresh', onRefresh);
+      return () => {
+        ScrollTrigger.removeEventListener('refreshInit', onRefreshInit);
+        ScrollTrigger.removeEventListener('refresh', onRefresh);
+        if (m) m.revert();
+        clean();
+      };
+    });
+    return outer;
+  };
+
+  // ---------------------------------------------------------------------------------------------------------
+  window.Scenes = window.Scenes || {};
+  window.Scenes[ID] = (root, opts = {}) => {
+    const mode = opts.mode || root.dataset.mode || 'drag';
+    if (mode === 'peel' || mode === 'tear') return foldScene(root, mode, opts);
+    return dragScene(root, opts);
   };
 })();

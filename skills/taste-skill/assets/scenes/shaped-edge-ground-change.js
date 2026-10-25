@@ -34,10 +34,12 @@
 //           <svg class="seg-arc" aria-hidden="true" viewBox="0 0 1440 720" preserveAspectRatio="xMidYMax meet">
 //             <path id="seg-arc-a" d="M101 720 A619 619 0 0 1 1339 720" fill="none"/>
 //             <text class="seg-arc__static" text-anchor="middle"><textPath href="#seg-arc-a" startOffset="50%">the same words</textPath></text>
-//           </svg>                                          (the script replaces its content with one <text> per word)
+//           </svg>            (with script this SVG is hidden and the script sets the heading on the curve
+//                             letter by letter in a <div class="seg-arc seg-arc-words"> beside it, moved by
+//                             transform only; style the words through .seg-arc as usual)
 //                     This static path is what a page with no script draws. Its id must be unique on the page:
 //                     when the scene is used two or three times, give each instance its own id (seg-arc-a,
-//                     seg-arc-b...) and point that instance's textPath href at it. The script makes its own ids.
+//                     seg-arc-b...) and point that instance's textPath href at it.
 //           <div class="seg-crest">
 //             <img class="seg-crest__mark" src alt="">      optional emblem, 40-56px
 //             <p class="seg-crest__caption">a statement, 6-10 words</p>   set in the display face, two lines
@@ -77,7 +79,8 @@
 //                                  The flip is timed at the centre of the header's first child (its logo);
 //   chromeX       null   0-100     or at this many percent across the header, for a centred logo.
 //                                  (With no script nothing flips, so give a fixed header a solid bar then.)
-//   scrub         0.6 | true       seconds of catch-up; true (locked) is used when Lenis is smoothing
+//   scrub         0.6 | true       seconds of catch-up; true (locked) is the default when Lenis is smoothing
+//                                  and on touch screens
 //   phone         "same"           "same" | "rest" (the phone gets the finished composition). A heading of
 //                                  more than four words always rests on a phone.
 //
@@ -102,13 +105,10 @@
 // Screens under 560px tall get the finished composition.
 (() => {
   const ID = 'shaped-edge-ground-change';
-  const SVGNS = 'http://www.w3.org/2000/svg';
-  const XLINK = 'http://www.w3.org/1999/xlink';
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const num = (v, d, a, b) => { const n = typeof v === 'string' && v.trim() !== '' ? +v : v; return typeof n === 'number' && isFinite(n) ? clamp(n, a, b) : d; };
   // depth of the arch's edge below its crown at x, for an arch W wide and C tall
   const edgeDepth = (x, W, C) => { const u = clamp((x - W / 2) / (W / 2), -1, 1); return C * (1 - Math.sqrt(1 - u * u)); };
-  let uid = 0;
 
   window.Scenes = window.Scenes || {};
   window.Scenes[ID] = (root, opts = {}) => {
@@ -159,76 +159,139 @@
       }
     };
 
-    // ---- the heading on the curve: one <text> per word on one path, laid out by hand (per-word
-    // startOffset), because word-spacing on a textPath is unreliable across browsers.
+    // ---- the heading on the curve. The words spread along the arch every frame from 0.10 to 0.56, so
+    // they must move by transform only: each letter is its own element, placed on the curve the way
+    // a textPath places a glyph (its middle on the path, its baseline on the path, turned to the
+    // tangent there). Moving a letter is then a compositor job: no text layout, no repaint of the
+    // ground. Letter positions inside each word are measured from the word set whole, so kerning holds.
+    // The static SVG in the markup stays for a page with no script; with script it is hidden.
     const words = label ? label.textContent.trim().split(/\s+/).filter(Boolean) : [];
-    const arc = { path: null, texts: [], tps: [], L: 0, widths: [], sum: 0, gStart: 0, gEnd: 0, g: -1, ok: false, fits: true };
+    const arc = { box: null, words: [], probe: null, lut: null, geo: null, L: 0, sum: 0, base: 0, gStart: 0, gEnd: 0, g: -1, ok: false, fits: true };
     if (svg && words.length) {
-      const id = `seg-arc-path-${(++uid).toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-      svg.textContent = '';
-      arc.path = document.createElementNS(SVGNS, 'path');
-      arc.path.setAttribute('id', id);
-      arc.path.setAttribute('class', 'seg-arc__path');
-      arc.path.setAttribute('fill', 'none');
-      svg.appendChild(arc.path);
+      arc.box = document.createElement('div');
+      arc.box.className = 'seg-arc seg-arc-words';
+      arc.box.setAttribute('aria-hidden', 'true');
       for (const w of words) {
-        const t = document.createElementNS(SVGNS, 'text');
-        t.setAttribute('class', 'seg-arc__word');
-        const tp = document.createElementNS(SVGNS, 'textPath');
-        tp.setAttribute('href', '#' + id);
-        tp.setAttributeNS(XLINK, 'xlink:href', '#' + id);
-        tp.setAttribute('startOffset', '0');
-        tp.textContent = w;
-        t.appendChild(tp);
-        svg.appendChild(t);
-        arc.texts.push(t);
-        arc.tps.push(tp);
+        const m = document.createElement('span'); // the word set whole, measured, never seen
+        m.className = 'seg-arc__measure';
+        m.textContent = w;
+        arc.box.appendChild(m);
+        let at = 0; // offsets in the text node are UTF-16 units, letters are code points
+        const chars = [...w].map((ch) => {
+          const c = document.createElement('span');
+          c.className = 'seg-arc__char';
+          c.textContent = ch;
+          arc.box.appendChild(c);
+          const it = { el: c, at, len: ch.length, c: 0, w: 0 };
+          at += ch.length;
+          return it;
+        });
+        arc.words.push({ m, chars, width: 0 });
       }
+      arc.probe = document.createElement('span'); // finds the baseline inside a letter's box
+      arc.probe.className = 'seg-arc__measure';
+      arc.probe.innerHTML = 'H<i class="seg-arc__base"></i>';
+      arc.box.appendChild(arc.probe);
+      svg.after(arc.box);
+      root.classList.add('seg--chars');
     }
-    // W, C, the path, its length, the word widths and the widest gap: all depend on the box and the font.
-    // The words must stay in the middle 62% of the curve (no tilt past about 56 degrees). A heading too
-    // long for that at the CSS size (a wide display face, a 30-character heading) is set smaller, down
-    // to 65% of it; only past that is it set straight.
+    // The curve: the upper half of an ellipse centred on the cap's bottom middle, inset by i (rx = W/2 - i,
+    // ry = C - i). A table of arc length against angle turns "s along the curve" into a point and a
+    // tangent with no DOM call, so a frame costs only arithmetic and transforms.
+    const N = 720;
+    const pointAt = (s) => {
+      const { lut, geo } = arc;
+      s = clamp(s, 0, arc.L);
+      let lo = 0, hi = N;
+      while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (lut[mid] <= s) lo = mid; else hi = mid; }
+      const f = lut[hi] > lut[lo] ? (s - lut[lo]) / (lut[hi] - lut[lo]) : 0;
+      const th = Math.PI * (1 - (lo + f) / N);
+      const sin = Math.sin(th), cos = Math.cos(th);
+      return { x: geo.cx + geo.rx * cos, y: geo.cy - geo.ry * sin, a: (Math.atan2(geo.ry * cos, geo.rx * sin) * 180) / Math.PI };
+    };
+    // W, C, the curve, its length, the letter positions and the widest gap: all depend on the box and
+    // the font. The words must stay in the middle 62% of the curve (no tilt past about 56 degrees). A
+    // heading too long for that at the CSS size (a wide display face, a 30-character heading) is set
+    // smaller, down to 65% of it; only past that is it set straight.
     arc.measure = () => {
       arc.ok = false;
-      if (!arc.texts.length) return false;
+      if (!arc.words.length) return false;
       const W = cap.clientWidth, C = cap.clientHeight;
       if (!W || !C) return false;
       const i = clamp(0.14 * C, 44, 110); // baseline inset: glyph tops stay ~0.4em inside the edge
-      svg.setAttribute('viewBox', `0 0 ${W} ${C}`);
-      arc.path.setAttribute('d', `M ${i} ${C} A ${W / 2 - i} ${C - i} 0 0 1 ${W - i} ${C}`);
-      arc.L = arc.path.getTotalLength();
-      for (const tp of arc.tps) tp.setAttribute('startOffset', '0');
-      const n = arc.texts.length;
+      arc.geo = { cx: W / 2, cy: C, rx: W / 2 - i, ry: C - i };
+      const lut = new Float64Array(N + 1);
+      let px = arc.geo.cx - arc.geo.rx, py = C;
+      for (let k = 1; k <= N; k++) {
+        const th = Math.PI * (1 - k / N);
+        const x = arc.geo.cx + arc.geo.rx * Math.cos(th), y = arc.geo.cy - arc.geo.ry * Math.sin(th);
+        lut[k] = lut[k - 1] + Math.hypot(x - px, y - py);
+        px = x; py = y;
+      }
+      arc.lut = lut;
+      arc.L = lut[N];
+      // The words keep to the middle of the curve: their ends within its middle 62%, and no letter
+      // where the curve turns steeper than 56 degrees (on a phone the arch is taller than it is wide,
+      // so that comes sooner than the 62%).
+      let k0 = 0;
+      for (; k0 < N / 2; k0++) {
+        const th = Math.PI * (1 - k0 / N);
+        if (Math.abs(Math.atan2(arc.geo.ry * Math.cos(th), arc.geo.rx * Math.sin(th))) <= (56 * Math.PI) / 180) break;
+      }
+      const n = arc.words.length;
+      let win = 0.62 * arc.L;
+      const fs = () => parseFloat(getComputedStyle(arc.box).fontSize) || 16;
       const read = () => {
-        arc.widths = arc.texts.map((t) => t.getComputedTextLength());
-        arc.sum = arc.widths.reduce((a, b) => a + b, 0);
-        arc.gStart = 0.28 * (parseFloat(getComputedStyle(svg).fontSize) || 16);
+        const range = document.createRange();
+        for (const wd of arc.words) {
+          const node = wd.m.firstChild, r0 = wd.m.getBoundingClientRect();
+          wd.width = r0.width;
+          wd.chars.forEach((ch) => {
+            range.setStart(node, ch.at); range.setEnd(node, ch.at + ch.len);
+            const r = range.getBoundingClientRect();
+            ch.w = r.width; ch.c = r.left - r0.left + r.width / 2;
+          });
+        }
+        arc.base = arc.probe.lastChild.offsetTop;
+        arc.sum = arc.words.reduce((a, wd) => a + wd.width, 0);
+        arc.gStart = 0.28 * fs();
+        // the outermost letters' middles may reach the 56-degree points, their ends a little past
+        const first = arc.words[0].chars[0], lw = arc.words[n - 1], last = lw.chars[lw.chars.length - 1];
+        win = Math.min(0.62 * arc.L, arc.L - 2 * lut[k0] + (first ? first.c : 0) + (last ? lw.width - last.c : 0));
         return arc.sum + (n - 1) * arc.gStart;
       };
-      svg.style.removeProperty('font-size');
+      arc.box.style.removeProperty('font-size');
       let need = read();
-      arc.fits = need <= 0.62 * arc.L;
+      arc.fits = need <= win;
       if (!arc.fits && need > 0) {
-        const k = (0.58 * arc.L) / need;
+        const k = (0.94 * win) / need;
         if (k >= 0.65) {
-          svg.style.fontSize = (k * (parseFloat(getComputedStyle(svg).fontSize) || 16)).toFixed(2) + 'px';
+          arc.box.style.fontSize = (k * fs()).toFixed(2) + 'px';
           need = read();
-          arc.fits = need <= 0.62 * arc.L;
+          arc.fits = need <= win;
         }
       }
-      const room = n > 1 ? (0.62 * arc.L - arc.sum) / (n - 1) : 0;
+      // each letter turns about the middle of its baseline, the point that sits on the curve
+      for (const wd of arc.words) for (const ch of wd.chars) ch.el.style.transformOrigin = `${(ch.w / 2).toFixed(2)}px ${arc.base.toFixed(2)}px`;
+      const room = n > 1 ? (win - arc.sum) / (n - 1) : 0;
       arc.gEnd = n > 1 ? Math.max(arc.gStart, Math.min((Stage.phone ? o.phoneSpread : o.spread) * W, room)) : 0;
       arc.g = -1;
       arc.ok = arc.L > 0 && arc.sum > 0;
       return arc.ok;
     };
     arc.layout = (g) => {
-      if (!arc.ok || Math.abs(g - arc.g) < 0.1) return;
+      if (!arc.ok || Math.abs(g - arc.g) < 0.05) return;
       arc.g = g;
-      const n = arc.texts.length;
+      const n = arc.words.length;
       let s = arc.L / 2 - (arc.sum + (n - 1) * g) / 2;
-      for (let k = 0; k < n; k++) { arc.tps[k].setAttribute('startOffset', s.toFixed(1)); s += arc.widths[k] + g; }
+      for (const wd of arc.words) {
+        for (const ch of wd.chars) {
+          const p = pointAt(s + ch.c);
+          ch.el.style.transform = `translate(${(p.x - ch.w / 2).toFixed(2)}px, ${(p.y - arc.base).toFixed(2)}px) rotate(${p.a.toFixed(2)}deg)`;
+        }
+        s += wd.width + g;
+      }
+      root.classList.add('seg--arc-set');
     };
 
     let liveTl = null; // the scrubbed timeline while the scene runs; null in the finished composition
@@ -236,11 +299,11 @@
       if (!liveTl || o.arc === 'static') return Math.max(arc.gStart, 0.5 * arc.gEnd);
       return arc.gStart + (arc.gEnd - arc.gStart) * clamp((liveTl.progress() - 0.1) / 0.46, 0, 1);
     };
-    // Measure with the curve shown (a hidden SVG measures nothing), then decide: on the curve, or set
-    // straight when the words cannot fit on it.
+    // Measure with the letters' box shown (a display:none box measures nothing), then decide: on the
+    // curve, or set straight when the words cannot fit on it.
     const relayout = () => {
       fitHero();
-      if (!arc.texts.length) { root.classList.add('seg--flat'); return; }
+      if (!arc.words.length) { root.classList.add('seg--flat'); return; }
       root.classList.remove('seg--flat');
       const ok = arc.measure();
       const flat = ok && (!arc.fits || (Stage.phone && words.length > 4));
@@ -356,7 +419,9 @@
       const H = window.innerHeight || 1, C = cap.clientHeight || 0.8 * H;
       return Stage.scene(root, {
         hold: Math.round(1.25 * (1 + C / H) * 100) / 100, // informational: the CSS sets the height
-        scrub: o.scrub ?? (Stage.lenis ? true : 0.6),
+        // locked to the scroll when Lenis already smooths it, and on touch screens, where the finger's
+        // own scroll is smooth and the arch must stay attached to it (1:1 is the point of the move)
+        scrub: o.scrub ?? (Stage.lenis || Stage.touch ? true : 0.6),
         build: short.matches ? null : build,
         phone: o.phone === 'rest' || words.length > 4 ? 'rest' : 'same',
         rest,

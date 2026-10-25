@@ -1,10 +1,12 @@
 /* tasteskill / scenes / pinned-chapter-switcher.css
    Default: the finished composition. The heading and a row of chapter links on the stage ground, then
-   every chapter as its own full-width picture block with its title and text set over a flat scrim. This
-   is what reduced motion, no script, a failed CDN and a phone set to 'rest' show.
+   every chapter as its own full-width picture block with its title and text set over a flat scrim (the
+   whole picture with no script; from the picture's horizon down when the script has placed it). This is
+   what reduced motion, no script, a failed CDN and a phone set to 'rest' show.
    Under .is-live: one held stage. Every picture is stacked in the same frame and clipped open by the
-   scroll. The pictures stay clear above their horizon; below it a flat band of scrim (laid by the script
-   from data-horizon) carries every word: the title and text share one slot at the bottom left, and under
+   scroll. The pictures stay clear above their horizon; below it a flat band of scrim (the ::after of the
+   .chs-move box the script wraps round each picture, from data-horizon down) carries every word: the
+   title and text share one slot at the bottom left, and under
    them one dock row holds the heading, the index and the count (on a phone, the heading and count over a
    row of bars). With data-set="pair" the pictures sit in a big and a small frame on the ground and the
    words beside them.
@@ -79,7 +81,8 @@
   background: var(--plate-bg, #1b1c1d);
 }
 [data-scene="pinned-chapter-switcher"] .chs-plate picture,
-[data-scene="pinned-chapter-switcher"] .chs-inset picture { position: absolute; inset: 0; display: block; }
+[data-scene="pinned-chapter-switcher"] .chs-inset picture,
+[data-scene="pinned-chapter-switcher"] .chs-move { position: absolute; inset: 0; display: block; }
 [data-scene="pinned-chapter-switcher"] .chs-img {
   position: absolute;
   inset: 0;
@@ -96,11 +99,13 @@
   opacity: 0;
   pointer-events: none;
 }
-[data-scene="pinned-chapter-switcher"] .chs-band { display: none; }
+/* the scrim: over the whole picture, or, when the script has found the picture's horizon (data-horizon),
+   a band from that line down, so the sky stays clear */
 [data-scene="pinned-chapter-switcher"] .chs-plate::after {
   content: "";
   position: absolute;
   inset: 0;
+  top: var(--band-top, 0px);
   background: rgb(0 0 0 / var(--scrim, 0.45));
   pointer-events: none;
 }
@@ -163,6 +168,15 @@
   [data-scene="pinned-chapter-switcher"] .chs-body { font-size: 15px; line-height: 1.45; }
 }
 
+/* a short screen (a phone on its side, a window dragged short) gets the finished composition from the
+   script too: each chapter one screen tall, so a chapter brought into view shows its picture, title and
+   text together, and the title sized by the height as well */
+@media (max-height: 559px) {
+  [data-scene="pinned-chapter-switcher"] .chs-ch { height: 100svh; min-height: 340px; }
+  [data-scene="pinned-chapter-switcher"] .chs-title { font-size: clamp(40px, min(8vw, 16svh), 128px); }
+  [data-scene="pinned-chapter-switcher"] .chs-text { bottom: clamp(24px, 7vh, 40px); }
+}
+
 /* ---------- live: one held stage ---------- */
 html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { background: var(--chs-ground, #0b0b0c); }
 [data-scene="pinned-chapter-switcher"].is-live {
@@ -181,24 +195,16 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
   overflow: visible;
 }
 [data-scene="pinned-chapter-switcher"].is-live .chs-plate { z-index: 1; }
-/* room for drift and push: the picture (or a clip placed straight in the plate) runs 6% past each edge */
-[data-scene="pinned-chapter-switcher"].is-live :is(.chs-plate, .chs-inset) picture { inset: -6%; }
-[data-scene="pinned-chapter-switcher"].is-live :is(.chs-plate, .chs-inset) > .chs-img { inset: -6%; width: 112%; height: 112%; }
-[data-scene="pinned-chapter-switcher"].is-live .chs-img { transform-origin: 50% 50%; }
+/* room for drift and push: the mover (the box the script wraps round the picture) runs 6% past each edge */
+[data-scene="pinned-chapter-switcher"].is-live :is(.chs-plate, .chs-inset) > .chs-move { inset: -6%; transform-origin: 50% 50%; }
+[data-scene="pinned-chapter-switcher"].is-live .chs-move > :is(picture, .chs-img) { position: absolute; inset: 0; width: 100%; height: 100%; }
 /* live, the scrim is a band from the picture's horizon down (the script sets --band-top; without a
-   horizon it is 0 and the band covers the whole picture). The band's box is the picture's own box, so it
-   takes the same scale and drift and its edge never leaves the horizon. The shade above the horizon starts
-   at --scrim-sky and deepens as the plate is covered. */
+   horizon it is 0 and the band covers the whole picture). It is the mover's own ::after, painted into the
+   same layer as the picture, so it takes the same scale and drift and its edge never leaves the horizon.
+   The shade above it starts at --scrim-sky and deepens as the plate is covered. */
 [data-scene="pinned-chapter-switcher"].is-live .chs-plate::after { display: none; }
 [data-scene="pinned-chapter-switcher"].is-live .chs-shade { opacity: var(--scrim-sky, 0); }
-[data-scene="pinned-chapter-switcher"].is-live .chs-band {
-  display: block;
-  position: absolute;
-  inset: -6%;
-  transform-origin: 50% 50%;
-  pointer-events: none;
-}
-[data-scene="pinned-chapter-switcher"].is-live .chs-band::before {
+[data-scene="pinned-chapter-switcher"].is-live .chs-plate > .chs-move::after {
   content: "";
   position: absolute;
   left: 0;
@@ -206,16 +212,25 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
   bottom: 0;
   top: var(--band-top, 0px);
   background: rgb(0 0 0 / var(--scrim, 0.45));
+  pointer-events: none;
 }
+/* the progress bars and the rolling count move on every seam: keep them on their own small layers */
+[data-scene="pinned-chapter-switcher"].is-live :is(.chs-fill, .chs-reel) { will-change: transform; }
+/* the stage writes --p on the section on every scroll step, and an inherited custom property sends a style
+   pass through every element under it (75 here, with the split lines). Nothing inside the chapters, the
+   heading or the index reads it, so it stops at the stage's children: the pass touches a handful */
+[data-scene="pinned-chapter-switcher"].is-live > .scene-stage > * { --p: 0; }
 
 /* the words: low on the left, over the dock */
 [data-scene="pinned-chapter-switcher"].is-live .chs-text {
   z-index: 30;
   bottom: calc(var(--chs-foot) + var(--chs-tab-h) + clamp(28px, 4.5vh, 52px));
 }
-/* the title stays left of the half-and-half seam, so a new title sits on one picture while it passes */
+/* the title stays left of the half-and-half seam, so a new title sits on one picture while it passes; on
+   a wide, short screen (1536 x 730, 1366 x 650) the height sets its size too, so the words keep to the
+   lower ~40% and the half-and-half frames have the middle of the stage to themselves */
 [data-scene="pinned-chapter-switcher"].is-live .chs-title {
-  font-size: clamp(48px, 6.8vw, 112px);
+  font-size: clamp(48px, min(6.8vw, 11.5svh), 112px);
   max-width: min(11ch, calc(50vw - var(--chs-gutter) - 2.5vw));
 }
 
@@ -338,11 +353,12 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
 }
 /* a detail of the big picture: the same photograph, closer */
 [data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-inset[data-clone] picture,
-[data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-inset[data-clone] > .chs-img {
+[data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-inset[data-clone] .chs-move > .chs-img {
   scale: var(--inset-zoom, 1.7);
   transform-origin: var(--inset-pos, 50% 50%);
 }
-/* the words are on the ground, not on a picture: the shade only darkens a picture being covered */
+/* the words are on the ground, not on a picture: no band, and the shade only darkens a picture being covered */
+[data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-plate > .chs-move::after { content: none; }
 [data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-shade { opacity: 0; }
 /* on the ground the heading and count sit at the top, and the index runs the whole foot */
 [data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-head { top: max(28px, 5vh); bottom: auto; align-items: baseline; }
@@ -379,7 +395,7 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
   [data-scene="pinned-chapter-switcher"].is-live .chs-text { bottom: calc(var(--chs-foot) + 3px + 12px + 22px + 28px); }
   [data-scene="pinned-chapter-switcher"].is-live .chs-title { max-width: none; font-size: 40px; line-height: 0.98; }
   /* a phone shows more text over less picture: a slightly deeper band */
-  [data-scene="pinned-chapter-switcher"].is-live .chs-band::before { background: rgb(0 0 0 / calc(var(--scrim, 0.45) + 0.05)); }
+  [data-scene="pinned-chapter-switcher"].is-live .chs-plate > .chs-move::after { background: rgb(0 0 0 / calc(var(--scrim, 0.45) + 0.05)); }
 
   /* 'pair' on a phone: the big frame alone, framed, with the words under it on the ground, and the bars
      and heading back at the top */

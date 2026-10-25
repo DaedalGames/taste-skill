@@ -180,6 +180,7 @@
   margin: 0;
   width: var(--ws-btn-h);
   height: var(--ws-btn-w);
+  border-radius: 0;     /* the letter is square; the script rounds the bar only after the handoff */
   transform: none;
   opacity: 0;
   pointer-events: none;

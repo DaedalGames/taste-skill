@@ -23,7 +23,8 @@
    light is all core colour (a pale halo would pass behind the white lead at under 3:1 and go brown over
    the night).
    .lf--flood ends on the core (the section after starts on --lf-core).
-   .lf-soft is the rack focus's blurred copy of the two lines (added by the script, live scene only). */
+   .lf-soft is one rung of the rack focus: a copy of the two lines the script blurs once to a fixed
+   radius; there are three, most blurred first, all under the h2 (added by the script, live only). */
 
 [data-scene="light-flood"] {
   --lf-c-day: var(--lf-day, var(--ground, #e6ebee));
@@ -141,8 +142,14 @@
 }
 /* the copy's letters: generated content, so the copy holds no text of its own (a <br> in a line comes
    through as a line break) */
-[data-scene="light-flood"] .lf-soft > span::before { content: attr(data-lf-text); white-space: pre; }
+[data-scene="light-flood"] .lf-soft > span { position: relative; }
+[data-scene="light-flood"] .lf-soft > span::before { content: attr(data-lf-text); white-space: pre; filter: var(--lf-blur, none); }
 [data-scene="light-flood"] .lf-soft > .lf-wrap::before { white-space: pre-line; }
+/* a rung the script could paint shows its canvas (the letters blurred once) and keeps the generated
+   letters only for its layout; otherwise the letters show with the CSS blur, applied when painted */
+[data-scene="light-flood"] .lf-soft > span > canvas { display: none; position: absolute; pointer-events: none; }
+[data-scene="light-flood"] .lf-soft > .lf-drawn > canvas { display: block; }
+[data-scene="light-flood"] .lf-soft > .lf-drawn::before { visibility: hidden; }
 /* Each line stays one line (the headline is two lines at every width). Its size is the smaller of the
    design size and --lf-*-fit, which the script measures so the line fills the width at most; without
    the script, a cap from the character count (18 when unset) does the same job roughly. The key's cap
@@ -185,10 +192,17 @@
 
 /* ---------- live ---------- */
 
-[data-scene="light-flood"].is-live > .scene-stage { min-height: 0; }
-/* the rack focus's soft copy: blurred once by the script, then only faded (its own layer) */
+/* The stage writes --p on the section every frame. Nothing in this scene reads it, and as an inherited
+   custom property it would make every layer in the stage recalculate its style on every frame; the
+   stage keeps a value of its own, so that work stops at the section (4 elements a frame, not 31). */
+[data-scene="light-flood"].is-live > .scene-stage { min-height: 0; --p: 0; }
+/* the rack focus's soft copies: blurred once by the script, then only faded (each its own layer) */
 [data-scene="light-flood"].is-live .lf-soft { display: flex; }
 [data-scene="light-flood"].is-live .lf-soft > * { will-change: opacity, transform; }
+/* the real lines too, from the start: rastered once at their real size (they are never scaled up), so
+   a fade, the lead's shrink or the key's lift never repaints 100px+ type on a frame */
+[data-scene="light-flood"].is-live .lf-line > .lf-lead,
+[data-scene="light-flood"].is-live .lf-line > .lf-key { will-change: opacity, transform; }
 [data-scene="light-flood"].is-live .lf-ground--core,
 [data-scene="light-flood"].is-live .lf-ground--night { display: block; opacity: 0; will-change: opacity; }
 

@@ -20,7 +20,7 @@
     --powder: #c6d4e6;
     --stone: #9a948b;
     --clay: #dac7aa;
-    --coral: #e8573f;
+    --coral: #e25a4e;
     --ground: var(--paper);
     --font-display: "Noto Serif Display", Georgia, serif;
     --font-text: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
@@ -68,7 +68,23 @@
     letter-spacing: -0.035em;
   }
   .intro h1 span { display: block; }
-  .intro p { margin: 0 0 1.2vw; font-size: clamp(17px, 1.3vw, 22px); line-height: 1.45; max-width: 26em; }
+  .intro p { margin: 0 0 1.2vw; font-size: clamp(18px, 1.3vw, 22px); line-height: 1.45; max-width: 26em; }
+  .intro .go {
+    display: inline-block;
+    margin-top: 18px;
+    background: var(--paper);
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 16px;
+    line-height: 1;
+    padding: 15px 22px;
+    border-radius: 999px;
+  }
+  .intro .go:hover, .intro .go:focus-visible { background: var(--coral); }
+
+  /* the framed pair in the photo room is one room, close and wide: first the reader against the wall,
+     then the room around him and the light falling into it from the high windows */
+  .rw-photo .rw-flip__a img { scale: 2.3; transform-origin: 24% 70%; }
 
   .after {
     background: var(--oat);
@@ -103,10 +119,10 @@
     background: var(--oat);
     color: var(--ink);
     padding: 0 var(--gutter) 40px;
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.5;
   }
-  footer p { margin: 0; max-width: 64em; opacity: 0.72; }
+  footer p { margin: 0; max-width: 66ch; opacity: 0.72; }
 
   @media (max-width: 899px) {
     .intro { grid-template-columns: 1fr; row-gap: 28px; min-height: 64svh; }
@@ -129,11 +145,17 @@
 <main id="top">
 <section class="intro" aria-labelledby="page-title">
   <h1 id="page-title"><span>Varde</span><span>Architects</span></h1>
-  <p>Public stairs, halls, stations and libraries, drawn in Rotterdam and built slowly since 2009.</p>
+  <p>Public stairs, halls, stations and libraries, drawn in Rotterdam and built slowly since 2009.<br><a class="go" href="#walk">Walk through the rooms</a></p>
 </section>
 
 <section class="scene" data-scene="room-walk-track" id="walk" aria-labelledby="rw-title">
   <div class="scene-stage">
+    <div class="rw-chrome">
+      <a class="rw-chip rw-mark" href="#top">Varde</a>
+      <p class="rw-chip rw-where" aria-hidden="true"><span class="rw-where__name">Eight rooms</span><span class="rw-where__count">1 of 8</span><span class="rw-bar"><span></span></span></p>
+      <a class="rw-chip rw-skip" href="#after">Skip the walk</a>
+    </div>
+
     <div class="rw-track">
 
       <article class="rw-room rw-threshold" data-name="Eight rooms">
@@ -142,25 +164,25 @@
       </article>
 
       <article class="rw-room rw-photo" data-name="Abbey Library">
-        <figure class="rw-bleed"><img src="https://picsum.photos/id/546/1260/1000" width="1260" height="1000" alt="The abbey cloister, its stone vaults lit by low sun through the arches" decoding="async"></figure>
+        <figure class="rw-bleed"><img src="https://picsum.photos/id/546/1400/933" srcset="https://picsum.photos/id/546/1400/933 1400w, https://picsum.photos/id/546/2400/1600 2400w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 94vw, (min-width: 900px) 58vw, 100vw" width="1400" height="933" alt="The abbey cloister, its stone vaults lit by low sun through the arches" decoding="async"></figure>
         <figure class="rw-flip">
-          <div class="rw-flip__b"><img src="https://picsum.photos/id/508/900/600" width="900" height="600" alt="The reading hall under its tall pale vaults" decoding="async"></div>
-          <div class="rw-flip__a"><img src="https://picsum.photos/id/508/600/800" width="600" height="800" alt="Close on the top of the reading hall's vaults, where the light comes in" decoding="async"></div>
+          <div class="rw-flip__b"><img src="https://picsum.photos/id/775/900/600" srcset="https://picsum.photos/id/775/900/600 900w, https://picsum.photos/id/775/1800/1200 1800w" sizes="(min-width: 900px) 30vw, 70vw" width="900" height="600" alt="Morning sun falling through the reading room's high openings onto a reader sitting by the wall" decoding="async"></div>
+          <div class="rw-flip__a"><img src="https://picsum.photos/id/775/1800/1200" srcset="https://picsum.photos/id/775/1800/1200 1800w, https://picsum.photos/id/775/2400/1600 2400w" sizes="(min-width: 900px) 69vw, 161vw" width="1800" height="1200" alt="Close on a reader sitting against the warm stone wall, a glass in his hands" decoding="async"></div>
         </figure>
         <div class="rw-copy">
-          <h3><span class="rw-line">Light comes in</span><span class="rw-line">from above</span></h3>
+          <h3><span class="rw-line">Light from</span><span class="rw-line">above</span></h3>
           <p>The Abbey Library in Ghent keeps its old vaults and adds nothing at eye level. Daylight falls from the high windows, so the books stay out of the sun and the readers sit in it.</p>
         </div>
       </article>
 
       <article class="rw-room rw-ink" data-name="On stairs">
-        <figure class="rw-pic rw-pic--a"><img src="https://picsum.photos/id/954/720/960" width="720" height="960" alt="A white stair seen through a narrow opening in a white wall" decoding="async"></figure>
-        <figure class="rw-pic rw-pic--b"><img src="https://picsum.photos/id/842/540/720" width="540" height="720" alt="Wooden steps with handrails going down into a pink morning fog" loading="lazy" decoding="async"></figure>
+        <figure class="rw-pic rw-pic--a"><img src="https://picsum.photos/id/494/600/800" srcset="https://picsum.photos/id/494/600/800 600w, https://picsum.photos/id/494/1200/1600 1200w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 29vw, (min-width: 900px) 24vw, 50vw" width="600" height="800" alt="A walker and a dog crossing a stone stair landing in a shaft of sun" decoding="async"></figure>
+        <figure class="rw-pic rw-pic--b"><img src="https://picsum.photos/id/402/450/600" srcset="https://picsum.photos/id/402/450/600 450w, https://picsum.photos/id/402/536/715 536w" sizes="(min-width: 900px) 18vw, 50vw" width="450" height="600" alt="A long street of shopfronts running straight into a low evening sun" decoding="async"></figure>
         <p class="rw-read"><span class="rw-rl">We start every project on the stairs.</span> <span class="rw-rl">A stair is where strangers slow down</span> <span class="rw-rl">together, look up and decide how far</span> <span class="rw-rl">to go. Get the stair right and the rest</span> <span class="rw-rl">of the building tends to follow it.</span></p>
       </article>
 
       <div class="rw-band" aria-hidden="true">
-        <div class="rw-band__col"><span>Rules</span><span>*</span><span>Rules</span><span>*</span><span>Rules</span><span>*</span><span>Rules</span><span>*</span><span>Rules</span><span>*</span></div>
+        <div class="rw-band__col">Rules * Rules * Rules * Rules * Rules *</div>
       </div>
 
       <article class="rw-room rw-values" data-name="Three rules">
@@ -175,7 +197,7 @@
 
       <div class="rw-relay" data-name="Projects">
         <article class="rw-card" style="--block: var(--oat)">
-          <figure class="rw-card__photo"><img src="https://picsum.photos/id/946/1000/900" width="1000" height="900" alt="The yellow brick front of the school with its dark green door" loading="lazy" decoding="async"></figure>
+          <figure class="rw-card__photo"><img src="https://picsum.photos/id/153/900/810" srcset="https://picsum.photos/id/153/900/810 900w, https://picsum.photos/id/153/1800/1620 1800w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 60vw, (min-width: 700px) 50vw, 100vw" width="900" height="810" alt="Rows of folded oak seats in the school hall, lit from its tall windows" loading="lazy" decoding="async"></figure>
           <div class="rw-card__block">
             <span class="rw-card__year">2018</span><span class="rw-card__place">Antwerp</span>
             <h3 class="rw-card__name">Kade School</h3>
@@ -183,23 +205,23 @@
           </div>
         </article>
         <article class="rw-card" style="--block: var(--clay)">
-          <figure class="rw-card__photo"><img src="https://picsum.photos/id/859/1000/900" width="1000" height="900" alt="A red brick wall with a pale wooden door and a bicycle parked beside it" loading="lazy" decoding="async"></figure>
+          <figure class="rw-card__photo"><img src="https://picsum.photos/id/508/900/810" srcset="https://picsum.photos/id/508/900/810 900w, https://picsum.photos/id/508/1800/1620 1800w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 60vw, (min-width: 700px) 50vw, 100vw" width="900" height="810" alt="The chapel's tall pale vaults, warm with evening light, over what is now the reading floor" loading="lazy" decoding="async"></figure>
           <div class="rw-card__block">
             <span class="rw-card__year">2020</span><span class="rw-card__place">Leeds</span>
-            <h3 class="rw-card__name">Mill Library</h3>
+            <h3 class="rw-card__name">Chapel Library</h3>
             <a class="rw-card__link" href="#after">See the library</a>
           </div>
         </article>
         <article class="rw-card" style="--block: var(--powder)">
-          <figure class="rw-card__photo"><img src="https://picsum.photos/id/947/1000/900" width="1000" height="900" alt="A whitewashed roof terrace with a clay pot and a small domed tower" loading="lazy" decoding="async"></figure>
+          <figure class="rw-card__photo"><img src="https://picsum.photos/id/322/900/810" srcset="https://picsum.photos/id/322/900/810 900w, https://picsum.photos/id/322/1800/1620 1800w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 60vw, (min-width: 700px) 50vw, 100vw" width="900" height="810" alt="A cobbled lane between old fronts in ochre and rust-red plaster, open to the sky at its far end" loading="lazy" decoding="async"></figure>
           <div class="rw-card__block">
             <span class="rw-card__year">2021</span><span class="rw-card__place">Porto</span>
-            <h3 class="rw-card__name">Roof Terrace</h3>
-            <a class="rw-card__link" href="#after">See the terrace</a>
+            <h3 class="rw-card__name">Ochre Lane</h3>
+            <a class="rw-card__link" href="#after">See the lane</a>
           </div>
         </article>
         <article class="rw-card" style="--block: var(--stone)">
-          <figure class="rw-card__photo"><img src="https://picsum.photos/id/396/1000/900" width="1000" height="900" alt="A long moving walkway under a curved, warmly lit ceiling" loading="lazy" decoding="async"></figure>
+          <figure class="rw-card__photo"><img src="https://picsum.photos/id/396/900/810" srcset="https://picsum.photos/id/396/900/810 900w, https://picsum.photos/id/396/1800/1620 1800w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 60vw, (min-width: 700px) 50vw, 100vw" width="900" height="810" alt="A long moving walkway under a curved, warmly lit ceiling" loading="lazy" decoding="async"></figure>
           <div class="rw-card__block">
             <span class="rw-card__year">2023</span><span class="rw-card__place">Malmö</span>
             <h3 class="rw-card__name">Pier Station</h3>
@@ -211,14 +233,14 @@
       <div class="rw-hold" data-name="How we work">
         <article class="rw-card rw-card--last" style="--block: var(--oat)">
           <div class="rw-stack">
-            <figure class="rw-card__photo"><img src="https://picsum.photos/id/78/1000/900" width="1000" height="900" alt="A carved wooden double door in an old stone front" loading="lazy" decoding="async"></figure>
+            <figure class="rw-card__photo"><img src="https://picsum.photos/id/78/900/810" srcset="https://picsum.photos/id/78/900/810 900w, https://picsum.photos/id/78/1500/1350 1500w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 60vw, (min-width: 700px) 50vw, 100vw" width="900" height="810" alt="A carved wooden double door in an old stone front" loading="lazy" decoding="async"></figure>
             <div class="rw-card__block">
               <span class="rw-card__year">2024</span><span class="rw-card__place">Basel</span>
               <h3 class="rw-card__name">Gate Hall</h3>
               <a class="rw-card__link" href="#after">See the hall</a>
             </div>
-            <figure class="rw-stack__pic"><img src="https://picsum.photos/id/625/1000/430" width="1000" height="430" alt="A long wooden table with white chairs by tall windows" loading="lazy" decoding="async"></figure>
-            <figure class="rw-stack__pic"><img src="https://picsum.photos/id/42/1000/430" width="1000" height="430" alt="A cup of coffee on a long wooden table in a bright room" loading="lazy" decoding="async"></figure>
+            <figure class="rw-stack__pic"><img src="https://picsum.photos/id/1076/700/390" srcset="https://picsum.photos/id/1076/700/390 700w, https://picsum.photos/id/1076/1400/780 1400w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 43vw, 50vw" width="700" height="390" alt="A building wrapped in bronze fins, seen from below against a pale sky" loading="lazy" decoding="async"></figure>
+            <figure class="rw-stack__pic"><img src="https://picsum.photos/id/975/700/390" srcset="https://picsum.photos/id/975/700/390 700w, https://picsum.photos/id/975/1400/780 1400w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 43vw, 50vw" width="700" height="390" alt="Two tall oak shutters closed in an old brick wall, warm in the late sun" loading="lazy" decoding="async"></figure>
             <a class="rw-stack__all" href="#after"><span>All 38 projects</span><span aria-hidden="true">&rarr;</span></a>
           </div>
         </article>
@@ -233,12 +255,12 @@
         <figure class="rw-window">
           <div class="rw-window__pan">
             <div class="rw-flip">
-              <div class="rw-flip__b"><img src="https://picsum.photos/id/208/1100/620" width="1100" height="620" alt="A tall many-paned window in a dark room, looking out onto green trees" loading="lazy" decoding="async"></div>
-              <div class="rw-flip__a"><img src="https://picsum.photos/id/315/1100/620" width="1100" height="620" alt="Looking straight up the planted light well of the yard to the sky" loading="lazy" decoding="async"></div>
+              <div class="rw-flip__b"><img src="https://picsum.photos/id/953/1000/563" srcset="https://picsum.photos/id/953/1000/563 1000w, https://picsum.photos/id/953/1920/1080 1920w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 64vw, 88vw" width="1000" height="563" alt="Looking straight up the round stair well, its rings of windows lit by the noon sun" loading="lazy" decoding="async"></div>
+              <div class="rw-flip__a"><img src="https://picsum.photos/id/979/1000/563" srcset="https://picsum.photos/id/979/1000/563 1000w, https://picsum.photos/id/979/1920/1080 1920w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 64vw, 88vw" width="1000" height="563" alt="Looking straight up from the yard between two old fronts to a dome and a blue sky" loading="lazy" decoding="async"></div>
             </div>
           </div>
         </figure>
-        <p class="rw-cap"><span>Hollin Yard, looking up at noon</span><span>The model room, looking out</span></p>
+        <p class="rw-cap"><span>Hollin Yard, looking up at noon</span><span>Inside the round stair well</span></p>
       </article>
 
     </div>
@@ -248,12 +270,6 @@
         <h2 class="rw-exit__title"><span class="rw-line">Bring us</span><span class="rw-line">your site</span></h2>
         <p class="rw-exit__foot">We take on four new buildings a year. Write to studio@varde.example.</p>
       </div>
-    </div>
-
-    <div class="rw-chrome">
-      <a class="rw-chip rw-mark" href="#top">Varde</a>
-      <p class="rw-chip rw-where" aria-hidden="true"><span class="rw-where__name">Eight rooms</span><span class="rw-where__count">1 of 8</span><span class="rw-bar"><span></span></span></p>
-      <a class="rw-chip rw-skip" href="#after">Skip the walk</a>
     </div>
   </div>
 </section>
@@ -272,7 +288,7 @@
 </main>
 
 <footer>
-  <p>Photographs: Hartmut Tobies, Jeff Sheldon, Todd Quackenbush, Joe Beck, Padurariu Alexandru, Brennan Ehrhardt, Anthony Delanoix, Sam X, Paul Evans, Breather, Luke Chesser, Liam Andrew and Martin Wessely, through Unsplash. Varde Architects and its buildings are invented for this demonstration.</p>
+  <p>Photographs: Hartmut Tobies, Austin Ban, Matthew Wiebe, Loudge, Charlie Foster, Jeff Sheldon, Afroz Nawaf, Sam X, Paul Evans, Samuel Zeller, Leeroy, Jean-Marie Grange and Alexandre Perotto, through Unsplash. Varde Architects and its buildings are invented for this demonstration.</p>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>

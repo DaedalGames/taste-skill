@@ -93,7 +93,8 @@
   .book:hover { background: #2a332f; }
   .book:active { transform: scale(0.98); }
   .book:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
-  footer { padding: 48px var(--gutter) 40px; font-size: 16px; color: #3d4441; max-width: 90ch; }
+  footer { padding: 48px var(--gutter) 40px; font-size: 16px; color: #3d4441; }
+  footer p { margin: 0; max-width: 62ch; }
 
   /* below 1024px the headline takes the full measure, so it holds two lines */
   @media (max-width: 1023px) {
@@ -136,7 +137,7 @@
       </ol>
     </nav>
 
-    <article class="chs-ch" id="swim-1" data-horizon=".5" style="--plate-bg:#24434d; --scrim:.52">
+    <article class="chs-ch" id="swim-1" data-horizon=".506" style="--plate-bg:#24434d; --scrim:.52">
       <figure class="chs-plate">
         <picture>
           <source media="(max-width: 767px)" sizes="112vw" srcset="https://picsum.photos/id/16/450/1125.webp 450w, https://picsum.photos/id/16/700/1750.webp 700w">
@@ -178,12 +179,12 @@
       </div>
     </article>
 
-    <article class="chs-ch" id="swim-4" data-horizon=".69" style="--plate-bg:#0d1a2c; --scrim:.3; --obj-pos:50% 85%; --obj-pos-phone:85% 50%">
+    <article class="chs-ch" id="swim-4" data-horizon=".69" data-horizon-at=".64" style="--plate-bg:#0d1a2c; --scrim:.3; --obj-pos:50% 85%; --obj-pos-phone:85% 50%">
       <figure class="chs-plate">
         <picture>
           <source media="(max-width: 767px)" sizes="146vw" srcset="https://picsum.photos/id/505/480/800.webp 480w, https://picsum.photos/id/505/800/1333.webp 800w">
           <source media="(orientation: portrait) and (max-width: 1023px)" sizes="112vw" srcset="https://picsum.photos/id/505/720/1200.webp 720w, https://picsum.photos/id/505/1080/1800.webp 1080w">
-          <img class="chs-img" src="https://picsum.photos/id/505/1700/1700.webp" srcset="https://picsum.photos/id/505/1200/1200.webp 1200w, https://picsum.photos/id/505/1700/1700.webp 1700w, https://picsum.photos/id/505/2200/2200.webp 2200w" sizes="112vw" width="1700" height="1700" alt="A lone figure standing on a dark headland against a deep blue sky, an orange glow along the horizon">
+          <img class="chs-img" src="https://picsum.photos/id/505/1700/1275.webp" srcset="https://picsum.photos/id/505/1200/900.webp 1200w, https://picsum.photos/id/505/1700/1275.webp 1700w, https://picsum.photos/id/505/2200/1650.webp 2200w" sizes="112vw" width="1700" height="1275" alt="A lone figure standing on a dark headland against a deep blue sky, an orange glow along the horizon">
         </picture>
       </figure>
       <div class="chs-text">
@@ -208,7 +209,7 @@
 </section>
 </main>
 
-<footer>Photographs: Paul Jarvis, Ivan Slade, Yoni Kaplan-Nadel and Lee Scott, through Unsplash. Nesvik and its sea baths are invented for this demonstration.</footer>
+<footer><p>Photographs: Paul Jarvis, Ivan Slade, Yoni Kaplan-Nadel and Lee Scott, through Unsplash. Nesvik and its sea baths are invented for this demonstration.</p></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>

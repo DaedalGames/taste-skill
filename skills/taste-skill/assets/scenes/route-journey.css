@@ -55,7 +55,7 @@
   text-anchor: middle;
   dominant-baseline: central;
   fill: var(--route-ink);
-  fill-opacity: 0.09;
+  fill-opacity: 0.07;
 }
 /* the vehicle's colours that follow the page: its beacons take the accent; its rim stays a near-black,
    which melts into a night ground and outlines the pale cab on a light one (--route-vehicle-rim) */
@@ -173,6 +173,9 @@
 [data-scene="route-journey"]:not(.is-live) .route-legs { display: none; }
 
 html.js .scene.is-live[data-scene="route-journey"] > .scene-stage {
+  /* stage.js writes --p on the section every frame; nothing here reads it (the scene's script drives
+     every part), so stop it at the stage, or each frame would restyle the plates, the fog and the list */
+  --p: 0;
   display: block;
   padding: 0;
   background: var(--route-ground);
@@ -193,26 +196,33 @@ html.js .scene.is-live[data-scene="route-journey"] > .scene-stage {
   height: 0;
   transform-origin: 0 0;
   pointer-events: none;
-  --p: 0; /* the stage writes --p on the section every frame; stop it here so the map is not restyled */
 }
 .is-live[data-scene="route-journey"] .route-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .is-live[data-scene="route-journey"] .route-cam--posts,
 .is-live[data-scene="route-journey"] .route-cam--posts > .route-world { transform-style: preserve-3d; }
 .is-live[data-scene="route-journey"] .route-flat { position: absolute; inset: 0; }
-/* The map and the line layer are big: will-change keeps one raster of them (the browser raises it once,
-   as the crane in passes the screen's own scale) instead of re-rastering every tile whenever the
-   camera's scale or angle changes, which was most of the frame time. That raster is soft once the camera
-   has zoomed in over the plot, so there the lines drop the lock (JS removes .is-ride from 0.85) and the
-   map hands over to .route-ground--end, a copy of the few hundred map px seen overhead, which rasters
-   at the final zoom. Only these flat layers get will-change, never the camera or the world. */
+/* The painted map (route-journey.js, PERFORMANCE): opaque bitmap cells, each a layer the compositor only
+   moves (will-change, so it is never redrawn as the camera's scale changes), and the bitmap of the view
+   over the plot, which lands on the screen pixel for pixel, over a coarse draft of the whole map. JS hides
+   the vector map as soon as the draft is in. */
+.is-live[data-scene="route-journey"] .route-bake { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.is-live[data-scene="route-journey"] .route-bake > canvas { position: absolute; display: block; will-change: transform; }
+/* Until then, the vector map. The map and the line layer are big: will-change keeps one raster of them
+   (the browser raises it once, as the crane in passes the screen's own scale) instead of re-rastering
+   every tile whenever the camera's scale or angle changes. That raster is soft once the camera has
+   zoomed in over the plot, so there the lines drop the lock (JS removes .is-ride from 0.85) and the map
+   hands over to .route-ground--end, a copy of the few hundred map px seen overhead, which rasters at the
+   final zoom. Only these flat layers get will-change, never the camera or the world. */
 .is-live[data-scene="route-journey"] .route-ground,
 .is-live[data-scene="route-journey"] .route-lines { position: absolute; left: 0; top: 0; overflow: visible; transform: translateZ(0); }
-.is-live[data-scene="route-journey"] .route-ground:not(.route-ground--end),
-.is-live[data-scene="route-journey"] .route-cam.is-ride .route-lines { will-change: transform; }
-.is-live[data-scene="route-journey"] .route-ground--end { overflow: hidden; visibility: hidden; will-change: transform; }/* The map's soft-edged fills (relief, fields, forest, water, houses) are low-contrast steps of the
-   ground, so they are drawn without edge anti-aliasing: that costs nothing you can see and halves the
-   raster work of every new map tile the camera turns towards. Roads, lines and type keep theirs. */
-.is-live[data-scene="route-journey"] .route-ground :is(.rm-land, .rm-relief-1, .rm-relief-2, .rm-relief-3, .rm-field-a, .rm-field-b, .rm-forest, .rm-water, .rm-house, .rm-light) { shape-rendering: crispEdges; }
+.is-live[data-scene="route-journey"] .route-ground:not(.route-ground--end) { will-change: transform; }
+.is-live[data-scene="route-journey"] .route-cam.is-ride .route-lines,
+.is-live[data-scene="route-journey"] .route-lines--wide { will-change: transform, opacity; }
+.is-live[data-scene="route-journey"] .route-ground--end { overflow: hidden; visibility: hidden; will-change: transform; }
+/* On the riding vector map the soft-edged fills (relief, fields, forest, water, houses) are low-contrast
+   steps of the ground, so they are drawn without edge anti-aliasing, which halves the raster work of
+   every new map tile. The copy seen at rest over the plot keeps its anti-aliasing. */
+.is-live[data-scene="route-journey"] .route-ground:not(.route-ground--end) :is(.rm-land, .rm-relief-1, .rm-relief-2, .rm-relief-3, .rm-field-a, .rm-field-b, .rm-forest, .rm-water, .rm-house, .rm-light) { shape-rendering: crispEdges; }
 .is-live[data-scene="route-journey"] .route-tip { position: absolute; left: 0; top: 0; overflow: visible; }
 .is-live[data-scene="route-journey"] .route-ghost { fill: none; stroke: var(--route-ink); stroke-opacity: 0.45; stroke-width: calc(4px * var(--lw, 1)); stroke-dasharray: calc(1px * var(--lw, 1)) calc(14px * var(--lw, 1)); stroke-linecap: round; }
 .is-live[data-scene="route-journey"] .route-trail { fill: none; stroke: var(--route-accent); stroke-width: calc(8px * var(--lw, 1)); stroke-linecap: round; stroke-linejoin: round; }
@@ -253,17 +263,19 @@ html.js .scene.is-live[data-scene="route-journey"] > .scene-stage {
   gap: var(--gap);
   transform: translateZ(0);
 }
-.is-live[data-scene="route-journey"] .route-tile { position: relative; border-radius: 6px; background: var(--route-ground-2); }
-.is-live[data-scene="route-journey"] .route-tile__lit,
-.is-live[data-scene="route-journey"] .route-tile__flash,
-.is-live[data-scene="route-journey"] .route-tile__accent { position: absolute; inset: 0; border-radius: inherit; opacity: 0; }
+.is-live[data-scene="route-journey"] .route-tile { border-radius: 6px; background: var(--route-ground-2); }
+/* the light, one layer per ring of tiles (JS sets their opacity and scale; nothing in them repaints) */
+.is-live[data-scene="route-journey"] .route-plot__lit,
+.is-live[data-scene="route-journey"] .route-plot__flash { position: absolute; inset: 0; opacity: 0; visibility: hidden; transform-origin: 50% 50%; will-change: opacity, transform; pointer-events: none; }
+.is-live[data-scene="route-journey"] .route-plot__sq,
+.is-live[data-scene="route-journey"] .route-plot__centre { position: absolute; width: var(--tile); height: var(--tile); border-radius: 6px; }
 /* a lit tile: the accent tint, with its point of accent in the middle (one of the cabin's ground screws) */
-.is-live[data-scene="route-journey"] .route-tile__lit { background: var(--route-accent-tint); transform: scale(.8); }
-.is-live[data-scene="route-journey"] .route-tile__lit::after { content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--route-accent); }
-/* the wave front: the tile flashes in the full accent as the light passes over it */
-.is-live[data-scene="route-journey"] .route-tile__flash { background: var(--route-accent); }
-.is-live[data-scene="route-journey"] .route-tile__accent { background: var(--route-accent); }
-.is-live[data-scene="route-journey"] .route-tile__mark { position: absolute; inset: 12px; width: auto; height: auto; color: var(--route-accent-ink); fill: currentColor; opacity: 0; }
+.is-live[data-scene="route-journey"] .route-plot__lit .route-plot__sq { background: var(--route-accent-tint); }
+.is-live[data-scene="route-journey"] .route-plot__lit .route-plot__sq::after { content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--route-accent); }
+/* the wave front: the tiles flash in the full accent as the light passes over them */
+.is-live[data-scene="route-journey"] .route-plot__flash .route-plot__sq { background: var(--route-accent); }
+.is-live[data-scene="route-journey"] .route-plot__centre { background: var(--route-accent); opacity: 0; will-change: opacity; }
+.is-live[data-scene="route-journey"] .route-plot__mark { position: absolute; width: var(--tile); height: var(--tile); padding: 12px; box-sizing: border-box; color: var(--route-accent-ink); fill: currentColor; opacity: 0; will-change: opacity, transform; }
 .is-live[data-scene="route-journey"] .route-plot__ring {
   position: absolute;
   left: 50%;
@@ -286,7 +298,7 @@ html.js .scene.is-live[data-scene="route-journey"] > .scene-stage {
 .is-live[data-scene="route-journey"] .route-traveller__body { position: absolute; inset: 0; display: block; overflow: visible; opacity: 0; }
 .is-live[data-scene="route-journey"] .route-traveller__chevron { fill: var(--route-ink); }
 /* headlights: two flat translucent pools on the road ahead, only where the page sets --route-beam */
-.is-live[data-scene="route-journey"] .route-traveller__beam { position: absolute; left: 0; top: 0; overflow: visible; fill: var(--route-beam, transparent); opacity: 0; pointer-events: none; }
+.is-live[data-scene="route-journey"] .route-traveller__beam { position: absolute; left: 0; top: 0; overflow: visible; fill: var(--route-beam, transparent); opacity: 0; pointer-events: none; will-change: opacity; }
 .is-live[data-scene="route-journey"] .route-traveller__drop { position: absolute; inset: 6px 4px 2px; border-radius: 10px; background: rgb(0 0 0 / .55); opacity: 0; }
 .is-live[data-scene="route-journey"] .route-traveller__land {
   position: absolute;
@@ -300,8 +312,9 @@ html.js .scene.is-live[data-scene="route-journey"] > .scene-stage {
   opacity: 0;
 }
 
-/* standing boards beside the stops; JS keeps them upright and facing the camera. The plate reaches
-   away from the road (right of a board on the right, left of one on the left) */
+/* standing boards beside the stops; JS swings each up from the ground about its foot until it faces the
+   camera, then fades it. The plate reaches away from the road (right of a board on the right, left of
+   one on the left) */
 .is-live[data-scene="route-journey"] .route-posts { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
 .is-live[data-scene="route-journey"] .route-post { position: absolute; width: 0; height: 0; transform-style: preserve-3d; }
 .is-live[data-scene="route-journey"] .route-post__inner {
@@ -313,7 +326,6 @@ html.js .scene.is-live[data-scene="route-journey"] > .scene-stage {
   flex-direction: column;
   align-items: center;
   transform-origin: 50% 100%;
-  transform: scaleY(0);
   visibility: hidden;
 }
 .is-live[data-scene="route-journey"] .route-post__inner--right { left: -3px; align-items: flex-start; transform-origin: 3px 100%; }
@@ -433,6 +445,9 @@ html.js .scene.is-live[data-scene="route-journey"] > .scene-stage {
   .is-live[data-scene="route-journey"] .route-gauge__value { font-size: 26px; }
   .is-live[data-scene="route-journey"] .route-count { display: none; }
   .is-live[data-scene="route-journey"] .route-step__title { font-size: 18px; }
+  /* the stop's line keeps the room the arrival row (line and button) needs, so the row never reaches
+     up over the gauge's leg bars */
+  .is-live[data-scene="route-journey"] .route-steps { min-height: 42px; align-content: end; }
   .is-live[data-scene="route-journey"] .route-step__body { opacity: 0 !important; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .is-live[data-scene="route-journey"] .route-arrive { flex-direction: row; display: flex; align-items: center; justify-content: space-between; bottom: 12px; left: 16px; right: 16px; }
   .is-live[data-scene="route-journey"] .route-arrive__line { font-size: 17px; max-width: none; }

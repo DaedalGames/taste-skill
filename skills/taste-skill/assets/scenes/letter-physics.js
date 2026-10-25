@@ -26,19 +26,27 @@
 //     </div>
 //   </section>
 //
+// While it runs, the script splits A and B into word and letter spans (B's readable copy moves to a hidden
+// sibling <p class="lp-sr">, and B itself is aria-hidden), adds the glow (<div class="lp-core">) under the
+// disc and paints each light into an <img class="lp-glow">. The finished composition puts the text back
+// unsplit, and its CSS hides the glow and the painted images.
+//
 // A: one claim, 12-36 characters (hard cap 40); it is fitted to two lines at most, inside 86% of the
-// width. On the phone a short claim also grows, from 13.5vw up to 19vw (--lp-a-grow), while it still
-// fits those two lines. Two lines of 86vw hold only about 30 characters at 40px, so on a 390px phone a
-// longer claim is set below 40px (measured in a normal-width grotesk at 750: 31-32 characters 42-46px,
-// 33 characters 40px, 37-41 characters 33-38px; a wide face drops sooner, from about 26). A claim of
-// 12-20 characters in short words usually reaches 70-74px. Keep claims for the phone short, or accept
-// the smaller size there. B: one sentence, 40-90 characters (longer B flies in by words), set at
-// 0.047 D (22-32px; 32px is the house ceiling for a sentence set large) and 20px on the phone, inside
-// the disc's solid core. Labels: 1-3 words each, sentence case; they sit beside A on desktop, live and at
-// rest, and are hidden on the phone, where there is no room beside it (and at 768-1099px when no script
-// runs to measure A against them). Colours come from custom properties on the section:
-// --lp-ground (#0a0d0b), --lp-paper (A, #f2f3f0), --lp-ink (B, #0b0e0c), --lp-light (the disc),
-// --lp-scrim (.74, the flat fill over the picture); faces from the page's --font-display and --font-text.
+// width (and clear of the side labels), never taller than half the stage. A short claim also grows while
+// it still fits: on desktop from 8.4vw up to 1.5x (--lp-a-grow; "Darkness is a material." sets at about
+// 180px on a 1440px screen), on the phone from 13.5vw up to 1.4x. Two lines of 86vw hold only about 30
+// characters at 40px, so on a 390px phone a longer claim is set below 40px (measured in a normal-width
+// grotesk at 750: 31-32 characters 42-46px, 33 characters 40px, 37-41 characters 33-38px; a wide face
+// drops sooner, from about 26). A claim of 12-20 characters in short words usually reaches 70-74px. Keep
+// claims for the phone short, or accept the smaller size there. B: one sentence, 40-90 characters
+// (longer B flies in by words), set at 0.047 D (22-32px; 32px is the house ceiling for a sentence set
+// large) and 20px on the phone, inside the disc's solid core. Labels: 1-3 words each, sentence case;
+// they sit beside A on desktop, live and at rest, and are hidden on the phone, where there is no room
+// beside it (and at 768-1099px when no script runs to measure A against them).
+// Colours come from custom properties, set on the section or the page: --lp-ground (the stage; when it
+// is not set, the page's own --ground is used if it is dark enough for the light paper on it, else
+// #0a0d0b), --lp-paper (A, #f2f3f0), --lp-ink (B, #0b0e0c), --lp-light (the disc), --lp-scrim (.74, a
+// flat fill of the ground over the picture); faces from the page's --font-display and --font-text.
 //
 // Options (data-options JSON). Default, then range:
 //   hold       2.5       screens the stage is held on desktop (2-3.2)
@@ -47,13 +55,17 @@
 //   scrub      auto      true when Lenis smooths the page, else 0.8 (seconds of catch-up); set to override
 //   exit       'burst'   how A leaves: 'burst' (3D, drag, spin, gravity), 'detonate' (flung flat, wider,
 //                        fast spin, shrinking at the end of its life) or 'crumble' (letters drop away in
-//                        place, no push, no depth)
+//                        place, no push, no depth, the middle of the claim first; every letter is gone by
+//                        0.44, and the light opens later, from 0.30, out of the hole they leave)
 //   spread     0.36      burst radius as a share of the stage width (0.3-0.45; 240-600px on desktop)
 //   depth      520       how near the centre letters come, px (380-540; perspective is 900)
 //   gravity    0.22      fall over the burst as a share of the stage height (0.12-0.3)
 //   light      'white'   the disc: 'white', 'warm' (#fff6e8), any CSS colour, or 'none' (no pool: B lands
-//                        in the paper colour on the dark ground, and the picture dims only to 0.7)
-//   disc       0.8       disc diameter as a share of the stage height on desktop (0.5-1)
+//                        in the paper colour on the dark ground, flying in from 0.30 instead of 0.50 so
+//                        it meets A's last letters (0.42 with crumble), and the picture dims only to 0.7)
+//   disc       1.1       disc diameter as a share of the stage height on desktop (0.5-1.2; at most 1.1
+//                        of the width): the outer edge of the feather; the light reads about 0.87 of the
+//                        stage tall and floods it at the payoff
 //   phoneDisc  1.15      disc diameter as a share of the stage width on the phone (0.9-1.3)
 //   payoff     'land'    'land' holds B to the end; 'pass' carries B through the screen plane and away
 //                        over 0.84-0.98 (only when the next section continues the statement)
@@ -65,10 +77,16 @@
 //
 // Progress map (desktop 1440x900, hold 2.5): 0-6% A at rest, labels in; 6-16% A breathes in to 95.5%;
 // 16-60% the burst (A unreadable from about 25%, every letter gone by 51%; letters rising into the top
-// 96px are at 0.4 or less, for a sticky nav); 20-34% the window glows: a wide soft bloom swells from the
-// centre; 26-40% the disc condenses inside it (already about 70px across when it appears, never a crisp
-// dot) and opens to 0.8 of the stage height by 62%, the halo with it, the picture dims to 0.42; 50-80% B
-// flies in from depth in reading order and lands; 80-100% B held, ink on light.
+// 96px are at 0.4 or less, for a sticky nav); 20-34% the light comes on at the centre: a soft glow, white
+// at its heart with no edge at any size, in a wide faint halo; 38-46% the disc condenses in that glow
+// once it is half grown (so it never shows as a small coin), and opens to about 0.87 of the stage
+// height by 62%, the halo with it, the picture dims to 0.42; 50-80% B flies in from depth in reading order and
+// lands; 80-100% B held, ink on light.
+//
+// Performance: the light is painted once per size into bitmaps shown as images, so the scrub only scales
+// and fades finished pictures on their own layers (will-change while the stage is on screen, hidden while
+// at 0); geometry is measured only when the stage resizes, the fonts change or ScrollTrigger refreshes,
+// never inside a frame.
 (() => {
   const ID = 'letter-physics';
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -91,7 +109,7 @@
     depth: num(o.depth, 520, 380, 540),
     gravity: num(o.gravity, 0.22, 0.12, 0.3),
     light: typeof o.light === 'string' && o.light.trim() ? o.light.trim() : 'white',
-    disc: num(o.disc, 0.8, 0.5, 1),
+    disc: num(o.disc, 1.1, 0.5, 1.2),
     phoneDisc: num(o.phoneDisc, 1.15, 0.9, 1.3),
     payoff: pick(o.payoff, ['land', 'pass'], 'land'),
     intro: o.intro === true,
@@ -104,12 +122,15 @@
   const prng = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
 
   // Split into words (inline-block, nowrap, so lines break exactly as the unsplit text) and characters.
-  // The full text stays readable to screen readers in a hidden span; the split spans are hidden from them.
+  // The full text stays readable to screen readers in a hidden copy; the split spans are hidden from them.
+  // The heading keeps its copy inside (it names the section); the answer's copy is a hidden sibling and the
+  // split paragraph is aria-hidden, so the paragraph itself holds the sentence once (measurable as it is).
   const seg = window.Intl && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
   const graphemes = (s) => (seg ? [...seg.segment(s)].map((x) => x.segment) : Array.from(s));
-  const split = (el) => {
+  const split = (el, outside = false) => {
     if (el.__lp) return el.__lp;
     const html = el.innerHTML;
+    const hidden = el.getAttribute('aria-hidden');
     const words = [], chars = [];
     const walk = (node) => {
       for (const n of [...node.childNodes]) {
@@ -138,11 +159,11 @@
     };
     const text = el.textContent.trim().replace(/\s+/g, ' ');
     walk(el);
-    const sr = document.createElement('span');
+    const sr = document.createElement(outside ? 'p' : 'span');
     sr.className = 'lp-sr';
     sr.textContent = text;
-    el.prepend(sr);
-    el.__lp = { html, words, chars, text };
+    if (outside) { el.after(sr); el.setAttribute('aria-hidden', 'true'); } else el.prepend(sr);
+    el.__lp = { html, words, chars, text, sr, outside, hidden };
     return el.__lp;
   };
   // Layout position of el inside box, transforms ignored. offsetParent is not enough on its own: an element
@@ -157,9 +178,29 @@
   };
   const unsplit = (el) => {
     if (!el || !el.__lp) return;
-    el.innerHTML = el.__lp.html;
+    const s = el.__lp;
+    el.innerHTML = s.html;
+    if (s.outside) {
+      s.sr.remove();
+      if (s.hidden === null) el.removeAttribute('aria-hidden'); else el.setAttribute('aria-hidden', s.hidden);
+    }
     delete el.__lp;
   };
+  // A colour as rgb 0-255, through a 1px canvas (any CSS colour syntax the browser knows).
+  let probe = null;
+  const rgbOf = (c) => {
+    try {
+      if (!c || (window.CSS && CSS.supports && !CSS.supports('color', c))) return null;
+      probe = probe || document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+      probe.clearRect(0, 0, 1, 1);
+      probe.fillStyle = '#000';
+      probe.fillStyle = c;
+      probe.fillRect(0, 0, 1, 1);
+      const d = probe.getImageData(0, 0, 1, 1).data;
+      return d[3] > 250 ? [d[0], d[1], d[2]] : null;
+    } catch (e) { return null; }
+  };
+  const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
 
   const make = (root, opts = {}) => {
     const o = settings(opts || {});
@@ -175,30 +216,40 @@
     const cue = root.querySelector('.lp-cue');
     const lightOn = o.light !== 'none' && !!disc;
     root.dataset.light = lightOn ? 'on' : 'none';
-    // the bloom: the first, widest and softest light, under the disc (decoration, hidden from readers)
-    let bloom = null;
+    // The glow, a light the live scene adds under the disc (decoration, hidden from readers): white at its
+    // heart and soft all the way out, with no edge at any size, so the light comes on as a glow and the
+    // disc condenses inside it.
+    let core = null;
     if (lightOn) {
-      bloom = root.querySelector('.lp-bloom');
-      if (!bloom) {
-        bloom = document.createElement('div');
-        bloom.className = 'lp-bloom';
-        bloom.setAttribute('aria-hidden', 'true');
-        disc.before(bloom);
+      core = root.querySelector('.lp-core');
+      if (!core) {
+        core = document.createElement('div');
+        core.className = 'lp-core';
+        core.setAttribute('aria-hidden', 'true');
+        disc.before(core);
       }
     }
     if (lightOn) root.style.setProperty('--lp-light', LIGHTS[o.light] || o.light);
     root.style.setProperty('--lp-disc', String(o.disc));
     root.style.setProperty('--lp-disc-phone', String(o.phoneDisc));
+    // The stage takes the page's own ground when the section has no --lp-ground and that ground is dark
+    // enough for the paper colour (about 7:1); a light page ground keeps the scene's own near-black.
+    if (!getComputedStyle(root).getPropertyValue('--lp-ground').trim()) {
+      const rgb = rgbOf(getComputedStyle(root).getPropertyValue('--ground').trim());
+      if (rgb && lum(rgb) <= 0.08) root.style.setProperty('--lp-ground-page', `rgb(${rgb[0]} ${rgb[1]} ${rgb[2]})`);
+    }
 
     const clean = (el) => (el ? el.textContent.trim().replace(/\s+/g, ' ') : '');
     const textA = clean(a), textB = clean(b);
     const seed = (hash(textA + '|' + textB) ^ o.seed) >>> 0;
-    const S = { live: false, phone: false, key: '', geo: null, pa: [], pb: [], fonts: 0, clean: true, P: { u: 0 }, nW: 1 };
+    // dirty: the geometry must be measured again (a resize, a refresh, new fonts, a new mode); it is never
+    // read from the layout inside a frame
+    const S = { live: false, phone: false, dirty: true, geo: null, pa: [], pb: [], clean: true, P: { u: 0 }, nW: 1 };
 
     // Fit A to two lines at most inside the width it may use: 86% of the stage, and never into the side
     // labels where they sit beside it. Also no taller than half the stage. The CSS size is the start; a
-    // claim that does not fit shrinks, and where --lp-a-grow is over 1 (the phone) a short one grows, up
-    // to that factor, for as long as it still fits.
+    // claim that does not fit shrinks, and a short one grows, up to --lp-a-grow (1.5 on desktop, 1.4 on the
+    // phone), for as long as it still fits.
     const cssNum = (name, d) => parseFloat(getComputedStyle(root).getPropertyValue(name)) || d;
     const lineHeight = () => cssNum('--lp-lh', 0.92);
     const fitA = () => {
@@ -248,7 +299,7 @@
     const prepare = (phone) => {
       S.phone = phone;
       const sa = split(a);
-      const sb = b ? split(b) : null;
+      const sb = b ? split(b, true) : null;
       const byWords = o.particles === 'words' || (o.particles === 'auto' && phone && ([...textA].length > 36 || (navigator.hardwareConcurrency || 8) <= 4));
       const rnd = prng(seed);
       const sgn = () => (rnd() < 0.5 ? -1 : 1);
@@ -260,7 +311,6 @@
         v.tx = sgn() * 50 * rnd(); v.ty = sgn() * 50 * rnd();
         v.cr = rnd(); v.cd = 0.04 + 0.07 * rnd();
         v.drop = 40 + 120 * rnd(); v.dx = (rnd() * 2 - 1) * 10; v.rot = (rnd() * 2 - 1) * 20;
-        v.cs = Math.min(0.16 + 0.01 * p.wi + 0.25 * v.cr, 0.58 - v.cd);
         return v;
       });
       const rb = prng(seed ^ 0x9e3779b9);
@@ -274,13 +324,12 @@
       S.clean = true;
     };
 
-    // Geometry, measured with layout offsets (transforms never count) and redone whenever the stage size,
-    // the mode or the fonts change.
-    const key = () => `${stage.clientWidth}x${stage.clientHeight}|${S.phone}|${S.fonts}|${document.fonts ? document.fonts.status : ''}`;
+    // Geometry, measured with layout offsets (transforms never count) and redone only when it is marked
+    // dirty: the stage resized, the mode or the fonts changed, or ScrollTrigger refreshed. A frame never
+    // reads the layout.
     const G = () => {
-      const k = key();
-      if (k === S.key && S.geo) return S.geo;
-      S.key = k;
+      if (S.geo && !S.dirty) return S.geo;
+      S.dirty = false;
       fitA();
       const W = stage.clientWidth, H = stage.clientHeight, ph = S.phone;
       const c = ph
@@ -295,10 +344,12 @@
         const d = Math.hypot(q.x, q.y);
         let nx = 0, ny = -1;
         if (d >= 4) { nx = q.x / d; ny = q.y / d; }
-        const j = S.pa[i].jit, cs = Math.cos(j), sn = Math.sin(j);
+        const p = S.pa[i], j = p.jit, cs = Math.cos(j), sn = Math.sin(j), dn = d / dmax;
         // by, hh: where the letter starts against the stage centre, for the fade under a sticky nav;
-        // f0: that fade at rest, so a letter that starts high is never dimmed on the first frame
-        return { nx: nx * cs - ny * sn, ny: nx * sn + ny * cs, dn: d / dmax, by: q.y, hh: q.hh, f0: navFade(H / 2 + q.y - q.hh) };
+        // f0: that fade at rest, so a letter that starts high is never dimmed on the first frame;
+        // cs: when it starts to crumble (crumble only): the middle of the claim first, where the light
+        // will open, the edges last, every letter gone by 0.44
+        return { nx: nx * cs - ny * sn, ny: nx * sn + ny * cs, dn, by: q.y, hh: q.hh, f0: navFade(H / 2 + q.y - q.hh), cs: Math.min(0.16 + 0.15 * dn + 0.1 * p.cr, 0.44 - p.cd) };
       });
       let bv = [];
       if (b && S.pb.length) {
@@ -316,21 +367,29 @@
     // The light, painted once per size: a flat circle softened by a Gaussian (a canvas shadow, sigma =
     // shadowBlur / 2), so the scrub only scales a finished bitmap. A live CSS blur would be filtered again
     // on every frame the disc grows. Disc: circle 0.79 D, sigma 0.051 D, in a 1.1 D box; halo: circle
-    // 1.1 D at 26% of the light, sigma 0.15 D, in a 2 D box; bloom (live only, made here): circle 0.56 D,
-    // sigma 0.24 D, in a 2.2 D box, a wide soft swell about half as bright as the disc at its centre. A
-    // baked feather shrinks with its bitmap, so the disc is never shown small: the bloom makes the first
-    // light, and the disc condenses inside it. The finished composition keeps the CSS blur.
-    const glow = (el) => el.querySelector(':scope > .lp-glow') || el.appendChild(Object.assign(document.createElement('canvas'), { className: 'lp-glow' }));
+    // 1.1 D at 26% of the light, sigma 0.15 D, in a 2 D box, the wide spill; glow (live only, made here):
+    // circle 0.92 D, sigma 0.15 D, in a 1.6 D box: white at its heart, its feather a third of its radius,
+    // so it reads as light and never as a coin however small it is scaled. A baked feather shrinks with
+    // its bitmap, so the disc (a thin feather on a wide plateau) is never shown small: the glow makes the
+    // first light, and the disc condenses inside it once it is half grown. The finished composition keeps
+    // the CSS blur.
+    // Each bitmap is shown as an <img> (a PNG of the canvas), not as the canvas: a layer that holds one
+    // image is rastered at the image's own size (480-720px) and scaled by the compositor, where a canvas
+    // would be rastered at its box (up to 2 D, about 1700px) every time it is first shown.
+    const glow = (el) => el.querySelector(':scope > .lp-glow') || el.appendChild(Object.assign(document.createElement('img'), { className: 'lp-glow', alt: '', decoding: 'async', draggable: false }));
     const paint = (el, box, r, sigma, alpha, cap) => {
       const w = el.clientWidth;
       if (!w) return;
-      const cv = glow(el), n = Math.max(8, Math.round(Math.min(w, cap))), D = w / box, k = n / w;
-      cv.width = n; cv.height = n;
-      const ctx = cv.getContext('2d');
-      if (!ctx) return;
+      const n = Math.max(8, Math.round(Math.min(w, cap))), k = n / w, D = w / box;
       const col = getComputedStyle(root).getPropertyValue('--lp-light').trim() || '#ffffff';
+      const img = glow(el), id = `${n}|${col}`;
+      if (img.__id === id) return;          // the bitmap depends only on its pixel size and colour
+      img.__id = id;
+      const cv = document.createElement('canvas');
+      cv.width = n; cv.height = n;
+      const ctx = cv.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return;
       const off = n * 3;
-      ctx.clearRect(0, 0, n, n);
       ctx.globalAlpha = alpha;
       ctx.fillStyle = col;
       ctx.shadowColor = col;
@@ -342,19 +401,29 @@
       // a light seeded dither (about 2 levels) on the feather only, so a long soft falloff on a dark ground
       // does not step into rings; the solid core stays clean under B
       try {
-        const img = ctx.getImageData(0, 0, n, n), px = img.data, rnd = prng(n * 7919 + 17);
+        const data = ctx.getImageData(0, 0, n, n), px = data.data, rnd = prng(n * 7919 + 17);
         for (let i = 3; i < px.length; i += 4) {
           const v = px[i];
           if (v > 0 && v < 250) px[i] = clamp(Math.round(v + (rnd() + rnd() - 1) * 2), 0, 255);
         }
-        ctx.putImageData(img, 0, 0);
+        ctx.putImageData(data, 0, 0);
       } catch (e) { /* a tainted or lost canvas keeps the plain feather */ }
+      // decoded at once (the light shows a fifth of the way in), so its first visible frame never decodes
+      const show = (url) => {
+        const old = img.__url;
+        img.__url = url;
+        img.src = url;
+        const ready = img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+        if (old && old.startsWith('blob:')) ready.then(() => URL.revokeObjectURL(old));
+      };
+      if (cv.toBlob && window.URL && URL.createObjectURL) cv.toBlob((blob) => { if (blob && img.__id === id) show(URL.createObjectURL(blob)); }, 'image/png');
+      else show(cv.toDataURL('image/png'));
     };
     const bake = () => {
       if (!lightOn) return;
       paint(disc, 1.1, 0.395, 0.051, 1, 720);
       if (halo) paint(halo, 2, 0.55, 0.15, 0.26, 560);
-      if (bloom) paint(bloom, 2.2, 0.28, 0.24, 1, 400);
+      if (core) paint(core, 1.6, 0.46, 0.15, 1, 480);
     };
 
     // The burst, in closed form (no physics engine under a scrub): u is the burst's own progress, 0-1.
@@ -371,7 +440,7 @@
       if (o.exit === 'crumble') {
         const t = 0.16 + 0.44 * u;
         for (const p of S.pa) {
-          const f = clamp01((t - p.cs) / p.cd), e = f * f;
+          const f = clamp01((t - g.a[p.i].cs) / p.cd), e = f * f;
           p.el.style.transform = f > 0 ? `translate3d(${(p.dx * e).toFixed(2)}px,${(p.drop * e).toFixed(2)}px,0) rotate(${(p.rot * e).toFixed(2)}deg)` : '';
           p.el.style.opacity = f > 0 ? (1 - f).toFixed(3) : '';
         }
@@ -408,7 +477,7 @@
       if (lightOn) root.classList.add('is-baked');
       prepare(c.phone);
       resetA();
-      S.key = '';
+      S.dirty = true;
       S.geo = null;
       S.P = { u: 0 };
       G();
@@ -428,37 +497,46 @@
         tl.fromTo(bg, { opacity: 1 }, { opacity: lightOn ? 0.42 : 0.7, duration: 0.42, ease: 'power1.inOut', immediateRender: false }, 0.18)
           .fromTo(bg, { scale: 1 }, { scale: 1.04, duration: 1, ease: 'none' }, 0);
       }
-      // T7 the window glows first: the bloom swells from the headline's centre (0.20-0.34), then thins to
-      // a skirt round the disc. T8 the disc condenses inside it: it starts at 0.12 of its size, so it is
-      // already about 70px across when it begins to show, and comes in slowly (0.26-0.40) while it grows,
-      // so its edge never reads crisp against the bloom; it opens to full by 0.62. T9 the halo spills
-      // round both and settles. The fades use autoAlpha, so the three wide layers are not composited at all
-      // while they are invisible (the first fifth of the scene).
+      // The light, written for the default window (0.20 → full at 0.62). Crumble keeps its letters in place
+      // longer, so there the same moves run later and faster (0.30 → 0.62), out of the hole the crumbling
+      // middle leaves; the light never opens behind letters that still stand.
+      // T7 the glow comes on at the headline's centre (0.20-0.32): white at its heart, soft all the way
+      // out, growing with the disc's own curve; the halo spills wide and faint round it. T8 the disc
+      // condenses in the glow only once it is about half grown (0.38-0.46), where its feather is wide and
+      // the glow under it already white, so it never shows as a small coin with an edge; it opens to full
+      // by 0.62, and the glow thins away under it. T9 the halo settles to a skirt. The fades use
+      // autoAlpha: a light at 0 is not composited at all.
       if (lightOn) {
-        if (bloom) {
-          tl.fromTo(bloom, { scale: 0.3 }, { scale: 1, duration: 0.2, ease: 'power1.out' }, 0.2)
-            .fromTo(bloom, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.14 }, 0.2)
-            .to(bloom, { autoAlpha: 0.35, duration: 0.24, ease: 'power1.inOut' }, 0.38);
-        }
-        tl.fromTo(disc, { scale: 0.12 }, { scale: 1, duration: 0.42, ease: 'power2.inOut' }, 0.2)
-          .fromTo(disc, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.14, ease: 'power1.in' }, 0.26);
+        const L0 = o.exit === 'crumble' ? 0.3 : 0.2, k = (0.62 - L0) / 0.42;
+        const at = (t) => L0 + (t - 0.2) * k;
+        const fade = (el, from, to, t, d, ease = 'none') => tl.fromTo(el, { autoAlpha: from }, { autoAlpha: to, duration: d * k, ease }, at(t));
+        tl.fromTo(core, { scale: 0.06 }, { scale: 1, duration: 0.42 * k, ease: 'power2.inOut' }, at(0.2));
+        fade(core, 0, 1, 0.2, 0.12);
+        tl.to(core, { autoAlpha: 0, duration: 0.16 * k, ease: 'power1.inOut' }, at(0.46));
+        tl.fromTo(disc, { scale: 0.12 }, { scale: 1, duration: 0.42 * k, ease: 'power2.inOut' }, at(0.2));
+        fade(disc, 0, 1, 0.38, 0.08, 'power1.inOut');
         if (halo) {
-          tl.fromTo(halo, { scale: 0.2 }, { scale: 1, duration: 0.44, ease: 'power2.out' }, 0.22)
-            .fromTo(halo, { autoAlpha: 0 }, { autoAlpha: 0.9, duration: 0.18, ease: 'power1.out' }, 0.22)
-            .to(halo, { autoAlpha: 0.55, duration: 0.26, ease: 'power1.inOut' }, 0.4);
+          tl.fromTo(halo, { scale: 0.2 }, { scale: 1, duration: 0.44 * k, ease: 'power2.out' }, at(0.22));
+          fade(halo, 0, 0.9, 0.22, 0.18, 'power1.out');
+          tl.to(halo, { autoAlpha: 0.55, duration: 0.26 * k, ease: 'power1.inOut' }, at(0.4));
         }
       }
-      // T10 B flies out of depth in reading order, shuffled inside each word, and lands by 0.80
+      // T10 B flies out of depth in reading order, shuffled inside each word, and lands by 0.80. Without the
+      // light nothing else fills the middle of the scene, so there B starts at 0.30, while A's last letters
+      // are still leaving the frame, and focuses in word by word until 0.70 (crumble: 0.42-0.76, as its
+      // letters stand at the centre until about 0.42): the screen is never left with neither text nor light.
       if (b && S.pb.length) {
-        const span = Math.max(1, S.nW - 1);
+        const crumble = o.exit === 'crumble';
+        const b0 = lightOn ? 0.5 : crumble ? 0.42 : 0.3;
+        const span = Math.max(1, S.nW - 1), bw = lightOn ? 0.1 : crumble ? 0.14 : 0.2;
         S.pb.forEach((p, i) => {
-          const at = 0.5 + 0.1 * (p.wi / span) + 0.04 * p.r;
+          const at = b0 + bw * (p.wi / span) + 0.04 * p.r;
           tl.fromTo(p.el,
             { x: () => G().b[i].x, y: () => G().b[i].y, z: () => G().b[i].z, rotationX: p.rx, rotation: p.rz },
             { x: 0, y: 0, z: 0, rotationX: 0, rotation: 0, duration: 0.16, ease: 'expo.out' }, at)
             .fromTo(p.el, { opacity: 0 }, { opacity: 1, duration: 0.16, ease: 'power2.out' }, at);
         });
-        tl.fromTo(b, { scale: 0.92 }, { scale: 1, duration: 0.3, ease: 'power2.out' }, 0.5);
+        tl.fromTo(b, { scale: 0.92 }, { scale: 1, duration: 0.3, ease: 'power2.out' }, b0);
         if (o.payoff === 'pass') tl.to(b, { z: 220, opacity: 0, duration: 0.14, ease: 'power1.in' }, 0.84);
       }
       // will-change only while the stage is on screen
@@ -506,23 +584,36 @@
       }));
     };
 
-    // Late fonts and refreshes: refit and re-measure, then redraw the burst where the scroll left it.
+    // Late fonts, resizes and refreshes: mark the geometry dirty, refit and re-measure, then redraw the
+    // burst where the scroll left it.
+    const redraw = () => { if (S.live && S.pa.length) { S.clean = false; renderA(S.P.u); } };
     if (window.ScrollTrigger) {
-      ScrollTrigger.addEventListener('refresh', () => { if (S.live && S.pa.length) { S.clean = false; renderA(S.P.u); } });
+      ScrollTrigger.addEventListener('refreshInit', () => { S.dirty = true; });
+      ScrollTrigger.addEventListener('refresh', redraw);
     }
     if (document.fonts) {
       let wait = 0;
       document.fonts.addEventListener('loadingdone', () => {
-        S.fonts += 1;
+        S.dirty = true;
         clearTimeout(wait);
         wait = setTimeout(() => {
-          if (S.live && window.ScrollTrigger) { S.key = ''; ScrollTrigger.refresh(); } else fitA();
+          if (S.live && window.ScrollTrigger) ScrollTrigger.refresh(); else fitA();
         }, 60);
       });
     }
-    // the finished composition refits on resize (a live stage refits through the ScrollTrigger refresh)
-    let raf = 0;
-    if (window.ResizeObserver) new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { if (!S.live) fitA(); }); }).observe(stage);
+    // a resized stage: the finished composition refits; a live one re-measures at once (ScrollTrigger's
+    // own refresh follows a window resize)
+    let raf = 0, size = '';
+    if (window.ResizeObserver) {
+      new ResizeObserver(([e]) => {
+        const r = e && e.contentRect, s = r ? `${Math.round(r.width)}x${Math.round(r.height)}` : '';
+        if (s === size) return;
+        size = s;
+        S.dirty = true;
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => { if (S.live) redraw(); else fitA(); });
+      }).observe(stage);
+    }
 
     if (!window.Stage) return null;
     const scrub = o.scrub !== null ? o.scrub : (Stage.lenis ? true : 0.8);

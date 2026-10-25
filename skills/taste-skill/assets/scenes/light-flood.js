@@ -10,10 +10,16 @@
 //
 // Nothing here is a CSS gradient: the dome and the night are flat shapes with a Gaussian edge, painted
 // once (canvas textures in the live scene, blurred divs in the finished composition) and then only
-// scaled, moved or faded. Their soft edges carry a 1/255 dither, painted in, so the dark falloffs never
-// band; the solid night stays exactly the token. The ground changes by cross-fading flat colour layers.
-// No filter is ever animated either: the rack focus cross-fades each line with a copy of it that is
-// blurred once (opacity only), so the first scroll through costs what every later one does.
+// scaled, moved or faded. Each texture runs 3.5 sigma past its shape on every side, so the soft edge
+// fades to nothing inside the canvas (a tail cut by the canvas edge shows as a straight lid on the
+// dome). Their soft edges carry a 1/255 dither, painted in, so the dark falloffs never band; the solid
+// night stays exactly the token. The ground changes by cross-fading flat colour layers.
+// No filter is ever animated either, and none runs on the GPU per frame: the rack focus is a ladder of
+// copies of each line painted once into canvases, blurred on the CPU to fixed radii (key 4, 2, 0.9px;
+// lead 1.5, 3.4, 6px), and focus moves by cross-fading neighbours on the ladder (opacity only). Two
+// neighbours differ by a pixel or two of blur, so every in-between frame reads as the line at an
+// in-between focus, never as sharp letters with a glow or a dark fringe round them, and the first scroll
+// through costs what every later one does (no blur shader to compile as the scene comes into view).
 //
 // No photographs. Use it for a brand chapter, a day-to-night turn in hospitality, wellness or finance,
 // or one statement worth three screens; once per page. Not for anything that has to be read in detail:
@@ -22,9 +28,9 @@
 // Needs gsap + ScrollTrigger (no SplitText), stage.js and light-flood.css.
 //
 // DOM (the CSS draws the finished composition from the same markup; the script adds any missing
-// decorative layer, so the h2 alone also works; with focus "rack" it also adds
-// <div class="lf-soft" aria-hidden="true">, a copy of the two lines that is shown blurred under the h2
-// in the live scene only):
+// decorative layer, so the h2 alone also works; with focus "rack" it also adds three
+// <div class="lf-soft" aria-hidden="true">, copies of the two lines laid out from generated content
+// (no text of their own), each line holding a canvas the script paints blurred; live scene only):
 //   <section class="scene" data-scene="light-flood" data-options='{}' aria-labelledby="lf-h">
 //     <div class="scene-stage">
 //       <div class="lf-ground" aria-hidden="true"></div>
@@ -40,7 +46,10 @@
 //   </section>
 //   The section before sits on --lf-day; the section after on --lf-night (or --lf-core with
 //   ending "flood"). The h2 always holds the whole sentence; nothing is split or hidden from readers.
-//   Both lines are sized to stay on one line each (36px at the least), so the headline is two lines.
+//   The copy limit is hard: 18 characters a line (counting spaces and punctuation). Each line is sized
+//   to stay one line (36px at the least, the key always 1.15x the lead or more), so the headline is two
+//   lines down to a 390px phone. Longer copy wraps (a three- or four-line headline, which the house
+//   rules do not allow) and the console says so: shorten the copy, do not ship the wrap.
 //
 // Colours (CSS custom properties on the section or :root; see light-flood.css): --lf-day, --lf-halo,
 // --lf-core, --lf-night, --lf-ink, --lf-key. The core must have a relative luminance of 0.15-0.25 so the
@@ -58,9 +67,9 @@
 //   ending      "night"   "night": the light goes out and the scene ends on --lf-night | "flood": the
 //                         sentence holds on the full flood and the scene ends on --lf-core (add class
 //                         lf--flood to the section too, for the no-script composition)
-//   focus       "rack"    "rack": key 4px -> sharp, lead sharp -> 6px and away, each a cross-fade with a
-//                         copy blurred once | "flat": no blur, only opacity (always flat on devices
-//                         with 4 cores or fewer)
+//   focus       "rack"    "rack": key 4px -> sharp, lead sharp -> 6px and away, each a cross-fade along
+//                         a ladder of copies blurred once (phone: 3px and 4px) | "flat": no blur, only
+//                         opacity (always flat on devices with 4 cores or fewer)
 //   hold        3         2-4 screens the stage is held (2 brisk, 4 ceremonial); the section is hold + 1
 //   phoneHold   2.5       2-4
 //   flood       3         2.4-3.6 end scale of the dome (2.4 leaves halo in the corners, 3.6 pure fill)
@@ -75,23 +84,27 @@
 //
 // Timeline (fractions of the hold):
 //   rise       dome 0.5 -> 1 (0-0.24, power1.out) and up from +0.12H to -0.12H (0-0.30); key 4px -> sharp
-//              (the sharp key fades in over its blurred copy 0.16-0.26, the copy fades out 0.20-0.36)
+//              along the ladder, fast then slow (4 -> 2px 0.165-0.22, 2 -> 0.9px 0.225-0.28, 0.9px ->
+//              sharp 0.285-0.335; about 1.6px at 0.25), with a lens breath on the blurred rungs, scale
+//              1.05 -> 1 (0.16-0.285); with focus "flat" the light alone reveals the key
 //   flood      dome 1 -> 3 (0.24-0.42, power2.in, past every edge); ground to core under it (0.30-0.42)
 //   hold       0.42-0.52, the whole sentence sharp on the flood
-//   nightfall  lead 0 -> 6px (its blurred copy fades in under it 0.52-0.60 as the sharp lead fades out
-//              0.53-0.61), slightly smaller and up, and gone (0.62-0.74); the night plate
+//   nightfall  lead sharp -> 6px along the ladder (0.53-0.645; about 3.4px at 0.60), slightly smaller
+//              and up (0.52-0.74), and gone (0.63-0.75); the night plate
 //              falls from the top (0.54-0.84, power1.inOut), its front a wide arc whose sides lead, until
 //              the light left is a dome whose top is at 58% of the height; halo fades (0.56-0.70); ground
 //              to night under it all (0.62-0.80); the light shrinks to 1.15 (0.64-0.92) and sinks to
 //              +0.25H (0.64-0.96); the key lifts to 48% of the height (0.74-0.90, sine.inOut)
 //   lights out the dome fades (0.84-0.96); 0.96-1 solid night with the key alone
 //
-// Robust to: any length of copy (each line is measured and fitted to one line, never below 36px, and
-// wraps with a console warning past that); late fonts and resizes (fitted again once the stage's width
-// settles, before ScrollTrigger refreshes; every px value is a function of the stage height; the
-// textures are painted again when a refresh finds the stage 15% or more off the size they were painted
-// for); the scene as the first section (the lead reads at progress 0) or in the middle; scrolling back
-// (every state restores); reduced motion switched on or off while the page is open.
+// Robust to: copy of up to 18 characters a line at any width (each line is measured and fitted to one
+// line, never below 36px, the key 1.15x the lead or more; past that it wraps with a console warning);
+// late fonts and resizes (fitted again when a font arrives and once the stage's width settles, before
+// ScrollTrigger refreshes, and a fit that changes a size asks for a refresh; every px value is a
+// function of the stage height; the textures are painted again when a refresh finds the stage 15% or
+// more off the size they were painted for); the scene as the first section (the lead reads at progress
+// 0) or in the middle; scrolling back (every state restores); reduced motion switched on or off while
+// the page is open.
 (() => {
   const ID = 'light-flood';
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -112,10 +125,18 @@
   // night: the plate's front is the top of an ellipse rx (x W) by ry (x H) with a soft edge (sigma x H);
   // its middle ends at apexEnd (x H from the stage top) at 0.84, its sides drop lower, so the last
   // light is a dome.
-  const DESK = { s0: 0.5, s1: 1, s3: 1.15, y0: 0.12, y1: -0.12, sink: 0.25, keyBlur: 4, leadBlur: 6, keyRest: 0.48, night: { rx: 0.62, ry: 0.55, sigma: 0.1, apexEnd: 0.58 } };
-  const PHONE = { s0: 0.6, s1: 1.2, s3: 1.3, y0: 0.08, y1: -0.17, sink: 0.25, keyBlur: 3, leadBlur: 4, keyRest: 0.48, night: { rx: 0.8, ry: 0.35, sigma: 0.09, apexEnd: 0.62 } };
+  // keyBlur / leadBlur: the rack focus ladders, the blur radii (px) of each line's copies, most blurred
+  // first; the sharp line is the last rung.
+  const DESK = { s0: 0.5, s1: 1, s3: 1.15, y0: 0.12, y1: -0.12, sink: 0.25, keyBlur: [4, 2, 0.9], leadBlur: [6, 3.4, 1.5], keyRest: 0.48, night: { rx: 0.62, ry: 0.55, sigma: 0.1, apexEnd: 0.58 } };
+  const PHONE = { s0: 0.6, s1: 1.2, s3: 1.3, y0: 0.08, y1: -0.17, sink: 0.25, keyBlur: [3, 1.5, 0.7], leadBlur: [4, 2.3, 1], keyRest: 0.48, night: { rx: 0.8, ry: 0.35, sigma: 0.09, apexEnd: 0.62 } };
+  const RUNGS = 3; // blurred copies per line
+  // the ladders' steps, [start, length] in fractions of the hold: the key's focus closes fast then slow
+  // (about 1.6px left at 0.25, sharp by 0.335); the lead's opens slow, fast, slow (about 3.4px at 0.60)
+  const KEY_STEPS = [[0.165, 0.055], [0.225, 0.055], [0.285, 0.05]];
+  const LEAD_STEPS = [[0.53, 0.045], [0.565, 0.045], [0.6, 0.045]];
   const APEX = 1.2; // where the front's middle sits in the plate, which is two stage heights tall
   const WAIT = 0.02; // opacity of a rack-focus layer waiting its turn (see the rise)
+  const STEP = 1.15; // the key is at least this many times the lead's size
 
   const layer = (stage, before, cls, inner = '') => {
     const el = document.createElement('div');
@@ -137,19 +158,15 @@
     if (!night.querySelector('.lf-night__fill')) night.innerHTML = '<div class="lf-night__fill"></div>';
   };
 
-  // The rack focus's soft copy: the two lines again, in the same grid cell as the h2 and under it, laid
-  // out by the same rules (so it sits exactly under the real lines at every size) and only shown in the
-  // live scene. Its letters are CSS generated content (data-lf-text, drawn by a ::before), so the copy
-  // holds no text: the page's text, its headline and what readers and search see stay the one sentence
-  // in the h2. Each copy gets one static blur; only its opacity moves.
+  // The rack focus's soft copies: the two lines again, RUNGS times, in the same grid cell as the h2 and
+  // under it, laid out by the same rules (so they sit exactly under the real lines at every size) and
+  // only shown in the live scene. Their letters are CSS generated content (data-lf-text, drawn by a
+  // ::before), so a copy holds no text: the page's text, its headline and what readers and search see
+  // stay the one sentence in the h2. Each copy gets one static blur; only its opacity moves. In the DOM
+  // the most blurred comes first, so a sharper rung always sits over a softer one.
   const ensureSoft = (stage, line, lead, key) => {
-    let soft = stage.querySelector(':scope > .lf-soft');
-    if (!soft) {
-      soft = document.createElement('div');
-      soft.className = 'lf-soft';
-      soft.setAttribute('aria-hidden', 'true');
-      stage.insertBefore(soft, line);
-    }
+    const have = [...stage.querySelectorAll(':scope > .lf-soft')];
+    for (const extra of have.slice(RUNGS)) extra.remove();
     const copy = (el) => {
       const c = document.createElement('span');
       c.className = el.className;
@@ -157,8 +174,73 @@
       c.dataset.lfText = (el.innerText || el.textContent).replace(/[ \t\r]+/g, ' ').replace(/ ?\n ?/g, '\n').trim();
       return c;
     };
-    soft.replaceChildren(copy(lead), copy(key));
-    return { softLead: soft.children[0], softKey: soft.children[1] };
+    const softLeads = [], softKeys = [];
+    for (let i = 0; i < RUNGS; i++) {
+      let soft = have[i];
+      if (!soft) {
+        soft = document.createElement('div');
+        soft.className = 'lf-soft';
+        soft.setAttribute('aria-hidden', 'true');
+      }
+      stage.insertBefore(soft, line);
+      soft.replaceChildren(copy(lead), copy(key));
+      softLeads.push(soft.children[0]);
+      softKeys.push(soft.children[1]);
+    }
+    return { softLeads, softKeys };
+  };
+
+  // The rungs' blur, painted once. A CSS blur on a moving layer costs the GPU a blur pass every frame,
+  // and its shaders compile the first time the scene comes into view (a visible hitch on a first scroll,
+  // worst on Windows). So each rung draws its line into a canvas instead: the same font, size, letter
+  // spacing, colour and baseline as the real line (read from its computed style), blurred on the CPU by
+  // the canvas's shadowBlur (the letters are drawn off the canvas and only their blurred copy lands), at
+  // a resolution the blur allows. The canvas is then a plain picture, only faded and scaled. Where a browser
+  // cannot set letter spacing on a canvas, or the line wraps, the rung keeps its CSS blur, applied to
+  // its generated letters (paint time, never per frame).
+  const canPaintText = (() => {
+    try {
+      const c = document.createElement('canvas').getContext('2d');
+      return !!c && 'letterSpacing' in c && 'fontBoundingBoxAscent' in c.measureText('x');
+    } catch { return false; }
+  })();
+  const paintRung = (copy, blur) => {
+    let cv = copy.querySelector(':scope > canvas');
+    copy.classList.remove('lf-drawn');
+    copy.style.setProperty('--lf-blur', `blur(${blur}px)`);
+    if (!canPaintText || copy.classList.contains('lf-wrap')) return false;
+    const cs = getComputedStyle(copy);
+    const fs = parseFloat(cs.fontSize), w = copy.offsetWidth, text = copy.dataset.lfText || '';
+    if (!fs || !w || !text || text.includes('\n')) return false;
+    if (!cv) { cv = document.createElement('canvas'); cv.setAttribute('aria-hidden', 'true'); copy.appendChild(cv); }
+    const c = cv.getContext('2d', { willReadFrequently: true }); // a CPU canvas: the blur runs once, here
+    if (!c) return false;
+    // device pixels per CSS pixel: full resolution for a light blur, less where the blur hides it
+    const k = blur >= 3 ? 0.75 : Math.min(2, window.devicePixelRatio || 1);
+    const m = Math.ceil(3 * blur) + 4, W = w + 2 * m, Hh = copy.offsetHeight + 2 * m;
+    cv.width = Math.ceil(W * k); cv.height = Math.ceil(Hh * k);
+    cv.style.cssText = `left:${-m}px;top:${-m}px;width:${W}px;height:${Hh}px`;
+    c.clearRect(0, 0, cv.width, cv.height);
+    c.font = `${cs.fontStyle} ${cs.fontWeight} ${fs * k}px ${cs.fontFamily}`;
+    c.letterSpacing = (cs.letterSpacing === 'normal' ? 0 : parseFloat(cs.letterSpacing) * k) + 'px';
+    c.fontKerning = cs.fontKerning === 'none' ? 'none' : 'normal';
+    c.textBaseline = 'alphabetic';
+    c.textAlign = 'left';
+    const t = c.measureText(text);
+    // the line box's half-leading model, in CSS px, with the font's ascent and descent rounded and the
+    // half-leading floored as the browser's line layout does: the baseline sits
+    // floor((line height - ascent - descent) / 2) + ascent below the line's top; the line is centred in
+    // the copy's box like the real one
+    const A = Math.round(t.fontBoundingBoxAscent / k), D = Math.round(t.fontBoundingBoxDescent / k);
+    const lh = cs.lineHeight === 'normal' ? A + D : parseFloat(cs.lineHeight);
+    const x = (m * k) + (w * k - t.width) / 2;
+    const y = (m + parseFloat(cs.paddingTop || 0) + Math.floor((lh - (A + D)) / 2) + A) * k;
+    const off = cv.width + 64;
+    c.fillStyle = cs.color;
+    if (blur > 0) { c.shadowColor = cs.color; c.shadowBlur = 2 * blur * k; c.shadowOffsetX = off; }
+    c.fillText(text, blur > 0 ? x - off : x, y);
+    copy.classList.add('lf-drawn');
+    return true;
   };
 
   // A 1/255 dither on the soft edge of a painted texture. A slow dark falloff composited in 8 bits shows
@@ -193,11 +275,13 @@
   // Gaussian edge (a canvas shadow, sigma = shadowBlur / 2), measured from the CSS divs they replace so
   // the geometry stays in the stylesheet. Scaling a texture never re-runs a blur, in any browser; the
   // divs keep drawing the finished composition. Returns false (divs stay) if a canvas cannot be had.
+  // Each canvas is the box grown by 3.5 sigma on every side (placed in percentages of the box, so a
+  // small resize stretches it with the box as before): the Gaussian tail is under 0.03% there, so no
+  // edge of the texture ever shows as a line in the soft field.
   const paintSun = (sun) => {
     sun.classList.remove('lf-sun--drawn');
     const box = { w: sun.offsetWidth, h: sun.offsetHeight };
     if (!box.w || !box.h) return false;
-    const k = Math.min(0.5, 1400 / box.w);
     const out = [];
     for (const name of ['halo', 'core']) {
       const div = sun.querySelector('.lf-' + name);
@@ -207,13 +291,17 @@
       if (!c) return false;
       const cs = getComputedStyle(div);
       const sigma = parseFloat((cs.filter.match(/blur\(([\d.]+)px\)/) || [])[1] || 0);
-      cv.width = Math.round(box.w * k); cv.height = Math.round(box.h * k);
+      const pad = Math.ceil(3.5 * sigma), W = box.w + 2 * pad, Hh = box.h + 2 * pad;
+      const k = Math.min(0.5, 1400 / W);
+      const pc = (v, of) => (v / of * 100).toFixed(4) + '%';
+      cv.style.cssText = `inset:auto;left:${pc(-pad, box.w)};top:${pc(-pad, box.h)};width:${pc(W, box.w)};height:${pc(Hh, box.h)}`;
+      cv.width = Math.round(W * k); cv.height = Math.round(Hh * k);
       c.clearRect(0, 0, cv.width, cv.height);
       const off = cv.width * 4;
       c.shadowColor = cs.backgroundColor; c.shadowBlur = 2 * sigma * k; c.shadowOffsetX = off;
       c.fillStyle = cs.backgroundColor;
       c.beginPath();
-      c.ellipse((div.offsetLeft + div.offsetWidth / 2) * k - off, (div.offsetTop + div.offsetHeight / 2) * k, div.offsetWidth / 2 * k, div.offsetHeight / 2 * k, 0, 0, Math.PI * 2);
+      c.ellipse((pad + div.offsetLeft + div.offsetWidth / 2) * k - off, (pad + div.offsetTop + div.offsetHeight / 2) * k, div.offsetWidth / 2 * k, div.offsetHeight / 2 * k, 0, 0, Math.PI * 2);
       c.fill();
       c.shadowColor = 'transparent'; c.shadowBlur = 0; c.shadowOffsetX = 0;
       dither(c, cv.width, cv.height);
@@ -284,45 +372,78 @@
     root.classList.toggle('lf--flood', flood);
 
     const rack = opts.focus !== 'flat' && !((navigator.hardwareConcurrency || 8) <= 4);
-    const { softLead, softKey } = rack ? ensureSoft(stage, line, lead, key) : {};
+    const { softLeads = [], softKeys = [] } = rack ? ensureSoft(stage, line, lead, key) : {};
 
     // Each line stays one line: measured at its design size, a line wider than the stage gets the size
-    // at which it just fits (--lf-lead-fit / --lf-key-fit, set on the stage so the soft copy follows).
-    // Runs now, when the fonts arrive, once a resize has settled (a ResizeObserver on the stage, after
-    // 100ms without a change; never on every resize event) and in any case before ScrollTrigger measures
-    // (its refreshInit), so the scene measures the fitted lines. Never below 36px: a line that would need
-    // less wraps instead (and the console says the copy is too long for the scene; keep each line to
-    // about 18 characters).
+    // at which it just fits (--lf-lead-fit / --lf-key-fit, set on the stage so the soft copies follow).
+    // The key keeps a size step over the lead (STEP, 1.15x or more): when the key has to shrink, the
+    // lead shrinks with it. Never below 36px: a line that would need less wraps instead, and the console
+    // says the copy is too long for the scene (18 characters a line is a hard limit).
+    // Runs now; when a web font arrives; once a resize has settled (a ResizeObserver on the stage, after
+    // 100ms without a change; never on every resize event); and before ScrollTrigger measures (its
+    // refreshInit). Outside a refresh, a fit that changes a size (or a late font that moves the scene on
+    // the page) asks for one debounced ScrollTrigger.refresh, so the key's lift and the header's
+    // measure are never left stale.
     stage.style.setProperty('--lf-lead-n', Math.max(1, lead.textContent.trim().length));
     stage.style.setProperty('--lf-key-n', Math.max(1, key.textContent.trim().length));
-    let warned = false, fitW = -1;
+    let warned = false, fitW = -1, fitted = '';
+    // the rungs follow the lines: painted again after every fit (a new size, a font that arrived)
+    let ladder = null;
+    const paintRungs = () => {
+      if (!ladder || !root.classList.contains('is-live')) return;
+      softKeys.forEach((el, i) => paintRung(el, ladder.key[i]));
+      softLeads.forEach((el, i) => paintRung(el, ladder.lead[i]));
+    };
+    const px = (el) => parseFloat(getComputedStyle(el).fontSize);
     const fit = () => {
       fitW = stage.clientWidth;
-      for (const [el, twin, v] of [[lead, softLead, '--lf-lead-fit'], [key, softKey, '--lf-key-fit']]) {
-        el.classList.remove('lf-wrap');
-        stage.style.setProperty(v, '100vw'); // the design size, measured; the script's measure replaces the rough cap
-        const room = el.clientWidth, need = el.scrollWidth;
-        let wrap = false;
-        if (need > room + 1) {
-          const size = parseFloat(getComputedStyle(el).fontSize) * (room / need) * 0.94;
-          stage.style.setProperty(v, Math.max(36, size).toFixed(2) + 'px');
-          if (size < 36) {
-            wrap = true;
-            if (!warned) { warned = true; console.warn('light-flood: "' + el.textContent.trim() + '" does not fit on one line at 36px here; keep each line to about 18 characters.'); }
-          }
-        }
+      const lines = [[lead, softLeads, '--lf-lead-fit'], [key, softKeys, '--lf-key-fit']];
+      // both at their design size (the script's measure replaces the CSS's rough cap), one layout
+      for (const [el, , v] of lines) { el.classList.remove('lf-wrap'); stage.style.setProperty(v, '100vw'); }
+      const [L0, K0] = lines.map(([el]) => {
+        const size = px(el), room = el.clientWidth, need = el.scrollWidth;
+        return { size, most: need > room + 1 ? size * (room / need) * 0.94 : size };
+      });
+      let L = Math.max(36, L0.most), K = Math.max(36, K0.most);
+      if (K < STEP * L) L = Math.max(36, Math.min(L, K / STEP)); // the lead gives way first
+      if (K < STEP * L) K = STEP * L; // both at the floor: the key keeps its step (and wraps)
+      [[L0, L], [K0, K]].forEach(([d, s], i) => {
+        const [el, twins, v] = lines[i];
+        if (s < d.size - 0.01) stage.style.setProperty(v, s.toFixed(2) + 'px');
+        const wrap = s > d.most + 0.01;
         el.classList.toggle('lf-wrap', wrap);
-        if (twin) twin.classList.toggle('lf-wrap', wrap);
-      }
+        for (const t of twins) t.classList.toggle('lf-wrap', wrap);
+        if (wrap && !warned) { warned = true; console.warn('light-flood: "' + el.textContent.trim() + '" does not fit on one line at ' + Math.round(s) + 'px here, so the headline wraps past two lines; the limit is 18 characters a line.'); }
+      });
+      paintRungs();
+      const was = fitted;
+      fitted = L.toFixed(1) + '/' + K.toFixed(1);
+      return was !== '' && was !== fitted;
     };
     fit();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
-    let fitT = 0;
-    const fitIfMoved = () => { clearTimeout(fitT); if (stage.clientWidth !== fitW) fit(); };
+    let fitT = 0, refT = 0, placedAt = NaN, refreshedW = innerWidth;
+    const top = () => root.getBoundingClientRect().top + (window.scrollY || 0);
+    const refreshSoon = () => {
+      if (!window.ScrollTrigger || !root.classList.contains('is-live')) return;
+      clearTimeout(refT);
+      refT = setTimeout(() => ScrollTrigger.refresh(), 150);
+    };
+    // a window resize gets ScrollTrigger's own refresh; only a stage that changed width inside the same
+    // window (a scrollbar, a container) asks for one here
+    const fitIfMoved = () => { clearTimeout(fitT); if (stage.clientWidth !== fitW && fit() && innerWidth === refreshedW) refreshSoon(); };
     const fitSoon = () => { clearTimeout(fitT); fitT = setTimeout(fitIfMoved, 100); };
+    const fontIn = () => { if (fit() || Math.abs(top() - placedAt) > 1) refreshSoon(); };
+    if (document.fonts) {
+      if (document.fonts.ready) document.fonts.ready.then(fontIn);
+      if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', fontIn);
+    }
     if (window.ResizeObserver) new ResizeObserver(fitSoon).observe(stage);
     else addEventListener('resize', fitSoon);
-    if (window.ScrollTrigger) ScrollTrigger.addEventListener('refreshInit', fitIfMoved);
+    if (window.ScrollTrigger) {
+      // a refresh is measuring anyway: fit first (its own measure), and drop any refresh still waiting
+      ScrollTrigger.addEventListener('refreshInit', () => { clearTimeout(refT); clearTimeout(fitT); if (stage.clientWidth !== fitW) fit(); });
+      ScrollTrigger.addEventListener('refresh', () => { placedAt = top(); refreshedW = innerWidth; });
+    }
 
     const hold = num(opts.hold, 3, 2, 4);
     const phoneHold = num(opts.phoneHold, 2.5, 2, 4);
@@ -396,27 +517,36 @@
       gsap.set(sun, { xPercent: -50, yPercent: -50, transformOrigin: '50% 50%' });
 
       // RISE: the dome comes up behind the sentence; the key phrase comes into focus as the light reaches it
-      // (with a slight lens breath, 1.05 -> 1). Text tweens stay 2D (force3D false): the real lines are
-      // never promoted to a layer mid-scroll, so they always raster crisply at their real size. The rack
+      // (with a slight lens breath on its blurred rungs, 1.05 -> 1). The real lines sit on their own
+      // layers from the start (light-flood.css), rastered once at scale 1, so their fades, the lead's
+      // shrink and the key's lift never repaint text; the real key is never scaled. The rack
       // focus never animates a filter (a tweened blur costs a new blur pass, and on a first scroll a new
-      // shader, every frame): each line's soft copy is blurred once, here, and only cross-faded.
+      // shader, every frame): each line's copies are painted blurred once, here, and only cross-faded.
       tl.fromTo(sun, { scale: n.s0 }, { scale: n.s1, duration: 0.24, ease: 'power1.out' }, 0);
       tl.fromTo(sun, { y: () => n.y0 * H() }, { y: () => n.y1 * H(), duration: 0.30, ease: 'power1.out' }, 0);
-      // The layers waiting their turn (the sharp key, the soft lead) rest at 2% rather than 0: invisible
-      // (under a level of difference on the grounds behind them), but drawn, so the browser's one-time
+      // The rungs waiting their turn rest at 2% rather than 0: invisible (under a level of difference on
+      // the grounds behind them, and under the lines themselves), but drawn, so the browser's one-time
       // work for text and blurred layers under opacity is done as the scene scrolls into view, not in the
       // middle of the rise on a visitor's first scroll.
+      // One step along a ladder: the incoming rung comes up to full while the outgoing one is still
+      // full, then the outgoing one goes, so the letters never dim; the two differ by a pixel or two of
+      // blur, so the frame in between reads as an in-between focus.
+      const rung = (inc, out, [at, d]) => {
+        tl.fromTo(inc, { opacity: WAIT }, { opacity: 1, duration: d * 0.6, ease: 'sine.inOut', immediateRender: false }, at);
+        tl.fromTo(out, { opacity: 1 }, { opacity: 0, duration: d * 0.6, ease: 'sine.inOut', immediateRender: false }, at + d * 0.4);
+      };
       if (rack) {
-        gsap.set(softKey, { filter: `blur(${n.keyBlur}px)` });
-        gsap.set(softLead, { filter: `blur(${n.leadBlur}px)`, opacity: WAIT });
-        tl.fromTo([key, softKey], { scale: 1.05 }, { scale: 1, duration: 0.22, ease: 'sine.out', force3D: false }, 0.16);
-        // the sharp key comes up over its blurred self (0.16-0.26), and the blur's halo goes once the
-        // letters are solid (0.20-0.36, fast then slow, as a blur radius closing would): the letters keep
-        // their full white throughout and only their edges tighten
-        tl.fromTo(key, { opacity: WAIT }, { opacity: 1, duration: 0.10, ease: 'sine.inOut' }, 0.16);
-        tl.fromTo(softKey, { opacity: 1 }, { opacity: 0, duration: 0.16, ease: 'power2.out' }, 0.20);
-      } else {
-        tl.fromTo(key, { scale: 1.05 }, { scale: 1, duration: 0.22, ease: 'sine.out', force3D: false }, 0.16);
+        ladder = { key: n.keyBlur, lead: n.leadBlur };
+        paintRungs();
+        softKeys.forEach((el, i) => gsap.set(el, { opacity: i ? WAIT : 1 }));
+        softLeads.forEach((el) => gsap.set(el, { opacity: WAIT }));
+        gsap.set(key, { opacity: WAIT });
+        // the lens breath rides on the blurred rungs and is over (scale 1) before the sharp key comes
+        // up at 0.285, so the real line never scales: it keeps its one crisp raster at its real size
+        tl.fromTo(softKeys, { scale: 1.05 }, { scale: 1, duration: 0.125, ease: 'sine.out', force3D: false }, 0.16);
+        // most blurred to sharp: each sharper rung comes up over the softer one under it
+        const keys = [...softKeys, key];
+        KEY_STEPS.forEach((s, i) => rung(keys[i + 1], keys[i], s));
       }
 
       // FLOOD: past every edge, accelerating; the ground turns under it so the corners follow
@@ -424,16 +554,16 @@
       tl.fromTo(gCore, { opacity: 0 }, { opacity: 1, duration: 0.12, immediateRender: false }, 0.30);
       if (flood) return; // ending "flood": the sentence holds on the core to the end
 
-      // NIGHTFALL: the lead goes soft (its blurred copy comes up under it, then the sharp lead fades off
-      // it) and then away
+      // NIGHTFALL: the lead goes soft down its ladder (each softer rung comes up under the sharper one,
+      // which then fades off it) and then away
       if (rack) {
-        tl.fromTo(softLead, { opacity: WAIT }, { opacity: 1, duration: 0.08, ease: 'sine.inOut' }, 0.52);
-        tl.fromTo(lead, { opacity: 1 }, { opacity: 0, duration: 0.08, ease: 'sine.inOut', immediateRender: false }, 0.53);
-        tl.fromTo(softLead, { opacity: 1 }, { opacity: 0, duration: 0.12, ease: 'sine.in', immediateRender: false }, 0.62);
+        const leads = [lead, ...softLeads.slice().reverse()];
+        LEAD_STEPS.forEach((s, i) => rung(leads[i + 1], leads[i], s));
+        tl.fromTo(softLeads[0], { opacity: 1 }, { opacity: 0, duration: 0.12, ease: 'sine.in', immediateRender: false }, 0.63);
       } else {
         tl.fromTo(lead, { opacity: 1 }, { opacity: 0, duration: 0.14, ease: 'sine.in', immediateRender: false }, 0.60);
       }
-      tl.fromTo(rack ? [lead, softLead] : lead, { scale: 1, y: 0 }, { scale: 0.95, y: () => -0.03 * H(), duration: 0.22, ease: 'sine.in', immediateRender: false, force3D: false }, 0.52);
+      tl.fromTo([lead, ...softLeads], { scale: 1, y: 0 }, { scale: 0.95, y: () => -0.03 * H(), duration: 0.22, ease: 'sine.in', immediateRender: false, force3D: false }, 0.52);
       // hidden: even the sides' soft edge is 3.5 sigma above the stage (under 0.1% of night shows, so the
       // top edge meets the section before with no seam); at 0.84 the middle of the front is at apexEnd
       tl.fromTo(night, { y: () => -(APEX + drop + 3.5 * g.sigma) * H() }, { y: () => (g.apexEnd - APEX) * H(), duration: 0.30, ease: 'power1.inOut' }, 0.54);
