@@ -23,3 +23,8 @@
 
 - `d/`, `m/` (frame sequences), `clay-board*.webp`, `kiln-shelf*.webp`: the vase and its props are 3D
   renders made for this demo.
+
+## fixed-hero-object
+
+- `d/`, `p/` (turntable frames of the 'Halden 35' camera): 3D renders made for this demo; the camera and its maker are invented.
+
