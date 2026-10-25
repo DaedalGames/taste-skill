@@ -83,8 +83,8 @@
 //                         ratio of 2 or more, no touch; wideCount, its frame count (default count)
 //   turns        auto     whole turns over the route (1-3); auto = the fewest the chapters' poses allow
 //                         (flights - 1 when no chapter names a pose)
-//   hold         auto     screens held on desktop; auto = 1.75 x panels (7 for 4 panels)
-//   phoneHold    auto     screens held on the phone; auto = 1.5 x panels (6 for 4 panels)
+//   hold         auto     screens held on desktop; auto = 1.75 x panels (7 for 4 panels), 4.5 or more
+//   phoneHold    auto     screens held on the phone; auto = 1.5 x panels (6 for 4 panels), 4.5 or more
 //   hero         1.2      scale of the opening pose (0.9-1.3), lowered until it clears the title
 //   park         1.6      largest scale in the right lane (1.15-1.9), as far as the stage's height allows;
 //                         a narrow pose (a profile) grows up to 1.2x
@@ -105,30 +105,37 @@
 // end of its copy's text (the lines as set, not the column) nor nearer than 3vw; on a stage wide for its
 // height (1920x1080) that lead grows, up to 21vw, until half the bleed is kept; in the left lane it is
 // centred in the space left of the copy, with room for its rock. Every pose shown while a chapter's copy
-// is up stays clear of it. The dock keeps the object 3vh above the top of the gauge. The count is drawn
-// in two inks, each clipped to its ground, so a passing edge cuts it cleanly. Vertical (phones, and any
+// is up stays clear of it, and every pose turned through in a flight stays 2vw inside the left edge and
+// below the top (where a turning pose would come nearer, the scale passed mid-way is lowered). The hero
+// holds frame 0, the pose it is fitted to, until the first flight; when that flight would carry the object
+// over the caption (a chapter in the left lane first) the caption is gone just after it sets off. The
+// dock keeps the object 3vh above the top of the gauge, and its heading ends 6vw short of the object. The
+// count is drawn in two inks, each clipped to its ground, so a passing edge cuts it cleanly, and it steps
+// aside (fades out and back) through a flight that would carry the object over it. Vertical (phones, and any
 // stage taller than wide): no lateral flights; the object rises from the centre (52svh, scale 1.25) into
 // the room between the count and the copy, as large as that room allows (up to 1.3, a narrow pose more),
-// and docks 5vh above the gauge (scale dock x 1.45), 2vh or more under the dock's heading. Every pose it shows, leaning as
-// it banks and rocks, stays 2vw inside the stage and below the count (and the dock's heading once it
-// is up): each flight is followed through as its tweens run it, and where a turning pose would come
-// nearer an edge, the scale that dominates there (a parked pose's, or the one passed mid-way) is lowered. The copy sits at the foot of the lower lane (44-93svh), so a short chapter leaves the object
-// more room. A sheet of 7 rows or more goes into two columns there; on desktop its rows get shorter so
+// and docks 5vh above the gauge (scale dock x 1.45), 2vh or more under the dock's heading. Every pose it
+// shows, from the hero's hold to the dock, leaning as it banks and rocks, stays 2vw inside the stage and
+// below the count (and the dock's heading once it is up): each flight is followed through as its tweens
+// run it, and where a turning pose would come nearer an edge, the scale that dominates there (a parked
+// pose's, or the one passed mid-way) is lowered. The copy sits at the foot of the lower lane (44-93svh),
+// so a short chapter leaves the object more room. A sheet of 7 rows or more goes into two columns there; on desktop its rows get shorter so
 // 3-12 rows fit the stage.
 //
 // Progress map (desktop 1440x900, 4 panels, the demo's poses): 0% the object large (1.18) in the centre
-// of the hero, frame 0, the title top left and the caption bottom left; 5-18% it flies right, banking,
-// growing, turning toward the copy as the next panel rises behind it; 25% parked right on the lens
-// three-quarter (frame 66), 82vh tall from 52vw to the edge, 14vw from the end of the heading, 2 of 4;
-// 33-47% it turns through its back while it crosses to the left lane, the dark ground's edge sweeping up under it; 50% parked left on the front
-// three-quarter, rocking, the spec sheet on the right, 3 of 4; 64-80% it docks small and centred as the
-// last panel rises, turning back onto frame 0, where the turn stops at 78%; 77-93% the gauge draws, the
-// numbers fade in counting and the action comes in; 93-100% held. Reduced motion, no script and phone
+// of the hero, frame 0, the title top left and the caption bottom left, held there to 3%; 3-16% it flies
+// right, banking, growing, turning toward the copy as the next panel rises behind it; 25% parked right on
+// the lens three-quarter (frame 66), 82vh tall from 52vw to the edge, 14vw from the end of the heading,
+// 2 of 4; 31-44% it turns through its back while it crosses to the left lane, the dark ground's edge
+// sweeping up under it (the count steps aside); 50% parked left on the front three-quarter, rocking, the
+// spec sheet on the right, 3 of 4; 63-80% it docks small and centred as the last panel rises, turning
+// back onto frame 0, where the turn stops at 78%; 78-93% the gauge draws, the numbers fade in counting
+// and the action comes in; 93-100% held. Reduced motion, no script and phone
 // 'rest': the panels stacked, each with its still, every number final.
 (() => {
   const ID = 'fixed-hero-object';
   const VERT = '(max-width: 767px), (max-aspect-ratio: 1/1)';
-  const W = { lead: 0.05, flight: 0.125, dockFlight: 0.16, dockShow: 0.13, end: 0.07 };
+  const W = { lead: 0.03, flight: 0.125, dockFlight: 0.16, dockShow: 0.13, end: 0.07 };
   const BOX = [0.12, 0.08, 0.88, 0.86]; // a frame's opaque box (l t r b, fractions) until it is measured
   const LEAD = 14; // vw: the furthest the right lane's silhouette sits from the end of its copy's text
   const cache = new Map();
@@ -326,10 +333,11 @@
     return api;
   }
 
-  // The route of the turn. keys: [{ t, g }], each a moment of the scroll (0-1) and the pose it shows
-  // (a fraction of a turn); the last key is the landing. Picks the direction and the whole turns that
-  // keep the fastest stretch slowest, then returns u(t) in turns (signed): slow through each key, a
-  // steady turn between them, easing to a stop on the landing.
+  // The route of the turn. keys: [{ t, g, hold }], each a moment of the scroll (0-1) and the pose it
+  // shows (a fraction of a turn); the last key is the landing. A key marked hold ends a stretch that
+  // stays on its pose (the hero, held on frame 0 until the first flight). Picks the direction and the
+  // whole turns that keep the fastest stretch slowest, then returns u(t) in turns (signed): slow
+  // through each key, a steady turn between them, easing to a stop on the landing.
   function route(keys, want) {
     let best = null;
     for (const dir of [1, -1]) {
@@ -340,14 +348,15 @@
         let u = Math.floor(prev) + g;
         if (u < prev - 1e-9) u += 1;
         if (j === keys.length - 1 && u < 1e-9) u += 1; // at least one turn
-        pts.push({ t: k.t, u });
+        pts.push({ t: k.t, u, hold: !!k.hold });
       });
       const sp = (j) => (pts[j + 1].u - pts[j].u) / Math.max(1e-6, pts[j + 1].t - pts[j].t);
-      // extra whole turns, each to the stretch it slows least
+      // extra whole turns, each to the stretch it slows least (never a held one)
       const total = pts[pts.length - 1].u;
       for (let e = Math.round(total); e < want; e++) {
         let pick = 0, low = Infinity;
         for (let j = 0; j < pts.length - 1; j++) {
+          if (pts[j + 1].hold) continue;
           const v = (pts[j + 1].u - pts[j].u + 1) / Math.max(1e-6, pts[j + 1].t - pts[j].t);
           if (v < low) { low = v; pick = j; }
         }
@@ -442,8 +451,9 @@
     };
     const count = Math.round(o.count) || 72;
     const flights = chapters.length + (hasDock ? 1 : 0);
-    const hold = o.hold || Math.round(N * 1.75 * 2) / 2;
-    const phoneHold = o.phoneHold || Math.round(N * 1.5 * 2) / 2;
+    // at least 4.5 screens, so a short page (a hero and one chapter) does not hurry its turn
+    const hold = o.hold || Math.max(4.5, Math.round(N * 1.75 * 2) / 2);
+    const phoneHold = o.phoneHold || Math.max(4.5, Math.round(N * 1.5 * 2) / 2);
     const heroScale = clamp(+o.hero || 1.2, 0.9, 1.3);
     const park = clamp(+o.park || 1.6, 1.15, 1.9);
     const leftScale = clamp(+o.left || 1.15, 0.9, 1.3);
@@ -602,7 +612,7 @@
       return BOX;
     };
     // the route of the build in use: the pose read at each chapter, and every pose shown while its copy is up
-    let R = null;
+    let R = null, FL = null; // FL: each flight's [start, end], with or without a sequence
     const frameAt = (t) => { const s = paint && paint.seq; return s && R ? mod(Math.round(R.route.at(t) * s.count), s.count) : 0; };
     const union = (list) => list.reduce((u, b) => [Math.min(u[0], b[0]), Math.min(u[1], b[1]), Math.max(u[2], b[2]), Math.max(u[3], b[3])], [1, 1, 0, 0]);
     const posesOf = (i) => {
@@ -615,7 +625,8 @@
 
     // headings set one line per .fho-line: a line too long for its column is set smaller, not wrapped;
     // one that would need to shrink below 0.6 wraps at 0.6 instead (a clipped glyph is never an option)
-    const heads = [heroTitleEl, ...chapterCopy.map((c) => c.head[0] && c.head[0].closest('.fho-title, .fho-head, h2, h3')), dockCopy && dockCopy.head[0] && dockCopy.head[0].closest('.fho-title, .fho-head, h2, h3')].filter(Boolean);
+    const dockHeadEl = dockCopy && dockCopy.head[0] ? dockCopy.head[0].closest('.fho-title, .fho-head, h2, h3') : null;
+    const heads = [heroTitleEl, ...chapterCopy.map((c) => c.head[0] && c.head[0].closest('.fho-title, .fho-head, h2, h3')), dockHeadEl].filter(Boolean);
     const fitHeads = () => {
       for (const el of heads) {
         el.style.removeProperty('--fho-fit');
@@ -672,6 +683,15 @@
     // a narrow pose (a profile) grows a little so it carries the same weight as a wide one
     const boost = (B) => clamp(Math.sqrt(0.72 / Math.max(0.2, B[2] - B[0])), 1, 1.2);
     function layout() {
+      // wide stages: the dock's heading ends 6vw short of the docked object (frame 0's silhouette centred
+      // over the gauge), set before the headings are fitted, so a long one is set smaller
+      if (dockHeadEl) {
+        if (!vert()) {
+          const B = boxAt(0), half = ((B[2] - B[0]) / 2 + 1 / 64) * (obj.offsetWidth || 1) * dockScale;
+          const room = obj.offsetLeft - half - 0.06 * (stage.clientWidth || innerWidth) - dockHeadEl.offsetLeft;
+          dockHeadEl.style.setProperty('--fho-room', Math.max(0, Math.floor(room)) + 'px');
+        } else dockHeadEl.style.removeProperty('--fho-room');
+      }
       fitHeads();
       // each number keeps the width of the widest value it counts through, set right, so its unit stays
       // put while it counts: the written value with every digit set as the face's widest digit (a count
@@ -853,78 +873,118 @@
       }
       if (by + dy - up0 * ds < headB) dy += headB - (by + dy - up0 * ds);
       const dock = { x: -off0 * Wb * ds, y: dy, s: ds };
-      // vertical: every pose turned through in a flight, leaning, stays 2vw inside the stage. Each flight
-      // is followed through, moment by moment, as its tweens run it (the scale from one end to its
-      // mid-way value and on, the offset, the frame shown): where a pose would come nearer an edge than
-      // 2vw, the scale that dominates there is lowered, the end's when the flight has barely left it or
-      // is about to land, else the mid-way one (caps). The ends are placed again when they change.
+      // Every pose turned through in a flight, leaning, stays inside the stage: 2vw from both sides and
+      // below the count on a vertical stage; 2vw from the left and below the top on a wide one, where the
+      // right lane bleeds off the right edge by design. Each flight is followed through, moment by moment,
+      // as its tweens run it (the scale from one end to its mid-way value and on, the offset, the lean,
+      // the frame shown): where a pose would come nearer an edge, the scale that dominates there is
+      // lowered: on a vertical stage the end's when the flight has barely left it or is about to land,
+      // else the mid-way one (caps); on a wide stage, whose ends are fitted to their lanes, the mid-way
+      // one. Vertical ends are placed again when they change.
       const hero = { x: -off0 * Wb * hs, y: hy, s: hs };
-      const ends = [hero, ...stops, dock];
-      const fl = R && R.flights ? R.flights : [];
+      // the ends of the flights: the hero, each chapter, and the dock when there is one
+      const ends = [hero, ...stops, ...(hasDock ? [dock] : [])];
+      const fl = FL || [];
       const caps = fl.map(() => Infinity);
-      if (V && fl.length === ends.length - 1) {
-        const pe = (n) => gsap.parseEase(n);
-        const curves = fl.map(([a, b], j) => {
-          const dk = hasDock && j === fl.length - 1;
-          return {
-            a, d: b - a, dk, c: dk ? 0.47 : 0.5, xd: dk ? 0.875 : 1, ex: pe(dk ? 'power3.inOut' : 'power2.inOut'),
-            ey: pe(dk || j === 0 ? 'power2.inOut' : 'sine.inOut'), ey2: pe('power2.out'),
-            e1: pe(dk ? 'power2.in' : j === 0 ? 'power1.in' : 'sine.inOut'), e2: pe(dk ? 'power2.out' : j === 0 ? 'power1.out' : 'sine.inOut'),
-            mid: (A, Bs) => (!dk && j > 0 ? Math.min(A, Bs) * 0.925 : (A + Bs) / 2),
-          };
-        });
-        // the lean through a flight, as the tilt tweens run it: banked half-way, then into the rest tilt
-        // of the end it reaches (a left lane is reached at -5 and left at +5, the rock between)
-        const kindOf = (e) => (e === 0 ? "hero" : e <= stops.length ? lanes[e - 1] : "dock");
-        const sine = pe("sine.inOut"), bankV = Math.min(bank, 5);
-        const leanAt = (j, u) => {
-          const from = kindOf(j) === "left" ? LEAN : 0, k = kindOf(j + 1);
-          if (k === "dock") return Math.abs(from * (1 - sine(Math.min(1, u / 0.875))));
-          const bk = (k === "right" ? -1 : 1) * bankV, rest = k === "left" ? -LEAN : 0;
-          return Math.abs(u < 0.5 ? from + (bk - from) * sine(u / 0.5) : bk + (rest - bk) * sine((u - 0.5) / 0.5));
+      const ok = fl.length > 0 && fl.length === ends.length - 1;
+      const pe = (n) => gsap.parseEase(n);
+      const curves = fl.map(([a, b], j) => {
+        const dk = hasDock && j === fl.length - 1, soft = V && j > 0;
+        return {
+          a, d: b - a, dk, c: dk ? 0.47 : 0.5, xd: dk ? 0.875 : 1, ex: pe(dk ? 'power3.inOut' : 'power2.inOut'),
+          ey: pe(dk || j === 0 ? 'power2.inOut' : 'sine.inOut'), ey2: pe('power2.out'),
+          e1: pe(dk ? 'power2.in' : soft ? 'sine.inOut' : 'power1.in'), e2: pe(dk ? 'power2.out' : soft ? 'sine.inOut' : 'power1.out'),
+          mid: (A, Bs) => (!dk && soft ? Math.min(A, Bs) * 0.925 : (A + Bs) / 2),
         };
+      });
+      // the lean through a flight in degrees (clockwise), as the tilt tweens run it: banked half-way,
+      // then into the rest tilt of the end it reaches (a left lane is reached at -rock and left at +rock)
+      const kindOf = (e) => (e === 0 ? 'hero' : e <= stops.length ? lanes[e - 1] : 'dock');
+      const sine = pe('sine.inOut'), bankL = V ? Math.min(bank, LEAN) : bank, rockL = V ? LEAN : sweep / 2;
+      const lean = (j, u) => {
+        const from = kindOf(j) === 'left' ? rockL : 0, k = kindOf(j + 1);
+        if (k === 'dock') return from * (1 - sine(Math.min(1, u / 0.875)));
+        const bk = (k === 'right' ? -1 : 1) * bankL, rest = k === 'left' ? -rockL : 0;
+        return u < 0.5 ? from + (bk - from) * sine(u / 0.5) : bk + (rest - bk) * sine((u - 0.5) / 0.5);
+      };
+      // the offset down, as the y tweens run it (from where the park's drift left it; the dock's in
+      // two legs, lifting at the end)
+      const yAt = (j, cv, A, Bn, u) => {
+        const y0 = A.y + (A.drift || 0);
+        if (cv.dk) {
+          const yM = y0 + (Bn.y - y0) * (2 / 3);
+          return u < 0.625 ? y0 + (yM - y0) * cv.ey(u / 0.625) : yM + (Bn.y - yM) * cv.ey2(Math.min(1, (u - 0.625) / 0.375));
+        }
+        return y0 + (Bn.y - y0) * cv.ey(Math.min(1, u));
+      };
+      // flight j at u (0-1): the moment, the offset, the scale (and the mid-way scale's weight), the lean
+      const poseAt = (j, u) => {
+        const cv = curves[j], A = ends[j], Bn = ends[j + 1], v = Math.min(u, 1);
+        const sM = Math.max(0.3, Math.min(cv.mid(A.s, Bn.s), caps[j]));
+        let e, from, to, fromEnd;
+        if (u < cv.c) { e = cv.e1(u / cv.c); from = A.s; to = sM; fromEnd = j; }
+        else if (u < 2 * cv.c) { e = cv.e2((u - cv.c) / cv.c); from = sM; to = Bn.s; fromEnd = -1; }
+        else { e = 1; from = Bn.s; to = Bn.s; fromEnd = -1; }
+        return {
+          t: cv.a + cv.d * v, x: A.x + (Bn.x - A.x) * cv.ex(Math.min(1, u / cv.xd)), y: yAt(j, cv, A, Bn, u),
+          s: from + (to - from) * e, deg: lean(j, v), e, fromEnd, sM, A, Bn,
+        };
+      };
+      if (ok) {
         const reaches = new Map();
-        // the largest scale a pose can take at (x, y): 2vw inside the sides and below `lim`: the count
-        // once it shows (it fades in at the end of the first flight), and the dock's heading once it rises
+        // the largest scale a pose can take at (x, y): inside the sides (the left one only on a wide
+        // stage) and below `lim`: on a vertical stage the count once it shows (it fades in at the end of
+        // the first flight) and the dock's heading once it rises; on a wide one the top of the stage
         const room = (t, x, y, deg, lim) => {
-          const i = frameAt(t), key = i + ":" + deg.toFixed(1);
+          const i = frameAt(t), key = i + ':' + deg.toFixed(1);
           if (!reaches.has(key)) reaches.set(key, reach(boxAt(i), +deg.toFixed(1) + 0.05));
           const r = reaches.get(key);
-          const side = Math.min((bx + x - 2 * vw) / Math.max(1e-6, r.l), (w - 2 * vw - bx - x) / Math.max(1e-6, r.r));
+          const left = (bx + x - 2 * vw) / Math.max(1e-6, r.l);
+          const side = V ? Math.min(left, (w - 2 * vw - bx - x) / Math.max(1e-6, r.r)) : left;
           return lim > -Infinity ? Math.min(side, (by + y - lim) / Math.max(1e-6, r.t)) : side;
         };
-        const limAt = (j, cv, u) => (j === 0 ? (u >= 0.75 ? topV : -Infinity) : cv.dk && u >= 0.72 ? Math.max(topV, headB) : topV);
-        // the offset down, as the y tweens run it (the dock's in two legs, lifting at the end)
-        const yAt = (j, cv, A, Bn, u) => {
-          if (cv.dk) {
-            const yM = A.y + (Bn.y - A.y) * (2 / 3);
-            return u < 0.625 ? A.y + (yM - A.y) * cv.ey(u / 0.625) : yM + (Bn.y - yM) * cv.ey2(Math.min(1, (u - 0.625) / 0.375));
-          }
-          return A.y + (Bn.y - A.y) * cv.ey(Math.min(1, u));
-        };
+        const limAt = (j, cv, u) => (!V ? 0 : j === 0 ? (u >= 0.75 ? topV : -Infinity) : cv.dk && u >= 0.72 ? Math.max(topV, headB) : topV);
         for (let pass = 0; pass < 8; pass++) {
           const need = ends.map((e) => e.s);
           let moved = false;
+          // the hero's hold, before the first flight: the route keeps frame 0 there, checked all the same
+          const h0 = fl[0][0];
+          for (let t = 0; t <= h0 + 1e-9; t += Math.max(0.002, h0 / 16)) {
+            const cap = room(t, ends[0].x, ends[0].y, 0, -Infinity) * 0.998;
+            if (ends[0].s > cap) { moved = true; need[0] = Math.min(need[0], Math.max(0.3, cap)); }
+          }
           curves.forEach((cv, j) => {
-            const A = ends[j], Bn = ends[j + 1];
             for (let u = 0; u <= 1 + 1e-9; u += 0.01) {
-              const t = cv.a + cv.d * Math.min(u, 1);
-              const x = A.x + (Bn.x - A.x) * cv.ex(Math.min(1, u / cv.xd));
-              const sM = Math.max(0.3, Math.min(cv.mid(A.s, Bn.s), caps[j]));
-              let sc, e, from, to, fromEnd;
-              if (u < cv.c) { e = cv.e1(u / cv.c); from = A.s; to = sM; fromEnd = j; }
-              else if (u < 2 * cv.c) { e = cv.e2((u - cv.c) / cv.c); from = sM; to = Bn.s; fromEnd = -1; }
-              else { e = 1; from = Bn.s; to = Bn.s; fromEnd = -1; }
-              sc = from + (to - from) * e;
-              const cap = room(t, x, yAt(j, cv, A, Bn, u), leanAt(j, Math.min(u, 1)), limAt(j, cv, u)) * 0.998;
-              if (sc <= cap) continue;
+              const P = poseAt(j, u), { e, fromEnd, sM, A, Bn } = P;
+              const cap = room(P.t, P.x, P.y, Math.abs(P.deg), limAt(j, cv, u)) * 0.998;
+              if (P.s <= cap) continue;
               moved = true;
+              if (!V) {
+                // wide: the mid-way scale gives way where it carries weight, never below 0.55 of the ends
+                const wM = fromEnd >= 0 ? e : u < 2 * cv.c ? 1 - e : 0, other = fromEnd >= 0 ? A.s : Bn.s;
+                if (wM > 0.2) caps[j] = Math.min(caps[j], Math.max(0.55 * Math.min(A.s, Bn.s), (cap - other * (1 - wM)) / wM));
+                continue;
+              }
+              // where an end dominates, the mid-way scale gives way first where it carries a quarter of the
+              // weight or more (by up to 30% of its own size), and the end only by what is left: a parked
+              // or opening pose keeps its size where it can, and a slight nudge near an end stays slight
+              const excess = P.s - cap, low = Math.max(0.3, 0.7 * cv.mid(A.s, Bn.s));
+              const share = (wm) => {
+                const m0 = Math.max(0.3, Math.min(cv.mid(A.s, Bn.s), caps[j]));
+                const take = wm >= 0.25 ? Math.min(excess, wm * Math.max(0, m0 - low)) : 0;
+                if (take > 0) caps[j] = Math.min(caps[j], m0 - take / wm);
+                return excess - take;
+              };
               if (fromEnd >= 0) {
                 // leaving end j: its weight is 1 - e, the mid-way scale's e
-                if (e < 0.5) need[j] = Math.min(need[j], Math.max(0.3, (cap - sM * e) / (1 - e)));
+                if (e < 0.5) { const rest = share(e); if (rest > 1e-6) need[j] = Math.min(need[j], Math.max(0.3, A.s - rest / (1 - e))); }
                 else caps[j] = Math.min(caps[j], Math.max(0.3, (cap - A.s * (1 - e)) / e));
               } else if (u < 2 * cv.c && e < 0.5) caps[j] = Math.min(caps[j], Math.max(0.3, (cap - Bn.s * e) / (1 - e)));
-              else need[j + 1] = Math.min(need[j + 1], Math.max(0.3, e >= 1 ? cap : (cap - sM * (1 - e)) / e));
+              else {
+                // landing on end j + 1: its weight is e, the mid-way scale's 1 - e (none once landed)
+                const rest = share(u < 2 * cv.c ? 1 - e : 0);
+                if (rest > 1e-6) need[j + 1] = Math.min(need[j + 1], Math.max(0.3, Bn.s - rest / Math.max(e, 1e-6)));
+              }
             }
           });
           if (!moved) break;
@@ -935,8 +995,34 @@
           });
         }
       }
+      // does flight j carry the object over rect q (which rises by lift(u) as the track carries it)? The
+      // box tested is the clipped one of the frame shown, turned by the lean: its extent on the stage
+      const crosses = (j, q, lift = () => 0) => {
+        const m = 1 / 64;
+        for (let u = 0; u <= 1 + 1e-9; u += 0.02) {
+          const P = poseAt(j, u), B = boxAt(frameAt(P.t)), rad = (P.deg * Math.PI) / 180, co = Math.cos(rad), si = Math.sin(rad);
+          let l = Infinity, r = -Infinity, t = Infinity, b = -Infinity;
+          for (const [px, py] of [[B[0] - m, B[1] - m], [B[2] + m, B[1] - m], [B[2] + m, B[3] + m], [B[0] - m, B[3] + m]]) {
+            const qx = (px - 0.5) * Wb, qy = (py - 0.5) * Hb;
+            const X = bx + P.x + P.s * (qx * co - qy * si), Y = by + P.y + P.s * (qx * si + qy * co);
+            l = Math.min(l, X); r = Math.max(r, X); t = Math.min(t, Y); b = Math.max(b, Y);
+          }
+          const dy = lift(u);
+          if (r > q.l && l < q.r && b > q.t - dy && t < q.b - dy) return true;
+        }
+        return false;
+      };
+      const around = (el, a, b) => ({ l: el.offsetLeft - a, r: el.offsetLeft + el.offsetWidth + a, t: el.offsetTop - b, b: el.offsetTop + el.offsetHeight + b });
+      // wide stages: the hero caption leaves before the first flight when that flight would carry the
+      // object over it (a chapter in the left lane first, or a caption the page has moved); the caption
+      // rises with the track, one panel over the flight
+      const e2 = pe('power2.inOut');
+      const capOut = ok && !V && !!caption && caption.offsetWidth > 0 && crosses(0, around(caption, vw, vw), (u) => h * e2(u));
+      // wide stages: the count steps aside (fades out and back) through a flight that would carry the
+      // object over it, such as the dock flight out of a right lane, which climbs as it turns
+      const dips = fl.map((_, j) => ok && !V && !!counter && counter.offsetWidth > 0 && crosses(j, around(counter, vw, vh)));
       headSig = sigOf();
-      return { hero: ends[0], stops, dock: ends[ends.length - 1], caps, vh };
+      return { hero: ends[0], stops, dock: hasDock ? ends[ends.length - 1] : dock, caps, vh, capOut, dips };
     }
 
     // ------------------------------------------------------------------ links to a chapter
@@ -1021,13 +1107,18 @@
         dockAt = t; dockEnd = t + W.dockFlight * k; showEnd = dockEnd + W.dockShow * k;
         stops.push({ kind: 'dock', fStart: dockAt, fEnd: dockEnd, pEnd: showEnd });
       }
-      const turnEnd = hasDock ? dockAt + W.dockFlight * k * 0.875 : stops[stops.length - 1].fEnd;
+      // the turn ends on frame 0 near the end of the dock flight; without a dock, on the last chapter's
+      // pose as that chapter is read (not as it lands, which would hurry the last stretch of the turn)
+      const turnEnd = hasDock ? dockAt + W.dockFlight * k * 0.875 : stops[stops.length - 1].read;
       parks = new Map([[panels[0], 0], ...chapters.map((p, i) => [p, stops[i].read]), ...(hasDock ? [[dockPanel, 1]] : [])]);
 
       // the turn: routed through each chapter's pose, whole turns, frame 0 from turnEnd on
       R = null;
+      FL = stops.map((st) => [st.fStart, st.fEnd]);
       if (paint) {
-        const keys = [];
+        // the hero holds frame 0, the pose its lane is fitted to, until the first flight starts: a pose
+        // turning in place widens toward the title or the caption while they are read
+        const keys = stops.length && stops[0].fStart > 0 ? [{ t: stops[0].fStart, g: 0, hold: true }] : [];
         if (!hasDock) {
           stops.slice(0, -1).forEach((st, i) => { if (poses[i] != null) keys.push({ t: st.read, g: poses[i] }); });
           keys.push({ t: turnEnd, g: poses[M - 1] != null ? poses[M - 1] : 0 });
@@ -1037,7 +1128,7 @@
         }
         const named = poses.some((g) => g != null);
         const r = route(keys, Math.min(3, Math.max(0, Math.round(o.turns) || (named ? 0 : Math.max(1, flights - 1)))));
-        R = { route: r, windows: stops.slice(0, M).map((st) => [st.fEnd - 0.006 * k, st.pEnd]), reads: stops.slice(0, M).map((st) => st.read), flights: stops.map((st) => [st.fStart, st.fEnd]) };
+        R = { route: r, windows: stops.slice(0, M).map((st) => [st.fEnd - 0.006 * k, st.pEnd]), reads: stops.slice(0, M).map((st) => st.read), flights: FL };
         root.__fhoRoute = r;
       }
 
@@ -1138,17 +1229,30 @@
         ink();
       }
 
-      // the count: on a vertical stage the rising title would pass under it, so it waits for the first park
+      // the count: on a vertical stage the rising title would pass under it, so it waits for the first
+      // park; on a wide one it steps aside (out and back) through a flight that would carry the object
+      // over it (lay().dips)
       if (counter && stops.length) {
         gsap.set(counter, { opacity: vert() ? 0 : 1 });
-        const late = (stops[0].fEnd - stops[0].fStart) * 0.25 / stops[0].fEnd;
-        fx(counter, { opacity: () => (vert() ? 0 : 1) }, { opacity: 1 }, 0, stops[0].fEnd, (p) => Math.max(0, (p - 1 + late) / late));
+        const s0 = stops[0], late = (s0.fEnd - s0.fStart) * 0.25 / s0.fEnd, sn = gsap.parseEase('sine.inOut');
+        const bump = (u) => (u <= 0 || u >= 1 ? 0 : u < 0.12 ? sn(u / 0.12) : u > 0.85 ? sn((1 - u) / 0.15) : 1);
+        fx(counter, { opacity: () => (vert() ? 0 : 1) }, { opacity: () => (vert() || !lay().dips[0] ? 1 : 0) }, 0, s0.fEnd,
+          (p) => (vert() ? Math.max(0, (p - 1 + late) / late) : bump((p * s0.fEnd - s0.fStart) / (s0.fEnd - s0.fStart))));
+        stops.slice(1).forEach((st, i) => fx(counter, { opacity: 1 }, { opacity: () => (!vert() && lay().dips[i + 1] ? 0 : 1) }, st.fStart, st.fEnd - st.fStart, bump));
       }
 
-      // the hero caption: on a vertical stage it would rise through the object, so it fades as the flight starts
+      // the hero caption leaves when the first flight would pass over it. On a vertical stage it would
+      // rise through the object, so it fades as the flight starts; on a wide one, when the flight takes
+      // the object across it (a chapter in the left lane first), it is gone just after the flight sets off
       if (caption && stops.length) {
+        const a = stops[0].fStart, d = stops[0].fEnd - a, pre = Math.min(a, 0.025 * k), D = pre + 0.3 * d;
+        const p1 = gsap.parseEase('power1.in');
+        const capEase = (p) => {
+          const t = p * D; // from a - pre
+          return vert() ? p1(clamp((t - pre) / (0.3 * d), 0, 1)) : p1(clamp(t / (pre + 0.03 * d), 0, 1));
+        };
         gsap.set(caption, { opacity: 1 });
-        fx(caption, { opacity: 1 }, { opacity: () => (vert() ? 0 : 1) }, stops[0].fStart, (stops[0].fEnd - stops[0].fStart) * 0.3, 'power1.in');
+        fx(caption, { opacity: 1 }, { opacity: () => (vert() || lay().capOut ? 0 : 1) }, a - pre, D, capEase);
       }
 
       // chapter copy: in once the object is clear of its lane, out before it flies
@@ -1227,7 +1331,7 @@
       // numbers back to their written values when the scene stops running
       root.__fhoRestore = () => {
         root.__fhoBuild = null; root.__fhoInk = null; root.__fhoTrigger = null;
-        heads.forEach((el) => { el.style.removeProperty('--fho-fit'); el.classList.remove('is-wrapped'); });
+        heads.forEach((el) => { el.style.removeProperty('--fho-fit'); el.style.removeProperty('--fho-room'); el.classList.remove('is-wrapped'); });
         readouts.forEach((r) => { if (r.num) { r.num.el.textContent = r.num.text; r.num.el.style.removeProperty('min-width'); } });
         if (readList) { readList.style.removeProperty('--fho-nfit'); readList.classList.remove('is-stacked'); }
       };

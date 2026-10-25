@@ -8,8 +8,9 @@ visitors remember from award sites, and what a page built from tidy sections alo
 The scene library is taken apart from recent Awwwards Sites of the Day (October 2026: 43 sites recorded
 frame by frame while scrolling, 261 scenes described, 30 types), rebuilt from scratch in our own code,
 tested frame by frame at desktop and phone width and under reduced motion, and reviewed against the
-scenes it came from. Nothing a site owns is in them. Until `library/scenes.json` ships the draw deals
-none; a page that needs a scene builds one on the stage (section 8), with every rule here.
+scenes it came from. Nothing a site owns is in them. The draw deals them from `library/scenes.json`
+(section 9); a page that needs a scene the library does not have builds one on the stage (section 8),
+with every rule here.
 
 ## Contents
 
@@ -93,7 +94,9 @@ say how many pictures and words it takes; these hold for all of them:
 
 - The scene files read the page's tokens: `--ground`, `--ink`, `--muted`, `--accent`,
   `--font-display`, `--font-text` (with fallbacks). Set them on `:root` from the sheet and the scene
-  takes the page's colour and type. Check the demo against your page, not the other way round.
+  takes the page's colour and type. Colours a page does not otherwise have (the night of a light
+  flood, the two grounds of a raster cut) are the scene's own tokens, named in its file's header.
+  Check the demo against your page, not the other way round.
 - Display type in a scene uses the dealt display face and the two-line headline rule; statements stay
   at statement size.
 - Leave a quiet section between two scenes (a text section, a list, a plain picture) so each one lands.
@@ -131,8 +134,10 @@ scenes and the quiet sections between them make a rhythm, and that nothing betwe
 
 1. **Two or three per page,** from different families, a quiet section between them. The inspector
    warns over four (`many-scenes`) and when scenes hold more than 60% of the page (`scene-heavy`).
-2. **Each holds one to four screens:** about one screen per beat of the story; a hold with nothing new
-   to show is cut, not padded.
+2. **About one screen per beat of the story:** most scenes hold one to four screens; the long set
+   pieces (the walk through rooms, the fixed hero object, the orbit, the thumbnail stream, the warp
+   jump) hold five or more, so a page carries one of those at most, or its scenes pass the inspector's
+   60%. A hold with nothing new to show is cut, not padded.
 3. **Native scroll only.** No wheel capture, no locking the page, no scenes that only run on a click.
    Smoothing only through `Stage.smooth()`.
 4. **Readable at its rest points.** The statement on screen reads whole; nothing passes over text while
@@ -170,5 +175,103 @@ with `scenes.mjs` like any other.
 
 ## 9. The catalogue
 
-(Generated from `library/scenes.json`; the draw deals from it. `node <skill>/scripts/draw.mjs --list
-scenes` prints it.)
+Thirty scenes in eleven families. The draw deals from `library/scenes.json`, which holds each scene's
+full entry (where it goes, its content, its options, its phone plan); `node <skill>/scripts/draw.mjs
+--list scenes` prints the list, and each scene file's header is the full contract. A scene marked
+*product-photo* is dealt only with `--have product-photo`: photographs or renders of the client's own
+product, building or work. Every other scene works with real pictures of the subject's world, with
+drawings, or with type alone.
+
+**Camera through space**
+- **Descend through the weather** (`descend-through-weather`): the first screen sinks through cloud
+  from a peak above the weather onto the place below. Two photographs of the place, from above and
+  below the cloud. First screen only.
+- **Fly-through of photo cards** (`depth-card-flythrough`): the camera runs into one vanishing-point
+  picture while captioned photo cards pass on both sides. A backdrop whose lines meet at one point and
+  5-12 photographs in one grade.
+- **Powers-of-ten pull-back** (`powers-of-ten-pullback`): a film becomes a screen on a wall, then the
+  place becomes a framed print. A film or a still, and a place photographed straight on with an
+  opening that can be measured.
+- **Route journey** (`route-journey`): a parked traveller rides a tilted map along a route of 3-5 stops
+  to a destination that lights up. A real route and a real unit to count; map and vehicle are drawn.
+- **Warp jump** (`warp-jump`): a manifesto in timed beats over a field of streaks that speeds up, then a
+  jump into the accent. 35-60 words, no pictures.
+
+**Colour and ground**
+- **Light flood** (`light-flood`): one sentence plays out a day: light rises, floods the screen, night
+  falls. Two short lines, no pictures.
+- **Shaped edge carries the new ground** (`shaped-edge-ground-change`): the sky's colour rises over its
+  photograph as an arch and becomes the next chapter's ground. One photograph with open, even sky over
+  a wide subject.
+- **Stepped columns raise a stage** (`stepped-columns-raise-a-stage`): ink fills 3-5 columns like a
+  falling bar chart while a square wheel rolls round. Short copy for steps that really go from rough
+  to smooth, no pictures.
+
+**Grid reassembly**
+- **Orbit to formation** (`orbit-to-formation`): square photographs ride one wheel from an arch to a
+  ring to a half-wheel beside the figures. 12-16 photographs in one grade and four real figures.
+- **Scatter and lock** (`scatter-and-lock`): one photograph scattered as shards in 3D is assembled by
+  the scroll, then grows to full bleed. One strong photograph with texture everywhere.
+
+**Horizontal travel**
+- **Arrive and settle on a sideways track** (`arrive-and-settle-track`): the letters of a closing line
+  swoop in from the side and settle on a calm end frame with a button; presets for quotes and
+  projects. One line of 3-5 words, no pictures.
+- **Sideways walk through rooms** (`room-walk-track`): a row of coloured rooms walked sideways, each
+  with its own moment, ending on the contact. Fourteen of the client's own photographs
+  (*product-photo*).
+
+**Layer stack**
+- **Hinged sheets** (`hinged-sheets`): tickets rise from a face-down deck, turn over and land one by
+  one. A real paper or ticket idea and two to four tickets with equal copy.
+
+**Mask and reveal**
+- **Fly into the shape** (`fly-into-the-shape`): the camera flies into the brand's mark and the next
+  chapter opens inside it. An ownable solid mark and one dark photograph of the chapter's world.
+- **Shape-shifting window over a fixed world** (`shaped-window-over-fixed-world`): two windows in a
+  shutter slide level, merge and push through into a photograph of a place. One wide photograph of
+  the place. First screen.
+- **Twin-image scanner** (`twin-image-scanner`): a scan line rewrites a photograph of a thing into the
+  drawing of its structure. The subject's own photograph or render and a registered line drawing
+  (*product-photo*).
+
+**Media sequence**
+- **Instrument dial stage** (`instrument-dial-stage`): a dial reads off 3-6 items, each name huge on
+  the horizon with its picture in front. One 4:5 picture and one number an item.
+- **Lens over a thumbnail stream** (`lens-over-thumbnail-stream`): a strip of thumbnails slides under
+  a playhead and each project blooms into a collage. 48-100 of the client's own pictures in 5-12
+  projects (*product-photo*).
+- **Pinned chapter switcher** (`pinned-chapter-switcher`): 3-6 full-bleed picture chapters change by
+  hard wipes, the words swapping at the seam. One picture a chapter, shot or chosen as one series.
+
+**Object scrub**
+- **Fixed hero object** (`fixed-hero-object`): one product turns on its own layer while the chapters
+  rise beneath it. A turntable render of 36-120 frames (*product-photo*). First screen.
+- **Scrubbed transformation sequence** (`scrubbed-transformation-sequence`): an object changes state
+  as a scrubbed frame sequence while the ground opens to a new colour. 80-250 frames with alpha of the
+  change (*product-photo*).
+
+**Picture transform**
+- **Picture develops from marks** (`picture-develops`): a pen drawing draws itself, heaviest strokes
+  first, as the camera pulls back. One high-contrast drawing, or a photograph in darkroom mode.
+- **Thumbnail becomes the stage** (`thumbnail-becomes-the-stage`): the middle of three thumbnails
+  opens to full bleed and the statement's first line becomes its heading. One strong loop or picture.
+
+**Section transition**
+- **Peel, tear and drag** (`peel-tear-and-drag`): a plane drags the next page in behind it, a sticker
+  peels off, or the ground tears away. A top-down cut-out of a plane for the drag; nothing for the
+  tear.
+- **Raster cut between chapters** (`raster-cut`): the next chapter prints over the current one through
+  slats while the title changes ink line by line. Two grounds and a title of 2-4 words.
+
+**Type choreography**
+- **Letter physics** (`letter-physics`): a claim bursts apart in 3D and an answer lands in a disc of
+  light. A claim of 12-36 characters and one sentence, no pictures.
+- **Object rides through giant type** (`object-through-giant-type`): a cut-out object falls through a
+  wall of capitals that parts around it. A quote of 22-30 words and one clean cut-out.
+- **Scroll-turned drum** (`scroll-turned-drum`): names turn on a 3D drum like a slot reel, with an
+  optional drum of pictures beside it. 8-20 real names.
+- **Type re-layout** (`type-flip-relayout`): a list in giant capitals spreads, folds into an index and
+  hands its size to the heading. A one-word heading and 3-6 short items, no pictures.
+- **Wordmark under strain** (`wordmark-under-strain`): the brand's name is crushed, echoed, and drops
+  a letter that becomes the button. A name of 4-8 letters with a straight letter, no pictures.

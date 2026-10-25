@@ -8,11 +8,15 @@
 // DOM (the classes are the contract, the tags are free):
 //   <section class="scene" data-scene="orbit-to-formation" style="--n:14" data-options='{"hold":5}'>
 //     <div class="scene-stage">
-//       <h2 class="orbit-lede">The statement, 8-16 words (90 characters or fewer)</h2>
-//                     it is the title at progress 0, so it is fitted to the screen under the arch: a
-//                     statement that would run past the bottom edge is set smaller (40px at the least,
-//                     28px on phones), then the arch rises; about 45 characters keep the full display
-//                     size down to a 1280x640 laptop
+//       <h2 class="orbit-lede">The statement, 4-9 words (about 48 characters or fewer)</h2>
+//                     it is the title at progress 0 and a headline, so it is set on two lines at most:
+//                     a statement that would take three lines, or run past the bottom edge under the
+//                     arch, is set smaller (40px at the least, 28px on phones; in the finished layout it
+//                     first takes the full width, then steps down to 32px, 28px on phones), and the arch
+//                     rises when it still would not fit. About 48 characters keep two lines on every
+//                     screen down to a 360px phone. Longer text cannot keep the two-line rule there: at
+//                     the floor size about 64 characters set three lines on a phone, and 90 or more set
+//                     three lines on a laptop too, so keep the statement short
 //       <div class="orbit-wheel" role="list" aria-label="…">
 //         <figure class="orbit-card" role="listitem" style="--i:0">
 //           <img class="orbit-img" src="…" alt="…" width="560" height="560" decoding="async">
@@ -23,13 +27,15 @@
 //       <div class="orbit-anchor">
 //         <p class="orbit-figure">1987 <span class="orbit-figure-line">the first winter</span></p>
 //                     4 glyphs or fewer; the optional second line (3 words or fewer) makes the figure a
-//                     two-line headline inside the ring (the line is fitted to the ring on one line)
+//                     two-line headline inside the ring (the line stays on one line, set smaller when it
+//                     would not fit the ring's clear middle, in the live and the finished ring alike)
 //         <p class="orbit-caption">Caption of 12 words or fewer</p>
 //       </div>
 //       <ul class="orbit-stats">
 //         <li class="orbit-stat"><span class="orbit-stat-figure" data-value="365">365</span>
 //           <span class="orbit-stat-label">Label of 4 words or fewer</span></li>
-//         … 4 rows (2-6 work); figures like 17, 340+, 6°, 2.4k (data-value is the number to count to)
+//         … 4 rows (2-6 work); figures like 17, 340+, 6°, 2.4k (data-value is the number to count to);
+//         every figure takes the width of the widest, so the labels start on one edge
 //       </ul>
 //     </div>
 //   </section>
@@ -82,6 +88,13 @@
 // Cost per frame: one style write per card on the stage (a card that stays off the stage is not
 // restyled), plus the text layers that changed; no layout is read or written while scrolling, and the
 // CSS keeps the stage's --p from restyling the whole scene on every frame.
+//
+// The finished composition (reduced motion, phone 'rest', no GSAP) is the CSS without .is-live; the script
+// only fits the statement to two lines and the figure's second line into the ring there. Whenever the
+// section stops being live while the page is open (the visitor turns reduced motion on, the window
+// crosses the phone width with phone 'rest'), every inline style the live scene wrote is removed, so the
+// finished composition shows whole. (stage.js's gsap.matchMedia runs no callback when reduced motion is
+// on at a desktop width, so it never calls rest() there; the scene watches its own .is-live instead.)
 (() => {
   if (!window.Stage) return;
   const TAU = Math.PI * 2;
@@ -123,6 +136,62 @@
 
   // Ramanujan's perimeter of an ellipse
   const perimeter = (a, b) => Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
+
+  // how many lines a block of text sets (its line boxes, read from a Range)
+  const lineCount = (el, rg = document.createRange()) => {
+    rg.selectNodeContents(el);
+    const mids = [];
+    for (const q of rg.getClientRects()) {
+      if (q.width < 1 || q.height < 1) continue;
+      const m = (q.top + q.bottom) / 2;
+      if (!mids.some((v) => Math.abs(v - m) < q.height / 2)) mids.push(m);
+    }
+    return mids.length;
+  };
+  // the largest font size from hi down to lo (px) at which ok() holds; lo when none does
+  const fitSize = (el, lo, hi, ok) => {
+    const trial = (fs) => { el.style.fontSize = fs.toFixed(1) + 'px'; return ok(); };
+    if (lo < hi && trial(lo)) for (let k = 0; k < 8 && hi - lo > 0.5; k++) { const mid = (lo + hi) / 2; if (trial(mid)) lo = mid; else hi = mid; }
+    trial(lo);
+    return lo;
+  };
+
+  // The finished composition: the statement keeps two lines (it takes the full width first, then steps
+  // down to 32px, 28px on a phone) and the figure's second line stays on one line inside the ring's clear
+  // middle. Runs whenever the section is not live; the CSS alone already does this for text inside the
+  // header's lengths.
+  const fitFinished = (root) => {
+    if (root.classList.contains('is-live')) return;
+    const narrow = window.matchMedia('(max-width: 767px)').matches;
+    const lede = root.querySelector('.orbit-lede');
+    if (lede) {
+      lede.style.fontSize = ''; lede.style.maxWidth = '';
+      if (lede.offsetWidth && lineCount(lede) > 2) {
+        lede.style.maxWidth = 'none';
+        if (lineCount(lede) > 2) {
+          const fs0 = parseFloat(getComputedStyle(lede).fontSize) || 32;
+          fitSize(lede, Math.min(fs0, narrow ? 28 : 32), fs0, () => lineCount(lede) <= 2);
+        }
+      }
+    }
+    const line = root.querySelector('.orbit-anchor .orbit-figure-line');
+    const wheel = root.querySelector('.orbit-wheel');
+    const card = wheel && [...wheel.querySelectorAll('.orbit-card')].find((c) => c.offsetWidth);
+    if (line && card) {
+      line.style.fontSize = '';
+      // the ring's clear radius: from its centre to a card's inner edge (the cards point outward)
+      const wr = wheel.getBoundingClientRect(), cr = card.getBoundingClientRect();
+      const wx = wr.left + wr.width / 2, wy = wr.top + wr.height / 2;
+      const inner = Math.hypot(cr.left + cr.width / 2 - wx, cr.top + cr.height / 2 - wy) - card.offsetWidth / 2 - 12;
+      const lr = line.getBoundingClientRect();
+      const dy = Math.max(Math.abs(lr.top - wy), Math.abs(lr.bottom - wy));
+      const room = 2 * Math.sqrt(Math.max(0, inner * inner - dy * dy));
+      if (room > 0 && lr.width > room) {
+        const fs = parseFloat(getComputedStyle(line).fontSize) || 16;
+        line.style.fontSize = Math.max(14, Math.floor((fs * room) / lr.width * 2) / 2) + 'px';
+      }
+    }
+  };
 
   // The bottom edge of a fixed or sticky bar held at the top of the window (a site header), 0 if none.
   const barBottom = (root) => {
@@ -215,8 +284,9 @@
         C = { cx: 0, cy: 0.5 * H, rx: rC, ry: rC };
         roll = (B.cx - C.cx) / (TAU * rC);
       } else {
-        // big cards: on a phone the crest photograph is more than half the screen wide
-        sA = phone ? clamp(0.64 * W, 104, 260) : clamp(0.4 * W, 104, 220);
+        // big cards: on a phone the crest photograph is half the screen wide, and its neighbours stand
+        // tilted at both edges, so the screen shows a curve of pictures rather than one picture
+        sA = phone ? clamp(0.5 * W, 104, 220) : clamp(0.4 * W, 104, 220);
         // a steeper arch than 0.9 closes into a full ring on a tall screen (its loop seam would come up
         // from below the fold), and that ring's lower half would run under the statement: tall stages
         // keep the radius at 0.9 or more
@@ -230,8 +300,9 @@
         roll = 0.15;
       }
       const A = { cx: 0.5 * W, cy: crest + RA, rx: RA, ry: RA, sp: TAU };
-      // the arch: cards 1.25 card-widths apart; its loop seam must stay off-screen with one pitch to spare
-      const pitch = (1.25 * sA) / RA;
+      // the arch: cards 1.25 card-widths apart (1.15 on a tall stage, where fewer fit across); its loop
+      // seam must stay off-screen with one pitch to spare
+      const pitch = ((tall ? 1.15 : 1.25) * sA) / RA;
       const half = Math.asin(Math.min(1, (0.5 * W + sA) / RA)) + pitch + 0.03;
       const spread = () => {
         A.sp = Math.min(TAU, Math.max(n * pitch, 2 * half));
@@ -288,11 +359,13 @@
         G.ledeTop = ledeAt(tall ? 0.3 : 0.36);
       };
       if (lede) {
-        // The statement is the title at progress 0, so it is fitted to the screen: when it would run past
-        // the bottom edge (24px to spare), its size steps down to the largest that fits, to 40px at the
-        // least (28px on a tall stage); if it still does not fit there, the arch rises (its crest to 0.18
-        // of the height at the highest, 0.14 on a tall stage) and the statement with it.
-        lede.style.fontSize = '';
+        // The statement is the title at progress 0 and a headline, so it is fitted: when it would set
+        // three lines or more, or run past the bottom edge (24px to spare), its size steps down to the
+        // largest that keeps two lines and fits, to 40px at the least (28px on a tall stage). A statement
+        // too long for two lines at that size stays there (the fewest lines it can take). If it still
+        // runs past the bottom edge, the arch rises (its crest to 0.18 of the height at the highest, 0.14
+        // on a tall stage) and the statement with it.
+        lede.style.fontSize = ''; lede.style.maxWidth = '';
         placeLede();
         const room = H - 24;
         // the text's real extent: with a line height under 1 the glyph boxes reach past the block
@@ -304,13 +377,10 @@
           for (const q of rg.getClientRects()) if (q.height > 1) b = Math.max(b, q.bottom - top);
           return b;
         };
-        const fits = () => G.ledeTop + extent() <= room;
+        const fits = () => lineCount(lede, rg) <= 2 && G.ledeTop + extent() <= room;
         if (!fits()) {
           const fs0 = parseFloat(getComputedStyle(lede).fontSize) || 40;
-          let lo = Math.min(fs0, tall ? 28 : 40), hi = fs0;
-          const trial = (fs) => { lede.style.fontSize = fs.toFixed(1) + 'px'; if (tall) placeLede(); return fits(); };
-          if (trial(lo)) for (let k = 0; k < 8 && hi - lo > 0.5; k++) { const mid = (lo + hi) / 2; if (trial(mid)) lo = mid; else hi = mid; }
-          trial(lo);
+          fitSize(lede, Math.min(fs0, tall ? 28 : 40), fs0, () => { if (tall) placeLede(); return fits(); });
           const over = G.ledeTop + extent() - room;
           if (over > 0 && crest > crestTop) { setCrest(Math.max(crestTop, crest - over)); G.ledeTop = ledeAt(tall ? 0.24 : 0.28); }
         }
@@ -342,16 +412,19 @@
       // The column of figures: each row's text box and centre where it rests; the column rises Y0 into that
       // place while the reading line runs from the first row to the last.
       G.rows = null;
-      // a counting figure keeps the width of its final value, so its label never shifts as digits are added
-      if (counts) {
-        for (const c of counts) {
-          if (!c) continue;
-          const el = c.f.el, cur = el.textContent;
-          el.style.minWidth = '';
-          el.textContent = c.f.text;
-          el.style.minWidth = el.offsetWidth + 'px';
-          el.textContent = cur;
+      // every figure keeps the width of the widest final figure: the labels start on one edge whatever
+      // the figures are (2.4k beside 6°), and a counting figure never shifts its label as digits are added
+      const fl = figs.filter(Boolean);
+      if (fl.length) {
+        fl.forEach((f) => { f.el.style.minWidth = ''; });
+        let wide = 0;
+        for (const f of fl) {
+          const el = f.el, cur = el.textContent;
+          if (cur !== f.text) el.textContent = f.text;
+          wide = Math.max(wide, el.getBoundingClientRect().width);
+          if (cur !== f.text) el.textContent = cur;
         }
+        fl.forEach((f) => { f.el.style.minWidth = Math.ceil(wide) + 'px'; });
       }
       if (statsEl && rows.length) {
         const L = statsEl.offsetLeft, T = statsEl.offsetTop;
@@ -660,7 +733,7 @@
         rows.forEach((r) => { r.style.opacity = ''; });
         layers.forEach((L) => L.el.classList.remove('orbit-faded'));
         figs.forEach((f) => { if (f) { f.el.textContent = f.text; f.el.style.opacity = ''; f.el.style.minWidth = ''; } });
-        if (lede) lede.style.fontSize = '';
+        if (lede) { lede.style.fontSize = ''; lede.style.maxWidth = ''; }
         if (nAttr) root.style.setProperty('--n', nAttr); else root.style.removeProperty('--n');
         ['--sa', '--orbit-lede-top', '--orbit-inner-w', '--orbit-rows', '--orbit-bar'].forEach((p) => root.style.removeProperty(p));
         root.classList.remove('orbit-tall');
@@ -738,14 +811,28 @@
     };
     const scrub = opts.scrub !== undefined ? opts.scrub : (Stage.lenis ? true : 0.6);
     const build = (tl, ctx) => setup(root, ctx, o).timeline(tl);
-    const rest = () => {
+    // the finished composition, whenever the section is not live: nothing the live scene wrote is left
+    // behind, the ring has its count, and the statement and the figure are fitted
+    const finish = () => {
+      if (root.classList.contains('is-live')) return;
       if (root.__orbit) root.__orbit.dispose();
       // the finished ring needs the count even when the page forgot to set it
       if (!root.style.getPropertyValue('--n')) root.style.setProperty('--n', root.querySelectorAll('.orbit-card').length);
+      fitFinished(root);
     };
-    return Stage.scene(root, {
-      hold: o.hold, scrub, build, rest,
+    const mm = Stage.scene(root, {
+      hold: o.hold, scrub, build, rest: finish,
       phone: opts.phone === 'rest' ? 'rest' : { hold: o.phoneHold, build },
     });
+    // The stage removes .is-live when the motion stops (reduced motion turned on, a phone width with
+    // phone 'rest'), but on a desktop width with reduced motion its matchMedia runs no callback, so
+    // rest() never comes: the scene watches its own class. A switch between two live versions (desktop
+    // and phone) adds .is-live back in the same task, before this runs, and is left to the new build.
+    if (window.MutationObserver) new MutationObserver(finish).observe(root, { attributes: true, attributeFilter: ['class'] });
+    let lastW = 0;
+    if (window.ResizeObserver) new ResizeObserver(() => { const w = root.clientWidth; if (w !== lastW) { lastW = w; finish(); } }).observe(root);
+    if (document.fonts) document.fonts.ready.then(finish);
+    finish();
+    return mm;
   };
 })();

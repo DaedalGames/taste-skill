@@ -168,8 +168,8 @@
 [data-scene="fixed-hero-object"].is-live .fho-specs > div { min-height: clamp(30px, calc(58svh / var(--fho-rows, 5) - 4px), 60px); }
 
 /* the dock: heading top left, gauge and numbers under the docked object, the action bottom right */
-/* the heading keeps left of the docked object (centred, about 22vw wide) */
-[data-scene="fixed-hero-object"].is-live .fho-dock > .fho-head { position: absolute; left: var(--fho-m); top: 11svh; width: max-content; max-width: min(calc(34vw - var(--fho-m)), 7.4em); }
+/* the heading keeps left of the docked object, 6vw clear of it (--fho-room, measured by the script) */
+[data-scene="fixed-hero-object"].is-live .fho-dock > .fho-head { position: absolute; left: var(--fho-m); top: 11svh; width: max-content; max-width: min(var(--fho-room, 100vw), calc(34vw - var(--fho-m)), 7.4em); }
 [data-scene="fixed-hero-object"].is-live .fho-gauge { position: absolute; left: 50%; bottom: 4svh; width: min(100svh, 62vw); translate: -50% 0; }
 [data-scene="fixed-hero-object"].is-live .fho-readouts { position: absolute; left: 50%; bottom: 9svh; width: min(84svh, 52vw); translate: -50% 0; }
 [data-scene="fixed-hero-object"].is-live .fho-dock > .fho-cta { position: absolute; right: var(--fho-m); bottom: 6svh; }

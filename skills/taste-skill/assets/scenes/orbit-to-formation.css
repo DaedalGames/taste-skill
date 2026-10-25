@@ -27,10 +27,11 @@
   padding: clamp(64px, 12svh, 140px) var(--gutter, clamp(16px, 3.4vw, 56px));
 }
 
+/* a headline of two lines: up to about 48 characters at any width (the script fits longer ones) */
 [data-scene="orbit-to-formation"] .orbit-lede {
   grid-area: lede;
   margin: 0;
-  max-width: 22ch;
+  max-width: 26ch;
   font-family: var(--font-display, inherit);
   font-weight: 500;
   font-size: clamp(32px, 7vw, 124px);
@@ -76,7 +77,8 @@
   position: relative;
   z-index: 2;
   text-align: center;
-  max-width: calc(var(--S) * .6);
+  /* as wide as the ring's clear middle; the caption keeps its own measure */
+  max-width: calc(var(--S) * .74);
 }
 
 [data-scene="orbit-to-formation"] .orbit-figure {
@@ -89,20 +91,23 @@
   font-variant-numeric: tabular-nums;
   text-wrap: balance;
 }
-/* the optional second line of the figure: here a smaller line under the number; on the live stage both
-   lines are one two-line headline at display size */
+/* the optional second line of the figure: here a smaller line under the number, always one line (the
+   script sets it smaller when a long one would not fit the ring); on the live stage both lines are one
+   two-line headline at display size */
 [data-scene="orbit-to-formation"] .orbit-figure:has(.orbit-figure-line) { font-size: min(clamp(64px, 9vw, 150px), calc(var(--S) * .15)); }
 [data-scene="orbit-to-formation"] .orbit-figure-line {
   display: block;
-  margin-top: .1em;
+  width: fit-content;
+  margin: .1em auto 0;
   font-size: .6em;
   line-height: 1;
   letter-spacing: -.03em;
+  white-space: nowrap;
 }
 
 [data-scene="orbit-to-formation"] .orbit-caption {
   margin: 16px auto 0;
-  max-width: 28ch;
+  max-width: min(28ch, calc(var(--S) * .6));
   font-size: clamp(16px, 1.4vw, 20px);
   line-height: 1.45;
   text-wrap: balance;
@@ -159,13 +164,13 @@
 @media (max-width: 767px) {
   [data-scene="orbit-to-formation"] > .scene-stage { --S: min(calc(100vw - 24px), 72svh); }
   [data-scene="orbit-to-formation"] .orbit-lede { font-size: clamp(30px, 9vw, 44px); }
-  [data-scene="orbit-to-formation"] .orbit-wheel { --cs: calc(var(--S) * .17); --rr: calc(var(--S) * .41 - 4px); }
+  [data-scene="orbit-to-formation"] .orbit-wheel { --cs: calc(var(--S) * .16); --rr: calc(var(--S) * .42 - 4px); }
   [data-scene="orbit-to-formation"] .orbit-card { transform: translate(-50%, -50%) rotate(calc(var(--i, 0) * 360deg / min(var(--n, 10), 10))) translateY(calc(var(--rr) * -1)); }
   [data-scene="orbit-to-formation"] .orbit-card:nth-child(n + 11) { display: none; }
-  [data-scene="orbit-to-formation"] .orbit-anchor { max-width: calc(var(--S) * .5); }
+  [data-scene="orbit-to-formation"] .orbit-caption { max-width: calc(var(--S) * .5); }
   [data-scene="orbit-to-formation"] .orbit-figure,
-  [data-scene="orbit-to-formation"] .orbit-figure:has(.orbit-figure-line) { font-size: clamp(48px, 16vw, 72px); }
-  [data-scene="orbit-to-formation"] .orbit-figure-line { font-size: .5em; }
+  [data-scene="orbit-to-formation"] .orbit-figure:has(.orbit-figure-line) { font-size: clamp(48px, 15vw, 68px); }
+  [data-scene="orbit-to-formation"] .orbit-figure-line { font-size: .4em; }
   [data-scene="orbit-to-formation"] .orbit-caption { font-size: 14px; margin-top: 10px; }
   [data-scene="orbit-to-formation"] .orbit-stat-figure { font-size: clamp(44px, 13vw, 60px); }
 }

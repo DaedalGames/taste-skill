@@ -275,21 +275,29 @@ function dealScenes(dir, input, exclude) {
   const quiet = ['quiet', 'technical'].includes(input.tone);
   const n = Math.min(pool.length, quiet ? 2 : loud ? 3 : 2);
   const recentIds = hist.slice(0, 4).flatMap((h) => h.scenes || []);
-  let rest = fresh(pool, recentIds);
-  const out = []; const families = new Set(); const usedRoles = new Set();
-  while (out.length < n) {
-    let cands = rest.filter((sc) => !families.has(sc.family) && !(sc.position === 'opening' && out.some((o) => o.position === 'opening')) && !(sc.position === 'closing' && out.some((o) => o.position === 'closing')));
-    if (!cands.length) cands = pool.filter((sc) => !out.includes(sc) && !families.has(sc.family));
-    if (!cands.length) break;
-    const sc = pick(cands); out.push(sc); families.add(sc.family); rest = rest.filter((x) => x !== sc);
-  }
-  // the section each scene carries: the first role of the argument it suits that no other scene has taken
+  // Each scene is placed as it is picked, on a section of the argument it can carry, with a quiet section
+  // between it and every other scene; a scene with no such section is not dealt. Closing scenes take their
+  // latest section, the others their own first choice. One long scene a page, about nine screens in all.
   const roles = ['hero', ...input.sections];
-  return out.map((sc) => {
-    const role = sc.position === 'opening' ? 'hero' : roles.find((r) => (sc.roles || []).includes(r) && !usedRoles.has(r) && r !== 'hero') || null;
-    if (role) usedRoles.add(role);
-    return { ...sc, carries: role };
-  }).sort((a, b) => (a.carries ? roles.indexOf(a.carries) : 99) - (b.carries ? roles.indexOf(b.carries) : 99));
+  const out = []; const families = new Set(); const taken = new Set();
+  const free = (r) => { const i = roles.indexOf(r); return i >= 0 && !taken.has(i) && !taken.has(i - 1) && !taken.has(i + 1); };
+  const place = (sc) => {
+    if (sc.position === 'opening') return free('hero') ? 'hero' : null;
+    const ok = (sc.roles || []).filter((r) => r !== 'hero' && free(r));
+    if (!ok.length) return null;
+    return sc.position === 'closing' ? ok.sort((a, b) => roles.indexOf(b) - roles.indexOf(a))[0] : ok[0];
+  };
+  const holdOf = (sc) => sc.hold || 2;
+  const held = () => out.reduce((s, x) => s + holdOf(x), 0);
+  const allowed = (sc) => !out.some((o) => o.id === sc.id) && !families.has(sc.family) && place(sc) && !(holdOf(sc) > 4 && out.some((o) => holdOf(o) > 4)) && held() + holdOf(sc) <= 9;
+  while (out.length < n) {
+    let cands = fresh(pool, recentIds).filter(allowed);
+    if (!cands.length) cands = pool.filter(allowed);
+    if (!cands.length) break;
+    const sc = pick(cands); const role = place(sc);
+    taken.add(roles.indexOf(role)); families.add(sc.family); out.push({ ...sc, carries: role });
+  }
+  return out.sort((a, b) => roles.indexOf(a.carries) - roles.indexOf(b.carries));
 }
 function dealHero(dir, input, exclude) {
   // the direction's own list, and any hero written for this direction since (the October 2026 study added some)
@@ -553,8 +561,9 @@ function render(s) {
     p(`The page's big moments: ${s.scenes.length} scroll scenes, tested and ready to fill. They are part of the composition, so build them in step 6 with the section they carry, not as a motion afterthought. Each runs on the shared stage (assets/scenes/stage.js and stage.css, with GSAP and Lenis from the pinned CDN lines in stage.js) and ships its own finished composition for reduced motion and for phones that rest. How to put one on a page, fill it and check it: references/scenes.md. Check them with \`node <skill>/scripts/scenes.mjs <page>\` and look at every sheet.`);
     for (const sc of s.scenes) {
       p();
-      p(`### ${sc.name} (\`${sc.id}\`)${sc.carries ? ` — carries the ${sc.carries === 'hero' ? 'first screen' : sc.carries + ' section'}` : ' — a transition between two sections'}`);
-      p(sc.summary);
+      const what = sc.carries === 'hero' ? 'the first screen' : `the ${sc.carries} section`;
+      p(`### ${sc.name} (\`${sc.id}\`) — ${sc.position === 'transition' ? `the hand-over into ${what}` : `carries ${what}`}`);
+      p(`${sc.summary}${sc.hold ? ` Holds about ${sc.hold} screens.` : ''}`);
       if (sc.place) p(`Where: ${sc.place}`);
       if (sc.content) p(`Content: ${sc.content}`);
       if (sc.options) p(`Options (data-options): ${sc.options}`);

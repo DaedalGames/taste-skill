@@ -105,7 +105,8 @@
 // PERFORMANCE. The map rig is a plain 3D transform over flat layers (only the boards ride a preserve-3d
 // rig). Drawn as vector, the map costs the browser a raster of thousands of shapes for every new piece
 // of map the camera turns towards, which stutters on a first pass. So once the page is idle the scene
-// paints the map itself, in idle slices, into bitmaps: the ground is cut into cells (40 at most), each
+// paints the map itself, in idle slices, into bitmaps (CPU canvases, so the shapes are rastered in those
+// slices and not when a bitmap first comes on screen): the ground is cut into cells (40 at most), each
 // painted at the sharpest scale the camera's path will ever show it at (worked out from the path itself,
 // leaving out what lies under the fog's solid strip, under the rail plate or beyond the art), within a
 // pixel budget (18 Mpx, 24 on dense screens, 8 on a phone) that coarsens the far ground first, then the
@@ -759,6 +760,17 @@
       vw = stage.clientWidth || innerWidth; vh = stage.clientHeight || innerHeight;
       pickMode(vw, vh);
       z0 = Math.min(M.fitW / bbox.w, M.fitH / bbox.h);
+      // the overview keeps the first stop, where the traveller lands, a traveller's size and more from the
+      // screen's sides: the route's box slides sideways into its own slack (a phone, where it fills the width)
+      {
+        const half = (Math.max(TW, TH) / 2) * clamp(M.kt / z0, 1, M.tMax) * z0 + 16;
+        const left = M.ox * vw - (bbox.w / 2) * z0, right = M.ox * vw + (bbox.w / 2) * z0;
+        const sx = M.ox * vw + (X[0] - bbox.cx) * z0;
+        let shift = 0;
+        if (sx < half) shift = Math.min(half - sx, Math.max(0, vw - 8 - right));
+        else if (sx > vw - half) shift = -Math.min(sx - (vw - half), Math.max(0, left - 8));
+        M.ox += shift / vw;
+      }
       // keep the parked traveller and the lit plot clear of the rail plate and inside the screen,
       // whatever the window (the plot spans gap + half its size above the anchor, the rest below)
       const plotUp = plotSize / 2 + gap, plotDown = Math.max(plotSize / 2 - gap, TH / 2);
@@ -980,12 +992,12 @@
     const BAND = 160;
     // a canvas covering map rect (x, y, w, h) at pw x ph pixels; r is its true scale. Each is a layer of
     // its own whose pixels the compositor only moves (will-change, in the CSS)
-    const newJob = (x, y, w, h, pw, ph, cls, cpu) => {
+    const newJob = (x, y, w, h, pw, ph, cls) => {
       const cv = document.createElement('canvas');
       cv.width = pw; cv.height = ph;
       cv.className = cls;
       cv.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
-      return { cv, cpu, ox: x, oy: y, r: pw / w };
+      return { cv, ox: x, oy: y, r: pw / w };
     };
     const discard = (cv) => { cv.remove(); cv.width = cv.height = 0; };
     // work: paint one band of a canvas (a few ms), then hand finished canvases to the page
@@ -1079,7 +1091,7 @@
         const ab = bk.artBox, x = Math.floor(ab[0]) - PAD, y = Math.floor(ab[1]) - PAD;
         const r = Math.min(0.25, 4096 / Math.max(ab[2] - ab[0], ab[3] - ab[1]));
         const pw = Math.ceil((ab[2] - ab[0] + 2 * PAD) * r), ph = Math.ceil((ab[3] - ab[1] + 2 * PAD) * r);
-        bk.draftJob = newJob(x, y, pw / r, ph / r, pw, ph, 'route-bake__draft', true);
+        bk.draftJob = newJob(x, y, pw / r, ph / r, pw, ph, 'route-bake__draft');
         queueBands(bk.draftJob);
         bk.queue.push({ kind: 'draft', job: bk.draftJob });
       }
@@ -1090,7 +1102,7 @@
         if (!cell) { cell = { cv: null, next: null }; bk.cells.set(q.key, cell); }
         if (cell.cv) { cell.next = null; continue; }
         const x = q.x - PAD, y = q.y - PAD, w = q.size + 2 * PAD, pw = Math.ceil(w * q.r);
-        cell.next = newJob(x, y, w, w, pw, pw, 'route-bake__cell', true);
+        cell.next = newJob(x, y, w, w, pw, pw, 'route-bake__cell');
         todo.push([q.at, cell]);
       }
       todo.sort((a, b) => a[0] - b[0]);
@@ -1098,7 +1110,7 @@
       const key = endRect.map((v) => v.toFixed(2)).join() + '@' + endPx.r;
       if (bk.endDone !== key) {
         bk.endKey = key;
-        bk.endJob = newJob(endRect[0], endRect[1], endRect[2] - endRect[0], endRect[3] - endRect[1], endPx.pw, endPx.ph, 'route-bake__end', false);
+        bk.endJob = newJob(endRect[0], endRect[1], endRect[2] - endRect[0], endRect[3] - endRect[1], endPx.pw, endPx.ph, 'route-bake__end');
         bk.endJob.r = endPx.r;
         queueBands(bk.endJob);
         bk.queue.push({ kind: 'end', job: bk.endJob });
