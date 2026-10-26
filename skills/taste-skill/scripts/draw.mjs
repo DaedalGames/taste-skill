@@ -290,10 +290,12 @@ function dealScenes(dir, input, exclude) {
   // Atmosphere scenes (light, a burst of lines, letters) carry one line and no information. In round 1 of the
   // v2.5 tests every one of them was the stretch judges called dead scroll on a product page. They are dealt
   // only to loud or creative pages, one at most; everywhere else a scene carries the section's real content.
-  const ATMOSPHERE = new Set(['warp-jump', 'light-flood', 'letter-physics', 'wordmark-under-strain', 'object-through-giant-type']);
+  const ATMOSPHERE = new Set(['warp-jump', 'light-flood', 'letter-physics', 'wordmark-under-strain', 'object-through-giant-type', 'type-flip-relayout']);
+  // judged cheap twice (a page curl, a torn-paper seam): never dealt
+  const NEVER = new Set(['peel-tear-and-drag']);
   const creative = ['bold', 'playful'].includes(input.tone) || ['agency', 'studio-portfolio', 'personal-portfolio', 'music', 'fashion', 'event', 'culture'].includes(input.sector);
-  let pool = L.scenes.filter((sc) => fits(sc) && (creative || !ATMOSPHERE.has(sc.id)));
-  if (pool.length < 2) pool = L.scenes.filter((sc) => !exclude.includes(sc.id) && (sc.needs || []).every(has) && (creative || !ATMOSPHERE.has(sc.id)));
+  let pool = L.scenes.filter((sc) => fits(sc) && !NEVER.has(sc.id) && (creative || !ATMOSPHERE.has(sc.id)));
+  if (pool.length < 2) pool = L.scenes.filter((sc) => !exclude.includes(sc.id) && !NEVER.has(sc.id) && (sc.needs || []).every(has) && (creative || !ATMOSPHERE.has(sc.id)));
   if (!pool.length) return [];
   const roles = ['hero', ...input.sections];
   const loud = ['bold', 'playful'].includes(input.tone) || (!input.tone && ['agency', 'fashion', 'music', 'event'].includes(input.sector));

@@ -297,7 +297,8 @@ not finished. Order of work:
    (`assets.mjs --credits` prints it), never as a list across the footer, never as a sentence on the
    page. When the project has footage or a real picture of its own product, the first screen shows it,
    large. A portfolio whose work is invented for the brief shows each piece as a finished still of that
-   work (its title card, an end frame, a poster), with real detail.
+   work (its title card, an end frame, a poster), with real detail; a stock or location photograph
+   never stands in for a piece of work (a motion designer's work slots showing skylines lost a test).
 
    `references/imagery.md` covers searching, licences, video, drawing, crops and treatments.
 5. **The navigation and the footer** as section 0 deals them: a real header with the page's sections
