@@ -297,7 +297,7 @@ Under the inspector, the final builds measured 0 FAIL each; the baselines measur
 text under 13px).
 
 What the jurors rewarded, in the order they named it: an idea that belongs to this client and not to
-the category (the competitor test); one live thing on the page; full content at a readable size; a
+the category (the competitor test); one live thing on the page (in v2.5 dealt to some pages only, since a widget on every page became the kit); full content at a readable size; a
 first screen with one dominant element and a real button; drawings of the subject with detail. What
 they punished: a quiet page that read as empty, a small headline, text sliding over pictures or cut
 at the top, a page recoloured mid-section, rows cut at the right edge, a large sentence over three or

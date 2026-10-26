@@ -66,9 +66,13 @@ sheets. Make each pass on its own; do not blend them.
     position? Does any element run off the edge of the phone screen? A row that scrolls sideways on
     the phone reads as cut off in a screenshot and to most visitors; wrap it unless the cut is
     plainly deliberate (a partial card showing at the edge).
-14. **The competitor and the live thing.** Put the nearest competitor's name on the page: does the
-    idea still work? Then name the one live thing (what the visitor can do or what differs each visit).
-    If either answer is weak, that is the first problem of the round, ahead of any detail.
+14. **The competitor test.** Put the nearest competitor's name on the page: does the idea still work?
+    If it does, that is the first problem of the round, ahead of any detail. If the sheet dealt an
+    interactive piece, is it a tool a visitor would really use, or a toy?
+15. **Professional or generated?** Hold the page against a strong professional site of its kind (a
+    good shop, a tech company, a studio). Is the type a sensible size, is the colour one ground, one ink
+    and one accent, is every picture sharp and on subject, are there labels, captions or boxes that
+    say nothing, is there a real navigation and a footer that works? Each "no" is a problem to fix.
 
 A note from testing: in blind comparisons a richer page full of template devices beat a cleaner page
 that was thin, every time. The house rules remove the devices; passes 11–13 are where you make sure the
@@ -118,11 +122,15 @@ These override the arithmetic.
   a screenshot: overall cannot exceed **6.5**, whatever else is true.
 - Pass 3 fails (the page could belong to anyone): creativity cannot exceed **6**.
 - The idea passes for the nearest competitor (pass 14): creativity cannot exceed **7**.
-- Fewer than four real pictures (photographs, archival images, footage; drawings do not count):
-  design cannot exceed **6.5**.
+- A picture that is soft, random or off subject in a large slot, or pictures inside a headline or a
+  sentence: design cannot exceed **6.5**.
+- More than one accent hue, or the page on a coloured ground with a second hue on it: design cannot
+  exceed **6.5**.
+- A giant name or email in the footer, or picture credits spread across it: design cannot exceed **7**.
+- Labels, captions, chips or timestamps that carry nothing, or paragraphs over about 50 words:
+  content cannot exceed **6.5**.
 - A page that barely moves (the inspector's `still-page`), or motion that is one identical fade on
   every block: design cannot exceed **7**.
-- No live thing (pass 14): creativity cannot exceed **7.5**.
 - Any placeholder (grey box, lorem, "Image here"): content cannot exceed **5**.
 - Two or more desktop screens that are mostly empty ground, or a page whose running text is small and
   grey: design cannot exceed **6.5**.
@@ -144,7 +152,7 @@ Write it down; do not just think it. Use exactly this shape so rounds can be com
 ROUND n
 Seen in one second: …
 Idea (one sentence): …
-Live thing: …
+Interactive piece (if dealt): …
 Layout words by section: hero=… / …=… / …
 Scores: design _ · usability _ · creativity _ · content _ → overall _._
 Caps applied: …

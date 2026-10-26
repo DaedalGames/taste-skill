@@ -36,7 +36,8 @@
   "seenIn": [
    "opl-marina-rachello",
    "opl-anidachi"
-  ]
+  ],
+  "loud": true
  },
  {
   "id": "photograph-for-a-letter",
@@ -54,7 +55,8 @@
   "seenIn": [
    "aww-paul-kalkbrenner",
    "opl-nia-creative"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "name-split-to-corners",
@@ -108,7 +110,8 @@
   "motion": "shutter-image",
   "seenIn": [
    "aww-colonia-zacamil"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "sentence-split-by-frame",
@@ -145,7 +148,8 @@
   "motion": "colour-on-scroll",
   "seenIn": [
    "opl-juggle"
-  ]
+  ],
+  "loud": true
  },
  {
   "id": "swatch-column-beside-view",
@@ -252,7 +256,8 @@
   "seenIn": [
    "aww-mosbys-files",
    "opl-medium-rare"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "striped-card-beside-room",
@@ -425,7 +430,8 @@
   "seenIn": [
    "aww-zeroz-brand-site",
    "aww-moto-finance"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "object-on-the-seam",
@@ -523,7 +529,8 @@
   "motion": "masked-headline",
   "seenIn": [
    "opl-uglycash"
-  ]
+  ],
+  "loud": true
  },
  {
   "id": "counter-object-wide-wordmark",
@@ -648,7 +655,8 @@
   "motion": "masked-headline",
   "seenIn": [
    "opl-juggle"
-  ]
+  ],
+  "loud": true
  },
  {
   "id": "flush-left-shout-seam-photo",
@@ -667,7 +675,8 @@
    "aww-aardvark-book-club",
    "opl-postaway",
    "opl-the-sapphic-bar-index"
-  ]
+  ],
+  "loud": true
  },
  {
   "id": "menu-column-sticky-photo",
@@ -704,7 +713,8 @@
   "seenIn": [
    "aww-lxl-creative",
    "opl-kereliott"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "anchored-text-specimen-half",
@@ -870,7 +880,8 @@
   "motion": "colour-on-scroll",
   "seenIn": [
    "opl-marina-rachello"
-  ]
+  ],
+  "loud": true
  },
  {
   "id": "one-word-cropped",
@@ -889,7 +900,8 @@
    "opl-shawn-golden",
    "aww-px-push",
    "opl-lorenzo-bocchi-photography"
-  ]
+  ],
+  "loud": true
  },
  {
   "id": "window-opens-to-the-edges",
@@ -931,7 +943,8 @@
    "aww-squarespace-foundations",
    "aww-studio-k95-3",
    "aww-kononenko-architectural-bureau"
-  ]
+  ],
+  "loud": true
  },
  {
   "id": "navigation-on-the-midline",
@@ -989,7 +1002,8 @@
   "seenIn": [
    "aww-nothin",
    "aww-produx-design"
-  ]
+  ],
+  "loud": true
  },
  {
   "id": "square-over-a-moving-line",
@@ -1007,7 +1021,8 @@
   "motion": "edge-marquee",
   "seenIn": [
    "aww-realevate"
-  ]
+  ],
+  "loud": true
  },
  {
   "id": "two-doors-on-a-dark-wall",
@@ -1082,5 +1097,126 @@
    "aww-cominvi",
    "aww-no-art"
   ]
+ },
+ {
+  "id": "product-under-headline",
+  "name": "Product under the headline",
+  "archetype": "stack",
+  "directions": [
+   "clear-product",
+   "product-performs",
+   "spec-sheet"
+  ],
+  "needs": [],
+  "blueprint": "The headline and one sentence sit at the top of the content width, left-aligned or centred (one choice for the whole page), with one or two actions under them. Below, the product fills the width of the content area: a large interface fragment built in HTML (data-ui), the object, or what it produces, starting in the first screen and cropped by its bottom edge so the visitor scrolls into it. Generous space above the headline; the product is the largest thing on the screen.",
+  "mobile": "The same order: headline, sentence, action, then the product at full width, cropped by the edge rather than scaled to illegibility.",
+  "headline": "What it is or what it does, two to six words, at the dealt display step.",
+  "motion": "masked-headline",
+  "seenIn": [
+   "pro-linear",
+   "pro-vercel",
+   "pro-stripe",
+   "pro-raycast"
+  ]
+ },
+ {
+  "id": "words-beside-product",
+  "name": "Words beside the product",
+  "archetype": "split",
+  "directions": [
+   "clear-product",
+   "product-performs",
+   "spec-sheet",
+   "clear-service"
+  ],
+  "needs": [],
+  "blueprint": "The content width is split about 5 to 7. The headline, one sentence and the action sit in the narrower part, vertically centred or aligned to the top of the picture. The wider part holds the product, the object or the real place, large, running to the right edge of the screen. Nothing else on the first screen.",
+  "mobile": "Words first, then the picture at full width.",
+  "headline": "What it is, two to six words.",
+  "motion": "shutter-image",
+  "seenIn": [
+   "pro-mercury",
+   "pro-ramp",
+   "pro-superhuman"
+  ]
+ },
+ {
+  "id": "photograph-with-a-line",
+  "name": "Photograph with a line",
+  "archetype": "full-bleed",
+  "directions": [
+   "shop-window",
+   "calm-editorial",
+   "place-carries-it",
+   "clear-service"
+  ],
+  "needs": [],
+  "blueprint": "One sharp photograph fills the first screen under the navigation. A short line (the collection, the season, the place) and one action sit in the photograph's calmest area, usually the lower left, on the photograph itself with enough contrast (a neutral scrim only if needed). The photograph is chosen for that calm area; nothing else is on the screen.",
+  "mobile": "A portrait crop of the same photograph, the line and action in its calm area or directly under it on the ground.",
+  "headline": "Two to five words; it names, it does not explain.",
+  "motion": "slow-crossfade",
+  "seenIn": [
+   "pro-aesop",
+   "pro-arket",
+   "pro-patagonia",
+   "pro-snow-peak"
+  ]
+ },
+ {
+  "id": "two-photographs-and-a-line",
+  "name": "Two photographs and a line",
+  "archetype": "split",
+  "directions": [
+   "shop-window",
+   "calm-editorial",
+   "uneven-photographs"
+  ],
+  "needs": [],
+  "blueprint": "Two photographs of one family stand side by side, together filling the first screen's width, at the same height or one taller. The line and the action sit under them or across the lower edge of one of them. The two pictures say something together (the product and its use, the place and its detail).",
+  "mobile": "The first photograph full width, the line and action, then the second photograph.",
+  "headline": "Two to five words.",
+  "motion": "shutter-image",
+  "seenIn": [
+   "pro-cos",
+   "pro-apc",
+   "pro-norse-projects"
+  ]
+ },
+ {
+  "id": "object-on-plain-ground",
+  "name": "The object on a plain ground",
+  "archetype": "centre",
+  "directions": [
+   "spec-sheet",
+   "clear-product",
+   "hero-object",
+   "shop-window"
+  ],
+  "needs": [],
+  "blueprint": "The name and one line sit above, centred, with two actions (buy and learn more). Below them the object stands large on the plain ground (photographed or generated on that ground, or drawn precisely), filling most of the rest of the screen. Nothing else.",
+  "mobile": "The same, the object at full width.",
+  "headline": "The product's name, then one line that says what is new about it.",
+  "motion": "shutter-image",
+  "seenIn": [
+   "pro-apple",
+   "pro-nothing",
+   "pro-analogue"
+  ]
+ },
+ {
+  "id": "answer-first",
+  "name": "The answer first",
+  "archetype": "split",
+  "directions": [
+   "clear-service",
+   "clear-product",
+   "calm-editorial"
+  ],
+  "needs": [],
+  "blueprint": "The headline says what the service is and for whom; one sentence; the action. Beside or under it one real picture of the place or the people at work. Under both, a row of three or four facts a visitor would otherwise search for (price from, where, when, how long), set at the body size with their values at the head step. The facts are true and complete.",
+  "mobile": "Headline, sentence, action, picture, then the facts as a short list.",
+  "headline": "What it is and for whom, three to eight words.",
+  "motion": "masked-headline",
+  "seenIn": []
  }
 ]

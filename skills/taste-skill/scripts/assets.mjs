@@ -11,7 +11,7 @@
 //   node assets.mjs "<query>"                     search every source, licences safe for commercial use
 //        [--source all|openverse|commons|aic|met|museums]    one or several, comma-separated
 //        [--license safe|pd|all|cc0,pd,by,by-sa,...]        safe = CC0, public domain, CC BY, CC BY-SA
-//        [--orientation landscape|portrait|square]  [--min-width 1000]  [--width 1920]  [--limit 5]
+//        [--orientation landscape|portrait|square]  [--min-width 1800]  [--width 1920]  [--limit 5]
 //        [--no-check]                              skip checking that each image loads (faster)
 //        [--json]                                  machine-readable results
 //   node assets.mjs "<query>" --video              search for real footage instead (same options, plus
@@ -19,7 +19,7 @@
 //        [--max-mb 25]                             clips over this are flagged, and --get refuses them
 //   node assets.mjs --get <ref>[,<ref>...] [--to assets] [--name <file name>] [--width 1920] [--res 720] [--max-mb 25]
 //                                                  download into the project and record the credit
-//   node assets.mjs --credits [--to assets]        print the credits for the footer and the report
+//   node assets.mjs --credits [--to assets]        print the credits dialog and the report list
 //
 // Image sources: Openverse (api.openverse.org: Flickr, Wikimedia Commons, museums and libraries in one
 // index), Wikimedia Commons, the Art Institute of Chicago (public-domain works over IIIF) and The
@@ -57,7 +57,7 @@ const USAGE = `Find real, openly licensed pictures of the subject's world, downl
       --source all|openverse|commons|aic|met|museums   comma-separated; default all
       --license safe|pd|all|cc0,pd,by,by-sa,...        default safe: CC0, public domain, CC BY, CC BY-SA
       --orientation landscape|portrait|square
-      --min-width <px>       smallest acceptable full width, default 1000
+      --min-width <px>       smallest acceptable full width, default 1800 (a picture is used at most at about half its width)
       --width <px>           width of the image URL to use or download, default 1920
       --limit <n>            results per source, default 5 (at most 20)
       --no-check             do not check that every image loads (faster, less reliable)
@@ -136,7 +136,7 @@ const o = {
   sources: pickSources(args.source ?? args.sources ?? 'all'),
   licences: pickLicences(args.license ?? args.licence ?? 'safe'),
   orientation: pickOrientation(args.orientation),
-  minWidth: number('min-width', VIDEO ? 640 : 1000, 0, 20000),
+  minWidth: number('min-width', VIDEO ? 640 : 1800, 0, 20000),
   width: number('width', 1920, 200, 4000),
   limit: number('limit', 5, 1, 20),
   video: VIDEO,
@@ -847,10 +847,16 @@ function printCredits(opts) {
     return `<a href="${esc(c.page)}">“${esc(short(c.title, 90))}”</a>${by}${date}, ${lic}, via ${esc(c.via)}`;
   };
   const media = new Set(uniq.map((c) => c.media || 'image'));
-  const label = media.size > 1 ? 'Pictures and footage' : media.has('video') ? 'Footage' : 'Pictures';
-  console.log('Footer credits (HTML). Full contrast, keep the links, body size (one step smaller only on a page with plenty of');
-  console.log('running text). Remove anything the page no longer uses, here and in credits.json.\n');
-  console.log(`<p class="credits">${label}: ${uniq.map(html).join('; ')}.</p>`);
+  const label = media.size > 1 ? 'Image and video credits' : media.has('video') ? 'Video credits' : 'Image credits';
+  const owed = uniq.filter((c) => c.creditRequired !== false);
+  if (!owed.length) console.log('None of these pictures requires a credit: put nothing on the page; list them in your report.\n');
+  else {
+    console.log('Credits stay off the page surface: one small link in the footer opens this dialog. Never a wall of links in the footer.');
+    console.log('Remove anything the page no longer uses, here and in credits.json.\n');
+    console.log(`<button type="button" class="credits-link" onclick="document.getElementById('credits').showModal()">${label}</button>`);
+    console.log(`<dialog id="credits" aria-label="${label}"><form method="dialog"><button aria-label="Close">Close</button></form>`);
+    console.log(`  <ul>${owed.map((c) => `<li>${html(c)}</li>`).join('')}</ul>\n</dialog>`);
+  }
   console.log('\nFor your report:\n');
   for (const c of uniq) console.log(`- ${c.file}${c.media === 'video' && c.duration ? ` (video, ${clock(c.duration)})` : ''}: ${c.credit}. ${c.page}${c.creditRequired ? '' : ' (no credit required)'}`);
   return 0;

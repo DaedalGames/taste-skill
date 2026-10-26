@@ -58,7 +58,8 @@
    "aww-house-of-honey-1",
    "aww-produx-design"
   ],
-  "allow": []
+  "allow": [],
+  "weight": 0.5
  },
  {
   "id": "sentence-as-layout",
@@ -115,7 +116,8 @@
    "aww-coffeetech-r",
    "opl-midnight-2"
   ],
-  "allow": []
+  "allow": [],
+  "weight": 0.6
  },
  {
   "id": "pinned-poster",
@@ -168,7 +170,8 @@
    "aww-revelatio-studio"
   ],
   "allow": [],
-  "needsPictures": true
+  "needsPictures": true,
+  "weight": 0.7
  },
  {
   "id": "colour-chapters",
@@ -222,7 +225,9 @@
    "aww-aardvark-book-club",
    "aww-ai-in-design-report-2026"
   ],
-  "allow": []
+  "allow": [],
+  "weight": 0.35,
+  "loud": true
  },
  {
   "id": "place-carries-it",
@@ -333,7 +338,8 @@
    "opl-le-petit-bleu",
    "opl-archiv"
   ],
-  "allow": []
+  "allow": [],
+  "weight": 0.3
  },
  {
   "id": "one-motif",
@@ -389,7 +395,8 @@
    "opl-superlocal-2026",
    "opl-billow"
   ],
-  "allow": []
+  "allow": [],
+  "weight": 0.8
  },
  {
   "id": "product-performs",
@@ -595,7 +602,8 @@
    "opl-smallbits",
    "aww-butter"
   ],
-  "allow": []
+  "allow": [],
+  "weight": 0.8
  },
  {
   "id": "borrowed-category",
@@ -653,7 +661,8 @@
    "aww-moto-finance",
    "aww-vero-new-york"
   ],
-  "allow": []
+  "allow": [],
+  "weight": 0.5
  },
  {
   "id": "contact-sheet",
@@ -806,7 +815,9 @@
    "opl-depo-budget-app",
    "aww-trevor-noah"
   ],
-  "allow": []
+  "allow": [],
+  "weight": 0.4,
+  "loud": true
  },
  {
   "id": "split-stage",
@@ -1073,6 +1084,266 @@
    "opl-statements",
    "aww-nothin"
   ],
+  "allow": []
+ },
+ {
+  "id": "clear-product",
+  "name": "The product, clearly",
+  "weight": 1.6,
+  "sectors": [
+   "saas",
+   "dev-tool",
+   "ai-product",
+   "consumer-app",
+   "finance",
+   "physical-product",
+   "ecommerce",
+   "education",
+   "health"
+  ],
+  "tones": [
+   "technical",
+   "quiet",
+   "bold",
+   "warm"
+  ],
+  "needs": [],
+  "idea": "Explain the product the way the best technology companies do: one plain sentence that says what it is and who it is for, then the product itself, large and real, then each thing it does shown rather than told. The idea is not a metaphor; it is the product's own best moment, chosen and framed so a visitor understands it in five seconds. Find the one screen, object or result that makes someone want it, and open with that.",
+  "composition": "The first screen is a modest, confident headline (the dealt display step, two lines at most), one sentence under it and one or two actions, with the product filling most of what is left: a large interface fragment, the object, or the result it produces. Below it the page alternates between wide product moments (one capability, one picture or fragment at full width with a short heading) and compact rows that pair two sentences with a cropped fragment. Somewhere in the middle a calm overview lists the remaining capabilities as short items (a name and one sentence each), set in two or three columns with no icons and no boxes. Facts that matter (prices, limits, platforms, numbers) are set as facts: a table, a list, a figure. Sections are separated by space, not by colour.",
+  "typography": "Sentence case everywhere. The headline is a sensible size, not a poster; the hierarchy comes from weight and space as much as from size. Interface text inside fragments at its true size.",
+  "typeClasses": [
+   "grotesk-tight",
+   "grotesk-light",
+   "geometric"
+  ],
+  "colour": "A neutral ground (white, off-white or near-black) for the whole page; the accent on the actions and links only. Any other colour comes from the product itself.",
+  "paletteTags": [
+   "light-neutral",
+   "dark-neutral",
+   "mono-accent"
+  ],
+  "imagery": "The product is the picture: real interface fragments (data-ui), the object photographed or generated as it is, or the output it makes. Few people photographs; none of people at laptops.",
+  "sectionTags": [
+   "ui-led",
+   "quiet",
+   "dense"
+  ],
+  "motion": "pinned-story",
+  "richness": "Fidelity and order. A real fragment with believable content, a well-organised overview, numbers that add up and a footer that works carry more than any effect.",
+  "pitfalls": "Boxes everywhere (every capability in its own card), icons above feature names, three identical columns, a hero headline of ten words, a giant gradient. If the product cannot be shown truthfully, show its output or its facts instead of a fake dashboard.",
+  "seenIn": [
+   "pro-linear",
+   "pro-stripe",
+   "pro-vercel",
+   "pro-raycast",
+   "pro-apple"
+  ],
+  "allow": []
+ },
+ {
+  "id": "shop-window",
+  "name": "The shop window",
+  "weight": 1.5,
+  "sectors": [
+   "ecommerce",
+   "physical-product",
+   "fashion",
+   "hospitality",
+   "restaurant"
+  ],
+  "tones": [
+   "quiet",
+   "warm",
+   "luxury",
+   "editorial",
+   "bold"
+  ],
+  "needs": [],
+  "needsPictures": true,
+  "idea": "Build the page the way the best shops do: the products and the world they belong to, in large, sharp photographs, and an obvious way to buy. Taste shows in restraint: what is left out, how the pictures are cropped, how little the copy says. Find what makes this shop's things worth owning (a material, a maker, a place) and let every picture show it.",
+  "composition": "The first screen is one large photograph (or two side by side) with a short line and the action; the navigation names the real categories. Then products in rows of two to four, each a picture, a name and a price, nothing more. Between product rows, one editorial band: a single large picture with two sentences about the material or the making. A short row of the facts buyers ask about (delivery, returns, care) in plain text. The footer is link columns with a sign-up.",
+  "typography": "Small and calm. Product names and prices at the body size; headings modest; the pictures carry the scale.",
+  "typeClasses": [
+   "grotesk-light",
+   "serif-text",
+   "grotesk-tight",
+   "serif-light-large"
+  ],
+  "colour": "White or a pale neutral ground; ink near-black; one quiet accent or none (the action in the ink). Colour comes from the products.",
+  "paletteTags": [
+   "light-neutral",
+   "photographic-neutral",
+   "earth"
+  ],
+  "imagery": "The products, photographed (or generated) consistently: one background, one light, one crop per row. Around them, a few pictures of the world they are used in. No mock-ups, no floating cut-outs with shadows, no lifestyle stock of smiling models.",
+  "sectionTags": [
+   "photo-led",
+   "object-led",
+   "quiet",
+   "dense"
+  ],
+  "motion": "slow-crossfade",
+  "richness": "The products themselves, many of them, sharp and well ordered; the editorial band; real prices and real facts.",
+  "pitfalls": "Few, small or inconsistent product pictures; copy that explains instead of showing; badges and labels on every product; a carousel of three; a giant brand name at the foot.",
+  "seenIn": [
+   "pro-aesop",
+   "pro-cos",
+   "pro-arket",
+   "pro-rapha",
+   "pro-hay"
+  ],
+  "allow": []
+ },
+ {
+  "id": "calm-editorial",
+  "name": "The calm magazine",
+  "weight": 1.2,
+  "sectors": [
+   "culture",
+   "hospitality",
+   "restaurant",
+   "studio-portfolio",
+   "personal-portfolio",
+   "education",
+   "nonprofit",
+   "architecture",
+   "real-estate",
+   "music",
+   "event"
+  ],
+  "tones": [
+   "editorial",
+   "quiet",
+   "luxury",
+   "warm"
+  ],
+  "needs": [],
+  "idea": "Treat the page like a well-made magazine: a few things worth reading and looking at, given room. The subject's story is told in short pieces, each with one good picture and a few lines, in the order a reader would want them. The idea comes from what this subject has to say that nobody else can.",
+  "composition": "A first screen that reads like a cover: one large picture and a title, or a title alone with generous space and one line under it. Then a sequence of short pieces, each with its own shape: a wide picture with a caption-free heading under it, a two-column spread (picture on one side, a short text on the other), a list of dated items, a single quotation set as text. Pictures change size from piece to piece so the rhythm never repeats. Text columns are narrow (about 60 characters).",
+  "typography": "A serif or a refined sans for headings at modest sizes; text set for reading. No tricks.",
+  "typeClasses": [
+   "serif-text",
+   "serif-light-large",
+   "serif-display",
+   "grotesk-light"
+  ],
+  "colour": "Paper-like grounds (white, off-white, a light stone) or a deep ground; ink; one muted accent at most.",
+  "paletteTags": [
+   "light-neutral",
+   "earth",
+   "dark-neutral"
+  ],
+  "imagery": "Few, large, sharp photographs of one family; the pictures are the reason to keep scrolling.",
+  "sectionTags": [
+   "photo-led",
+   "quiet",
+   "type-led"
+  ],
+  "motion": "shutter-image",
+  "richness": "The writing and the pictures; every piece complete in itself.",
+  "pitfalls": "Long paragraphs; every piece in the same two-column shape; captions under every picture; pull quotes nobody said.",
+  "seenIn": [
+   "pro-kinfolk"
+  ],
+  "allow": []
+ },
+ {
+  "id": "spec-sheet",
+  "name": "The spec sheet",
+  "weight": 1,
+  "sectors": [
+   "physical-product",
+   "dev-tool",
+   "ecommerce",
+   "architecture",
+   "real-estate",
+   "finance",
+   "saas"
+  ],
+  "tones": [
+   "technical",
+   "bold",
+   "quiet"
+  ],
+  "needs": [],
+  "idea": "Precision as the personality: the product or place described the way an engineer would, exactly. Dimensions, materials, tolerances, numbers and names, set beautifully. The page wins trust by being specific where everyone else is vague; find the numbers only this subject has.",
+  "composition": "The first screen sets the object (or the place, or the product's output) large on a plain ground, with its name and a one-line description. Further down the page alternates between large views of the subject and well-set facts: a specification table with real rows, a numbered build or process only if order matters, a comparison of models as a clean table. A grid of details (close-up pictures with a short label naming what they show) can appear once.",
+  "typography": "A precise sans; tabular figures for every number; units set properly (12 mm, 1.4 kg).",
+  "typeClasses": [
+   "grotesk-tight",
+   "grotesk-light",
+   "geometric"
+  ],
+  "colour": "Very restrained: white, grey or black ground, ink, and one accent used like a signal.",
+  "paletteTags": [
+   "light-neutral",
+   "dark-neutral",
+   "mono-accent"
+  ],
+  "imagery": "The subject photographed or generated cleanly, from the front, the side, close up; drawings of its construction where they explain something.",
+  "sectionTags": [
+   "object-led",
+   "dense",
+   "quiet"
+  ],
+  "motion": "rolling-figures",
+  "richness": "Real, complete specifications and sharp details.",
+  "pitfalls": "Invented numbers; monospace labels everywhere; a table that is really a list of marketing claims; lines and boxes around every fact.",
+  "seenIn": [
+   "pro-teenage-engineering",
+   "pro-nothing",
+   "pro-leica",
+   "pro-framework"
+  ],
+  "allow": []
+ },
+ {
+  "id": "clear-service",
+  "name": "The clear service",
+  "weight": 1.2,
+  "sectors": [
+   "health",
+   "education",
+   "nonprofit",
+   "finance",
+   "hospitality",
+   "restaurant",
+   "real-estate",
+   "other",
+   "agency",
+   "event"
+  ],
+  "tones": [
+   "warm",
+   "quiet",
+   "technical"
+  ],
+  "needs": [],
+  "idea": "People come to a service page with questions: what is it, is it for me, what does it cost, how do I start. Answer them in that order, plainly, and the page feels trustworthy. The idea is the one thing this service does that others do not, stated in the first line and proven in the rest.",
+  "composition": "The first screen states what the service is and for whom, with the action (book, apply, call) and one picture of the real place or people at work. Then: who it is for, as a short list; how it works, as three or four plain steps; the prices or terms, as a table; answers to real questions, as an accordion that opens one at a time; how to reach them, with the address, hours and a map or directions. The action stays reachable on every screen.",
+  "typography": "A friendly, readable sans or a warm serif for headings; text at a comfortable size.",
+  "typeClasses": [
+   "grotesk-light",
+   "geometric",
+   "serif-text",
+   "rounded-friendly"
+  ],
+  "colour": "A light ground, ink, one warm or calm accent for the action.",
+  "paletteTags": [
+   "light-neutral",
+   "earth",
+   "mono-accent"
+  ],
+  "imagery": "Real pictures of the place and the people at work (the project's own, generated, or honestly generic); never stock handshakes.",
+  "sectionTags": [
+   "quiet",
+   "photo-led",
+   "dense"
+  ],
+  "motion": "masked-headline",
+  "richness": "Complete, honest answers: the real prices, the real hours, the real steps.",
+  "pitfalls": "Vague claims instead of facts; testimonials nobody gave; icons for every step; the booking hidden at the bottom.",
+  "seenIn": [],
   "allow": []
  }
 ]

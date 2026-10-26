@@ -38,8 +38,8 @@ scrolls, and fails it under eight elements. The motion layer has five parts:
   line by line.
 - **Feedback under the hand:** buttons that give on press, links that answer the pointer, cards and
   pictures that respond on hover, a menu that opens from where it was clicked.
-- **One moving picture:** a found clip as a muted loop with a poster frame, a slow drift or scale on
-  a large photograph, or a scroll-linked move on the hero picture.
+- **A moving picture only when the sheet deals one** (section 0: a clip, or one photograph that
+  drifts as the page scrolls). Most pages get none; when every page had a video it became the kit.
 
 What is still banned: the same fade-and-slide-up with the same timing on every block, which is the most
 cited motion tell of generated pages; motion that hides content until a script runs, with no fallback;
@@ -967,8 +967,8 @@ hard cuts; monospace HUD labels become small text in the text face.
    parallax under 8% of the element; scale between 0.94 and 1.15; built with scroll timelines inside
    `@supports`, static without them. Other held stages: sticky, about one screen per step, three
    screens at most, a line of text on every held screen.
-9. **One of each.** One signature move (a dealt scene can be it); one moving picture; one marquee at
-   most. A quiet section between two scenes, so each one lands.
+9. **One of each.** One signature move (a dealt scene can be it); a moving picture only if dealt; one
+   marquee at most. A quiet section between two scenes, so each one lands.
 10. **Text stays readable.** Fills start at 45% ink; dims no lower than 40%; blur at most 8px and gone
     once settled; nothing moves across text being read.
 11. **Colour by chapter** as hard cuts at section edges; the fixed header's ink follows in 300ms.

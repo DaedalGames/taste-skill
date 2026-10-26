@@ -1,10 +1,10 @@
 ---
 name: design-taste-frontend
 description: >-
-  tasteskill v2, the anti-slop frontend skill. Art direction for websites, distilled from a study of
-  247 curated gallery sites (One Page Love, Awwwards Sites of the Day). Deals researched directions
-  (idea, composition, type, palette, photographs, section blueprints) from a library, enforces a strict
-  no-slop house style with a real-browser inspector, and runs a look-and-fix loop on screenshots. Use
+  tasteskill v2.5, the anti-slop frontend skill. Art direction for websites from a study of 247
+  gallery sites and 65 professional sites. A script deals the whole direction at random (idea,
+  composition, type pairing, palette, frame, scroll scenes) so no two pages look alike, a strict
+  no-slop house style is checked in a real browser, and a look-and-fix loop runs on screenshots. Use
   this whenever you build, design, redesign, restyle, polish or review a landing page, marketing site,
   portfolio, product page, one-pager, hero or any public-facing web page, in any stack (HTML/CSS, React,
   Next.js, Vue, Svelte, Astro, Tailwind) — also when the user says a page looks generic, templated,
@@ -13,29 +13,33 @@ description: >-
   people work in, with their own run and rules.
 ---
 
-# tasteskill v2
+# tasteskill v2.5
 
 A page built by a model usually looks like the average of every page the model has seen: a centred
 headline over three lines, a little label above it, a row of icon cards, a soft gradient, a few thin
-rules and a monospace caption. Nothing in it is wrong and nothing in it was decided.
+rules and a monospace caption. Nothing in it is wrong and nothing in it was decided. And every model
+has favourites of its own: left to choose, it builds the same page every time, whatever the brief.
 
 This skill replaces those defaults with decisions, in four ways:
 
-1. **A script deals the directions, you choose among them.** Asked to invent a look, a model picks
-   the category default every time. `scripts/draw.mjs` deals three of twenty researched directions;
-   you choose the one that carries the subject's idea, and the script then deals its type system,
-   palette, hero and section compositions from a library distilled from 247 real sites.
+1. **A script deals the direction; you build it.** `scripts/draw.mjs` deals, at random and away from
+   recent builds, the direction, a type pairing from 169 faces with its own scale, a restrained
+   palette, the navigation, the footer, corners, spacing, how pictures are treated, whether the page
+   has an interactive piece or a video, and its scroll scenes. You do not choose among options: your
+   own choice is the bias this skill exists to remove.
 2. **The idea comes from the subject.** In the study, what separated the best sites from the forgettable
    ones was a concept taken from the thing itself, not the styling.
 3. **A house style with no ornaments,** measured in a real browser by `scripts/inspect.mjs`, so the
    rules are checked rather than hoped for.
 4. **You look at what you made.** Screenshots at three widths, a juror's rubric, fix, look again.
 
-One warning learned in testing. Taking the ornaments away is only half the job; a page that has lost its
-labels, rules and cards and gained nothing in their place reads as thin, and blind jurors rightly prefer
-a richer page with tells over an empty page without them. The other half is substance: type set
-larger, whole fields of colour, real pictures of this subject's world (found or drawn), and every
-section carrying its full content. The skill is built to give you that; do not trade it for restraint.
+What professional sites do, measured (October 2026, 65 tech companies and shops against 30 pages built
+with the previous version of this skill): their largest type is about 3.8vw (the builds: 14vw), body
+text 14-16px (17-19), pictures cover about 30% of every screen (10%), almost no page area stands on a
+coloured ground (20%), none has a giant name in the footer (53%), and they have half as many blank
+stretches. A good page is not louder; it is clearer: the full content in few words, sharp pictures of
+the subject large enough to see, a real navigation and footer, and one or two moments of motion that
+earn their place.
 
 In the commands below `<skill>` is this skill's folder. Run them from the project's root, so the
 working files land in `.taste-skill/` there. The scripts need Node 22+ and an installed Chrome, Edge
@@ -78,9 +82,9 @@ Do these in order. Steps 1–5 take a few minutes and decide whether the page is
 Find out what is real: the subject, the audience, the one thing the page must get someone to do, the
 stack, any existing brand (colours, fonts, logo), and above all **what imagery truly exists**: the
 project's own photographs or product shots, a real interface that can be shown, an image generation
-tool you can call, or nothing. Do not plan around pictures you do not have. Nothing of its own is
-rarely nothing at all: the subject's city, street, materials and history are in open archives and
-museums, free to use with a credit (step 6, `scripts/assets.mjs`).
+tool you can call, or nothing. Do not plan around pictures you do not have. Without pictures of its
+own, the page uses fewer, sharper pictures of the subject's world (step 6) and lets type and space
+carry the rest; it never fills slots with whatever a search returns.
 
 Name the pictures a visitor needs before deciding: for a place to stay, the rooms, the house and the
 table; for food, the plates and the room; for a product, the product; for a practice, its work. When
@@ -115,18 +119,14 @@ testimonial, pricing, call to action.
 
 ```bash
 node <skill>/scripts/draw.mjs --sector <sector> --brief "<one line about the subject>" \
-  --sections <roles in the order of your argument> [--tone <tone>] [--have <assets>] [--keep palette,type] \
-  --options 3
+  --sections <roles in the order of your argument> [--tone <tone>] [--have <assets>] [--keep palette,type]
 ```
 
-This deals three directions and prints a short summary of each. Hold each one against your inventory:
-which way of composing can carry something only this client has? Choose that one, not the most
-familiar, and write one line in your notes on why. In testing, a single random direction that did not
-suit the subject was the commonest cause of a weak page. Then deal the full sheet:
-
-```bash
-node <skill>/scripts/draw.mjs <the same arguments, without --options> --direction <chosen id>
-```
+This deals the whole sheet. Do not ask for options and do not pick a direction yourself (`--options`
+and `--direction` exist for a person choosing, not for you): models given a choice took the same five
+directions for 19 of 25 pages. If the dealt direction truly cannot carry this subject (it needs
+photographs that cannot exist, or contradicts a stated brand), redraw it once with `--redraw direction`
+and say why in the report.
 
 - `--sector`: `node <skill>/scripts/draw.mjs --list sectors`. Pick the closest.
 - `--sections`: roles from `--list roles` (features, showcase, how-it-works, testimonial, proof, stats,
@@ -178,7 +178,8 @@ Places to look for the first blank:
   that prints poems delivered its copy as paper slips.)
 - **Its object or shape.** What does it physically look like, in cross-section, in silhouette?
   Enlarge it, crop it, make it the frame or the one motif.
-- **Its name.** Can the letters hold a photograph, stack into a wall, split to two corners?
+- **Its name.** What does it mean, and what does that meaning look like? (Never a picture inside the
+  letters or between the words: that is a generated-page tell now.)
 - **Its place.** Is there one view that makes someone want to be there?
 - **Its ritual.** Is there a sequence the page can perform as it scrolls?
 - **Its artefact.** What printed thing already exists in its world: ticket, menu, label, receipt,
@@ -192,16 +193,15 @@ loaf of bread is every bakery; the seven doors of the street this one is named a
 "Clean and modern" is not an idea. The sites the study's panel scored lowest were the ones whose idea
 was recorded as "none beyond the standard formula".
 
-**One live thing.** Give the page one thing the visitor can do, or that is different for each visit,
-made from the idea: pick a wood and see the chair in it; type your name and see it cut in the
-foundry's letters; set the loan and read the real monthly figure; see whether the hut's stove is lit
-right now and how long until the last ferry; choose a size and see it against the room. In blind tests every winning page had one and the jurors named it first. Rules: it uses the subject's real content, it works on a phone with a thumb, it has a plain
-fallback without script, it never blocks reading, and it is one thing, not a playground. Its result
-stays in view while the visitor works the controls, at every width (on a phone, a small sticky result
-bar if the controls run long), and every heading beside it is true for every state it can reach. It is
-built in step 6 as part of the page, not added as motion in step 9; when it is built, drive every
-control to its extremes and look at the widest result at 1440, 768 and 390, since the inspector only
-sees the default state.
+**The interactive piece, only when the sheet deals one** (section 0). Most pages get none: when every
+page had a live widget, it became the kit (33 of 34 reviewed pages), and half of them were toys.
+When one is dealt, it is a tool the visitor would really use, made from the subject's real content: set
+the loan and read the real monthly figure; pick the dates and see the free rooms; choose a size and see
+it against the room. Rules: it works on a phone with a thumb, it has a plain fallback without script,
+it never blocks reading, and it is one thing, not a playground. Its result stays in view while the
+visitor works the controls, at every width, and every heading beside it is true for every state it can
+reach. Build it in step 6, then drive every control to its extremes and look at the widest result at
+1440, 768 and 390, since the inspector only sees the default state.
 
 **The scenes carry the idea too.** The scroll scenes on the sheet are devices waiting for a subject.
 Decide what each one shows from your inventory before building: the fly-through passes through this
@@ -226,10 +226,16 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
   For a product: what it is and what it costs or does. For a person: who and what they do. Every
   section the visitor came for (the line-up, the menu, the rooms, the price) has its own heading and
   its own place in the navigation.
-- **Write the full content.** Every section the brief asks for delivers its information completely:
-  the whole menu with prices, each room with its own details, every speaker and talk, the price with
-  what it includes, an answer for each real question. Thin sections are the commonest reason a clean
-  page loses to a busier one.
+- **The full content, in few words.** Every section the brief asks for delivers its information
+  completely (the whole menu with prices, each room with its details, every speaker, the price with
+  what it includes, an answer for each real question), as facts: lists, tables, names and numbers, not
+  paragraphs about them. Budgets: a section heading of two to eight words; one or two sentences under
+  it; card or item text of one sentence; no paragraph over about 50 words. Plain words that say what
+  the thing is and does, never jargon the visitor has to decode ("Folgezettel spine", "0.8 ms at 90k
+  cards"). If a sentence could be cut without losing a fact, cut it.
+- **No labels that carry nothing.** No timestamps, "connected source", status chips, tags, kickers or
+  captions on cards unless the visitor needs that fact. A caption under a picture says what a visitor
+  needs to know about it, or is not there.
 - Sample details are expected where the brief leaves gaps (dish names, room names and rates, project
   titles) so the design is seen at full density; list them in the report for the client to confirm.
   Proof is never invented: no customers, quotes, reviews, press, logos or business statistics.
@@ -243,53 +249,42 @@ not finished. Order of work:
    references tokens only. `<skill>/assets/base.css` is a neutral foundation you may start from (reset, token
    names, fluid type steps, grid, focus and selection styles, the motion helpers); it has no look of
    its own.
-2. **The hero, exactly as the blueprint describes it,** at desktop and at phone width. Get the big
-   thing big and the small things small before anything else exists.
-3. **Each section from its blueprint,** with this project's content. Keep the geometry, change the
-   subject, and leave the props behind: a café blueprint's opening-hours bar, scalloped menu sheet and
-   visit card stay with cafés, and on an architecture practice its list of buildings becomes a
-   drawing register, not a menu. Neighbouring sections must not share a layout. **Carry the idea into
-   every section,** pricing, FAQ and footer included: the commonest failure in the study, even among
-   good sites, is a distinctive first screen followed by stock blocks.
-4. **Imagery,** in this order of preference:
+2. **The hero, in the shape its blueprint describes,** set in the dealt type, colour and frame, at
+   desktop and at phone width. The headline takes the dealt display step, not a size the blueprint
+   names. Get the main thing clear before anything else exists.
+3. **Each section in the shape of its blueprint,** with this project's content. A blueprint is one
+   example of a shape (what is large, what sits beside what), not a drawing to trace: let the real
+   content decide the details, and leave its props behind (a café blueprint's opening-hours bar stays
+   with cafés). Neighbouring sections must not share a layout. **Carry the idea into every section,**
+   pricing and FAQ included: the commonest failure in the study is a distinctive first screen followed
+   by stock blocks.
+4. **Pictures: fewer, better, larger.** Professional sites give about 30% of every screen to pictures;
+   the builds this skill used to make gave 10%, mostly small, soft or random. Order of sources:
    1. the project's own;
-   2. generated, if you have an image tool;
-   3. **real pictures of the subject's world from the open collections,** whenever an honest one
-      exists. Search them with `node <skill>/scripts/assets.mjs "<query>"` (Openverse, Wikimedia
-      Commons, the Art Institute of Chicago and the Met; only licences that allow commercial use, by
-      default). Search the inventory, not the category: its street in old postcards, an old map of the
-      neighbourhood, its material up close, its trade in engravings, a museum object of its kind, a
-      botanical plate, a star chart. Use them large and with intent: one archival photograph as the
-      hero, an engraving enlarged into the page's motif, the real map of the street as the contact
-      section. Look at each before choosing; `--get <ref>` downloads it into `assets/` and records
-      its source and licence, and `--credits` prints the credit line for the footer. A found picture
-      shows the world around the client and is never presented as the client's own product, room,
-      dish, person or team;
-   4. **drawn in code from the subject itself,** for what no honest picture exists of (its objects,
-      its tiles, its windows, its product's interface, made as one consistent flat graphic language in
-      the palette's real colours);
-   5. the photographs dealt on the sheet, only where an honestly generic picture fits (the sea for a
-      sea house), never as a stand-in for the subject;
-   6. type and colour alone.
+   2. generated, if you have an image tool: the best way to show this exact subject;
+   3. the photographs dealt on the sheet and the rest of the library (`draw.mjs --photos <words>`):
+      sharp, modern, no credit needed; atmosphere, never a stand-in for the product or the client;
+   4. sharp modern photographs of the subject's world from the open collections
+      (`node <skill>/scripts/assets.mjs "<query>"`, 1800px or wider by default). Look at each one at
+      full size before using it;
+   5. drawn in code, large and precise, for the subject's own things that no picture shows;
+   6. type and space alone. An empty slot is better than a bad picture.
 
-   When the project has footage or a real picture of its own process or product, the first screen
-   shows it, large (about 40% of the screen or more). Never write a sentence on the page about where
-   the pictures come from or what they are not ("none of these shows our bar"): a caption says what
-   the picture shows and sits under or beside it, never across a piece of work, and the credit line
-   sits small in the footer. A portfolio whose work is invented for the brief draws each piece as a
-   finished still of that work (its title card with its own type, an end frame, a poster), with real
-   detail, never as a pictogram of the client's product.
+   Rules: every picture shows this subject's world and is requested at least 1.5 times the size it is
+   shown (twice for the hero); one treatment for all (section 0); three to eight good pictures beat
+   twelve weak ones. Old postcards, engravings, maps and archive scans only when the subject is
+   historical, and never in a large slot. Never a picture inside a headline or a thumbnail inside a
+   sentence. Credits a licence requires go in one "Image credits" dialog opened from a small footer link
+   (`assets.mjs --credits` prints it), never as a list across the footer, never as a sentence on the
+   page. When the project has footage or a real picture of its own product, the first screen shows it,
+   large. A portfolio whose work is invented for the brief shows each piece as a finished still of that
+   work (its title card, an end frame, a poster), with real detail.
 
-   **The floor, which the inspector checks:** at least four real pictures on the page, usually six to
-   twelve (photographs, archival images, maps, engravings, footage, raster artwork; for software, its
-   cropped interface fragments count too). SVG drawings do not count toward the floor: draw what no
-   picture exists of, and still carry real pictures. Add one moving picture wherever an honest clip
-   exists: search it with `assets.mjs --video "<query>"` and use it as a muted loop with a poster
-   frame. Models skip pictures and footage because finding them is work; the page fails without them.
-
-   `references/imagery.md` covers searching, licences and credits, video, drawing, crops and treatments.
-5. **The live thing** from step 4, built into the section where it proves the claim (often the hero
-   or the booking), with real content, a thumb-sized phone version and a plain fallback.
+   `references/imagery.md` covers searching, licences, video, drawing, crops and treatments.
+5. **The navigation and the footer** as section 0 deals them: a real header with the page's sections
+   as links and the one action, on every page; a footer that works (links, contact, legal), never a
+   giant name or email. **The interactive piece,** only if dealt, in the section where it proves the
+   claim, with real content, a thumb-sized phone version and a plain fallback.
 6. **The scroll scenes,** when the sheet deals them (section 9), each with the section it carries: the page's big
    moments, the camera that flies through the work, the picture that opens to the whole screen, the
    word that buckles under the scroll. Copy the shared stage and the scene's files from
@@ -322,7 +317,7 @@ not finished. Order of work:
    away hands it on to that bar (`references/layout.md` §7).
 9. **States and semantics.** Real links and buttons, visible focus, alt text, a phone layout that is
    its own composition. Every navigation and skip link lands on the section that holds what it names,
-   never on a scene that only introduces it. Every control, the live thing included, works from the
+   never on a scene that only introduces it. Every control, any tool included, works from the
    keyboard alone in reading order and has an accessible name: its visible label, or `aria-label` when
    it shows only an icon.
 
@@ -375,9 +370,9 @@ under sixteen). Any scroll scenes are already built (step 6); around them the la
 2. **An entrance for the parts of every section:** the heading, then the text, then the picture,
    staggered by 60–90ms, rising 16–32px with opacity, triggered once as the section enters. Not one
    fade for the whole block, and never content that stays hidden if the script fails.
-3. **Feedback on every control:** press, hover and focus on buttons, links, cards and the live thing.
-4. **One moving picture:** a found clip as a muted loop, a slow scale or drift on a photograph, or a
-   scroll-linked move on the hero picture.
+3. **Feedback on every control:** press, hover and focus on buttons, links, cards and any tool.
+4. **Video or a moving picture only as section 0 deals it.** Most pages get none; motion comes from
+   the page itself.
 
 Transform and opacity only; every move has a `prefers-reduced-motion` fallback that keeps the content
 and drops the travel. A move that changes the colour or the layout of whole screens (colour by
@@ -400,11 +395,11 @@ Do not report until all of these are true; each one was skipped in a test run th
 - The critique of your last round is written down in the shape of `references/critique.md` §4.
 
 Tell the user, briefly: the direction dealt (name and seed) and any redraws with reasons; the idea
-sentence and the live thing; the final scores from your last critique round and what still falls short;
-every found picture and clip with its title, creator, licence and source page (`assets.mjs --credits` prints
-the list) and where its credit sits on the page; which bundled photographs and which drawings stand in
-for photography (so they can be replaced); and any sample content that must be swapped before launch.
-Do not claim a check you did not run.
+sentence and the interactive piece, if one was dealt; the final scores from your last critique round
+and what still falls short; every picture and clip with its source (and, where a licence asks, its
+credit in the Image credits dialog); which bundled photographs and which drawings stand in for
+photography (so they can be replaced); and any sample content that must be swapped before launch. Do
+not claim a check you did not run.
 
 ## House rules
 
@@ -429,7 +424,13 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **No glass.** No backdrop blur panels, no floating pill navigation. | A plain bar: wordmark, a few links, one action. |
 | **No emoji, no gradient blobs, no decorative shapes, no fake dashboards of grey bars.** | A real picture, a real interface fragment, or nothing. |
 | **No styled accent word** in a headline (italic, serif, coloured, underlined). | One face, one colour. The words carry the emphasis. |
-| **Two typefaces at most,** usually one. | The dealt type system. |
+| **The dealt type system:** its faces, its weights, its six steps. Two families at most. | Map every other size onto the nearest step. |
+| **No pictures in headlines or sentences.** No photograph between the words of a headline, no picture inside the letters, no thumbnails inside running text. | The picture gets its own place, beside, above or behind the words, at a size that shows what it is. |
+| **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges. | Neutral ground (white, off-white, near-black); colour from the pictures; the accent on the action. |
+| **No giant name or email in the footer, no credit walls.** | The dealt footer: links, contact, legal at text sizes; picture credits behind one small "Image credits" link. |
+| **No drag rails or progress bars** outside a working tool; no sideways scrollers on desktop. | A list or grid that fits the width. |
+| **No page built from boxes,** no staggered folder tabs, no empty half-rows (nothing on the left, text on the right). | Text straight on the page, separated by space and size; tabs, if needed, as one working row that opens on click. |
+| **No labels that carry nothing**, no walls of text. | Facts, few words; see step 5. |
 
 Three places keep their own conventions and are left alone by the inspector: real code in
 `<pre>`/`<code>` (monospace is correct there), real tables and form fields (they may have lines), and
@@ -444,22 +445,20 @@ and hairline grids are actually *more* common on award sites than on weak ones, 
 generators imitate them and why they now read as costume. They are banned here without exception.
 `references/tells.md` keeps the dated registry.
 
-Removing ornament leaves space. Never fill it with another ornament. Fill it with scale (make the main
-thing larger), with the full content, with a picture made for this subject, or with a field of flat
-colour. Leave it empty on purpose once per page at most.
+Removing ornament leaves space. Never fill it with another ornament. Fill it with the full content,
+with a good picture of this subject, or close the gap (tighter sections). Leave it empty on purpose
+once per page at most.
 
 ## Laws of the craft
 
 Short form. Numbers are from the study unless marked as house style.
 
 **Type**
-- Two or three sizes do the visible work: one very large, one small, nothing in between. Median
-  headline-to-body ratio on the studied sites is 4.3; the best go far beyond (largest type: median
-  8.4vw on the top sites against 5.0vw on the weak ones).
-- Display type: tracking -0.02 to -0.05em, leading 0.85–1.05. Text: 16–20px, leading 1.45–1.6,
-  45–75 characters per line.
-- Five sizes on a page is the ceiling. One family is normal (a third of the studied sites); two is the
-  limit.
+- The dealt six steps are the scale. The hero takes the display step the sheet deals: on professional
+  sites the largest type is about 3.8vw (55px at 1440); a giant headline is a dealt event, not a habit.
+- Display type: tracking and leading as dealt. Text: 16–18px, leading 1.45–1.6, 45–75 characters a line.
+- Weights: only those the sheet loads. A weight the face lacks is faked by the browser (the inspector
+  fails it).
 - Left-aligned by default. Centre at most one moment.
 
 **Space**
@@ -472,34 +471,31 @@ Short form. Numbers are from the study unless marked as house style.
 
 **Colour**
 - One ground, one ink, one accent. The accent appears on the action and perhaps one other thing.
+  Professional sites put almost no page area on coloured grounds; colour comes from their pictures.
 - Running text in the full ink. A page set in soft grey reads unfinished.
 - Surfaces are separated by a small step in tone, never by a line or a shadow.
-- A section may change the whole field colour. Nothing fades into anything.
+- At most one section changes to a field colour (the sheet deals it). Nothing fades into anything.
 
 **Imagery**
-- One dominant image beats six small ones. On the top-scored sites the hero media covers at least half
-  the first screen 68% of the time.
-- Same crop ratios, same treatment, square corners unless the direction says otherwise (73% of the
-  studied sites leave media square).
-- No image is better than a placeholder, an icon, or an abstract shape. A picture drawn for this
-  subject, in its colours and with care, is better than either. A real picture of its world, found
-  and credited, is better still.
-- Every found picture is downloaded into the project, credited on the page and listed in the report.
-  None is presented as the client's own.
+- One dominant, sharp picture beats six small ones. On the top-scored sites the hero media covers at
+  least half the first screen 68% of the time.
+- Same crop ratios, same treatment, the dealt corners.
+- No image is better than a placeholder, an icon, an abstract shape, or a blurry or random picture.
+- Every picture is in the project, listed in the report; none is presented as the client's own.
 - Nothing ever lies on top of a headline or a statement (the inspector fails it).
 
 **Components**
-- Buttons: flat, one fill colour, either square-cornered or fully round, decided once (top sites: 52%
-  square, 23% pill; the 9–16px "soft" radius is the weak-site default). Most strong heroes have no
-  button at all, or one.
-- Navigation: wordmark, three to five plain links, one action. No bar chrome. On a long page it stays
-  in reach: the plain bar returns on scroll up, or the one action stays fixed.
+- Buttons: flat, one fill colour, the dealt corner, decided once. Most strong heroes have one button,
+  or two (the action and a quieter second).
+- Navigation: the dealt kind, on every page, with the real sections as links and the one action. On a
+  long page it stays in reach: the plain bar returns on scroll up, or the one action stays fixed.
 - A control explains how to use it by its form, its label and its place. When it seems to need a
   sentence on how to operate it, redesign the control instead of adding the sentence. What a field
   accepts is different. First remove the limit where you can: a date picker, or a parser that takes
   any common format. A limit that remains, such as password rules or file type and size, stays visible
   beside the field and is tied to it with `aria-describedby`.
-- The footer is a designed close, not a sitemap: on most strong sites the name returns at full width.
+- The footer is the dealt kind: it works (links, contact, legal) at text sizes. None of the 65
+  professional sites studied sets a giant name or email there.
 
 ## Special cases
 

@@ -49,22 +49,30 @@ In order of preference:
 2. **Images you can generate** with an image tool in this session. Write prompts as a photographer's
    brief: subject, angle, light, background, crop ratio, and "no text". Generate the hero first and
    make the rest match its light.
-3. **Real pictures of the subject's world from the open collections** (section 3). Archives,
-   museums and photographers have published millions of pictures anyone may use with a credit: the
-   client's city and street in old postcards, maps of its neighbourhood, its materials, its trade in
-   engravings, museum objects of its kind. Whenever an honest one exists, it beats a drawing of the
-   same thing: it is real, it has detail no drawing in a page's budget reaches, and it carries history.
-   Honest means nobody could take it for the client's own product, room, dish, person or team.
-4. **Pictures you draw in code from the subject itself** (section 8), for what no honest picture
-   exists of: the product's own objects as flat shapes, the place's tiles and windows, a map of its
-   streets, the document a tool produces, the interface of a piece of software. In testing, pages that
-   drew their subject with care beat pages that borrowed unrelated photographs every time, and beat
-   pages that showed nothing.
-5. **The photographs dealt on the direction sheet.** Real photographs of places, light, texture and
-   weather. Use them only where an honestly generic picture fits (the open sea for a house on the sea,
-   fog for a quiet retreat). They cannot stand in for a specific product, dish, room, person or
-   screen: a foggy motorway on a restaurant page reads as stock at once, and jurors notice.
-6. **Type and colour alone,** done on purpose (section 9).
+3. **The photographs dealt on the direction sheet** and the rest of the library (section 4): sharp,
+   modern photographs of places, light, texture and materials, free of credits. Use them where an
+   honestly generic picture fits (the open sea for a house on the sea, stone for a mason). They never
+   stand in for a specific product, dish, room, person or screen.
+4. **Sharp modern photographs from the open collections** (section 3), 1800px or wider, of the
+   subject's world as it looks now: its city, its materials, its kind of work. Honest means nobody
+   could take one for the client's own product, room, dish, person or team. Old postcards,
+   engravings, maps and archive scans only when the subject itself is historical (a museum, a
+   restoration, a century-old firm), and never in a large slot: in the October 2026 review, archive
+   imagery on about half the pages was the most common reason a page looked cheap.
+5. **Pictures you draw in code from the subject itself** (section 8), for what no honest picture
+   exists of: the product's own objects, the document a tool produces, the interface of a piece of
+   software. Only when drawn with real care and precision; a rough drawing is worse than none.
+6. **Type and space alone,** done on purpose (section 9). An empty slot is better than a bad picture.
+
+**The quality bar, for every picture before it goes on the page.** Open it at full size and look:
+
+- Sharp at the size it is shown: the source is at least 1.5 times the shown width (twice for the
+  hero). The inspector fails pictures shown more than 1.25 times their own size.
+- It shows this subject's world, and would not fit the nearest competitor's page or any page at all.
+- It belongs to one family with the others: one light, one era, one treatment.
+- No watermark, burned-in text, frame, scanner edge, noise or heavy compression.
+- It earns its size: a picture in a large slot has a clear subject; a picture that only fills a gap
+  is removed and the gap closed.
 
 Tell `draw.mjs` the truth with `--have`. If you have no product photographs and no image tool, do not
 pass `product-photo`; the draw will avoid the directions that depend on showing the object. Pictures
@@ -82,15 +90,15 @@ URL, the page it comes from, its size, its creator, its licence and a credit lin
   prints, drawings, photographs, textiles and objects, in large scans.
 
 ```bash
-node <skill>/scripts/assets.mjs "ghent postcard"
-node <skill>/scripts/assets.mjs "fig" --source museums --orientation portrait
+node <skill>/scripts/assets.mjs "gent korenmarkt"
 node <skill>/scripts/assets.mjs "basalt texture" --min-width 2400 --source openverse,commons
+node <skill>/scripts/assets.mjs "fig" --source museums --orientation portrait   # historical subjects
 node <skill>/scripts/assets.mjs --get commons:36649959,met:707892     # download, record the credits
-node <skill>/scripts/assets.mjs --credits                             # footer line and report list
+node <skill>/scripts/assets.mjs --credits                             # the credits dialog and report list
 ```
 
 By default it keeps only licences that allow commercial use (CC0, public domain, CC BY, CC BY-SA) and
-pictures at least 1000 pixels wide, and checks that every image it prints actually loads.
+pictures at least 1800 pixels wide, and checks that every image it prints actually loads.
 `--license pd` keeps only pictures that need no credit; `--orientation`, `--min-width` and `--limit`
 narrow the list; `--source` picks the sources; `--json` gives the raw results. Each result has a ref
 (`commons:36649959`) that `--get` takes.
@@ -98,23 +106,16 @@ narrow the list; `--source` picks the sources; `--json` gives the raw results. E
 **What to search for.** The inventory (SKILL.md step 1), not the category: "bakery" finds other
 people's bakeries. The subject's world is specific:
 
-- **Its place:** the city, the street, the harbour, the valley, in old postcards and photographs
-  ("ghent postcard", "rotterdam harbour 1920") and as it looks today ("gent korenmarkt").
-- **Its maps:** the street plan, the chart of its bay, the geology of its valley ("ghent old map",
-  "nautical chart lisbon").
+- **Its place as it looks now:** the city, the street, the harbour, the valley ("gent korenmarkt",
+  "lofoten harbour").
 - **Its materials,** close enough to read as a surface: the stone of its quay, the grain of its oak,
   its glaze, its tiles ("azulejo tiles", "basalt cobblestones", "oak grain").
-- **Its trade's history:** the old tools, the craft in engravings and trade catalogues, patent
-  drawings ("bread oven engraving", "potter's wheel", "bicycle patent drawing").
-- **Museum objects of its kind,** with `--source museums`: a coffee set from about 1810 for a studio
-  that makes coffee sets, a woodblock print of a wave for a surf school, a porcelain plate painted
-  with figs for a fig orchard.
-- **Scientific imagery:** botanical and zoological plates ("botanical engraving fig"), star charts,
-  microscope photographs, satellite views of its coast, geological sections.
+- **Its kind of work, today:** hands at the craft, the tools in use, the landscape it works in.
+- **Only for a historical subject:** old photographs and postcards of the place, old maps, museum
+  objects of its kind (`--source museums`), engravings. Small slots, one family, never the hero.
 
-Search in the place's own words (azulejo, not "blue tile"; Korenmarkt, not "market square"), add a
-medium (postcard, engraving, old map, lithograph, aerial photograph) or a decade, and try two or three
-queries per idea. The museum sources match best on one or two words ("fig", "harbour", "teapot").
+Search in the place's own words (azulejo, not "blue tile"; Korenmarkt, not "market square") and try
+two or three queries per idea. If nothing sharp and fitting turns up, do not fill the slot.
 
 **What makes a good find.**
 
@@ -129,21 +130,9 @@ queries per idea. The museum sources match best on one or two words ("fig", "har
 - No watermark, no burned-in text or logo, no frame or scanner edge you cannot crop away, and no
   recognisable living person who could be taken for the client's staff or customers.
 
-**Use it creatively.** Found pictures are material, not decoration:
-
-- **One archival photograph as the hero,** full-bleed: the street as it was a century ago, behind the
-  name of the business that stands in it today, with the year in the caption.
-- **A museum engraving enlarged until its line becomes texture,** cropped tight and returning at
-  different scales as the page's one motif (the whole fig plate in the hero, a single leaf of it
-  beside the menu).
-- **An engraving or a map on white paper set with `mix-blend-mode: multiply` on the page's colour
-  field,** so the ink sits on the ground (section 6).
-- **The real map of the street as the contact section,** the door marked, the north and the scale
-  taken from the original.
-- **A material close-up as a whole field:** the quay's stone behind the opening hours.
-- **A run of old postcards or plates as the gallery,** one size, one treatment.
-
-Treatments stay within section 6: untouched, greyscale for the whole set, or multiply on a field.
+**Use it with intent.** One sharp picture of the place, large, beats a row of small ones; a material
+close-up can hold a whole section behind its text; the same picture can return at a different crop
+further down. Treatments stay within section 6 and the treatment the sheet deals.
 
 **Stay honest.**
 
@@ -159,10 +148,12 @@ Treatments stay within section 6: untouched, greyscale for the whole set, or mul
   says only "a dog in a box behind the bicycle"). A picture placed to prove a claim shows the claim
   (two children on the bike, not women riding ordinary bikes); when no photograph does, show the
   page's own drawing of the product in that state.
-- **Record and credit every picture.** `--get` writes the source, creator, licence and page of each
-  download to `assets/credits.json`. CC BY and CC BY-SA require a credit with the title, the creator,
-  a link to the source and a link to the licence; `--credits` prints them as one line of HTML for
-  the footer (section 10). Public-domain pictures need no credit; give one anyway.
+- **Record every picture; credit where the licence asks, out of sight.** `--get` writes the source,
+  creator, licence and page of each download to `assets/credits.json`. CC BY and CC BY-SA require a
+  credit with the title, the creator, a link to the source and a link to the licence; `--credits`
+  prints them as a dialog opened by one small "Image credits" link in the footer (section 10). Never
+  a list of credits across the footer: reviewers named it as one of the ugliest parts of the pages.
+  Public-domain and CC0 pictures need no credit on the page.
 - **Respect the licence.** CC BY-SA: an altered version (recoloured, combined with other pictures)
   must be shared under the same licence. Non-commercial (NC) and no-derivatives (ND) licences are out
   for a client's site, which is why the script leaves them out unless asked. Read the `note` lines:
@@ -173,11 +164,11 @@ Treatments stay within section 6: untouched, greyscale for the whole set, or mul
   very large hero where the source has it). The page then works offline, does not break when an
   archive moves a file, and does not load from someone else's server. Every licence the script
   allows by default permits copying.
-- **List them in the report:** file, title, creator, licence, source page, and where the credit sits.
-  `--credits` prints that list too.
+- **List them in the report:** file, title, creator, licence, source page. `--credits` prints that
+  list too.
 
-If two or three honest queries per idea find nothing that fits, draw (section 8). A drawing made for
-the subject is better than a found picture that is merely nearby. If the script cannot reach any
+If two or three honest queries per idea find nothing sharp that fits, leave the slot out or draw it
+with care (section 8). A picture that is merely nearby is worse than none. If the script cannot reach any
 source (no network), draw, and say so in the report. For moving pictures, the same script searches
 real footage with `--video` (section 11).
 
@@ -320,8 +311,8 @@ and they hold their own: a median panel score of 7.5 against 7.2 for the whole s
 A found picture, downloaded into the project with `--get`, used as the hero:
 
 ```html
-<img src="assets/fig-engraving.jpg" width="1920" height="2807" fetchpriority="high" decoding="async"
-     alt="Hand-coloured engraving of a fig cut open, with its flowers and seeds, in black, pink and green">
+<img src="assets/korenmarkt-morning.jpg" width="3200" height="2000" fetchpriority="high" decoding="async"
+     alt="The Korenmarkt in Ghent in early morning light, trams crossing the empty square">
 ```
 
 A dealt photograph further down the page:
@@ -331,10 +322,14 @@ A dealt photograph further down the page:
      alt="Red and white lighthouse in a turquoise sea below a chalk cliff" loading="lazy" decoding="async">
 ```
 
-The credits, as `--credits` prints them, in the footer:
+The credits a licence requires, as `--credits` prints them: one small link in the footer's legal line
+opens a dialog. Nothing about the pictures' sources appears anywhere else on the page.
 
 ```html
-<p class="credits">Pictures: <a href="https://commons.wikimedia.org/wiki/File:Fig_(Ficus_carica_L.);_57_segments_of_flowers_and_fruits_at_Wellcome_V0043000.jpg">“Fig (Ficus carica L.): 57 segments of flowers and fruits”</a>, <a href="https://creativecommons.org/publicdomain/mark/1.0/">public domain</a>, via Wikimedia Commons.</p>
+<button type="button" class="credits-link" onclick="document.getElementById('credits').showModal()">Image credits</button>
+<dialog id="credits" aria-label="Image credits"><form method="dialog"><button aria-label="Close">Close</button></form>
+  <ul><li><a href="https://commons.wikimedia.org/wiki/File:…">“Korenmarkt, Ghent”</a> by …, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via Wikimedia Commons</li></ul>
+</dialog>
 ```
 
 - Always `width` and `height` (or `aspect-ratio` in CSS) so nothing jumps while loading.
@@ -345,11 +340,10 @@ The credits, as `--credits` prints them, in the footer:
   alt is the archive's title; rewrite it to say what the picture shows.
 - A coloured `background-color` on the image container (the ground or surface tone) so the layout is
   whole before the image arrives.
-- The credit line is part of the footer's design, at full contrast, with its links. Set it at the body
-  size; one step smaller only on a page with plenty of running text, because a long credit line in
-  small type can become the page's most common text size and fail the inspector's body-size check.
-  One line for all pictures; no credit captions laid over the pictures themselves. Credit only the
-  pictures the page still uses.
+- The "Image credits" link sits with the legal links at their size; the dialog is plain (the page's
+  ground, the text face, a close button) and lists only the pictures the page still uses. The
+  inspector fails a footer that carries three or more credits in the open. No credit captions laid
+  over the pictures themselves.
 - A broken image fails the inspector. Check every picture in the screenshots.
 
 ## 11. Video
