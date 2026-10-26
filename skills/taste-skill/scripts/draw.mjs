@@ -141,7 +141,7 @@ if (opt('alternatives')) {
   console.log(`# ${role}: blueprints that suit "${dir.name}"\n`);
   for (const s of pool) console.log(line(s));
   const software = imageryMode(saved.input) === 'interface';
-  const others = L.sections.filter((s) => s.role === role && !pool.includes(s) && (software || !softwareOnly(s)) && (s.needs || []).every((n) => saved.input.have.includes(n) || (n === 'product-ui' && software)));
+  const others = L.sections.filter((s) => s.role === role && !s.banned && !pool.includes(s) && (software || !softwareOnly(s)) && (s.needs || []).every((n) => saved.input.have.includes(n) || (n === 'product-ui' && software)));
   if (others.length) {
     console.log(`# Other ${role} blueprints (written for other directions; if one fits the content better, take its geometry and set it in this direction's type, colour and manner)\n`);
     for (const s of others) console.log(line(s));
@@ -445,7 +445,8 @@ function adjustments(bp, s) {
 }
 // Every blueprint of a role that suits this direction and this build's real assets.
 function sectionPool(dir, role, input) {
-  let pool = L.sections.filter((s) => s.role === role);
+  // banned blueprints (drag rails, progress bars, folder tabs) are never dealt
+  let pool = L.sections.filter((s) => s.role === role && !s.banned);
   if (!pool.length) return [];
   const mode = imageryMode(input);
   const feasible = pool.filter((s) => (s.needs || []).every((n) => n === 'photography' || input.have.includes(n) || (n === 'product-ui' && mode === 'interface')));
@@ -480,15 +481,16 @@ function dealReferences(dir, input) {
 
 // ---------- rendering ----------
 function siteCard(s, full) {
-  const lines = [`- **${s.name}** (${s.source}, studied score ${s.score}) \`${s.id}\``, `  Idea: ${s.idea}`, `  Hero: ${s.hero}`];
+  // on the sheet only the idea: the details of another site's look are what builders copied literally
+  const lines = [`- **${s.name}** (${s.source}, studied score ${s.score}) \`${s.id}\``, `  Idea: ${s.idea}`];
   if (full) {
-    lines.push(`  Type: ${s.type}`, `  Colour: ${s.colour}`, `  Imagery: ${s.imagery}`, `  Layout: ${s.layout}`);
+    lines.push(`  Hero: ${s.hero}`, `  Type: ${s.type}`, `  Colour: ${s.colour}`, `  Imagery: ${s.imagery}`, `  Layout: ${s.layout}`);
     if (s.media) lines.push(`  Pictures and footage: ${s.media}`);
     if (s.motion) lines.push(`  Motion: ${s.motion}`);
     for (const sec of s.sections || []) lines.push(`  Section (${sec.role}): ${sec.description}`);
     for (const t of s.steal || []) lines.push(`  Worth taking: ${t}`);
     lines.push(`  URL: ${s.url}`);
-  } else if (s.steal?.[0]) lines.push(`  Worth taking: ${s.steal[0]}`);
+  }
   return lines.join('\n');
 }
 function render(s) {
@@ -594,15 +596,17 @@ function render(s) {
   const adjust = (bp) => { const n = adjustments(bp, s); if (n.length) { p(); p('Adjusted for this page:'); for (const x of n) p(`- ${x}`); } };
   p(`## 6. Hero — ${s.hero.name}`); p(s.hero.blueprint); p(); p(`On a phone: ${s.hero.mobile}`); if (s.hero.headline) p(`Headline: ${s.hero.headline}`); adjust(s.hero); p();
   p('## 7. Sections, in order');
-  p('Each is a composition to rebuild with this project\'s content. Keep the geometry; change the subject. Re-order or drop a');
-  p('section when the argument of the page needs it (see references/copy.md), never to fall back to a card grid.');
+  p('Each is one example of a shape for this section: keep what is large and what sits beside what, and let the real content decide the');
+  p('details (sizes from the six steps, colours from section 4, corners from section 0). Re-order or drop a section when the argument of the');
+  p('page needs it (see references/copy.md), never to fall back to a card grid. A section a scene carries (section 9) is that scene.');
   s.sections.forEach((sec, i) => {
     p();
+    if (sec.role === 'footer' && s.frame) { p(`### ${i + 1}. footer — as dealt in section 0`); p(s.frame.footer.text); return; }
     if (!sec.blueprint) { p(`### ${i + 1}. ${sec.role}`); p('No blueprint in the library for this role. Compose it from the direction above, using a layout shape not used by its neighbours.'); return; }
     p(`### ${i + 1}. ${sec.role} — ${sec.name} (${sec.shape})`); p(sec.blueprint); if (sec.mobile) p(`On a phone: ${sec.mobile}`); adjust(sec);
   });
   p();
-  if (s.motion) { p(`## 8. Motion — ${s.motion.name}`); p(s.motion.description); p('This is the signature move, the one loud moment. Around it the page still needs the rest of the motion layer (SKILL.md step 9): an entrance for the parts of every section, feedback on every control, and one moving picture. The inspector fails a page that barely moves. Recipes: references/motion.md.'); p(); }
+  if (s.motion) { p(`## 8. Motion — ${s.motion.name}`); p(s.motion.description); p('This is the signature move, the one loud moment. Around it the page still needs the rest of the motion layer (SKILL.md step 9): an entrance for the parts of every section and feedback on every control; video only as section 0 deals it. The inspector fails a page that barely moves. Recipes: references/motion.md.'); p(); }
   if (s.scenes?.length) {
     p('## 9. Scroll scenes');
     p(`The page's big moments: ${s.scenes.length} scroll scenes, tested and ready to fill. They are part of the composition, so build them in step 6 with the section they carry, not as a motion afterthought. Each runs on the shared stage (assets/scenes/stage.js and stage.css, with GSAP and Lenis from the pinned CDN lines in stage.js) and ships its own finished composition for reduced motion and for phones that rest. How to put one on a page, fill it and check it: references/scenes.md. Check them with \`node <skill>/scripts/scenes.mjs <page>\` and look at every sheet.`);
@@ -635,7 +639,8 @@ function render(s) {
   p('## Always');
   p('Headlines two lines or fewer at every width. No eyebrow labels, no monospace, no 01/02/03, no thin rules, no gradients, no shadows at rest,');
   p('no cream-and-terracotta, no violet. The frame: one h1 on the first screen that says what this is, equal outer margins, no');
-  p('section huddled on one side with the other half empty, no blank stretch over half a screen, a heading on every section.');
+  p('section huddled on one side with the other half empty, no blank stretch over half a screen, a heading on every section. No picture inside a');
+  p('headline or a sentence, no giant name or credits in the footer, no drag or progress bars, no page built from boxes, one accent hue, few words.');
   p('`inspect.mjs` measures all of it.');
   if (s.allow?.length) p(`This direction is allowed: ${s.allow.join(', ')} (the inspector reads this from the saved sheet).`);
   p();

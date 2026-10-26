@@ -96,7 +96,8 @@
    "opl-nia-creative",
    "opl-april-leihuanani-evangelista",
    "aww-mosbys-files"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "features-mosaic-of-unlike-tiles",
@@ -1835,7 +1836,8 @@
   "needs": [],
   "blueprint": "Questions are filed like cards in a drawer. A heading of two to four words at about 4vw sits in columns 3–10. Beneath it, in the same columns, five or six filled panels are stacked so that each overlaps the one above, leaving 96px of every card showing. Each card has a tab on its top edge, 200px wide and 40px tall, stepping right by 150px per card, cut with `clip-path: polygon()` so card and tab are one filled shape. The cards rotate through two or three palette colours. The tab carries the topic in one or two words at 16px; the visible strip under it shows the question at 20px medium. Choosing a card expands it to show the answer at 17px over at most 50ch and pushes the cards below it down. One card is open at a time; the first is open on load.",
   "mobile": "Cards run full width with the same overlap, 88px of each showing. Tabs shrink to 120px wide and step right by 48px per card. The open card expands in place with its answer at 16px and 20px padding, and the heading leads at 9vw.",
-  "seenIn": []
+  "seenIn": [],
+  "banned": true
  },
  {
   "id": "cta-idea-restated-inverted",
@@ -2910,7 +2912,8 @@
   "seenIn": [
    "aww-mosbys-files",
    "opl-medium-rare"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "work-book-spine-index",
@@ -3080,7 +3083,8 @@
    "opl-transport",
    "opl-marina-rachello",
    "opl-le-petit-bleu"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "gallery-full-bleed-sequence",
@@ -3129,7 +3133,8 @@
   "seenIn": [
    "aww-julien-calot",
    "aww-2xa-studio"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "gallery-prints-over-headline",
@@ -3811,7 +3816,8 @@
   "seenIn": [
    "aww-butter",
    "opl-plastic"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "features-giant-command-list",
@@ -4010,7 +4016,8 @@
    "opl-textmode-overlay",
    "opl-vessa",
    "opl-juggle"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "how-it-works-stages-as-one-bar",
@@ -4036,7 +4043,8 @@
   "mobile": "The bar turns vertical: segments stack as full-width blocks whose heights keep the proportions, 72px minimum, 6px gaps, about 70svh in total. Each holds its duration at 22px top-left and its clause at 16px beneath. The heading sits above at 11vw on two lines.",
   "seenIn": [
    "opl-wild-as"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "stats-figure-set-by-a-slider",
@@ -4059,7 +4067,8 @@
   "needs": [],
   "blueprint": "The number is the visitor's own. A flat field at least 88svh tall. Top-left, on the page margin: a question of two to five words at 36–44px that serves as the heading ('How many invoices a month?'). 28px under it, one control from the product at true size, 400px wide, root marked data-ui: a slider with its real label and current value, or a stepper, or a short numeric field, preset to a typical answer. Then a long gap. Bottom-left, on the same edge, the result at clamp(140px, 19vw, 320px), heavy, leading 0.8, tabular numerals, with its unit at 0.22em on the same baseline. It recalculates on every input event from a stated, honest formula. Bottom-right, on the figure's baseline, one sentence at 17px, 30ch wide, says how the figure is worked out. No other figure appears in the section.",
   "mobile": "Question at 26px, then the control at full width with a 44px thumb. The figure sits at the bottom at 30vw with its unit beneath it at 20px, both flush left. The working-out sentence follows at 15px. The section is at least 84svh so the gap between control and figure survives.",
-  "seenIn": []
+  "seenIn": [],
+  "banned": true
  },
  {
   "id": "stats-bars-standing-on-the-edge",
@@ -4198,7 +4207,8 @@
   "mobile": "The slide is 78% of the width at 4:5, with 32px of each neighbour showing and 10px gaps, still snapping. The row of facts becomes two columns, name and category on the left, year and team from 50% of the width; the link drops under the name. 64px between projects.",
   "seenIn": [
    "aww-leo-parpeix-portfolio-2026"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "showcase-cards-cross-a-held-photograph",
@@ -4356,7 +4366,8 @@
   "mobile": "No pin. The cards sit in one row that scrolls sideways with scroll-snap, each 82% of the width with the next peeking in at the right edge, all upright. The heading and sentence sit above the row.",
   "seenIn": [
    "aww-made-with-gsap-1"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "work-small-index-large-picture",

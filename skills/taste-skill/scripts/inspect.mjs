@@ -180,7 +180,7 @@ try {
     const after = await page.eval(probe).catch(() => metrics);
     const m = after.headings.length >= metrics.headings.length ? after : metrics;
     const lay = await page.eval(layout).catch(() => null);
-    const ex = appMode ? null : await page.eval(extra).catch((e) => { frameErrors.push('extra: ' + String(e.message).slice(0, 160)); return null; });
+    const ex = await page.eval(extra).catch((e) => { frameErrors.push('extra: ' + String(e.message).slice(0, 160)); return null; });
     const appM = appMode ? await page.eval(app).catch(() => null) : null;
     if (appM) appM.colourShare = await helper.eval(colourShare, 'data:image/jpeg;base64,' + frames[0]).catch(() => null);
 
@@ -247,7 +247,7 @@ try {
     // a third of the studied award pages were still unreadable 4.5s after load; the house sequence is over by 1.2s
     if (!appMode && early && early.found && !early.visible && !allow.includes('late-title')) findings.push({ level: 'FAIL', id: 'late-title', width: w, message: `The title is not readable 1.2s after the page loaded (${early.why}).`, fix: 'Put the headline in the HTML, painted on the first frame; the load sequence only adds arrival and is settled by 1.2s (references/motion.md, "Load sequence in 1.2 seconds"). No preloader, no gate, no waiting for the load event.' });
     if (lay) findings.push(...judgeLayout(lay, { width: w, allow }));
-    if (ex) findings.push(...judgeExtra(ex, { width: w, allow, screens: total }));
+    if (ex) findings.push(...judgeExtra(ex, { width: w, allow, screens: total, app: !!appMode }));
     if (appMode) {
       findings = findings.filter((f) => !APP_SKIP.has(f.id) && f.id !== 'no-title' && f.id !== 'small-title');
       if (appM) findings.push(...judgeApp(appM, m, { width: w, allow }));

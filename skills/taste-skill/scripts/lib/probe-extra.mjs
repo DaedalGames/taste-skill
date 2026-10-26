@@ -155,5 +155,56 @@ export function extra() {
       if (left > W * 0.42) out.rightHuddled.push({ y: r2(top), h: r2(r.height), from: r2((left / W) * 100), text: textOf(s).slice(0, 50) });
     }
   }
+  // --- words in interfaces: sentence-long titles, and mock-ups that talk too much
+  out.longTitles = [];
+  for (const h of document.querySelectorAll('h1, h2, h3, h4')) { if (!visible(h)) continue; const n = words(textOf(h)); if (n > 5) out.longTitles.push({ text: textOf(h).slice(0, 60), words: n, ui: !!h.closest('[data-ui]'), level: h.tagName }); }
+  out.uiWords = [...document.querySelectorAll('[data-ui]')].filter((u) => !u.parentElement?.closest('[data-ui]') && visible(u)).map((u) => ({ words: words(textOf(u)), text: textOf(u).slice(0, 40) }));
+  out.sentences = [...document.querySelectorAll('p, li, td, dd, figcaption')].filter((p) => visible(p) && words(textOf(p)) > 12).length;
+
+  // --- breakage at narrow widths (most of the reviewed pages' high-severity faults were phone or tablet only)
+  // text cut by the screen edge or by a clipping box, mock-ups included: a 520px sheet in a 390px screen reads "Sub"
+  out.cutText = [];
+  {
+    const tw = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); let n, seen = 0;
+    const clipOf = (el) => { for (let e = el.parentElement; e && e !== B; e = e.parentElement) { const cs = getComputedStyle(e); if (/(hidden|clip)/.test(cs.overflowX) || /(hidden|clip)/.test(cs.overflow)) return e; } return null; };
+    while ((n = tw.nextNode()) && seen < 4000) {
+      const t = n.nodeValue.trim(); if (t.length < 3) continue; seen++;
+      const el = n.parentElement; if (!el || !visible(el) || el.closest('[aria-hidden=true], .marquee, [class*=marquee i], [class*=ticker i]')) continue;
+      const range = document.createRange(); range.selectNodeContents(n);
+      for (const r of range.getClientRects()) {
+        if (r.width < 8 || r.bottom < 0 || r.top > H * 6) continue;
+        let cut = null;
+        if (r.right > W + 4 || r.left < -4) cut = 'the screen edge';
+        else { const c = clipOf(el); if (c) { const cr = c.getBoundingClientRect(); if (r.right > cr.right + 4 || r.left < cr.left - 4) { const scroller = /(auto|scroll)/.test(getComputedStyle(c).overflowX); if (!scroller) cut = 'a clipping box'; } } }
+        if (cut) { out.cutText.push({ text: t.slice(0, 40), by: cut, ui: !!el.closest('[data-ui]') }); break; }
+      }
+      if (out.cutText.length >= 12) break;
+    }
+  }
+  // text shortened with an ellipsis: the number or name that matters, cut to "$1,..."
+  out.truncated = [];
+  for (const el of B.querySelectorAll('*')) {
+    if (out.truncated.length >= 8) break;
+    const cs = getComputedStyle(el); if (cs.textOverflow !== 'ellipsis' || !visible(el)) continue;
+    if (el.scrollWidth > el.clientWidth + 1) out.truncated.push({ text: textOf(el).slice(0, 40) });
+  }
+  // sticky or fixed bands that eat the screen on a phone or tablet (navigation and scroll scenes excepted)
+  out.stickyBands = [];
+  for (const el of B.querySelectorAll('*')) {
+    const cs = getComputedStyle(el); if (cs.position !== 'sticky' && cs.position !== 'fixed') continue;
+    if (!visible(el) || el.closest('header, nav, [role=banner], .scene, [data-scene], dialog, [role=dialog]')) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width >= W * 0.8 && r.height >= H * 0.33 && r.height < H * 0.97) out.stickyBands.push({ what: textOf(el).slice(0, 40) || el.tagName.toLowerCase(), h: Math.round((r.height / H) * 100) });
+    if (out.stickyBands.length >= 4) break;
+  }
+  // a form field set inside a headline or sentence ("Send [you@work.dev] a free key")
+  out.formInSentence = [];
+  for (const i of document.querySelectorAll('h1 input, h2 input, h3 input, p input, h1 select, h2 select, p select')) { if (visible(i)) out.formInSentence.push({ text: textOf(i.closest('h1, h2, h3, p')).slice(0, 50) }); }
+  // a navigation at the top: links to the page's parts or a menu button
+  {
+    const top = [...B.querySelectorAll('a[href], button')].filter((a) => { const r = a.getBoundingClientRect(); return r.top + sy < 160 && r.bottom > 0 && visible(a) && r.width > 8; });
+    const menu = top.some((b) => /menu|navigation/i.test((b.getAttribute('aria-label') || '') + ' ' + textOf(b)) || b.getAttribute('aria-expanded') != null);
+    out.nav = { links: top.length, menu };
+  }
   return out;
 }

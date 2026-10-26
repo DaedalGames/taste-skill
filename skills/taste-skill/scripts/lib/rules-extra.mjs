@@ -1,11 +1,22 @@
 // Findings from probe-extra.mjs (v2.5): what reviewers kept finding on pages the first rules passed.
 // Thresholds come from the October 2026 comparison of professional sites, award sites and skill builds
 // (professional sites: no giant footers, about one hue, almost no page on coloured grounds).
-export function judgeExtra(x, { width, allow = [], screens = 1 } = {}) {
+export function judgeExtra(x, { width, allow = [], screens = 1, app = false } = {}) {
   const out = [];
   const add = (level, id, message, fix) => { if (!allow.includes(id)) out.push({ level, id, width, message, fix }); };
   const desktop = width >= 1100;
   const list = (a, f, n = 3) => a.slice(0, n).map(f).join('; ');
+  // an app screen: only the breakage and the words checks apply
+  if (app) {
+    const titles = (x.longTitles || []).filter((t) => t.level !== 'H1' || t.words > 6);
+    if (titles.length) add('WARN', 'sentence-title', `${titles.length} title(s) are sentences: ${list(titles, (t) => `"${t.text}" (${t.words} words)`)}.`, 'Titles on an app screen are nouns of one to three words ("Revenue", "Failed deploys"). The finding, if any, is one short line under the page title.');
+    if (desktop && x.sentences > 4) add('WARN', 'app-wordy', `${x.sentences} sentences of more than 12 words on one screen.`, 'An app screen says one thing in words (the finding, one line); the rest is figures, names, labels and controls. Cut the explanations.');
+    if (x.cutText?.length) add('FAIL', 'cut-text', `Text is cut by ${x.cutText[0].by} at ${width}px: ${list(x.cutText, (c) => `"${c.text}"`, 5)}.`, 'Nothing may be wider than the screen: let panels wrap, scroll a wide table inside its own frame with a visible edge, or drop columns at this width.');
+    if (x.truncated?.length) add('WARN', 'ellipsis', `Text is shortened with an ellipsis: ${list(x.truncated, (t) => `"${t.text}"`, 4)}.`, 'Never cut the figure or name that matters. Let it wrap, shorten the label, or drop a column at this width.');
+    return out;
+  }
+  const wordy = (x.uiWords || []).filter((u) => u.words > 120);
+  if (wordy.length) add('WARN', 'fragment-wordy', `${wordy.length} interface fragment(s) carry more than 120 words: ${list(wordy, (u) => `"${u.text}…" (${u.words} words)`)}.`, 'A fragment on a page shows only the part that proves the claim: one panel, three to six rows, real names and figures, no captions or helper text.');
 
   if (x.imageInHeadline?.length) add('FAIL', 'picture-in-headline', `A picture sits inside a headline: ${list(x.imageInHeadline, (h) => `"${h.text}" (${h.how})`)}.`, 'Headlines are words only. Put the picture beside, above or behind the headline as its own element, at a size that shows what it is. Pictures set into the words or filling the letters are a generated-page tell now.');
   if (x.inlinePictures?.length) add('FAIL', 'picture-in-sentence', `${x.inlinePictures.length} small picture(s) inside running text: ${list(x.inlinePictures, (p) => `"${p.text}" (${p.size})`)}.`, 'Take the thumbnails out of the sentences. A picture worth showing gets its own place and size; a sentence is words.');
@@ -31,6 +42,11 @@ export function judgeExtra(x, { width, allow = [], screens = 1 } = {}) {
     if (worst > 6 || x.labels.length > Math.max(10, screens * 3)) add('WARN', 'label-clutter', `${x.labels.length} little labels on the page (up to ${worst} on one screen): ${list(x.labels, (l) => `"${l.text}"`, 6)}.`, 'Cut every label, tag, timestamp and caption that does not carry information a visitor needs. A card does not need "Today, 8:14 am" or "Connected source".');
   }
   if (x.walls?.length) add('WARN', 'text-wall', `${x.walls.length} paragraph(s) over 70 words: ${list(x.walls, (w) => `"${w.text}…" (${w.words} words)`)}.`, 'Say it in a third of the words. Paragraphs on a page are two or three sentences; the rest is a link to a page that has room for it.');
+  if (x.cutText?.length) add('FAIL', 'cut-text', `Text is cut by ${x.cutText[0].by} at ${width}px: ${list(x.cutText, (c) => `"${c.text}"${c.ui ? ' (in a mock-up)' : ''}`, 5)}.`, 'Nothing may be wider than the screen. Give mock-ups and fixed-width panels max-width: 100% and let their content wrap, or design a narrower version for phone and tablet; never let a box clip its own words.');
+  if (x.truncated?.length) add('WARN', 'ellipsis', `Text is shortened with an ellipsis: ${list(x.truncated, (t) => `"${t.text}"`, 4)}.`, 'Never cut the figure or name that matters. Let it wrap, shorten the label, or drop a column at this width.');
+  if (width < 1100 && x.stickyBands?.length) add('FAIL', 'sticky-band', `A sticky or fixed band covers ${x.stickyBands[0].h}% of the ${width}px screen: ${list(x.stickyBands, (b) => `"${b.what}" (${b.h}%)`)}.`, 'Below 1100px, release pinned stages and sticky pictures: let them scroll as ordinary blocks. Only the navigation may stay fixed on a phone, and it stays thin.');
+  if (x.formInSentence?.length) add('FAIL', 'form-in-sentence', `A form field sits inside a headline or sentence: ${list(x.formInSentence, (f) => `"${f.text}"`)}.`, 'Put the field and its button on their own row under the heading, with a visible label: the sentence-form field broke on 8 of 9 reviewed pages.');
+  if (x.nav && x.nav.links < 2 && !x.nav.menu) add('FAIL', 'no-nav', `No navigation at the top of the page (${x.nav.links} link(s) in the first 160px).`, 'Every page has a header: the name, links to its main sections and the one action (or a Menu button on a phone).');
   if (desktop && x.rightHuddled?.length) add('WARN', 'empty-left', `${x.rightHuddled.length} band(s) with nothing in the left ${x.rightHuddled[0].from}% of the width: ${list(x.rightHuddled, (b) => `"${b.text}" at ${b.y}px`)}.`, 'A row with an empty left side and text on the right looks broken. Put the heading on the left and the text on the right, or set the block from the left margin.');
   return out;
 }

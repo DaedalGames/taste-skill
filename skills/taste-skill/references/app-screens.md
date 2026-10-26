@@ -227,6 +227,15 @@ Three more lines, each tested:
 - **Show the evidence beside the answer.** A judge trusts "Error rate 0.28%" more with its spike
   annotated ("peaked at 3.9% after the 23:28 deploy, reverted") than with the number alone. One line
   of explanation on the event that matters is worth more than a second chart.
+- **Words: few, and never about the interface.** Professional dashboards are figures, names and
+  controls. The page title and every card title are nouns of one to three words ("Revenue", "Failed
+  deploys", "Bills due"), never sentences (`sentence-title`). The screen carries one sentence at most,
+  the finding, under the title, in twelve words or fewer; annotations on a chart are a few words each.
+  No helper text explaining what a card shows, no subtitles under card titles, no badges, timestamps
+  or "connected" chips unless the job needs them, no empty-state essays. If a block needs a sentence to
+  be understood, redesign the block (`app-wordy` warns over four long sentences on a screen). On a
+  marketing page, a fragment of the product shows only the part that proves the claim: one panel,
+  three to six rows, real names and figures (`fragment-wordy` warns over 120 words).
 
 ### 2.3 Choose a style
 
