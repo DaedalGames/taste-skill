@@ -7,7 +7,7 @@ const NAV = [
   ['bar', 5, 'A plain bar: the name on the left, three to six links, one action on the right. It stays at the top, or hides on the way down and returns on the first scroll up.'],
   ['centred-name', 1.5, 'The name centred, the links split either side of it, the action at the far right. Good when the name is short.'],
   ['two-rows', 1, 'A thin top row with secondary links (help, sign in, language) over a main row with the name, the main links and the action, like a large company site.'],
-  ['menu', 1.2, 'The name on the left, the one action and a "Menu" button on the right that opens a full panel with the links. Only for pages with six links or more; the action stays visible.'],
+  ['menu', 0.5, 'The name on the left, the links inline and the one action on the right on desktop; below 1024px a "Menu" button opens a full panel with the links while the action stays visible. Never a Menu button alone on desktop.'],
   ['split', 0.8, 'The name on the left, the main links in the middle of the width, the action and a secondary link (sign in, cart) on the right.'],
 ];
 const FOOTER = [

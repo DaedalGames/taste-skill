@@ -28,7 +28,7 @@ const GROUNDS = [
   ['pale-tint', 5, true, [0.92, 0.955], [0.025, 0.05], 'Pale'],
   ['near-black', 18, false, [0.16, 0.2], [0.004, 0.016], 'Near-black'],
   ['black', 7, false, [0.11, 0.135], [0, 0.006], 'Black'],
-  ['deep', 8, false, [0.22, 0.31], [0.035, 0.075], 'Deep'],
+  ['deep', 8, false, [0.2, 0.28], [0.02, 0.045], 'Deep'],
   ['field', 2, true, [0.62, 0.8], [0.1, 0.16], 'Coloured'],
 ];
 // accent hues in OKLCH degrees; violet and indigo (about 265-315) are never dealt

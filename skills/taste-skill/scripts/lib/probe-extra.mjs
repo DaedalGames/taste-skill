@@ -176,6 +176,32 @@ export function extra() {
     for (const a of document.querySelectorAll('a[href]')) { const h = a.getAttribute('href') || ''; if (/\.example\b|example\.(com|org)/i.test(h) && out.placeholders.length < 4) out.placeholders.push(h.slice(0, 50)); }
   }
 
+  // --- the same large picture twice, the same heading twice, boxes with nothing in them, switches as a feature list
+  {
+    const seenPics = new Map();
+    for (const img of document.querySelectorAll('img')) { if (!visible(img)) continue; const r = img.getBoundingClientRect(); if (r.width * r.height < W * H * 0.08) continue; const k = (img.currentSrc || img.src).split('?')[0].split('/').pop(); if (k) seenPics.set(k, (seenPics.get(k) || 0) + 1); }
+    out.repeatedPictures = [...seenPics.entries()].filter(([, n]) => n > 1).map(([k, n]) => ({ src: k.slice(0, 40), n }));
+    const heads = new Map();
+    for (const h of document.querySelectorAll('h1, h2, h3')) { if (!visible(h) || inUI(h)) continue; const k = textOf(h).toLowerCase(); if (k.length > 3) heads.set(k, (heads.get(k) || 0) + 1); }
+    out.repeatedHeadings = [...heads.entries()].filter(([, n]) => n > 1).map(([k]) => k.slice(0, 40));
+    out.hollow = [];
+    let n2 = 0;
+    for (const el of B.querySelectorAll('div, li, article, section > div, a')) {
+      if (++n2 > 5000 || out.hollow.length >= 6) break;
+      if (inUI(el) || !visible(el)) continue;
+      const r = el.getBoundingClientRect(); if (r.width < 180 || r.height < 220 || r.width > W * 0.9) continue;
+      const cs = getComputedStyle(el); const filled = rgb(cs.backgroundColor) && String(rgb(cs.backgroundColor)) !== String(groundOf(el.parentElement || B)); const outlined = parseFloat(cs.borderTopWidth) >= 1 && cs.borderTopStyle !== 'none';
+      if (!filled && !outlined) continue;
+      const kids = [...el.querySelectorAll('*')].filter((k) => !k.childElementCount && visible(k)).map((k) => k.getBoundingClientRect()).filter((b) => b.width > 2 && b.height > 2);
+      if (!kids.length) continue;
+      const top = Math.min(...kids.map((b) => b.top)), bottom = Math.max(...kids.map((b) => b.bottom));
+      const covered = kids.reduce((s, b) => s + b.height, 0);
+      // the content's own height against the box: a tall card with a price at the top and two lines at the foot
+      if (Math.min(covered, bottom - top) / r.height < 0.3 && (bottom - top) / r.height > 0.6) out.hollow.push({ text: textOf(el).slice(0, 40), h: Math.round(r.height) });
+    }
+    out.switchList = [...document.querySelectorAll('input[type=checkbox], [role=switch], input[type=radio]')].filter((i) => visible(i) && !i.closest('form, [data-ui], dialog, [role=dialog]')).length;
+  }
+
   // --- breakage at narrow widths (most of the reviewed pages' high-severity faults were phone or tablet only)
   // text cut by the screen edge or by a clipping box, mock-ups included: a 520px sheet in a 390px screen reads "Sub"
   out.cutText = [];

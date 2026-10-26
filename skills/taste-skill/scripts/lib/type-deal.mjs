@@ -100,7 +100,7 @@ export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamili
   // the hero's display size, in vw at 1440: a wide span, so pages do not share one headline size
   // professional sites: largest type median 3.9vw (P75 4.5vw); award sites 5.6vw (P75 9.6vw); generated pages 14vw.
   // Most pages get a confident professional size; a giant headline is a rare, dealt event, never the default.
-  const displayVw = wpick([[3.4, 2], [4, 3.5], [4.8, 3.5], [5.6, 2.5], [6.6, 1.6], [8, 1], [10, 0.5], [12.5, 0.2]]) * (dClass === 'condensed' ? 1.25 : dClass === 'wide' ? 0.8 : 1);
+  const displayVw = wpick([[4.4, 2], [5, 3], [5.8, 3], [6.6, 2.5], [7.6, 1.5], [9, 0.8], [11, 0.3]]) * (dClass === 'condensed' ? 1.25 : dClass === 'wide' ? 0.8 : 1);
   // a light weight reads as thin below a large size: at a modest display size it steps up to regular
   if (dWeight < 400 && displayVw < 5.5 && display.weights.includes(400)) dWeight = 400;
   const px = (n) => Math.round(n * 10) / 10;

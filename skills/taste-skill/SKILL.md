@@ -155,6 +155,9 @@ The command prints a **direction sheet**. It is the art direction for this build
   it wants five quotations and there are none), do not bend the content to fit. List the others with
   `--alternatives <role>`, pick the one whose assumptions match the content, and take it with
   `--redraw section:<role>=<id>`.
+- **Take the accent from the subject.** If the dealt accent has nothing to do with the subject (a
+  software teal on a coffee roaster), keep its lightness and strength and move its hue to the subject's
+  own colour (crema amber, copper, the green of the name), and say so in the report.
 - **Check the palette against the subject.** A dealt palette is a set of proportions (one ground, one
   ink, one accent, fields) as much as a set of colours. If its colours fight the subject's own material
   (candy pastels for a peat whisky, neon for a mountain hut), redraw the palette once; if the subject
@@ -279,7 +282,9 @@ not finished. Order of work:
 
    Rules: every picture shows this subject's world and is requested at least 1.5 times the size it is
    shown (twice for the hero); one treatment for all (section 0); three to eight good pictures beat
-   twelve weak ones. Archive photographs, old maps and engravings only when they are the idea itself
+   twelve weak ones. The first picture a visitor sees shows the product or the place itself (the cup
+   and the bar, the room, the product working), never a street, a facade or a blurred mood shot; if no
+   such picture exists, the hero is set in type. Each photograph appears once on the page. Archive photographs, old maps and engravings only when they are the idea itself
    (the history this subject continues, like the slip boxes behind a notes app), sharp, large and of
    one family; never as filler or a random old picture of the place. Never a picture inside a headline
    or a thumbnail inside a sentence. Software shows itself large on the first screen, at a size a

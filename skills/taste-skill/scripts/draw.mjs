@@ -320,7 +320,9 @@ function dealScenes(dir, input, exclude) {
     if (!cands.length) cands = pool.filter(allowed);
     if (!cands.length) break;
     const sc = pick(cands); const role = place(sc);
-    taken.add(roles.indexOf(role)); families.add(sc.family); out.push({ ...sc, carries: role });
+    // a scene earns about one screen per beat: two screens of hold on most pages, three on a loud or creative one
+    const cap = creative ? 3 : 2;
+    taken.add(roles.indexOf(role)); families.add(sc.family); out.push({ ...sc, carries: role, hold: Math.min(holdOf(sc), cap), defaultHold: holdOf(sc) });
   }
   return out.sort((a, b) => roles.indexOf(a.carries) - roles.indexOf(b.carries));
 }
@@ -624,7 +626,7 @@ function render(s) {
       p();
       const what = sc.carries === 'hero' ? 'the first screen' : `the ${sc.carries} section`;
       p(`### ${sc.name} (\`${sc.id}\`) — ${sc.position === 'transition' ? `the hand-over into ${what}` : `carries ${what}`}`);
-      p(`${sc.summary}${sc.hold ? ` Holds about ${sc.hold} screens.` : ''}`);
+      p(`${sc.summary}${sc.hold ? ` Hold: ${sc.hold} screens${sc.defaultHold > sc.hold ? ` (set \`data-options\` hold to ${sc.hold}, or the lowest value the scene allows; its default is ${sc.defaultHold})` : ''}. Every frame of the hold must read as a finished layout: no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway.` : ''}`);
       if (sc.place) p(`Where: ${sc.place}`);
       if (sc.carries === 'work') p('On the work, the scene is the work: its cards, chapters or pictures are the pieces themselves, each shown once and each linking to its piece. The world around the work belongs on another section.');
       if (sc.content) p(`Content: ${sc.content}`);
