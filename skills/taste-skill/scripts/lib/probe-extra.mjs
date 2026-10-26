@@ -186,7 +186,7 @@ export function extra() {
   for (const el of B.querySelectorAll('*')) {
     if (out.truncated.length >= 8) break;
     const cs = getComputedStyle(el); if (cs.textOverflow !== 'ellipsis' || !visible(el)) continue;
-    if (el.scrollWidth > el.clientWidth + 1) out.truncated.push({ text: textOf(el).slice(0, 40) });
+    if (el.scrollWidth > el.clientWidth + 1) out.truncated.push({ text: textOf(el).slice(0, 40), ui: !!el.closest('[data-ui]') });
   }
   // sticky or fixed bands that eat the screen on a phone or tablet (navigation and scroll scenes excepted)
   out.stickyBands = [];

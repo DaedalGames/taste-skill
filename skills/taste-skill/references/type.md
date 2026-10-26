@@ -32,33 +32,30 @@ From 202 measurable sites out of the 247 studied (Chrome, 1440×900 and 390×844
 | Hero in capitals | 24% | | |
 | Hero centred | 39% | | 52% on the weak sites |
 
-Two things to take from it. First, size contrast is the main lever and the best sites pull it harder.
-Second, weight is not: half of the heroes are set in a regular weight. Scale and spacing make type
-confident; bold is one option among several.
+Two things to take from it. First, size contrast is a lever, and award sites pull it hard for one
+moment. Second, weight is not: half of the heroes are set in a regular weight. Scale and spacing make
+type confident; bold is one option among several.
 
-## 2. The scale: few sizes, far apart
+The October 2026 comparison adds the other side. On 65 professional sites (technology companies and
+good shops) the largest type is about 3.8vw (middle half 2.5-4.5vw, about 55px at 1440) and body text
+14-16px; the 30 pages built with the previous version of this skill set their largest type at 14vw and
+body text at 17-19px, and read as shouting. So the sheet now deals the display size per page: most pages
+get a confident professional size, and a giant headline is a dealt event, never a habit.
 
-The panel described about 30 of the 114 strongest sites as using two or three type sizes with nothing
-in between, and none as using a graded five- or six-step scale. So: one display size, one text size
-and a small size carry the page; a lead size and a heading size exist for when they are needed. Five
-is the ceiling. The common failure is nine sizes that are all near each other (16, 18, 20, 24, 28,
-32…), which reads as mush. Choose steps that are clearly different:
+## 2. The scale: the six dealt steps
 
-```css
-:root {
-  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);   /* 13–14px  captions, legal */
-  --step-body:  clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);    /* 17–19px  paragraphs */
-  --step-lead:  clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);      /* 20–26px  supporting line, large body */
-  --step-head:  clamp(2rem, 1.3rem + 3.2vw, 4rem);             /* 32–64px  section headings */
-  --step-display: clamp(3rem, 1rem + 9vw, 9rem);               /* set by the hero blueprint */
-}
-```
+The sheet deals the scale with the faces: a ratio (1.2 to 1.6), a body size (16-18px) and a display
+size, as six steps: `--step-small`, `--step-body`, `--step-lead`, `--step-sub`, `--step-head` and
+`--step-display`. They are the whole scale. Every size a blueprint names maps onto the nearest step;
+nothing in between. The common failure is nine sizes that are all near each other (16, 18, 20, 24, 28,
+32...), which reads as mush; the inspector warns past seven.
 
-- `--step-display` belongs to the direction. A monument wordmark is 16–24vw; a quiet instrument's
-  headline is 28px. Use the size the hero blueprint gives, as a `clamp()` so it scales with the
-  viewport but is bounded on phones and very wide screens.
-- Keep the gap: the display size should be at least four times the body size on desktop, and nothing
-  should sit between `--step-lead` and `--step-head` unless the design truly needs a sixth size.
+- `--step-display` is the hero headline's size, dealt for this page (usually 3.5-6vw at 1440). A
+  blueprint that names another size for the headline is overruled by the sheet.
+- `--step-head` is every section heading; `--step-sub` a subheading or a large figure; `--step-lead`
+  the supporting line under a headline; `--step-small` legal lines and table notes only, never 12px.
+- Keep the gap: the display size is about three times the body size or more on desktop; a headline
+  that is only a little larger than the section headings reads as a section heading.
 - Resist a "subheading" size for every card and label. If two sizes look almost the same, make them
   the same.
 
