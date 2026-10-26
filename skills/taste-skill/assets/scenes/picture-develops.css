@@ -2,7 +2,11 @@
    Without .is-live (no script, reduced motion, a phone set to 'rest', art that cannot be read) this is the
    finished composition: title and note over the complete drawing, a caption under it. With .is-live the
    same grid is held for the scene's hold and a canvas lays the drawing down; the img stays in the
-   accessibility tree at opacity 0. The live scene's last frame is this layout. */
+   accessibility tree at opacity 0. The live scene's last frame is this layout.
+   Weights follow the page: --display-weight (the title; 500 here when the page sets none). A weight the
+   page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="picture-develops"] { font-synthesis-weight: none; }
 
 .scene[data-scene="picture-develops"] {
   --pd-paper: var(--paper, var(--ground, #f3f3f0));
@@ -34,7 +38,7 @@
   max-width: 12ch;
   font-family: var(--font-display, inherit);
   font-size: clamp(40px, 5.4vw, 88px);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   line-height: .95;
   letter-spacing: -.03em;
   text-wrap: balance;

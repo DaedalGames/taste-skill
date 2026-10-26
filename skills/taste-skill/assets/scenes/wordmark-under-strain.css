@@ -2,7 +2,13 @@
    By default this is the finished composition (reduced motion, no script, a phone set to 'rest'): the word
    stands in its stepped echo, every copy on a plate of the ground colour, with the button under it.
    Under .is-live the stage is held, the copies start flat on each other and the timeline moves them.
-   Takes the page's tokens: --ground, --ink, --font-display, --font-text. */
+   Takes the page's tokens: --ground, --ink, --font-display, --font-text.
+   Weights follow the page: --display-weight (the wordmark; 800 here when the page sets none),
+   --strong-weight (the label; 600 here when the page sets none) and --text-weight (the top line and the
+   meta line; 400 here when the page sets none). A weight the page has not loaded is never faked: the
+   nearest loaded one shows. */
+
+[data-scene="wordmark-under-strain"] { font-synthesis-weight: none; }
 
 [data-scene="wordmark-under-strain"] {
   --ws-ground: var(--ground, #efefec);
@@ -55,7 +61,7 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 8px 48px;
-  font: 400 var(--ws-text-size)/1.45 var(--font-text, inherit);
+  font: var(--text-weight, 400) var(--ws-text-size)/1.45 var(--font-text, inherit);
 }
 [data-scene="wordmark-under-strain"] .ws-top > * { margin: 0; }
 [data-scene="wordmark-under-strain"] .ws-top > :first-child { max-width: 38ch; }
@@ -70,7 +76,7 @@
   /* clearance under the top row, from the tallest letter (--ws-asc: how far it rises above the capitals) */
   margin: calc(max(var(--ws-top-gap), var(--ws-h0) * .13) + var(--ws-asc, 0em) + var(--ws-lift, 0px)) 0 0;
   font-family: var(--font-display, inherit);
-  font-weight: var(--ws-weight, 800);
+  font-weight: var(--ws-weight, var(--display-weight, 800));
   font-size: var(--ws-size);
   font-stretch: var(--ws-stretch, normal);
   line-height: 1;
@@ -142,7 +148,7 @@
   transform: translateX(var(--ws-cta-x, 0px));
 }
 [data-scene="wordmark-under-strain"] .ws-drop__label {
-  font: 600 var(--ws-label-size)/1 var(--font-text, inherit);
+  font: var(--strong-weight, 600) var(--ws-label-size)/1 var(--font-text, inherit);
   white-space: nowrap;
   color: var(--ws-label-ink, var(--ws-ground));
 }
@@ -158,7 +164,7 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 4px 32px;
-  font: 400 var(--ws-text-size)/1.45 var(--font-text, inherit);
+  font: var(--text-weight, 400) var(--ws-text-size)/1.45 var(--font-text, inherit);
 }
 [data-scene="wordmark-under-strain"] .ws-meta > * { margin: 0; }
 [data-scene="wordmark-under-strain"] .ws-meta a,

@@ -7,7 +7,12 @@
    flies above them. Every rule hangs on [data-scene="fixed-hero-object"], so the section needs no other
    class. Tokens: --ground, --night, --ink, --paper, --accent, --font-display, --font-text, --margin.
    Six sizes: the title, the heading, the numbers, a lead (values and units), the body and a small size
-   (captions, labels, the count, the action). */
+   (captions, labels, the count, the action).
+   Weights follow the page: --display-weight (the heading and the figures; 600 here when the page sets
+   none) and --strong-weight (the spec values, the units, the button and the counter; 500 here when the
+   page sets none). A weight the page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="fixed-hero-object"] { font-synthesis-weight: none; }
 
 [data-scene="fixed-hero-object"] {
   --fho-m: var(--margin, clamp(20px, 4.4vw, 72px));
@@ -41,7 +46,7 @@
 
 /* type */
 [data-scene="fixed-hero-object"] .fho-title,
-[data-scene="fixed-hero-object"] .fho-head { margin: 0; font-family: var(--fho-display); font-weight: 600; text-wrap: balance; }
+[data-scene="fixed-hero-object"] .fho-head { margin: 0; font-family: var(--fho-display); font-weight: var(--display-weight, 600); text-wrap: balance; }
 [data-scene="fixed-hero-object"] .fho-title { font-size: calc(var(--fho-title) * var(--fho-fit, 1)); line-height: 0.92; letter-spacing: -0.035em; }
 [data-scene="fixed-hero-object"] .fho-head { font-size: calc(var(--fho-head) * var(--fho-fit, 1)); line-height: 0.98; letter-spacing: -0.035em; }
 /* live, each .fho-line is one line: the script sets a line too long for its column smaller (--fho-fit) */
@@ -64,7 +69,7 @@
   background: color-mix(in srgb, var(--fho-c) 7%, transparent);
 }
 [data-scene="fixed-hero-object"] .fho-specs dt { font-size: var(--fho-small); color: var(--fho-muted); }
-[data-scene="fixed-hero-object"] .fho-specs dd { margin: 0; font-size: var(--fho-lead); font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; }
+[data-scene="fixed-hero-object"] .fho-specs dd { margin: 0; font-size: var(--fho-lead); font-weight: var(--strong-weight, 500); letter-spacing: -0.01em; white-space: nowrap; }
 
 /* the dock: gauge, numbers, the action */
 [data-scene="fixed-hero-object"] .fho-gauge { display: block; overflow: visible; color: var(--fho-c); }
@@ -75,9 +80,9 @@
 /* four readouts start smaller; live, the script fits them to their columns */
 [data-scene="fixed-hero-object"] .fho-readouts:has(> li:nth-child(4)) { --fho-nfit: 0.7; }
 [data-scene="fixed-hero-object"]:not(.is-live) .fho-readouts li { white-space: normal; }
-[data-scene="fixed-hero-object"] .fho-num { display: inline-block; font: 600 calc(var(--fho-num) * var(--fho-nfit, 1)) / 1 var(--fho-display); letter-spacing: -0.03em; text-align: right; margin-right: 0.1em; }
+[data-scene="fixed-hero-object"] .fho-num { display: inline-block; font: var(--display-weight, 600) calc(var(--fho-num) * var(--fho-nfit, 1)) / 1 var(--fho-display); letter-spacing: -0.03em; text-align: right; margin-right: 0.1em; }
 /* the unit gives way a little when the numbers are set smaller, never below the small size */
-[data-scene="fixed-hero-object"] .fho-unit { font-size: max(var(--fho-small), calc(var(--fho-lead) * (0.5 + 0.5 * var(--fho-nfit, 1)))); font-weight: 500; letter-spacing: -0.01em; }
+[data-scene="fixed-hero-object"] .fho-unit { font-size: max(var(--fho-small), calc(var(--fho-lead) * (0.5 + 0.5 * var(--fho-nfit, 1)))); font-weight: var(--strong-weight, 500); letter-spacing: -0.01em; }
 /* readings too many or too long to sit beside their units: each unit goes under its number (set by the script) */
 [data-scene="fixed-hero-object"] .fho-readouts.is-stacked .fho-unit { display: block; margin-top: 6px; line-height: 1.2; }
 /* stacked, nothing sits beside the number: it counts centred over its unit */
@@ -87,7 +92,7 @@
 [data-scene="fixed-hero-object"] .fho-cta {
   display: inline-flex; align-items: center; justify-content: center; height: 48px; padding: 0 28px;
   border-radius: 999px; background: var(--fho-accent); color: #151614; text-decoration: none;
-  font: 500 var(--fho-small) / 1 var(--fho-text); transition: background-color 180ms ease;
+  font: var(--strong-weight, 500) var(--fho-small) / 1 var(--fho-text); transition: background-color 180ms ease;
 }
 [data-scene="fixed-hero-object"] .fho-cta:hover,
 [data-scene="fixed-hero-object"] .fho-cta:focus-visible { background: color-mix(in srgb, var(--fho-accent) 82%, #fff); }
@@ -148,7 +153,7 @@
 /* the count, in two inks: each is clipped to the ground beneath it, so a passing edge cuts the words */
 [data-scene="fixed-hero-object"].is-live .fho-counter {
   position: absolute; top: 5svh; right: var(--fho-m); z-index: 4;
-  font: 500 var(--fho-small) / 1.2 var(--fho-text); font-variant-numeric: tabular-nums;
+  font: var(--strong-weight, 500) var(--fho-small) / 1.2 var(--fho-text); font-variant-numeric: tabular-nums;
 }
 [data-scene="fixed-hero-object"] .fho-count { display: flex; align-items: flex-start; gap: 0.3em; color: var(--fho-ink); }
 [data-scene="fixed-hero-object"] .fho-count + .fho-count { position: absolute; inset: 0; color: var(--fho-on-dark); }

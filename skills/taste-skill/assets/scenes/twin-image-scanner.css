@@ -2,7 +2,12 @@
    Default = the finished composition (no script, reduced motion, a small phone): the stage split at
    --ts-edge, surface above the line, structure below it, both tags on the line, every part named. Under
    .is-live the script moves the line; nothing here is laid out again while it does (transforms only).
-   One column (phones, portrait tablets up to 1024px): the words on top, the picture below, larger. */
+   One column (phones, portrait tablets up to 1024px): the words on top, the picture below, larger.
+   Weights follow the page: --display-weight (the title; 600 here when the page sets none) and
+   --strong-weight (the button, the tags and the callout labels; 500 here when the page sets none). A
+   weight the page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="twin-image-scanner"] { font-synthesis-weight: none; }
 
 [data-scene="twin-image-scanner"] {
   --ts-ground-a: var(--ground, #ece6d8);
@@ -75,7 +80,7 @@
   right: 0;
   margin: 0;
   font-family: var(--font-display, inherit);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   font-size: calc(clamp(40px, 5.6vw, 112px) * var(--ts-fit, 1));
   line-height: 0.96;
   letter-spacing: -0.02em;
@@ -87,7 +92,7 @@
   display: inline-block;
   padding: 15px 22px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: var(--strong-weight, 500);
   line-height: 1;
   text-decoration: none;
   background: var(--ts-ink-a);
@@ -191,7 +196,7 @@
   left: var(--ts-tag-x, calc(var(--ts-m) + 4 * (100% - 2 * var(--ts-m) - 11 * var(--ts-gap)) / 12 + 4 * var(--ts-gap)));
   padding: 4px 9px;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: var(--strong-weight, 500);
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -220,7 +225,7 @@
   padding: 5px 10px;
   white-space: nowrap;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: var(--strong-weight, 500);
   line-height: 1.2;
   background: var(--ts-ground-b);
   color: var(--ts-ink-b);

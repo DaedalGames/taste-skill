@@ -1,13 +1,16 @@
 // tasteskill / scenes / stepped-columns-raise-a-stage.js — Stepped columns raise a stage.
 //
-// A held stage on one flat page colour holds a row of 3-5 equal columns. Solid ink panels rise from the
-// foot of every column; they all start together and finish at evenly spread points, so the row reads
-// first as a falling bar chart and then levels into one block. As the ink passes, each column's copy
-// turns from ink-on-page to page-on-ink. Wherever ink has arrived, a page-coloured line drawing shows: a
+// A held stage on one flat page colour holds a row of 3-5 equal columns. Each column opens as an ink
+// stub that already holds its step's copy, under its note (the date or stage, in ink on the page). The
+// stubs rise together and finish at evenly spread points, so the row reads first as a falling bar chart
+// and then levels into one block, late in the hold. An ink edge never stops in a line of copy: where it
+// would cross one (the note at the top of a column), it jumps past it in one step, so no word is ever
+// cut into two colours while it is read. Wherever ink has arrived, a page-coloured line drawing shows: a
 // square wheel rolling over a road of arches with its hub perfectly level, gaining a side on every arch
 // as the arches shrink, until it rests as a circle on a flat road in the last column. The rolling wheel
-// says "the road gets smoother as we go": use it when the steps really run from rough to smooth, and
-// {"wheel":"none"} for a plain stepped chart otherwise.
+// says "the road gets smoother as we go": use it only when the steps' own copy runs from rough to
+// smooth, and {"wheel":"none"} for a plain stepped chart otherwise (a timeline, an order's progress,
+// tiers): there the wheel means nothing.
 //
 // Needs gsap + ScrollTrigger (no SplitText), stage.js, then this file. Read the CSS file's header too.
 //
@@ -46,39 +49,43 @@
 // --sr-ink (defaults to --accent, else vermilion #d2232a) must reach 4.5:1 against the page.
 //
 // Options (data-options JSON, or the second argument), with defaults and ranges:
-//   hold       screens the stage is held on desktop       0.75 × N, clamped 2.25-3.75; 2 with wheel "none"
-//   phoneHold  screens held on a phone (rows)              0.55 × N, clamped 2-3 (2.2 for four steps);
-//                                                          2 with wheel "none"
+//   hold       screens the stage is held on desktop       0.6 × N, clamped 1.8-3 (2.4 for four);
+//                                                          1.8 with wheel "none"
+//   phoneHold  screens held on a phone (rows)              0.5 × N, clamped 1.8-2.6 (2 for four);
+//                                                          1.8 with wheel "none"
 //   scrub      seconds of catch-up                         0.3 with Stage.smooth(), else 0.5   (0.2-0.8)
 //   order      which column fills first                    "descending" (first column first, reads "done in
 //                                                          order") | "ascending" (last column first: a rising
 //                                                          chart for tiers) | "centre" (odd N, middle first)
-//   ends       [first, last] ink end points, 0-1           [0.28, 0.70]; first 0.20-0.35, last 0.60-0.75
+//   ends       [first, last] ink end points, 0-1           [0.30, 0.86]; first 0.20-0.40, last 0.75-0.88
 //   wheel      "road" (the rolling wheel) | "none"         "road"
-//   ghost      true: ink copy reads before the ink arrives true; false = pure mask in columns: each panel
-//                                                          starts as a stub just tall enough for its copy
-//                                                          (rows always keep the ghost copy)
+//   ghost      false: each column starts as an ink stub     false; true = the whole step's copy waits in
+//              that already holds its copy, under its       ink on the page and the ink rises from the
+//              note in ink on the page                      column's foot (it jumps past the copy at once)
 // The rail is optional; without it the rows layout has no wheel. --n on the section (the step count)
 // is only needed for the no-script layout; the script sets it.
 //
 // Timeline (fractions of the hold), one linear proxy 0 → 1 that renders every frame:
-//   columns  every panel's clip-path runs inset(100% 0 0 0) → inset(0) from 0, ending at its end point
-//            (default 0.28 / 0.42 / 0.56 / 0.70 for four): the staircase keeps exact ratios. The wheel
-//            rolls from 0.22 (later if the ink would not lead it: it is never cut by a bar top) to 0.90.
-//   rows     every panel fills left to right inside a 0.24 window that ends at its end point, so the ink
-//            edge crosses a row's copy briefly; the rail wheel rolls from 0.05 to the last end + 0.08.
+//   columns  every panel's clip-path runs from its stub (inset(100% 0 0 0) with the ghost) to inset(0)
+//            from 0, ending at its end point (default 0.30 / 0.49 / 0.67 / 0.86 for four), skipping
+//            every band that holds a line of copy: the edge reaches the line, then is past it on the
+//            next frame. The wheel rolls from 0.22 (later if the ink would not lead it: it is never cut
+//            by a bar top) to 0.94, so something still moves until the stage lets go.
+//   rows     each row turns to ink as one block, faded over 0.04 of the hold that ends at its end
+//            point (a wipe would cut the row's words); the rail wheel rolls from 0.05 to the last end
+//            + 0.08.
 //   The header, the road, the dashed axle and the ghost copy never move.
 //
 // Layout modes, chosen on every refresh from the stage size and N:
 //   cols   columns side by side (1-6 steps, ≥ 860px wide, ≥ 540px tall, ≥ 190px a column); the drawing
 //          prints in page colour on the ink. Titles share one top line, bodies another.
-//   rows   below that, on a phone, or 7-12 steps: stacked rows filled left to right; the wheel moves onto
-//          the header rail and rolls there in ink on the page colour (R up to 32px in the rail's top
-//          padding). When the copy does not fit, two compact levels are tried before giving up:
-//          data-sr-dense="rows" (smaller row type, the note beside the title, and on a row ≥ 560px wide
-//          title, body and note side by side) and data-sr-dense="all" (a short header too, the rail's
-//          labels beside its road). That keeps a 375x667 phone, landscape phones and 12 steps on a
-//          1440x900 desktop moving.
+//   rows   below that, on a phone, or 7-12 steps: stacked rows, each with its note on its title's line,
+//          that turn to ink one after another; the wheel moves onto the header rail and rolls there in
+//          ink on the page colour (R up to 32px in the rail's top padding). When the copy does not fit,
+//          two compact levels are tried before giving up: data-sr-dense="rows" (smaller row type and
+//          padding, and on a row ≥ 560px wide title, body and note side by side) and
+//          data-sr-dense="all" (a short header too, the rail's labels beside its road). That keeps a
+//          375x667 phone, landscape phones and 12 steps on a 1440x900 desktop moving.
 //   still  the copy does not fit even then: the finished composition, unheld.
 // Reduced motion, no script and a failed CDN show the finished composition (CSS): every column inked;
 // with this file running it also prints the road and one wheel per column, square to circle. Turning
@@ -103,8 +110,39 @@
   const DROP = [9, 7, 4, 10, 5, 8, 6]; // what goes first when the road is too long
   const FADE = 2; // 12-sided arches that flatten while the wheel rounds off
   const SAMPLES = 360; // outline points while two outlines blend (every n here but 7 divides it)
-  const ROW_WINDOW = 0.24; // rows: how much of the hold one row takes to fill
+  const ROW_FADE = 0.04; // rows: how much of the hold one row takes to turn to ink
+  const AIR = 6; // px of air the ink edge keeps from a line of copy it jumps past
   const MAX_COLS = 6, MAX_ROWS = 12;
+
+  // The ink in a column, 0-1 of its height from the foot, for a share f (0-1) of its rise from k0. The
+  // bands in `zones` hold copy: the edge never stops in one. It runs through what is left at an even
+  // pace and crosses each band between two frames, so a line of copy is never shown cut in two colours.
+  const allowed = (k0, zones) => {
+    const segs = [];
+    let x = k0;
+    for (const [a, b] of zones) {
+      if (b <= x) continue;
+      if (a > x) segs.push([x, Math.min(a, 1)]);
+      x = Math.max(x, b);
+      if (x >= 1) break;
+    }
+    if (x < 1) segs.push([x, 1]);
+    return segs;
+  };
+  const inkAt = (segs, f) => {
+    if (f >= 1 || !segs.length) return f >= 1 ? 1 : segs.length ? segs[0][0] : 0;
+    let d = f * segs.reduce((s, [a, b]) => s + b - a, 0);
+    for (const [a, b] of segs) { if (d <= b - a) return a + d; d -= b - a; }
+    return 1;
+  };
+  // the share of the rise at which the ink first reaches k
+  const shareAt = (segs, k) => {
+    const L = segs.reduce((s, [a, b]) => s + b - a, 0);
+    if (!L) return 1;
+    let acc = 0;
+    for (const [a, b] of segs) { if (k <= b) return clamp((acc + Math.max(0, k - a)) / L, 0, 1); acc += b - a; }
+    return 1;
+  };
 
   // The road: arches from x0 (a trough) until the bumps end at or before xT, then flat. A long road
   // drops arches; a short one gains up to `grow` more squares at its start.
@@ -199,9 +237,9 @@
 
     // ---- options ----
     const wheelOn = !(opts.wheel === 'none' || opts.wheel === false);
-    const ghostOn = opts.ghost !== false && opts.ghost !== 'off';
-    const ends = Array.isArray(opts.ends) ? opts.ends : [0.28, 0.7];
-    const e1 = clamp(+ends[0] || 0.28, 0.05, 0.85), eN = clamp(+ends[1] || 0.7, e1, 0.88);
+    const ghostOn = opts.ghost === true || opts.ghost === 'on';
+    const ends = Array.isArray(opts.ends) ? opts.ends : [0.3, 0.86];
+    const e1 = clamp(+ends[0] || 0.3, 0.05, 0.85), eN = clamp(+ends[1] || 0.86, e1, 0.88);
     const order = opts.order || 'descending';
     const lin = (i) => (N === 1 ? eN : e1 + (i * (eN - e1)) / (N - 1));
     const E = colEls.map((_, i) => {
@@ -210,8 +248,8 @@
       return lin(i);
     });
     const lastEnd = Math.max(...E);
-    const hold = opts.hold ?? (wheelOn ? clamp(0.75 * N, 2.25, 3.75) : 2);
-    const phoneHold = opts.phoneHold ?? (wheelOn ? clamp(0.55 * N, 2, 3) : 2);
+    const hold = opts.hold ?? (wheelOn ? clamp(0.6 * N, 1.8, 3) : 1.8);
+    const phoneHold = opts.phoneHold ?? (wheelOn ? clamp(0.5 * N, 1.8, 2.6) : 1.8);
     const scrub = opts.scrub ?? (Stage.lenis ? 0.3 : 0.5);
 
     // ---- the parts this file makes ----
@@ -252,7 +290,7 @@
     const railLine = root.querySelector('.sr-rail-line');
     const dot = root.querySelector('.sr-rail-dot');
 
-    const S = { live: false, geo: null, lastP: 0, key: '', cache: {}, stub: 0, clip: [] };
+    const S = { live: false, geo: null, lastP: 0, key: '', cache: {}, stub: 0, clip: [], segs: [] };
 
     // ---- measuring ----
     const relTo = (base) => (node) => {
@@ -281,9 +319,9 @@
         const airTop = dense ? 8 : 4, airBottom = dense ? 6 : -1;
         if (all.some((b) => b.top < P.top + airTop || b.bottom > P.bottom - airBottom || b.right > P.right + 1)) return false;
         if (!m.note) return true;
-        // columns and plain rows keep the note above the copy; compact rows set it beside the title
-        if (dense) return copy.every((b) => !overlaps(m.note, b, 8));
-        return copy[0].top >= m.note.bottom + (cols ? 12 : 8);
+        // columns keep the note above the copy; rows set it beside the title
+        if (!cols) return copy.every((b) => !overlaps(m.note, b, 8));
+        return copy[0].top >= m.note.bottom + 12;
       });
     }
     const setAttr = (k, v) => { if (v == null) { if (root.hasAttribute(k)) root.removeAttribute(k); } else if (root.getAttribute(k) !== v) root.setAttribute(k, v); };
@@ -341,8 +379,12 @@
       const mode = live ? pickMode() : 'rest';
       setAttr('data-sr-mode', mode);
       if (mode !== 'rows') setAttr('data-sr-dense', null);
-      // the finished composition: every panel fully inked
-      if (mode !== 'cols' && mode !== 'rows') panels.forEach((p) => p && p.style.removeProperty('clip-path'));
+      // the finished composition: every panel fully inked (columns clip, rows fade)
+      panels.forEach((p) => {
+        if (!p) return;
+        if (mode !== 'cols') p.style.removeProperty('clip-path');
+        if (mode !== 'rows') p.style.removeProperty('opacity');
+      });
       S.clip = [];
       let base = stage.getBoundingClientRect();
       let rel = relTo(base);
@@ -355,21 +397,35 @@
       rel = relTo(base);
       M = parts(rel);
       const W = base.width;
-      // ghost copy off: each column starts as an ink stub just tall enough to hold its copy
+      // ghost copy off (the default): each column starts as an ink stub just tall enough to hold its copy
       S.stub = 0;
       if (!ghostOn && mode === 'cols') {
         const colH = M[0].col.height;
         S.stub = clamp(Math.max(...M.map((m) => m.col.bottom - ((m.title || m.text || { top: m.col.bottom }).top - 22))) / colH, 0, 0.6);
+      }
+      // the bands of each column the ink edge may cross but never stop in: every block of copy, the
+      // panel's and the ghost's (they share a place), with AIR above and below, from the column's foot
+      S.segs = [];
+      if (mode === 'cols') {
+        M.forEach((m, i) => {
+          const col = m.col;
+          const z = [m.note, m.title, m.text].filter(Boolean)
+            .map((b) => [(col.bottom - b.bottom - AIR) / col.height, (col.bottom - b.top + AIR) / col.height])
+            .sort((a, b) => a[0] - b[0]);
+          const merged = [];
+          for (const [a, b] of z) { const l = merged[merged.length - 1]; if (l && a <= l[1]) l[1] = Math.max(l[1], b); else merged.push([a, b]); }
+          S.segs[i] = allowed(S.stub, merged);
+        });
       }
       let kind = 'none';
       if (wheelOn) {
         if (mode === 'cols' || ((mode === 'rest' || mode === 'still') && oneRow && W >= 860)) kind = 'ink';
         else if (railLine && rail) kind = 'rail';
       }
-      const g = { mode, kind, wheel: false, p0: 0.22, p1: 0.9, railLen: 0 };
+      const g = { mode, kind, wheel: false, p0: 0.22, p1: 0.94, railLen: 0 };
       if (mode === 'rows') { g.p0 = 0.05; g.p1 = Math.min(0.95, lastEnd + 0.08); }
-      // when each panel starts filling: together in columns (a bar chart), in short windows in rows
-      g.start = E.map((e) => (mode === 'rows' ? Math.max(0, e - ROW_WINDOW) : 0));
+      // when each panel starts filling: together in columns (a bar chart); in rows just before its end point
+      g.start = E.map((e) => (mode === 'rows' ? Math.max(0, e - ROW_FADE) : 0));
       if (kind === 'ink') {
         const top = Math.max(...M.map((m) => (m.note ? m.note.bottom : m.col.top + 16)));
         const foot = Math.min(...M.map((m) => (m.title || m.text || { top: m.col.bottom - 16 }).top));
@@ -393,10 +449,9 @@
             // the ink must lead the wheel: each column is inked above the wheel's top before it arrives
             const colH = M[0].col.height, colBottom = M[0].col.bottom;
             const need = clamp((colBottom - (g.axleY - g.R - 4)) / colH, 0, 1);
-            const share = clamp((need - S.stub) / (1 - S.stub), 0, 1);
             M.forEach((m, i) => {
               const ti = clamp((m.col.left - (g.wx0 + g.R)) / (g.wx1 - g.wx0), 0, 1);
-              if (ti < 1) g.p0 = Math.max(g.p0, (E[i] * share - g.p1 * ti) / (1 - ti));
+              if (ti < 1) g.p0 = Math.max(g.p0, (E[i] * shareAt(S.segs[i], need) - g.p1 * ti) / (1 - ti));
             });
             g.p0 = Math.min(g.p0, 0.6);
             g.wheel = true;
@@ -515,13 +570,14 @@
           const el = panels[i];
           if (!el) continue;
           const f = clamp((p - g.start[i]) / (E[i] - g.start[i]), 0, 1);
-          const k = g.mode === 'cols' ? S.stub + (1 - S.stub) * f : f;
-          const v = g.mode === 'cols'
-            ? `inset(${(100 - k * 100).toFixed(2)}% 0% 0% 0%)`
-            : `inset(0% ${(100 - k * 100).toFixed(2)}% 0% 0%)`;
-          if (S.clip[i] !== v) { el.style.clipPath = v; S.clip[i] = v; }
+          // columns: the edge rises, skipping every band of copy; rows: the whole row fades to ink at once
+          const k = g.mode === 'cols' ? inkAt(S.segs[i] || [], f) : Math.round(f * 1000) / 1000;
+          if (g.mode === 'cols') {
+            const v = `inset(${(100 - k * 100).toFixed(2)}% 0% 0% 0%)`;
+            if (S.clip[i] !== v) { el.style.clipPath = v; S.clip[i] = v; }
+          } else if (S.clip[i] !== k) { el.style.opacity = String(k); S.clip[i] = k; }
           for (const part of g.ghosts[i]) {
-            const off = k >= part.at;
+            const off = g.mode === 'cols' ? k >= part.at : k >= 1;
             if (off !== part.off) { part.off = off; part.e.style.visibility = off ? 'hidden' : ''; }
           }
         }

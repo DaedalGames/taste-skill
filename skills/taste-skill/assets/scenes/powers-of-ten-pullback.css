@@ -2,7 +2,12 @@
    Without .is-live (no script, reduced motion, a failed CDN, a phone set to 'rest') the section is the
    finished composition: the copy beside the object, which shows the room with the film registered on its
    wall by the same --wx --wy --ww --wh fractions the live scene uses. With .is-live the stage is held and
-   the three layers are laid out in px by the scene file. */
+   the three layers are laid out in px by the scene file.
+   Weights follow the page: --display-weight (the copy's first line and the title; 600 here when the
+   page sets none) and --strong-weight (the link; 600 here when the page sets none). A weight the page
+   has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="powers-of-ten-pullback"] { font-synthesis-weight: none; }
 
 [data-scene="powers-of-ten-pullback"] {
   --pb-aspect: 1.7778;
@@ -149,7 +154,7 @@
   max-width: none;
   font-family: var(--font-display, inherit);
   font-size: clamp(36px, 4.4vw, 72px);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   line-height: 1.02;
   letter-spacing: -.03em;
   text-wrap: balance;
@@ -159,7 +164,7 @@
   color: var(--accent, var(--ink, #111));
   font-family: var(--font-text, inherit);
   font-size: 18px;
-  font-weight: 600;
+  font-weight: var(--strong-weight, 600);
   text-underline-offset: .2em;
   text-decoration-thickness: 2px;
 }
@@ -182,7 +187,7 @@
   margin: 0;
   color: var(--ink, #111);
   font-size: 18px;
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   line-height: 1.3;
   letter-spacing: 0;
 }
@@ -317,7 +322,7 @@
   max-width: none;
   font-family: var(--font-display, inherit);
   font-size: clamp(40px, 5.6vw, 92px);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   line-height: .98;
   letter-spacing: -.035em;
   text-wrap: balance;

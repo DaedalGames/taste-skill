@@ -19,6 +19,11 @@
     --accent: #b62118;
     --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
     --font-text: 'Bricolage Grotesque', system-ui, sans-serif;
+    /* the weights and the corner every scene takes from the page: one variable font, so any weight is real */
+    --display-weight: 800;
+    --strong-weight: 600;
+    --text-weight: 400;
+    --radius: 0px;
   }
   * { box-sizing: border-box; }
   html { background: var(--ground); }
@@ -26,7 +31,7 @@
     margin: 0;
     background: var(--ground);
     color: var(--ink);
-    font: 400 18px/1.5 var(--font-text);
+    font: var(--text-weight) 18px/1.5 var(--font-text);
     -webkit-font-smoothing: antialiased;
   }
   a { color: inherit; }
@@ -35,17 +40,17 @@
   /* first screen */
   .hero { min-height: 100svh; display: grid; grid-template-rows: auto auto auto 1fr; }
   .bar { display: flex; align-items: center; gap: 32px; padding: 28px 4vw 0; font-size: 16px; }
-  .bar__mark { margin-right: auto; color: var(--accent); font-weight: 800; font-size: 22px; letter-spacing: -0.03em; text-decoration: none; }
+  .bar__mark { margin-right: auto; color: var(--accent); font-weight: var(--display-weight); font-size: 22px; letter-spacing: -0.03em; text-decoration: none; }
   .bar a:not(.bar__mark):not(.bar__buy) { text-decoration: none; }
   .bar a:not(.bar__mark):not(.bar__buy):hover { text-decoration: underline; text-underline-offset: 4px; }
-  .bar__buy { padding: 10px 20px; border-radius: 999px; background: var(--accent); color: var(--paper); font-weight: 600; text-decoration: none; }
+  .bar__buy { padding: 10px 20px; border-radius: var(--radius); background: var(--accent); color: var(--paper); font-weight: var(--strong-weight); text-decoration: none; }
   .hero h1 {
     margin: 9svh 0 0;
     color: var(--accent);
     padding: 0 4vw;
     font-family: var(--font-display);
     font-size: clamp(56px, 11.6vw, 200px);
-    font-weight: 800;
+    font-weight: var(--display-weight);
     line-height: 0.88;
     letter-spacing: -0.055em;
     white-space: nowrap;
@@ -77,18 +82,18 @@
     max-width: 11ch;
     font-family: var(--font-display);
     font-size: clamp(40px, 5vw, 84px);
-    font-weight: 800;
+    font-weight: var(--display-weight);
     line-height: 0.95;
     letter-spacing: -0.045em;
   }
   .visit__text > p { margin: 32px 0 0; max-width: 30em; font-size: clamp(18px, 1.5vw, 22px); line-height: 1.5; }
   .hours { display: grid; grid-template-columns: auto 1fr; gap: 10px 32px; margin: 40px 0 0; font-size: 16px; }
-  .hours dt { font-weight: 700; }
+  .hours dt { font-weight: var(--strong-weight); }
   .hours dd { margin: 0; font-variant-numeric: tabular-nums; }
   .visit figure { grid-column: 4; margin: 0; }
-  .visit figure img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 16px; }
+  .visit figure img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius); }
   .foot { background: var(--accent); color: var(--paper); padding: 12svh 4vw 40px; }
-  .foot__name { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(48px, 11.6vw, 200px); line-height: 0.88; letter-spacing: -0.055em; white-space: nowrap; }
+  .foot__name { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(48px, 11.6vw, 200px); line-height: 0.88; letter-spacing: -0.055em; white-space: nowrap; }
   .foot__small { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 40px; margin-top: 64px; font-size: 16px; line-height: 1.5; }
   .foot__small p { margin: 0; }
 
@@ -137,10 +142,9 @@
         <li class="hs-slot">
           <div class="hs-sheet">
             <article class="hs-face hs-face--front">
-              <img class="hs-photo" src="https://picsum.photos/id/77/480/204" srcset="https://picsum.photos/id/77/480/204 480w, https://picsum.photos/id/77/960/408 960w" sizes="(max-width: 767px) 86vw, 400px" width="480" height="204" alt="The bath house pavilion at the end of a wooden jetty over calm water." loading="eager" decoding="async">
               <div class="hs-body">
                 <h3 class="hs-name">One swim</h3>
-                <p class="hs-pitch">The sea, the wood-fired sauna and the hot tub on the deck, for one visit.</p>
+                <p class="hs-pitch">The sea, the wood-fired sauna and the hot tub on the deck, for one visit on any day of the season.</p>
                 <ul class="hs-points">
                   <li>Towel and locker</li>
                   <li>Sauna until nine</li>
@@ -162,10 +166,9 @@
         <li class="hs-slot">
           <div class="hs-sheet">
             <article class="hs-face hs-face--front">
-              <img class="hs-photo" src="https://picsum.photos/id/384/480/204" srcset="https://picsum.photos/id/384/480/204 480w, https://picsum.photos/id/384/960/408 960w" sizes="(max-width: 767px) 86vw, 400px" width="480" height="204" alt="The surface of the sea up close, rippling deep blue-green." loading="eager" decoding="async">
               <div class="hs-body">
                 <h3 class="hs-name">Ten swims</h3>
-                <p class="hs-pitch">A card we punch at the door. Use it on any ten days within the year.</p>
+                <p class="hs-pitch">A card we punch at the door. Use it on any ten days within the year, alone or with a friend.</p>
                 <ul class="hs-points">
                   <li>Share it with a friend</li>
                   <li>Towel and locker</li>
@@ -187,10 +190,9 @@
         <li class="hs-slot">
           <div class="hs-sheet">
             <article class="hs-face hs-face--front">
-              <img class="hs-photo" src="https://picsum.photos/id/14/480/204" srcset="https://picsum.photos/id/14/480/204 480w, https://picsum.photos/id/14/960/408 960w" sizes="(max-width: 767px) 86vw, 400px" width="480" height="204" alt="A rocky shore meeting a pale, calm sea under a hazy winter sky." loading="eager" decoding="async">
               <div class="hs-body">
                 <h3 class="hs-name">Winter season</h3>
-                <p class="hs-pitch">Every day from October to April, when the sea is coldest and the sauna hottest.</p>
+                <p class="hs-pitch">Every day from October to April, when the sea is coldest, the sauna hottest and the pier is yours at dawn.</p>
                 <ul class="hs-points">
                   <li>As many swims as you like</li>
                   <li>Full moon night swims</li>

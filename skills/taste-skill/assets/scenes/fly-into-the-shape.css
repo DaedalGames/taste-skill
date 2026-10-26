@@ -7,7 +7,11 @@
    With .is-live the stage is held while the script writes the mark's outline into the world's clip-path
    every frame. Layers, bottom to top: the paper, the ink title, the extruded side (dark accent, clipped
    to the mark swept along the side), the world (clipped to the mark's face), and a light copy of the
-   title clipped to the whole mark, face and side (both made by the script). */
+   title clipped to the whole mark, face and side (both made by the script).
+   Weights follow the page: --display-weight (the title; 800 here when the page sets none). A weight the
+   page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="fly-into-the-shape"] { font-synthesis-weight: none; }
 
 [data-scene="fly-into-the-shape"] {
   --_paper: var(--ground, #ECE9E2);
@@ -81,7 +85,7 @@
   width: min(14ch, 86vw);
   margin: 0;
   font-family: var(--font-display, inherit);
-  font-weight: 800;
+  font-weight: var(--display-weight, 800);
   font-size: var(--_size);
   line-height: 0.95;
   letter-spacing: -0.01em;

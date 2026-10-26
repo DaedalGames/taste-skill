@@ -25,12 +25,12 @@
 // The line: plain text, 3-5 words, 14-28 characters, ideally a question or an invitation; the first
 // word has four or more letters so it reads the moment the section arrives. It is split into letters
 // at runtime (the h2 keeps the text as its aria-label). Kerning is measured and put back per pair.
-// Keep the line to 14 characters or more. A shorter line still ends cleanly (the end frame always
-// starts on a whole word and the cluster still lands on the right margin), but it has little sideways
+// Keep the line to 14 characters or more. A shorter line still ends whole, but it has little sideways
 // travel: its letters get a short run-in of their own, and the swoop is brief. Under 14 characters,
-// use a plain heading instead.
-// Longest word: about 11 characters keeps the full size (17vw). A longer word still fits: the whole
-// line is set smaller until that word fits between the margins (a 14-character word such as
+// use a plain heading instead. Above 28 characters the end frame, which holds the whole line, sets it
+// small (a 28-character line rests at about 100px at 1440x900): shorten the line instead.
+// Longest word: about 11 characters keeps the full travelling size (17vw). A longer word still fits:
+// the whole line is set smaller until that word fits between the margins (a 14-character word such as
 // "extraordinary?" takes the line from 245px to about 190px at 1440x900), and on the phone the line
 // shrinks until its widest word fits the column. Above 16 characters in one word, rewrite the line.
 //
@@ -66,9 +66,10 @@
 //   preset  'type' | 'stair' | 'rise'      the data-settle attribute, else 'type'
 //   speed   0.7-1.3    px of sideways travel per px of scroll (1 / 1 / 1.2). Lower is grander and holds
 //                      longer. Values from 0.3 to 3 are accepted; outside 0.7-1.3 the move reads as
-//                      sluggish or rushed. The hold is measured: travel ÷ (screen × speed) + rest, kept to
-//                      1-4 screens. The 4-screen cap wins over `speed` on long lines (a 39-character line
-//                      at speed 0.7 reaches it), so there the track runs faster than `speed` asks.
+//                      sluggish or rushed. The hold is measured: travel ÷ (screen × speed), plus the
+//                      pull-back to the whole line (0.6 screen ÷ speed; 0.35 when the line does not
+//                      shrink), plus rest, kept to 1-4 screens. The 4-screen cap wins over `speed` on long
+//                      lines, so there the track runs faster than `speed` asks.
 //   rest    0.2-0.6    screens of still end frame after the travel stops (0.3; 0-2 accepted)
 //   amp     0.6-1.5    letter offset as a multiple of the letter height (1.5); always clamped so every
 //                      letter stays 64px inside the stage (plus `inset`)
@@ -85,12 +86,14 @@
 // A value that is not a number (or an unknown curve or preset) falls back to the preset's default, so
 // a typo in data-options never switches the effect off or collapses the section.
 //
-// End frame (type): the line's last words level from the left, the support line and button beside
-// them with their bottom on the line's, and the visible margins equal on both sides (the cluster's
-// right edge mirrors the first letter's left edge). The travel ends on a word boundary, so the end
-// frame never starts on a sliced letter. It keeps two words or more whenever it can: first beside the
-// cluster as it is, then beside a narrower support line (down to 20 characters a line), then with the
-// cluster under the line. Only when even two words cannot fit does it end on the last word alone.
+// End frame (type): the whole line, never its last words alone. The giant line travels until its last
+// letter has landed (its end at 75% of the width), then the camera pulls back: the line shrinks, about
+// one fixed point, to the size at which all of it fits between the 6vw margins, while the support line
+// and button rise into place. They sit beside the line (bottoms level, the button's right edge on the
+// right margin) when that keeps the line at 85% or more of the size it gets with them under it;
+// otherwise under the line, from its first letter, the pair centred on the screen. A line that fits
+// whole at the travelling size does not shrink: it rests as it is, after its run-in. The settle size is
+// in the scene's state (root.__settle.dbg.rest, px).
 //
 // Phone (below 768px): no pin and no sideways travel. The stack is laid out like the finished
 // composition and the same mapping is turned 90°: the letters swoop onto their lines in reading order
@@ -264,19 +267,17 @@
     const box = $('.settle');
     const line = $('.settle__line');
     const cluster = $('.settle__cluster');
-    const support = cluster && cluster.querySelector('.settle__support');
     const S = { mode: null, items: [], extras: [], map: null, measure: null, focus: null, dbg: null };
     root.__settle = S;  // state, for inspection in devtools
 
-    const moved = () => [track, ...$$('.settle__char, .settle__support, .settle__cta, .settle__body, .settle__picture, .settle__caption, .settle__outro > *')];
-    // the layout measure() writes: the line's fitted size, the support's measure, the cluster's extra
-    // margin or its place under the line
+    const moved = () => [track, line, ...$$('.settle__char, .settle__support, .settle__cta, .settle__body, .settle__picture, .settle__caption, .settle__outro > *')];
+    // the layout measure() writes: the line's fitted size and the cluster's place at the end frame
     const clearEnd = () => {
-      if (cluster) { cluster.style.marginLeft = ''; cluster.style.left = ''; }
-      if (support) support.style.maxWidth = '';
+      if (cluster) { cluster.style.left = ''; cluster.style.top = ''; }
+      if (line) line.style.transform = '';
       if (box) box.style.removeProperty('--fs');
       root.removeAttribute('data-end');
-      root.style.removeProperty('--settle-lift');
+      root.classList.remove('is-zoom');
     };
     const reset = () => {
       for (const el of moved()) if (el) { el.style.transform = ''; el.style.opacity = ''; }
@@ -301,63 +302,68 @@
       }
     };
 
-    // The end frame of the line. The travel ends where a word starts at the left with nothing of the
-    // word before it left on screen. The visible margin that leaves on the left (the first letter's ink,
-    // 6vw at most) is mirrored on the right, where the cluster's visible right edge lands, so the frame
-    // is balanced for any copy and any width. Choices, best first; two words or more whenever possible:
-    //   1. the most words that leave room for the cluster beside them (2.5vw after the last letter's ink)
-    //   2. the same beside a narrower support line, down to 20 characters a line
-    //   3. the cluster under the line, when the screen is tall enough for the pair and the scatter
-    //   4. the last word alone beside the cluster (narrowed if need be), else above it
+    // The end frame of the line: always the whole line. The travel (part one) runs until the last letter
+    // has landed, its ink ending at END of the width. The pull-back (part two) then shrinks the line by
+    // k, about one fixed point, so that its first letter's ink lands on the left margin (6vw) and all of
+    // it fits before the right one, mirrored. The cluster sits beside the line (its right edge on the
+    // right margin, bottoms level) when that keeps k at 85% or more of what it is with the cluster under
+    // the line; otherwise under it, from the first letter, the pair centred on the screen. A line that
+    // fits as it is never grows (k is 1 at most) and then needs no travel: its letters get a run-in.
+    const END = 0.75;
     const endFrame = (W, H, rec) => {
       const cs = getComputedStyle(track);
       const padL = parseFloat(cs.paddingLeft) || 0.06 * W;
-      const gap = parseFloat(cs.columnGap) || 0.04 * W;
       const fs = parseFloat(getComputedStyle(line).fontSize);
       const ink = 0.06 * fs;                                          // tight tracking: ink overhangs the box
-      const spans = [];
-      for (const c of rec.chars) {
-        const l = c.offsetLeft, r = l + c.offsetWidth, last = spans[spans.length - 1];
-        if (last && last.word === c.parentNode) last.r = r;
-        else spans.push({ word: c.parentNode, l, r, bear: bearing(c.textContent) * fs });
-      }
-      const n = spans.length;
-      if (!n) return { travel: 0, mode: 'side', extra: 0, words: 0 };
-      const lineEnd = spans[n - 1].r + ink;
-      const at = (i) => (i ? Math.min(spans[i].l, Math.max(spans[i - 1].r + ink, spans[i].l - padL)) : 0);
-      const margin = (i) => Math.max(16, spans[i].l - at(i) + spans[i].bear);   // visible, both sides
+      const left0 = line.offsetLeft;
+      const first = rec.chars[0], last = rec.chars[rec.chars.length - 1];
+      if (!first) return { travel: 0, k: 1, mode: 'side', tx: 0, ty: 0, cx: 0, cy: 0 };
+      const a0 = first.offsetLeft - left0 + bearing(first.textContent) * fs;   // the ink, line-local
+      const a1 = last.offsetLeft + last.offsetWidth - left0 + ink;
+      const span = Math.max(1, a1 - a0);
+      const lh = line.offsetHeight;
+      const room = W - 2 * padL;
       const kids = cluster ? [...cluster.children] : [];
-      const width = () => (kids.length ? Math.max(...kids.map((el) => (el.matches('a, button') ? el.offsetWidth : textWidth(el)))) : 0);
-      const natural = line.offsetLeft + line.offsetWidth + gap;       // where the cluster sits in the flow
-      const side = (i) => {
-        const t = at(i), cw = width(), right = W - margin(i);
-        const g = cw ? Math.max(24, 0.025 * W) : 0;
-        if (lineEnd - t + g + cw > right) return null;
-        return { travel: t, mode: 'side', extra: cw ? Math.round(right - cw + t - natural) : 0, words: n - i };
-      };
-      const stack = (i) => {
-        const t = at(i);
-        if (lineEnd - t > W - margin(i)) return null;
-        return { travel: t, mode: 'stack', left: Math.round(spans[i].l + spans[i].bear), words: n - i };
-      };
-      // the pair stacked still leaves the letters at least half their height of swoop
-      const tall = () => {
-        if (!cluster) return true;
-        const h = rec.chars[0].offsetHeight;
-        const lift = (clamp(0.05 * H, 28, 64) + cluster.offsetHeight) / 2;
-        return 0.5 * H - lift - 0.5 * h - 64 - o.inset >= 0.5 * h;
-      };
-      const most = (lo, hi, fn) => { for (let i = lo; i <= hi; i++) { const f = fn(i); if (f) return f; } return null; };
-      const narrow = (fn) => {
-        if (!support) return null;
-        for (let ch = 30; ch >= 20; ch -= 2) { support.style.maxWidth = ch + 'ch'; const f = fn(); if (f) return f; }
-        support.style.maxWidth = '';
-        return null;
-      };
-      const two = n - 2;
-      return (two >= 0 && (most(0, two, side) || narrow(() => most(0, two, side)) || (tall() && most(0, two, stack))))
-        || side(n - 1) || narrow(() => side(n - 1)) || stack(n - 1)
-        || { travel: at(n - 1), mode: 'stack', left: Math.round(spans[n - 1].l + spans[n - 1].bear), words: 1 };
+      const cw = kids.length ? Math.max(...kids.map((el) => (el.matches('a, button') ? el.offsetWidth : textWidth(el)))) : 0;
+      const ch = cluster ? cluster.offsetHeight : 0;
+      const g = cw ? Math.max(24, 0.025 * W) : 0;
+      const gv = clamp(0.05 * H, 28, 64);
+      const tallH = H - 2 * 64 - o.inset;                             // the room the pair may take, top to bottom
+      const kStack = Math.min(1, room / span, cluster ? Math.max(0.1, (tallH - gv - ch) / lh) : 1);
+      const kSide = cluster ? Math.min(1, Math.max(0.05, (room - g - cw) / span), tallH / Math.max(lh, ch)) : kStack;
+      const side = !cluster || kSide >= 0.85 * kStack;
+      const k = clamp(side ? kSide : kStack, 0.05, 1);
+      // part one: none when the line fits as it is (k = 1), else until its end lands at END
+      const travel = k > 0.999 ? 0 : Math.max(0, left0 + a1 - END * W);
+      // the line's place at rest (stage px): its first ink on the margin, and the line (or, with the
+      // cluster under it, the pair) centred on the stage. It shrinks about the middle of its left edge.
+      const mid0 = track.offsetTop + line.offsetTop + lh / 2;
+      const tx = padL + travel - left0 - k * a0;
+      const ty = H / 2 - mid0 - (side ? 0 : (gv + ch) / 2);
+      const mid = mid0 + ty;
+      const cx = side ? W - padL - cw : padL;
+      const cy = side ? mid + (k * lh) / 2 - ch : mid + (k * lh) / 2 + gv;
+      // The cluster rises (from below its place) only once the shrinking line is clear of that place and
+      // of everything under it, so the line never passes over its own support line: the first point of
+      // the pull-back (0-1, before its ease) from which the line's box, with its descenders, stays clear.
+      const f = { travel, k, mode: side ? 'side' : 'stack', tx, ty, cx, cy, clear: 0 };
+      if (cluster) {
+        const desc = 0.12 * fs;
+        for (let i = 40; i >= 0; i--) {
+          const v = p2io(i / 40), s = lineAt(f, v);
+          const l = -travel + left0 + s.tx + s.s * a0, r = -travel + left0 + s.tx + s.s * a1;
+          const b = mid0 + s.ty + (s.s * lh) / 2 + s.s * desc;
+          if (b > cy - 8 && r > cx - 8 && l < cx + cw + 8) { f.clear = Math.min(0.9, (i + 1) / 40); break; }
+        }
+      }
+      return f;
+    };
+    // the line's transform at a point v (0-1, eased) of the pull-back: s goes from 1 to k on a geometric
+    // curve (an even zoom), and tx with it, so every point of the line moves straight towards one fixed
+    // point; ty follows v
+    const lineAt = (f, v) => {
+      const s = f.k > 0.999 ? 1 : Math.pow(f.k, v);
+      return { s, tx: f.tx * (f.k > 0.999 ? v : (1 - s) / (1 - f.k)), ty: f.ty * v };
     };
 
     // Cards: move the travel's end to the nearest card boundary, by a little less travel when the last
@@ -382,7 +388,7 @@
       reset();
       S.mode = 'desk';
       setFit(0);
-      let W = 1, H = 1, travel = 0, run = 0, T = 1, hold = 1.5;
+      let W = 1, H = 1, travel = 0, run = 0, T = 1, hold = 1.5, qa = 1, end = null;
       const rec = preset === 'type' && line ? split(line) : null;
       const glyphs = rec ? rec.chars.map((c) => c.textContent) : null;
       const sd = rec ? seeds(rec.text, rec.chars.length, glyphs) : null;
@@ -391,48 +397,46 @@
         W = stage.clientWidth || innerWidth;
         H = stage.clientHeight || innerHeight;
         clearEnd();
-        let lift = 0, mode = 'side', words = 0;
+        end = null;
+        let back = 0;                                                 // scroll px of the pull-back
         if (rec) {
           kern(line, rec.chars);
-          // a word wider than the room between the 6vw margins sets the whole line smaller, so the end
-          // frame never cuts a word at the edge
+          // a word wider than the room between the 6vw margins sets the whole line smaller, so no word
+          // is ever wider than the screen as it passes
           const fs0 = parseFloat(getComputedStyle(line).fontSize);
           const widest = Math.max(0, ...rec.words.map((w) => w.offsetWidth)) + 0.1 * fs0;
           if (box && widest > 0.88 * W) box.style.setProperty('--fs', Math.floor((fs0 * 0.88 * W) / widest) + 'px');
-          const f = endFrame(W, H, rec);
-          travel = f.travel;
-          mode = f.mode;
-          words = f.words;
-          if (cluster && f.mode === 'stack') {
-            root.dataset.end = 'stack';
-            cluster.style.left = f.left + 'px';
-            lift = Math.round((parseFloat(getComputedStyle(cluster).marginTop) + cluster.offsetHeight) / 2);
-            root.style.setProperty('--settle-lift', lift + 'px');
-          } else if (cluster && f.extra) cluster.style.marginLeft = f.extra + 'px';
+          end = endFrame(W, H, rec);
+          travel = end.travel;
+          root.dataset.end = end.mode;
+          if (cluster) {
+            // the cluster is placed at its end frame (track px: the track then stands at -travel)
+            cluster.style.left = Math.round(end.cx + travel) + 'px';
+            cluster.style.top = Math.round(end.cy - track.offsetTop) + 'px';
+          }
+          back = ((end.k < 0.98 ? 0.6 : cluster ? 0.35 : 0) * H) / o.speed;
         } else {
           travel = snapCards(Math.max(0, track.offsetWidth - W), W);
         }
         // a short line travels little; its letters get a run-in of their own so they still swoop in
         run = rec ? Math.max(0, 0.45 * W - travel) : 0;
-        const ts = (travel + run) / (H * o.speed);
+        const ride = (travel + run) / o.speed;
+        const ts = (ride + back) / H;
         hold = clamp(ts + o.rest, 1, 4);
-        T = travel + run > 0 ? clamp(Math.min(ts, hold - o.rest) / hold, 0.05, 1) : 0;
+        T = ride + back > 0 ? clamp(Math.min(ts, hold - o.rest) / hold, 0.05, 1) : 0;
+        qa = ride + back > 0 ? ride / (ride + back) : 1;              // the travel's share of the motion
         root.style.setProperty('--hold', hold.toFixed(4));
         const items = [], extras = [];
         let amax = 0;
         if (rec) {
           const h = rec.chars[0] ? rec.chars[0].offsetHeight : 100;
-          amax = Math.max(0, Math.min(o.amp * h, 0.5 * H - lift - 0.5 * h - 64 - o.inset));
+          amax = Math.max(0, Math.min(o.amp * h, 0.5 * H - 0.5 * h - 64 - o.inset));
           rec.chars.forEach((el, k) => {
             const c = el.offsetLeft + el.offsetWidth / 2;
             items.push({ el, c, s: Math.max(o.settle, (c - travel) / W), A: sd[k].a * amax, R: sd[k].r * o.tilt, e: o.enter });
           });
-          if (cluster) {
-            // the cluster rises once its left edge is on screen, or (under the line) late, once the
-            // letters above it have landed; it lands with the travel's end either way
-            const left = cluster.offsetLeft, rf = (left - travel) / W;
-            extras.push({ kind: 'cluster', left, rf, rs: Math.min(1, rf + 0.4), els: [cluster.querySelector('.settle__support'), cluster.querySelector('.settle__cta')].filter(Boolean) });
-          }
+          // the support line and button rise into their end place during the pull-back
+          if (cluster) extras.push({ kind: 'rise', els: [cluster.querySelector('.settle__support'), cluster.querySelector('.settle__cta')].filter(Boolean) });
         } else {
           const cards = $$('.settle__card');
           cards.forEach((card, k) => {
@@ -462,14 +466,31 @@
         S.items = items.map((it) => ({ ...it, x: NaN, y: NaN, r: NaN }));
         S.extras = extras.map((x) => ({ ...x, st: (x.els || [x.el]).map((el) => ({ el, x: NaN, y: NaN, r: NaN, o: NaN })) }));
         S.track = { el: track, x: NaN, y: NaN, r: NaN };
+        S.line = { tx: NaN, ty: NaN, s: NaN, zoom: null };
         S.trackW = track.offsetWidth;
-        S.dbg = { W, H, travel, run, hold: r2(hold), T: r2(T), mode, words, fs: rec ? parseFloat(getComputedStyle(line).fontSize) : 0, amax: Math.round(amax), lift };
+        const fs = rec ? parseFloat(getComputedStyle(line).fontSize) : 0;
+        S.dbg = { W, H, travel, run, hold: r2(hold), T: r2(T), qa: r2(qa), mode: end ? end.mode : '', k: end ? r2(end.k) : 1, fs, rest: end ? Math.round(fs * end.k) : fs, amax: Math.round(amax) };
+      };
+
+      // the line's own transform during the pull-back (see lineAt)
+      const putLine = (v) => {
+        const at = lineAt(end, v);
+        const tx = r1(at.tx), ty = r1(at.ty), sc = Math.round(at.s * 10000) / 10000;
+        const L = S.line;
+        // the letters have all landed by now: they drop their layers, so the line is drawn afresh at
+        // each size and rests sharp
+        if ((v > 0) !== L.zoom) { L.zoom = v > 0; root.classList.toggle('is-zoom', L.zoom); }
+        if (L.tx === tx && L.ty === ty && L.s === sc) return;
+        L.tx = tx; L.ty = ty; L.s = sc;
+        line.style.transform = tx || ty || sc !== 1 ? `translate3d(${tx}px, ${ty}px, 0) scale(${sc})` : '';
       };
 
       S.map = (p) => {
         const q = T > 0 ? clamp(p / T, 0, 1) : 1;
-        const x = -travel * q;
-        const lead = run * (1 - q);                                   // the short line's own run-in
+        const qA = qa > 0 ? clamp(q / qa, 0, 1) : 1;                  // the travel
+        const qB = qa < 1 ? clamp((q - qa) / (1 - qa), 0, 1) : 1;     // the pull-back
+        const x = -travel * qA;
+        const lead = run * (1 - qA);                                  // the short line's own run-in
         put(S.track, r1(x), 0, 0);
         for (const it of S.items) {
           const r = (it.c + x + lead) / W;
@@ -477,8 +498,17 @@
           if (u === 1 && it.y === 0 && it.r === 0) continue;          // settled, nothing to write
           put(it, 0, r1(it.A * curveAt(curve.y, u)), r2(it.R * curveAt(curve.r, u)));
         }
+        if (end) putLine(p2io(qB));
         for (const ex of S.extras) {
-          if (ex.kind === 'cluster') {
+          if (ex.kind === 'rise') {
+            // the support line and button rise 30vh into their end place (power4.out), the button just
+            // after the line, from the point where the shrinking line is clear of them (end.clear)
+            const u = clamp((qB - end.clear) / (1 - end.clear), 0, 1);
+            ex.st.forEach((st, i) => {
+              const v = i ? clamp((u - 0.12 * i) / (1 - 0.12 * i), 0, 1) : u;
+              put(st, 0, r1(0.3 * H * Math.pow(1 - v, 4)), 0, r2(clamp(v / 0.3, 0, 1)));
+            });
+          } else if (ex.kind === 'cluster') {
             // rises from 40vh with power3.out, keyed to its left edge from rs to its rest
             const rc = (ex.left + x) / W;
             const u = ex.rf >= ex.rs ? 1 : clamp((ex.rs - rc) / (ex.rs - ex.rf), 0, 1);
@@ -506,7 +536,7 @@
         const sp = card ? Math.max(o.settle, (anchor - travel) / W) : 0;
         const p = card && travel ? clamp((anchor - sp * W) / travel, 0, 1) * T : T;   // where it has arrived and settled
         const cur = clamp(st.progress, 0, 1);
-        const xNow = -travel * clamp(cur / T, 0, 1);
+        const xNow = -travel * clamp(clamp(cur / T, 0, 1) / qa, 0, 1);
         const visible = left + xNow >= 0 && left + w + xNow <= W;
         const settled = card ? (anchor + xNow) / W <= sp + 0.002 : cur >= T - 0.002;
         if (visible && settled) return;

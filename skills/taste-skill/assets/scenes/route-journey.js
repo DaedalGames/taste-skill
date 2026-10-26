@@ -5,10 +5,19 @@
 // The camera cranes in from a flat, north-up overview of the whole trip to a heading-up chase at 52deg,
 // stops at each stop with a slow swing and push-in while a name board swings up beside the road, the
 // rail names the stop and a gauge counts a real unit, then cranes back to straight overhead while a wave
-// of light sweeps the destination plot from its centre out, in perspective, and the plot settles lit.
+// of light sweeps the destination from its centre out, in perspective, and it settles lit.
 // Use it when the story really is a trip with 3 to 5 stops (a delivery, a tour, a process told as a
 // route); skip it for a plain list. Everything is derived from the scroll position, so scrolling back
 // gives exactly the same frame.
+//
+// THE MAP IS THE PAGE'S. The scene draws no country of its own: the route, the land, the coast and
+// water, the relief and the destination all come from the page's markup, in map px. The demo's map (its
+// town, lakes, fields, forest and lit farms) and its destination of tiles with a house mark are
+// placeholders for a made-up delivery: a page never ships them, nor the demo's route-tiles pattern or
+// route-mark. Draw the place the trip really crosses: the sea, fjord or lake where the road runs beside
+// it, the mountains it climbs, the town it ends in; and the destination as the subject itself, seen from
+// above (a house by the water, a shop front, a quay), never a grid. Without .route-art the scene rides
+// a plain ground with only the road on it, which is honest but empty: draw the place.
 //
 // THE DOM. The finished composition is the source: the live 3D world is built from it at run time and
 // removed again when the scene falls back (reduced motion, no script, a failed CDN, phone 'rest').
@@ -23,24 +32,37 @@
 //           <symbol id="route-vehicle" class="route-vehicle" viewBox="0 0 128 240" data-size="64 120">…</symbol>
 //                 nose up; drawn at 2x and shown at data-size (map px). Parts classed .rv-beacon take the accent,
 //                 .rv-outline a near-black rim (--route-vehicle-rim), so the pale parts never alias at tilt
-//           <symbol id="route-mark" class="route-mark" viewBox="0 0 32 32">…</symbol>        optional
+//           <symbol id="route-dest" class="route-dest" viewBox="0 0 360 300" data-size="360 300">…</symbol>
+//                 the destination, drawn north up as seen from above, in map px at data-size (else its
+//                 viewBox size), centred plotGap past the route's end along its last heading. Use the map
+//                 classes (.rm-house, .rm-water, .rm-forest, .rm-road …) so it takes the page's colours, and
+//                 class the parts that light up on arrival .rd-lit (windows, a door, a lamp on the jetty):
+//                 they take the accent once lit. Without it, the still's .route-still__plot is the destination.
 //         </defs>
 //         <g id="route-scene" class="route-scene">          (the class lets the inset's <use> copy take the map colours)
-//           <g class="route-art">  OPTIONAL. The map, in map px: shapes classed .rm-land (one sheet under all)
-//             .rm-water .rm-forest .rm-relief-1..3 .rm-field-a/b .rm-road .rm-lane .rm-house .rm-light (lit
-//             windows) .rm-river, <path class="route-road" d="(the route)"/> and up to three
-//             <text class="route-word" transform="translate(x y) rotate(r) scale(1 1.6)">. Leave it out and
-//             the scene draws a seeded country of fells, lakes, fields, forest, side roads and lit villages
-//             around the route itself (option seed), in the same classes, so it takes the page's colours.
+//           <g class="route-art">  The place, in map px. Shapes classed:
+//             .rm-land     one sheet under all (optional)
+//             .rm-water    sea, fjord, lake, filled; .rm-coast a shoreline stroke along it; .rm-river and
+//                          .rm-brook strokes
+//             .rm-peak     a <circle> or <ellipse> for each mountain or high moor (cx, cy, r): the scene turns
+//                          it into three tiers of relief, low to high, seeded by its place, so the page gives
+//                          where the high ground is and the scene draws it in the house style. Or draw the
+//                          tiers yourself as .rm-relief-1..3
+//             .rm-forest .rm-field-a/b .rm-road .rm-lane .rm-house .rm-light (lit windows), and up to three
+//                          <text class="route-word" transform="translate(x y) rotate(r) scale(1 1.6)">
+//             <path class="route-road" d="(the route)"/>   the road under the trail; added when missing
+//             Reach well beyond the route (see THE ROUTE) and end in organic shapes, never a straight edge.
+//             Leave .route-art out and the scene rides a plain ground with only the road (see above).
 //           </g>
 //           <use href="#route-geo" class="route-still__trail"/>
 //           <circle class="route-stop" data-step="2" cx="…" cy="…" r="22"/>   the stops on the map: data-step is
 //                 the step's number in the list (1 is the first); stops without a circle are spread evenly
 //                 between their neighbours. Circles without data-step are read in order (step 1, 2, …)
-//           <g class="route-still__plot">…</g>   <use href="#route-vehicle" …/>   (the still's finished state)
+//           <g class="route-still__plot"><use href="#route-dest" x y width height/></g>   <use href="#route-vehicle" …/>
+//                 (the still's finished state: the destination lit, the traveller parked)
 //         </g>
 //       </svg>
-//       <svg class="route-inset" viewBox="<the plot + 70>" aria-hidden="true"><use href="#route-scene"/></svg>  optional
+//       <svg class="route-inset" viewBox="<the destination + 70>" aria-hidden="true"><use href="#route-scene"/></svg>  optional
 //     </figure>
 //     <aside class="route-rail" aria-label="Stops on the route">
 //       <p class="route-gauge"><span class="route-gauge__label">Distance driven</span>
@@ -58,12 +80,12 @@
 // first leg heading up the map (within 30deg) and the last within 45deg, so the crane in and out never
 // spins the world. Put the sharp turns at the stops, where the traveller is slow, and keep the legs
 // between them straight or gently bent (radius 1000+): the heading-up camera turns with the road. End
-// the path `plotGap` px short of where the plot's centre should be; the plot (grid x grid tiles) is
-// placed on the route's end, along its last heading. Each step's data-value is the gauge reading at
-// that stop, in one real unit. Drawn map art should reach well beyond the route's box: the chase looks
-// about 2000 map px ahead and 1500 to the sides, so 2000 past the plot and the far bends. End it in
-// organic shapes (forest, fell, field patches), never a straight edge. At night, set --route-light (lit
-// windows, .rm-light) and --route-beam (the headlights) on the section.
+// the path `plotGap` px short of where the destination's centre should be. Each step's data-value is
+// the gauge reading at that stop, in one real unit. Lay the route over the place as it really runs
+// (along the coast, round the head of the fjord, over the pass), at one scale. The drawn map should reach
+// well beyond the route's box: the chase looks about 2000 map px ahead and 1500 to the sides, so 2000
+// past the destination and the far bends. At night, set --route-light (lit windows, .rm-light) and
+// --route-beam (the headlights) on the section.
 //
 // OPTIONS (data-options, all optional; defaults in brackets)
 //   hold        screens held [1.6 + 0.8 x legs: 3 stops 3.2, 4 stops 4.0, 5 stops 4.8, never more than 5], 1-6
@@ -79,13 +101,12 @@
 //               the screen edges. phoneArrive [1.0]
 //   orbit       degrees the camera swings at each stop [8], 0-12, towards the coming turn
 //   smooth      heading smoothing window in map px [320], 160-400; bigger is calmer in bends
-//   plotGap     map px from the route's end to the plot's centre [96]
-//   grid        tiles a side of the destination plot [5], 3-7.  tile [56] and gap [10], map px
+//   plotGap     map px from the route's end to the centre of #route-dest [96]
 //   unit        gauge rounding: 'auto' [tens from 1000 up, else whole numbers] or a step such as 0.5
 //   perspective stage perspective in px [1000 desktop, 900 compact, 760 phone], 600-2400
-//   seed        the drawn country's seed when the page has no .route-art [1]; change it for another map
 //   bake        true [the map is painted once into bitmaps before the ride] | false (the browser rasters the
 //               vector map as the camera reaches it, which stutters on a first pass)
+//   (seed, grid, tile and gap are gone: the scene no longer draws a country or a tile plot)
 //
 // LAYOUTS. Desktop (1100px and up): the traveller parked at (58vw, 66svh), intro top left, rail bottom
 // left. Compact (768-1099px): traveller centred, intro across the top, rail along the bottom. Phone
@@ -97,9 +118,10 @@
 // leaves the frame), intro out 0.09-0.14, rail in from 0.14 (on compact and phone layouts only once the
 // traveller has risen clear of the plate), legs 0.18-0.78 with 0.08
 // dwells between them (each leg's time in proportion to its length, the last 0.02 longer; shorter dwells
-// and smaller swings beyond 4 legs), crane out to overhead 0.74-0.88; the plot lights from its centre out
-// 0.765-0.86 while the camera is still tilted, each tile flashing in the accent and rising into place;
-// arrival copy 0.89-0.95, rest from 0.96. The camera never turns more than 36deg per 0.05 of progress.
+// and smaller swings beyond 4 legs), crane out to overhead 0.74-0.88; the destination, dimmed until then,
+// lights from its centre out 0.765-0.86 while the camera is still tilted (a ring of the accent runs at the
+// front of the light, the .rd-lit parts take the accent); arrival copy 0.89-0.95, rest from 0.96. The
+// camera never turns more than 36deg per 0.05 of progress.
 // A stop's board swings up from the ground as the traveller nears it and fades as it pulls away.
 //
 // PERFORMANCE. The map rig is a plain 3D transform over flat layers (only the boards ride a preserve-3d
@@ -130,7 +152,7 @@
   const DEFAULTS = {
     phone: 'same', scrub: 0.6, heading: 'up', tilt: 52, phoneTilt: 46, zoom: 1.25, phoneZoom: 0.9,
     push: 0.09, phonePush: 0.07, arrive: 2.0, phoneArrive: 1.0, orbit: 8, smooth: 320, plotGap: 96,
-    grid: 5, tile: 56, gap: 10, unit: 'auto', seed: 1, bake: true,
+    unit: 'auto', bake: true,
   };
 
   window.Scenes = window.Scenes || {};
@@ -147,10 +169,8 @@
       console.warn('route-journey: needs svg.route-still with a path.route-geo and two or more .route-step');
       return Stage.scene(root, { hold, build: null });
     }
-    // no map art on the page: draw a country around the route, so the chase always has ground under it
-    if (!still.querySelector('.route-art')) {
-      try { drawCountry(still, geo, stops, o); } catch (err) { console.warn('route-journey: could not draw a map', err); }
-    }
+    // the page's map: its peaks become relief, and the route gets its road (a plain ground without art)
+    try { prepareArt(still, geo); } catch (err) { console.warn('route-journey: could not prepare the map', err); }
     const build = (tl, ctx) => buildRoute(tl, ctx, root, o);
     return Stage.scene(root, {
       hold,
@@ -160,198 +180,64 @@
     });
   };
 
-  // ---------- a seeded country around the route (when the page brings no map art) ----------
-  // Fells in three tiers, lakes, field patchwork, forest, side roads and lanes branching off the route,
-  // a village at every stop and lit farmsteads along the roads, all clear of the route and the plot.
-  // Shapes are merged into one path per class per 640 map px, so a raster tile replays little.
-  function drawCountry(still, geo, nSteps, o) {
+  // ---------- the page's map, made ready to ride ----------
+  // The scene draws no country of its own (THE MAP IS THE PAGE'S). It only turns each .rm-peak the page
+  // marked into three tiers of relief, and lays the road along the route when the art has none. Without
+  // any .route-art the map is a plain ground with that road on it. Runs once per still.
+  function prepareArt(still, geo) {
+    if (still.__routeArt) return;
+    still.__routeArt = true;
     const d = geo.getAttribute('d') || '';
-    const probe = svgEl('path', { d }, still); // a laid-out copy to measure
-    const L = probe.getTotalLength();
-    if (!(L > 0)) { probe.remove(); return; }
-    const pts = [];
-    for (let s = 0; s <= L; s += 16) { const q = probe.getPointAtLength(s); pts.push([q.x, q.y]); }
-    const a0 = probe.getPointAtLength(Math.max(0, L - 12)), a1 = probe.getPointAtLength(L);
-    probe.remove();
-    const eh = Math.atan2(a1.y - a0.y, a1.x - a0.x);
-    const gap = +o.plotGap || 96, G = clamp(Math.round(+o.grid || 5), 3, 7);
-    const plotR = (G * (+o.tile || 56) + (G - 1) * (+o.gap || 10)) * 0.72; // the plot's half diagonal
-    const PX = a1.x + Math.cos(eh) * gap, PY = a1.y + Math.sin(eh) * gap;
-    let h = 2166136261 ^ Math.round(+o.seed || 0);
-    for (let i = 0; i < d.length; i++) h = Math.imul(h ^ d.charCodeAt(i), 16777619);
-    let st = h >>> 0;
-    const rnd = () => { st = (st + 0x6d2b79f5) | 0; let t = Math.imul(st ^ (st >>> 15), 1 | st); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-    const R = (a, b) => a + rnd() * (b - a);
-    let bx0 = PX - plotR, by0 = PY - plotR, bx1 = PX + plotR, by1 = PY + plotR;
-    for (const [x, y] of pts) { bx0 = Math.min(bx0, x); by0 = Math.min(by0, y); bx1 = Math.max(bx1, x); by1 = Math.max(by1, y); }
-    const EXT = 2300, B = [bx0 - EXT, by0 - EXT, bx1 + EXT, by1 + EXT];
-    const inB = (x, y, m = 0) => x > B[0] + m && y > B[1] + m && x < B[2] - m && y < B[3] - m;
-    const distR = (x, y) => { let m = Infinity; for (let i = 0; i < pts.length; i++) { const dx = pts[i][0] - x, dy = pts[i][1] - y, q = dx * dx + dy * dy; if (q < m) m = q; } return Math.sqrt(m); };
-    const nearPlot = (x, y, pad) => Math.hypot(x - PX, y - PY) < plotR + pad;
-    const lakes = [], towns = [], fieldsAt = [];
-    const inLake = (x, y, pad = 0) => lakes.some((l) => ((x - l.x) / (l.rx + pad)) ** 2 + ((y - l.y) / (l.ry + pad)) ** 2 < 1);
-    const inTown = (x, y, pad = 0) => towns.some((t) => Math.hypot(x - t.x, y - t.y) < t.r + pad);
-    const f = Math.round;
-    const closed = (p) => {
-      const n = p.length; let s = `M${f(p[0][0])} ${f(p[0][1])}`;
-      for (let i = 0; i < n; i++) {
-        const q0 = p[(i - 1 + n) % n], q1 = p[i], q2 = p[(i + 1) % n], q3 = p[(i + 2) % n];
-        s += `C${f(q1[0] + (q2[0] - q0[0]) / 6)} ${f(q1[1] + (q2[1] - q0[1]) / 6)} ${f(q2[0] - (q3[0] - q1[0]) / 6)} ${f(q2[1] - (q3[1] - q1[1]) / 6)} ${f(q2[0])} ${f(q2[1])}`;
-      }
-      return s + 'Z';
-    };
-    const open = (p) => {
-      const n = p.length; let s = `M${f(p[0][0])} ${f(p[0][1])}`;
-      for (let i = 0; i < n - 1; i++) {
-        const q0 = p[Math.max(0, i - 1)], q1 = p[i], q2 = p[i + 1], q3 = p[Math.min(n - 1, i + 2)];
-        s += `C${f(q1[0] + (q2[0] - q0[0]) / 6)} ${f(q1[1] + (q2[1] - q0[1]) / 6)} ${f(q2[0] - (q3[0] - q1[0]) / 6)} ${f(q2[1] - (q3[1] - q1[1]) / 6)} ${f(q2[0])} ${f(q2[1])}`;
-      }
-      return s;
-    };
-    const blob = (cx, cy, r, irr = 0.28, n = 9, sx = 1, sy = 1, rot = 0) => {
-      const p = [], b0 = R(0, Math.PI * 2), c = Math.cos(rot), s = Math.sin(rot);
-      for (let i = 0; i < n; i++) { const a = b0 + (i / n) * Math.PI * 2, rr = r * (1 + R(-irr, irr)), x = Math.cos(a) * rr * sx, y = Math.sin(a) * rr * sy; p.push([cx + x * c - y * s, cy + x * s + y * c]); }
-      return closed(p);
-    };
-    const quad = (x, y, w, hh, a) => { const c = Math.cos(a), s = Math.sin(a); return 'M' + [[-w / 2, -hh / 2], [w / 2, -hh / 2], [w / 2, hh / 2], [-w / 2, hh / 2]].map(([u, v]) => `${f(x + u * c - v * s)} ${f(y + u * s + v * c)}`).join('L') + 'Z'; };
-    const bins = new Map();
-    const put = (cls, x, y, ds) => { const k = cls + '|' + Math.floor(x / 640) + ',' + Math.floor(y / 640); const b = bins.get(k); if (b) b.d += ds; else bins.set(k, { cls, d: ds }); };
-    const area = (B[2] - B[0]) * (B[3] - B[1]);
-    const cx = (bx0 + bx1) / 2, cy = (by0 + by1) / 2;
-    // the land: one soft sheet a step above the ground, so open country reads as land
-    put('rm-land', cx, cy, blob(cx, cy, 1, 0.06, 16, (bx1 - bx0) / 2 + EXT * 0.94, (by1 - by0) / 2 + EXT * 0.94, 0));
-    // lakes, clear of the route and the plot
-    for (let k = 0, tries = 0, want = 3 + Math.floor(rnd() * 3); k < want && tries < 200; tries++) {
-      const l = { x: R(B[0] + 500, B[2] - 500), y: R(B[1] + 500, B[3] - 500), rx: R(130, 280), ry: 0, rot: R(-0.6, 0.6) };
-      l.ry = l.rx * R(0.5, 0.85);
-      if (distR(l.x, l.y) < l.rx + 160 || nearPlot(l.x, l.y, l.rx + 220) || inLake(l.x, l.y, l.rx + 200)) continue;
-      lakes.push(l); put('rm-water', l.x, l.y, blob(l.x, l.y, 1, 0.16, 10, l.rx, l.ry, l.rot)); k++;
+    let art = still.querySelector('.route-art');
+    if (!art) {
+      art = svgEl('g', { class: 'route-art', 'data-plain': '' });
+      // under everything else in the still: the scene group's first child, or the first thing after <defs>
+      const host = still.querySelector('.route-scene') || still;
+      host.insertBefore(art, [...host.children].find((c) => c.localName !== 'defs' && c.localName !== 'title' && c.localName !== 'desc') || null);
+      console.info('route-journey: the page has no .route-art, so the ride is over a plain ground. Draw the place the route crosses (water, coast, relief) in map px.');
     }
-    // fells: three tiers each
-    for (let k = 0, n = clamp(Math.round(area / 3.2e6), 6, 16); k < n; k++) {
-      const x = R(B[0] + 300, B[2] - 300), y = R(B[1] + 300, B[3] - 300), r = R(220, 430), sx = R(0.8, 1.4), sy = R(0.7, 1.3), rot = R(-0.6, 0.6);
-      [1, 0.66, 0.36].forEach((m, i) => put('rm-relief-' + (i + 1), x, y, blob(x + R(-24, 24) * i, y + R(-24, 24) * i, r * m, 0.24, 10, sx, sy, rot)));
-    }
-    // roads: side roads branching off the route, two through roads, lanes off the roads
-    const roads = [], lanes = [];
-    const walk = (x, y, ang, n, lenA, lenB, bend) => {
-      const p = [[x, y]];
-      for (let i = 0; i < n; i++) {
-        let nx, ny, ok = false;
-        for (let tr = 0; tr < 4 && !ok; tr++) {
-          const a = ang + R(-bend, bend) + (tr ? (tr % 2 ? 1 : -1) * 0.5 * tr : 0), len = R(lenA, lenB);
-          nx = x + Math.cos(a) * len; ny = y + Math.sin(a) * len;
-          if (!inLake(nx, ny, 40) && !nearPlot(nx, ny, 110)) { ok = true; ang = a; }
+    // peaks: a circle or ellipse each, drawn as three nested tiers of soft relief, low to high. Each is
+    // seeded by its own place and size, so the same page always draws the same hills.
+    const peaks = [...art.querySelectorAll('circle.rm-peak, ellipse.rm-peak')];
+    if (peaks.length) {
+      const f = Math.round;
+      const closed = (p) => {
+        const n = p.length; let s = `M${f(p[0][0])} ${f(p[0][1])}`;
+        for (let i = 0; i < n; i++) {
+          const q0 = p[(i - 1 + n) % n], q1 = p[i], q2 = p[(i + 1) % n], q3 = p[(i + 2) % n];
+          s += `C${f(q1[0] + (q2[0] - q0[0]) / 6)} ${f(q1[1] + (q2[1] - q0[1]) / 6)} ${f(q2[0] - (q3[0] - q1[0]) / 6)} ${f(q2[1] - (q3[1] - q1[1]) / 6)} ${f(q2[0])} ${f(q2[1])}`;
         }
-        if (!ok) break;
-        x = nx; y = ny; p.push([x, y]);
-        if (!inB(x, y, 100)) break;
+        return s + 'Z';
+      };
+      const tiers = ['', '', ''];
+      for (const pk of peaks) {
+        const num = (a) => parseFloat(pk.getAttribute(a)) || 0;
+        const cx = num('cx'), cy = num('cy');
+        const rx = pk.localName === 'circle' ? num('r') : num('rx'), ry = pk.localName === 'circle' ? num('r') : num('ry');
+        if (!(rx > 0 && ry > 0)) continue;
+        let st = (Math.imul(f(cx) * 73856093 ^ f(cy) * 19349663, 1) ^ f(rx + ry) * 83492791) >>> 0;
+        const rnd = () => { st = (st + 0x6d2b79f5) | 0; let t = Math.imul(st ^ (st >>> 15), 1 | st); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+        const R = (a, b) => a + rnd() * (b - a);
+        const rot = R(-0.6, 0.6), c = Math.cos(rot), s = Math.sin(rot);
+        [1, 0.66, 0.36].forEach((m, i) => {
+          // each tier a little off the one under it, towards one side, so the hill leans like real ground
+          const ox = R(-0.06, 0.06) * rx * i, oy = R(-0.06, 0.06) * ry * i;
+          const p = [], b0 = R(0, Math.PI * 2);
+          for (let k = 0; k < 10; k++) {
+            const a = b0 + (k / 10) * Math.PI * 2, rr = m * (1 + R(-0.24, 0.24));
+            const x = Math.cos(a) * rr * rx, y = Math.sin(a) * rr * ry;
+            p.push([cx + ox + x * c - y * s, cy + oy + x * s + y * c]);
+          }
+          tiers[i] += closed(p);
+        });
       }
-      return p;
-    };
-    const hdgAt = (i) => { const a = pts[Math.max(0, i - 2)], b = pts[Math.min(pts.length - 1, i + 2)]; return Math.atan2(b[1] - a[1], b[0] - a[0]); };
-    for (let s = R(260, 520); s < L - 220; s += R(560, 860)) {
-      const i = Math.round(s / 16), side = rnd() < 0.5 ? -1 : 1;
-      const p = walk(pts[i][0], pts[i][1], hdgAt(i) + side * R(1.15, 1.95), 8, 260, 420, 0.3);
-      if (p.length > 2) roads.push(p);
+      const g = svgEl('g', { class: 'rm-peaks' });
+      tiers.forEach((dd, i) => { if (dd) svgEl('path', { class: 'rm-relief-' + (i + 1), d: dd }, g); });
+      peaks[0].parentNode.insertBefore(g, peaks[0]);
+      peaks.forEach((pk) => pk.remove());
     }
-    for (let k = 0; k < 2; k++) {
-      const vert = rnd() < 0.5, t = R(0.15, 0.85);
-      const x = vert ? lerp(B[0], B[2], t) : B[0] + 120, y = vert ? B[1] + 120 : lerp(B[1], B[3], t);
-      const p = walk(x, y, vert ? Math.PI / 2 : 0, 30, 300, 460, 0.22);
-      if (p.length > 3) roads.push(p);
-    }
-    for (const p of roads) for (let i = 1; i < p.length - 1; i++) {
-      if (rnd() > 0.45) continue;
-      const a = Math.atan2(p[i + 1][1] - p[i][1], p[i + 1][0] - p[i][0]) + (rnd() < 0.5 ? -1 : 1) * R(1.1, 2);
-      const q = walk(p[i][0], p[i][1], a, 3, 170, 300, 0.35);
-      if (q.length > 1) lanes.push(q);
-    }
-    // a village at every stop but the last (the plot), aligned to the road there
-    const circles = [...still.querySelectorAll('.route-stop')];
-    const spots = circles.length ? circles.map((c) => [+c.getAttribute('cx'), +c.getAttribute('cy')]) : Array.from({ length: Math.max(1, nSteps - 1) }, (_, k) => pts[Math.min(pts.length - 1, Math.round((k / Math.max(1, nSteps - 1)) * (pts.length - 1)))]);
-    const houses = [];
-    const house = (x, y, w, hh, a) => {
-      houses.push([x, y, quad(x, y, w, hh, a)]);
-      if (rnd() < 0.76) {
-        const n = w > 26 && rnd() < 0.5 ? 2 : 1, c = Math.cos(a), s = Math.sin(a);
-        for (let i = 0; i < n; i++) { const ox = n === 2 ? (i ? 1 : -1) * w * 0.22 : R(-w * 0.18, w * 0.18), oy = R(-hh * 0.12, hh * 0.12); put('rm-light', x, y, quad(x + ox * c - oy * s, y + ox * s + oy * c, 8, 6, a)); }
-      }
-    };
-    for (const [sx, sy] of spots) {
-      if (nearPlot(sx, sy, 200)) continue;
-      let bi = 0, bd = Infinity; pts.forEach((q, i) => { const dd = (q[0] - sx) ** 2 + (q[1] - sy) ** 2; if (dd < bd) { bd = dd; bi = i; } });
-      const ang = hdgAt(bi), side = rnd() < 0.5 ? -1 : 1, rr = R(150, 210);
-      const tx = sx + Math.cos(ang + side * Math.PI / 2) * rr * 0.75, ty = sy + Math.sin(ang + side * Math.PI / 2) * rr * 0.75;
-      towns.push({ x: tx, y: ty, r: rr });
-      for (let k = 0, tries = 0, want = Math.round(R(22, 36)); k < want && tries < want * 40; tries++) {
-        const x = tx + R(-rr, rr), y = ty + R(-rr * 0.7, rr * 0.7);
-        if (Math.hypot(x - tx, y - ty) > rr || distR(x, y) < 36 || inLake(x, y, 20) || nearPlot(x, y, 60)) continue;
-        house(x, y, R(16, 34), R(12, 22), ang + (rnd() < 0.5 ? 0 : Math.PI / 2) + R(-0.06, 0.06)); k++;
-      }
-    }
-    // a hamlet beside the plot, so the view at rest has neighbours
-    {
-      const side = rnd() < 0.5 ? -1 : 1, a = eh + side * R(1.2, 1.9), dd = plotR + R(200, 260);
-      const tx = PX + Math.cos(a) * dd, ty = PY + Math.sin(a) * dd;
-      towns.push({ x: tx, y: ty, r: 120 });
-      for (let k = 0, tries = 0; k < 14 && tries < 400; tries++) {
-        const x = tx + R(-120, 120), y = ty + R(-90, 90);
-        if (distR(x, y) < 50 || nearPlot(x, y, 30) || inLake(x, y, 20)) continue;
-        house(x, y, R(16, 32), R(12, 20), eh + (rnd() < 0.5 ? 0 : Math.PI / 2) + R(-0.08, 0.08)); k++;
-      }
-    }
-    // farmsteads along the roads and lanes, lit
-    const farms = [];
-    for (const p of [...roads, ...lanes]) for (let i = 0; i < p.length - 1; i++) {
-      const [a, b] = [p[i], p[i + 1]], len = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / len, uy = (b[1] - a[1]) / len;
-      for (let t = R(60, 200); t < len; t += R(200, 380)) {
-        if (rnd() < 0.42) continue;
-        const off = R(44, 80) * (rnd() < 0.5 ? -1 : 1), x = a[0] + ux * t - uy * off, y = a[1] + uy * t + ux * off;
-        if (!inB(x, y, 60) || distR(x, y) < 70 || inLake(x, y, 30) || inTown(x, y, 20) || nearPlot(x, y, 80) || farms.some((q) => Math.hypot(q[0] - x, q[1] - y) < 100)) continue;
-        farms.push([x, y]);
-        const ang = Math.atan2(uy, ux) + R(-0.1, 0.1);
-        for (let j = 0, n = 1 + Math.floor(rnd() * 3); j < n; j++) house(x + R(-26, 26), y + R(-20, 20), R(18, 34), R(12, 20), ang + (j % 2 ? Math.PI / 2 : 0));
-      }
-    }
-    // field patchwork, near the villages and out in open country
-    const patch = (px, py, cols, rows, cw, ch, angle) => {
-      const c = Math.cos(angle), s = Math.sin(angle);
-      for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
-        if (rnd() < 0.2) continue;
-        const w = cw * R(0.72, 1) - 10, hh = ch * R(0.75, 1) - 10, lx = (i - (cols - 1) / 2) * cw, ly = (j - (rows - 1) / 2) * ch;
-        const x = px + lx * c - ly * s, y = py + lx * s + ly * c;
-        if (distR(x, y) < Math.max(w, hh) / 2 + 28 || inLake(x, y, 40) || inTown(x, y, -30) || nearPlot(x, y, 60) || !inB(x, y, 80)) continue;
-        put(rnd() < 0.5 ? 'rm-field-a' : 'rm-field-b', x, y, quad(x, y, w, hh, angle + R(-0.04, 0.04)));
-      }
-      fieldsAt.push([px, py, Math.max(cols * cw, rows * ch) / 2]);
-    };
-    for (const t of towns) patch(t.x + R(-260, 260), t.y + R(-260, 260), 4, 3, R(105, 130), R(90, 110), R(-0.4, 0.4));
-    for (let k = 0, tries = 0, want = clamp(Math.round(area / 1.6e6), 12, 28); k < want && tries < 400; tries++) {
-      const x = R(B[0] + 300, B[2] - 300), y = R(B[1] + 300, B[3] - 300);
-      if (inLake(x, y, 140) || inTown(x, y, 80) || nearPlot(x, y, 260) || distR(x, y) < 140 || fieldsAt.some((q) => Math.hypot(q[0] - x, q[1] - y) < q[2] + 200)) continue;
-      patch(x, y, 2 + Math.floor(rnd() * 3), 2 + Math.floor(rnd() * 2), R(105, 135), R(90, 115), R(-0.5, 0.5)); k++;
-    }
-    // forest: woods of many crowns around a few centres, and loose stands wherever there is room
-    const woods = Array.from({ length: clamp(Math.round(area / 2.6e6), 8, 18) }, () => [R(B[0] + 300, B[2] - 300), R(B[1] + 300, B[3] - 300), R(260, 520)]);
-    for (let k = 0, tries = 0, want = clamp(Math.round(area / 90000), 160, 420); k < want && tries < want * 25; tries++) {
-      let x, y;
-      if (rnd() < 0.7) { const w = woods[Math.floor(rnd() * woods.length)], a = R(0, Math.PI * 2), q = Math.sqrt(rnd()) * w[2]; x = w[0] + Math.cos(a) * q; y = w[1] + Math.sin(a) * q; }
-      else { x = R(B[0] + 150, B[2] - 150); y = R(B[1] + 150, B[3] - 150); }
-      const r = R(40, distR(x, y) > 900 ? 150 : 105);
-      if (!inB(x, y, 120) || distR(x, y) < r + 28 || nearPlot(x, y, r * 0.5 + 40) || inLake(x, y, r + 20) || inTown(x, y, r - 20) || fieldsAt.some((q) => Math.hypot(q[0] - x, q[1] - y) < q[2] * 0.8 + r)) continue;
-      put('rm-forest', x, y, blob(x, y, r, 0.32, 8)); k++;
-    }
-    for (const p of roads) put('rm-road', p[0][0], p[0][1], open(p));
-    for (const p of lanes) put('rm-lane', p[0][0], p[0][1], open(p));
-    for (const [x, y, ds] of houses) put('rm-house', x, y, ds);
-    const order = ['rm-land', 'rm-relief-1', 'rm-relief-2', 'rm-relief-3', 'rm-field-a', 'rm-field-b', 'rm-forest', 'rm-water', 'rm-road', 'rm-lane', 'rm-house', 'rm-light'];
-    const g = svgEl('g', { class: 'route-art', 'data-drawn': '' });
-    for (const cls of order) for (const b of bins.values()) if (b.cls === cls) svgEl('path', { class: cls, d: b.d }, g);
-    svgEl('path', { class: 'route-road', d }, g);
-    // under everything else in the still: the scene group's first child, or the first thing after <defs>
-    const host = still.querySelector('.route-scene') || still;
-    host.insertBefore(g, [...host.children].find((c) => c.localName !== 'defs' && c.localName !== 'title' && c.localName !== 'desc') || null);
+    // the road the route runs on, above the rest of the map
+    if (!art.querySelector('.route-road')) svgEl('path', { class: 'route-road', d }, art);
   }
 
   // ---------- the map as drawing instructions, for painting it into bitmaps ----------
@@ -450,7 +336,6 @@
     const gaugeFinal = gaugeNum ? gaugeNum.textContent : '';
     const values = steps.map((s, i) => { const v = parseFloat(s.dataset.value); return Number.isFinite(v) ? v : i; });
     const vehicle = root.querySelector('.route-vehicle');
-    const mark = root.querySelector('.route-mark');
     // The camera's numbers per layout, picked again on every refresh. ax/ay: the anchor the traveller
     // is parked on; ox/oy and fit: the overview; zc/zp/za: chase, push-in and arrival zoom;
     // k: counter-scale numerator for pins and lines; kt: for the traveller (the hero at every zoom).
@@ -586,50 +471,79 @@
     }
     for (let k = 1; k < N; k++) stopS[k] = Math.max(stopS[k], stopS[k - 1] + 1);
 
-    // the destination plot, on the route's end along its last heading
+    // The destination: the page's own drawing. #route-dest (centred plotGap past the route's end, along
+    // its last heading), else the still's .route-still__plot, cloned where the page drew it, else none
+    // (the end pin stays, and pulses at rest). Two copies of it: the base, dimmed until the light reaches
+    // it, and the lit copy (its .rd-lit parts in the accent), which a growing circle reveals from the
+    // centre out. While the light runs, only the lit copy's clip and one ring change.
     const end = sample(L);
-    const gap = +o.plotGap || 96;
-    const plotC = { x: end.x + Math.cos((end.h * Math.PI) / 180) * gap, y: end.y + Math.sin((end.h * Math.PI) / 180) * gap };
-    const G = clamp(Math.round(+o.grid || 5), 3, 7), TS = +o.tile || 56, TG = +o.gap || 10;
-    const plotSize = G * TS + (G - 1) * TG;
-    const plot = el('div', 'route-plot', flat);
-    plot.style.cssText = `left:${plotC.x - plotSize / 2}px;top:${plotC.y - plotSize / 2}px;width:${plotSize}px;height:${plotSize}px;--tile:${TS}px;--gap:${TG}px;--grid:${G}`;
-    // The plot: the grid of bare tiles, and over it the light, in one layer per ring of tiles (the tiles
-    // the same distance from the centre light together), so the sweep only changes the opacity and scale
-    // of a few layers and never repaints a tile
-    const mid = (G - 1) / 2;
-    let maxDist = 0;
-    const ringsBy = new Map();
-    for (let r = 0; r < G; r++) for (let c = 0; c < G; c++) {
-      el('i', 'route-tile', plot);
-      const dist = Math.hypot(r - mid, c - mid);
-      maxDist = Math.max(maxDist, dist);
-      const k = dist.toFixed(3);
-      if (!ringsBy.has(k)) ringsBy.set(k, { dist, cells: [] });
-      ringsBy.get(k).cells.push([r, c]);
-    }
-    const square = (cls, parent, r, c) => { const s = el('i', cls, parent); s.style.left = c * (TS + TG) + 'px'; s.style.top = r * (TS + TG) + 'px'; return s; };
-    const rings = [...ringsBy.values()].sort((a, b) => a.dist - b.dist).map((rg) => {
-      const lit = el('i', 'route-plot__lit', plot), flash = el('i', 'route-plot__flash', plot);
-      for (const [r, c] of rg.cells) {
-        // a lit tile: the accent tint with a point of accent (one of the cabin's ground screws); the plot
-        // settles as a pool of light, each square ring out from the centre a step dimmer (flat steps)
-        const ringN = Math.max(Math.abs(r - mid), Math.abs(c - mid));
-        square('route-plot__sq', lit, r, c).style.opacity = (1 - (0.3 * ringN) / Math.max(1, mid)).toFixed(3);
-        square('route-plot__sq', flash, r, c);
+    let plotC = { x: end.x + Math.cos(end.h * DEG) * (+o.plotGap || 96), y: end.y + Math.sin(end.h * DEG) * (+o.plotGap || 96) };
+    const destSym = root.querySelector('symbol#route-dest, symbol.route-dest');
+    const stillPlot = still.querySelector('.route-still__plot');
+    const dest = el('div', 'route-dest', flat);
+    const destBase = svgEl('svg', { class: 'route-dest__base', 'aria-hidden': 'true' }, dest);
+    const destLit = svgEl('svg', { class: 'route-dest__lit', 'aria-hidden': 'true' }, dest);
+    let box = null; // the drawing's box in map px: [x, y, w, h]
+    // A copy of the drawing in each layer. The still sits in display: none while the scene runs, and the
+    // browser paints no pattern or gradient from there, so the paint servers the drawing uses are copied
+    // into the layer (under ids of their own) and its references pointed at them.
+    let destN = 0;
+    const copyInto = (s, nodes) => {
+      const g = svgEl('g', {}, s);
+      for (const n of nodes) g.appendChild(n.cloneNode(true));
+      g.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
+      const tag = `--route-${++destN}`, ids = new Map();
+      const URL_RE = /url\(\s*['"]?#([^'")\s]+)['"]?\s*\)/g;
+      for (const n of [g, ...g.querySelectorAll('*')]) for (const a of ['fill', 'stroke', 'style', 'clip-path', 'mask']) {
+        const v = n.getAttribute(a);
+        if (!v || !v.includes('url(')) continue;
+        n.setAttribute(a, v.replace(URL_RE, (m, id) => {
+          const src = document.getElementById(id);
+          if (!src) return m;
+          if (!ids.has(id)) {
+            const defs = s.querySelector(':scope > defs') || s.insertBefore(svgEl('defs', {}), s.firstChild);
+            const c = defs.appendChild(src.cloneNode(true));
+            c.querySelectorAll('[id]').forEach((x) => x.removeAttribute('id'));
+            c.id = id + tag;
+            ids.set(id, c.id);
+          }
+          return `url(#${ids.get(id)})`;
+        }));
       }
-      return { lit, flash, dist: rg.dist };
-    });
-    const centreFill = square('route-plot__centre', plot, Math.floor(mid), Math.floor(mid));
-    let markEl = null;
-    if (mark && mark.id) {
-      markEl = svgEl('svg', { class: 'route-plot__mark', viewBox: mark.getAttribute('viewBox') || '0 0 32 32' }, plot);
-      markEl.style.left = Math.floor(mid) * (TS + TG) + 'px'; markEl.style.top = Math.floor(mid) * (TS + TG) + 'px';
-      svgEl('use', { href: '#' + mark.id }, markEl);
+      return g;
+    };
+    if (destSym) {
+      const vb = (destSym.getAttribute('viewBox') || '0 0 320 320').split(/[\s,]+/).map(Number);
+      const sz = (destSym.dataset.size || '').split(/[\s,]+/).map(Number);
+      const w = sz[0] || vb[2] || 320, h = sz[1] || vb[3] || 320;
+      box = [plotC.x - w / 2, plotC.y - h / 2, w, h];
+      for (const s of [destBase, destLit]) {
+        s.setAttribute('viewBox', vb.join(' '));
+        s.setAttribute('preserveAspectRatio', destSym.getAttribute('preserveAspectRatio') || 'xMidYMid meet');
+        copyInto(s, destSym.childNodes);
+      }
+    } else if (stillPlot) {
+      for (const s of [destBase, destLit]) copyInto(s, [stillPlot]);
+      // where the page drew it, measured on the base copy (with the group's own transform)
+      let bb = null; try { bb = destBase.querySelector(':scope > g').getBBox(); } catch {}
+      if (bb && bb.width > 0 && bb.height > 0) {
+        box = [bb.x, bb.y, bb.width, bb.height];
+        plotC = { x: bb.x + bb.width / 2, y: bb.y + bb.height / 2 };
+        for (const s of [destBase, destLit]) s.setAttribute('viewBox', box.join(' '));
+      }
     }
-    for (let i = 0; i < 3; i++) el('i', 'route-plot__ring', plot);
+    if (!box) { destBase.remove(); destLit.remove(); }
+    const plotSize = box ? Math.max(box[2], box[3]) : 160;
+    const gap = Math.hypot(plotC.x - end.x, plotC.y - end.y);
+    const dw = box ? box[2] : 0, dh = box ? box[3] : 0;
+    dest.style.cssText = `left:${plotC.x - dw / 2}px;top:${plotC.y - dh / 2}px;width:${dw}px;height:${dh}px;--ring:${Math.round(clamp(0.18 * plotSize, 40, 80))}px`;
+    // the light's reach: from the centre to the farthest corner
+    const destR = Math.hypot(dw, dh) / 2;
+    const front = el('i', 'route-dest__front', dest);
+    front.style.cssText = `left:${dw / 2 - destR}px;top:${dh / 2 - destR}px;width:${2 * destR}px;height:${2 * destR}px`;
+    for (let i = 0; i < 3; i++) el('i', 'route-dest__ring', dest);
 
-    // pins: one per stop; the last sits on the plot's centre tile
+    // pins: one per stop; the last sits on the destination's centre
     const pins = steps.map((_, k) => {
       const p = k === N - 1 ? plotC : sample(stopS[k]);
       const pin = el('div', 'route-pin', flat);
@@ -743,7 +657,7 @@
     const e = { p2io: E('power2.inOut'), p1io: E('power1.inOut'), sio: E('sine.inOut'), p2i: E('power2.in'), p2o: E('power2.out'), p3o: E('power3.out'), p1o: E('power1.out'), xo: E('expo.out') };
     const unitStep = o.unit === 'auto' || o.unit == null ? (Math.max(...values.map(Math.abs)) >= 1000 ? 10 : 1) : Math.max(0.001, +o.unit);
     const fmt = new Intl.NumberFormat(document.documentElement.lang || undefined, { maximumFractionDigits: unitStep < 1 ? String(unitStep).split('.')[1].length : 0 });
-    // the arrival: the light sweeps the plot from its centre out while the camera is still tilted
+    // the arrival: the light sweeps the destination from its centre out while the camera is still tilted
     const LIGHT0 = 0.765, LIGHT_SPREAD = 0.06, LIGHT_DUR = 0.035;
 
     // ---------- measuring (on build and on every refresh) ----------
@@ -1214,30 +1128,28 @@
       put(fog, 'visibility', fg <= 0 ? 'hidden' : 'visible');
       const ri = e.p3o(seg(p, railAt, 0.05));
       if (rail) { put(rail, 'opacity', ri.toFixed(3)); put(rail, 'transform', `translate3d(0,${(40 * (1 - ri)).toFixed(2)}px,0)`); }
-      const so = e.p2i(seg(p, 0.86, 0.04));
+      // the stops have left the plate by 0.89, when the arrival line starts to rise into it
+      const so = e.p2i(seg(p, 0.86, 0.03));
       for (const node of [list, count]) if (node) { put(node, 'opacity', (1 - so).toFixed(3)); put(node, 'transform', `translate3d(0,${(-16 * so).toFixed(2)}px,0)`); put(node, 'visibility', so >= 1 ? 'hidden' : 'visible'); }
       const al = e.p3o(seg(p, 0.89, 0.05)), ac = e.p3o(seg(p, 0.91, 0.04));
       if (arriveLine) { put(arriveLine, 'opacity', al.toFixed(3)); put(arriveLine, 'transform', `translate3d(0,${(24 * (1 - al)).toFixed(2)}px,0)`); put(arriveLine, 'visibility', al <= 0 ? 'hidden' : 'visible'); }
       if (arriveCta) { put(arriveCta, 'opacity', ac.toFixed(3)); put(arriveCta, 'transform', `translate3d(0,${(24 * (1 - ac)).toFixed(2)}px,0)`); put(arriveCta, 'visibility', ac <= 0 ? 'hidden' : 'visible'); }
-      // the plot: a wave of light runs out from the centre tile while the camera is still tilted; each
-      // ring of tiles flashes in the accent as the wave passes and settles lit, landing into place
-      for (const rg of rings) {
-        const at = LIGHT0 + (maxDist ? rg.dist / maxDist : 0) * LIGHT_SPREAD;
-        const lit = e.p3o(seg(p, at, LIGHT_DUR)), fl = Math.sin(Math.PI * seg(p, at, LIGHT_DUR * 1.5));
-        const land = `scale(${(1.08 - 0.08 * lit).toFixed(4)})`;
-        put(rg.lit, 'opacity', lit.toFixed(3));
-        put(rg.lit, 'transform', land);
-        put(rg.lit, 'visibility', lit <= 0 ? 'hidden' : 'visible');
-        put(rg.flash, 'transform', land);
-        put(rg.flash, 'opacity', (0.92 * fl).toFixed(3));
-        put(rg.flash, 'visibility', fl <= 0 ? 'hidden' : 'visible');
+      // the destination: a circle of light grows from its centre out while the camera is still tilted,
+      // revealing the lit copy over the dimmed base, with a ring of the accent running at its front; it
+      // settles lit (the base is then hidden under it)
+      if (box) {
+        const t = seg(p, LIGHT0, LIGHT_SPREAD + LIGHT_DUR), lt = e.p3o(t), fl = Math.sin(Math.PI * t);
+        put(destLit, 'clipPath', t >= 1 ? 'none' : `circle(${(lt * destR).toFixed(1)}px at 50% 50%)`);
+        put(destLit, 'visibility', t <= 0 ? 'hidden' : 'visible');
+        put(destBase, 'visibility', t >= 1 ? 'hidden' : 'visible');
+        put(front, 'transform', `scale(${Math.max(0.01, lt).toFixed(4)})`);
+        put(front, 'opacity', (0.9 * fl).toFixed(3));
+        put(front, 'visibility', fl <= 0.002 ? 'hidden' : 'visible');
+        // the end pin gives way to the lit destination
+        put(pins[N - 1].parentNode, 'opacity', (1 - e.p3o(seg(p, LIGHT0 + 0.02, 0.04))).toFixed(3));
       }
-      const ca = e.p3o(seg(p, LIGHT0 + 0.02, 0.04));
-      put(centreFill, 'opacity', ca.toFixed(3));
-      if (markEl) { put(markEl, 'opacity', ca.toFixed(3)); put(markEl, 'transform', `scale(${(0.6 + 0.4 * ca).toFixed(3)})`); }
-      put(pins[N - 1].parentNode, 'opacity', (1 - ca).toFixed(3));
       // pulses run only while the scene rests at either end (a running pulse would repaint every frame)
-      flag(plot, 'is-arrived', p >= 0.9);
+      flag(dest, 'is-arrived', p >= 0.9);
       // which stop is current: derived from s, so scrolling back is exact
       let a = 0;
       for (let k = 1; k < N; k++) if (s >= stopS[k - 1] + 0.4 * (stopS[k] - stopS[k - 1])) a = k;

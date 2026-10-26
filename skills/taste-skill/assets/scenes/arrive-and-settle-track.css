@@ -2,12 +2,15 @@
    Default rules are the finished composition (no script, reduced motion, a failed CDN): the same
    content set level and still. The live layouts sit under .scene.is-live: the pinned sideways track
    from 768px up, the vertical stack below. Takes the page's tokens: --ground --ink --accent
-   --accent-ink --surface --font-display --font-text. */
+   --accent-ink --surface --font-display --font-text, and its weights: --display-weight (the line, the
+   headings, the outro line; 600 here when the page sets none), --strong-weight (the buttons, names and
+   links; 600). A weight the page has not loaded is never faked: the nearest loaded one shows. */
 
 .scene[data-scene="arrive-and-settle-track"] {
   background: var(--ground, #f4f3ef);
   color: var(--ink, #111);
   font-family: var(--font-text, inherit);
+  font-synthesis-weight: none;
 }
 .scene[data-scene="arrive-and-settle-track"] .settle {
   box-sizing: border-box;
@@ -24,7 +27,7 @@
   margin: 0;
   max-width: 88vw;
   font-family: var(--font-display, inherit);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   font-size: var(--settle-fit, min(11vw, 22vh));
   line-height: 0.88;
   letter-spacing: -0.045em;
@@ -36,7 +39,7 @@
 }
 .scene[data-scene="arrive-and-settle-track"] .settle__word { white-space: nowrap; }
 .scene[data-scene="arrive-and-settle-track"] .settle__char { display: inline-block; transform-origin: 50% 60%; }
-.scene[data-scene="arrive-and-settle-track"].is-moving .settle__char { will-change: transform; }
+.scene[data-scene="arrive-and-settle-track"].is-moving:not(.is-zoom) .settle__char { will-change: transform; }
 
 .scene[data-scene="arrive-and-settle-track"] .settle__cluster {
   margin: 7vh 0 0 56vw;           /* clear of a descender in the last line */
@@ -62,7 +65,7 @@
   border-radius: 999px;
   background: var(--accent, var(--ink, #111));
   color: var(--accent-ink, var(--ground, #fff));
-  font: 600 clamp(17px, 1.2vw, 22px)/1 var(--font-text, inherit);
+  font: var(--strong-weight, 600) clamp(17px, 1.2vw, 22px)/1 var(--font-text, inherit);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -73,7 +76,7 @@
   margin: 0 0 7vh;
   max-width: 16ch;
   font-family: var(--font-display, inherit);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   font-size: clamp(34px, 4.2vw, 68px);
   line-height: 1;
   letter-spacing: -0.035em;
@@ -108,7 +111,7 @@
 .scene[data-scene="arrive-and-settle-track"] .settle__quote { margin: 0; font-size: clamp(19px, 1.6vw, 25px); line-height: 1.34; letter-spacing: -0.01em; }
 .scene[data-scene="arrive-and-settle-track"] .settle__quote p { margin: 0; }
 .scene[data-scene="arrive-and-settle-track"] .settle__who { margin: 0; display: flex; align-items: center; gap: 14px; font-size: 15px; line-height: 1.35; }
-.scene[data-scene="arrive-and-settle-track"] .settle__who b { display: block; font-weight: 600; }
+.scene[data-scene="arrive-and-settle-track"] .settle__who b { display: block; font-weight: var(--strong-weight, 600); }
 .scene[data-scene="arrive-and-settle-track"] .settle__avatar { flex: none; width: 48px; height: 48px; border-radius: 4px; object-fit: cover; }
 
 /* rise: projects */
@@ -131,11 +134,11 @@
 }
 .scene[data-scene="arrive-and-settle-track"] .settle__picture img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .scene[data-scene="arrive-and-settle-track"] .settle__caption { margin-top: 22px; display: grid; gap: 8px; justify-items: start; }
-.scene[data-scene="arrive-and-settle-track"] .settle__caption h3 { margin: 0; font: 600 clamp(22px, 1.9vw, 30px)/1.1 var(--font-display, inherit); letter-spacing: -0.02em; }
+.scene[data-scene="arrive-and-settle-track"] .settle__caption h3 { margin: 0; font: var(--display-weight, 600) clamp(22px, 1.9vw, 30px)/1.1 var(--font-display, inherit); letter-spacing: -0.02em; }
 .scene[data-scene="arrive-and-settle-track"] .settle__caption p { margin: 0; max-width: 42ch; font-size: 17px; line-height: 1.45; }
-.scene[data-scene="arrive-and-settle-track"] .settle__caption a { color: inherit; font-size: 17px; font-weight: 600; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+.scene[data-scene="arrive-and-settle-track"] .settle__caption a { color: inherit; font-size: 17px; font-weight: var(--strong-weight, 600); text-underline-offset: 4px; text-decoration-thickness: 2px; }
 .scene[data-scene="arrive-and-settle-track"] .settle__outro { display: grid; gap: 24px; justify-items: start; }
-.scene[data-scene="arrive-and-settle-track"] .settle__outro p { margin: 0; max-width: 22ch; font: 600 clamp(26px, 2.4vw, 36px)/1.15 var(--font-display, inherit); letter-spacing: -0.02em; }
+.scene[data-scene="arrive-and-settle-track"] .settle__outro p { margin: 0; max-width: 22ch; font: var(--display-weight, 600) clamp(26px, 2.4vw, 36px)/1.15 var(--font-display, inherit); letter-spacing: -0.02em; }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .scene[data-scene="arrive-and-settle-track"][data-settle="stair"] .settle__track { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -182,7 +185,7 @@
   html.js .scene[data-scene="arrive-and-settle-track"].is-live .settle__track {
     position: absolute;
     left: 0;
-    top: calc(50% - 0.425 * var(--fs) - var(--settle-lift, 0px));
+    top: calc(50% - 0.425 * var(--fs));
     width: max-content;
     display: flex;
     align-items: flex-end;
@@ -197,21 +200,18 @@
     line-height: 0.85;
     text-wrap: nowrap;
     white-space: nowrap;
+    transform-origin: 0 50%;          /* the pull-back to the whole line shrinks it about its left edge */
   }
-  /* the cluster hugs its content; JS adds the margin that puts its right edge on 94vw at the end */
+  /* the cluster hugs its content and waits at its place in the end frame (JS sets left and top: beside
+     the whole line on the right margin, or under it from its first letter) */
   html.js .scene[data-scene="arrive-and-settle-track"].is-live .settle__cluster {
-    flex: none;
+    position: absolute;
+    left: 0;
+    top: 0;
     width: max-content;
     margin: 0;
     max-width: none;
     white-space: normal;
-  }
-  /* when the last word and the cluster cannot share the row, the cluster sits under the line (JS sets
-     its left to the end frame's first word and lifts the pair so they centre together) */
-  html.js .scene[data-scene="arrive-and-settle-track"].is-live[data-end="stack"] .settle__cluster {
-    position: absolute;
-    top: 100%;
-    margin-top: clamp(28px, 5vh, 64px);
   }
 
   /* stair: heading fixed top-left, row top at 34vh, a 30vw lead-in so the first card is level at 0 */

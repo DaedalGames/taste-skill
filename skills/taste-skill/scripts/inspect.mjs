@@ -3,6 +3,9 @@
 //
 //   node inspect.mjs <url | path/to/file.html> [--out DIR] [--widths 1440,768,390] [--allow rule,rule] [--app] [--film] [--json]
 //
+// Every width is walked to the foot of the page, one screen at a time (up to 40 screens; a longer page is
+// sampled evenly), and every screen is photographed into the page sheets and checked.
+//
 // --film also photographs the scroll as a visitor sees it (a frame every third of a screen, real wheel
 // input) into desktop-film-NN.jpg, so a scroll scene is judged by its in-between states. A direction
 // that dealt scroll scenes switches it on by itself.
@@ -17,7 +20,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, statSync, createRea
 import { resolve, join, relative, dirname, extname, sep } from 'node:path';
 import { createServer } from 'node:http';
 import { Browser, sleep } from './lib/cdp.mjs';
-import { probe, frame, layout, app, colourShare } from './lib/probe.mjs';
+import { probe, frame, reach, layout, app, colourShare } from './lib/probe.mjs';
 import { judge, judgeLayout, judgeApp, APP_SKIP } from './lib/rules.mjs';
 import { viewportClass as name, screenshotLabel, isInspectionScreenshot } from './lib/inspection-files.mjs';
 
@@ -72,6 +75,7 @@ const helper = await browser.newPage({ width: 1600, height: 1000 });
 const report = { url: server ? target : url, at: new Date().toISOString(), allow, viewports: [], findings: [], images: [] };
 
 const MOTION_MIN = 8, MOTION_GOOD = 16; // distinct moving elements over load + one scroll through the page
+const MAX_SCREENS = 40; // screens photographed and checked at each width; a longer page is sampled evenly
 // Runs in the page before any of its own scripts: counts the distinct elements that actually move while
 // the page loads and is scrolled (CSS animations, CSS transitions, Web Animations, and script-driven
 // transform/opacity changes such as GSAP), so a page that never moves can be told from one that does.
@@ -132,17 +136,40 @@ try {
     await page.screenshot({ path: fold, quality: 82 });
     const metrics = await page.eval(probe);
 
-    // walk the page one screen at a time so scroll reveals fire, photographing each screen
+    // walk the whole page one screen at a time so scroll reveals fire, photographing and checking each screen.
+    // A page longer than MAX_SCREENS is walked in even strides, so its last screen is always seen.
+    const total = Math.max(1, Math.ceil((metrics.page.height || h) / h));
+    const stride = Math.max(1, Math.ceil(total / MAX_SCREENS));
     const frames = [readFileSync(fold).toString('base64')];
-    const frameChecks = [await page.eval(frame).catch(() => null)];
-    const screens = Math.min(11, Math.max(0, Math.ceil(metrics.page.height / h) - 1));
-    for (let i = 1; i <= screens; i++) {
-      await page.eval(`window.scrollTo({ top: ${i * h}, behavior: 'instant' })`).catch(() => {});
+    const frameErrors = []; // a check that throws loses its screen; the report keeps why
+    const check = (opts) => page.eval(frame, opts).catch((e) => { if (frameErrors.length < 5) frameErrors.push(String(e.message).slice(0, 200)); return null; });
+    const frameChecks = [await check()];
+    const reached = [await page.eval(reach, metrics.reach).catch(() => null)];
+    let upReach = null, atFoot = total <= 1;
+    const where = () => page.eval('({ y: Math.round(scrollY || document.scrollingElement.scrollTop || 0), max: Math.round(document.scrollingElement.scrollHeight - innerHeight) })').catch(() => null);
+    for (let i = 1, lastY = 0; i <= MAX_SCREENS + 8; i++) {
+      const to = `window.scrollTo({ top: ${i * stride * h}, behavior: 'instant' })`;
+      await page.eval(to).catch(() => {});
       await page.wheel(2);
       await sleep(650);
+      let pos = await where();
+      // a smooth-scroll library still easing toward an earlier target can take the jump back: settle it and retry once
+      if (pos && pos.y <= lastY + 2 && pos.y < pos.max - 2) { await page.wheel(Math.round(h / 2)); await sleep(1000); await page.eval(to).catch(() => {}); await page.wheel(2); await sleep(650); pos = await where(); }
+      if (!pos || pos.y <= lastY + 2) { atFoot = !!pos && pos.y >= pos.max - 2; break; } // the screen before was the end of the page
+      lastY = pos.y;
       frames.push(await page.screenshot({ quality: 78 }));
-      frameChecks.push(await page.eval(frame).catch(() => null));
+      frameChecks.push(await check());
+      reached.push(await page.eval(reach, metrics.reach).catch(() => null));
       await page.eval('window.__motionSample && window.__motionSample()').catch(() => {});
+      // once, about two thirds down a long page: back up half a screen, where a bar that hides on the way down returns
+      if (upReach === null && total > 6 && pos.y >= pos.max * 0.6) {
+        await page.wheel(-Math.round(h / 2), { step: 120, pauseMs: 30 });
+        await sleep(900);
+        upReach = await page.eval(reach, metrics.reach).catch(() => ({ found: false }));
+        await page.wheel(Math.round(h / 2), { step: 120, pauseMs: 30 }); // back down, so a smooth scroller's target is ahead again
+        await sleep(1000);
+      }
+      if (pos.y >= pos.max - 2) { atFoot = true; break; }
     }
     const motion = await page.eval('window.__motion ? window.__motion() : null').catch(() => null);
     // re-measure after everything has revealed (catches content that only exists post-reveal)
@@ -163,21 +190,28 @@ try {
       const atRest = sceneState.filter((s) => s.rest);
       if (atRest.length && !allow.includes('scene-not-live')) sceneFindings.push({ level: 'FAIL', id: 'scene-not-live', width: w, message: `${atRest.length} scene(s) show their finished composition on desktop instead of running: ${atRest.map((s) => s.id).join(', ')}.`, fix: 'GSAP or ScrollTrigger did not load (check the pinned CDN lines and the console), or the scene threw while building. The scene must run where motion is allowed.' });
       if (sceneState.length > 4 && !allow.includes('many-scenes')) sceneFindings.push({ level: 'WARN', id: 'many-scenes', width: w, message: `${sceneState.length} scroll scenes on one page.`, fix: 'Two or three scenes, with quiet sections between them, so each one lands. Cut the weakest.' });
+      // held screens against the page (a share alone rewards padding the rest of it), against an absolute budget,
+      // and the long set pieces (five screens or more), of which a page carries one
       const held = sceneState.reduce((a, s) => a + Math.max(0, s.h - h), 0);
-      if (held > (metrics.page.height || 1) * 0.6 && !allow.includes('scene-heavy')) sceneFindings.push({ level: 'WARN', id: 'scene-heavy', width: w, message: `Scenes hold ${Math.round(held / h)} of the page's ${Math.round((metrics.page.height || 0) / h)} screens.`, fix: 'Shorten the holds (one screen per beat) or cut a scene; the reading sections need room between them.' });
+      const longSets = sceneState.filter((s) => s.h - h >= h * 4.5);
+      const heavy = [held > (metrics.page.height || 1) * 0.6 && `they are ${Math.round((held / (metrics.page.height || 1)) * 100)}% of the page`, held > h * 7 && 'more than about 6.5 screens of hold in all', longSets.length > 1 && `${longSets.length} of them hold five screens or more (${longSets.map((s) => `${s.id} ${Math.round((s.h - h) / h)}`).join(', ')})`].filter(Boolean);
+      if (heavy.length && !allow.includes('scene-heavy')) sceneFindings.push({ level: 'WARN', id: 'scene-heavy', width: w, message: `Scenes hold ${Math.round(held / h)} of the page's ${Math.round((metrics.page.height || 0) / h)} screens: ${heavy.join('; ')}.`, fix: 'Shorten the holds (one screen per beat, and a hold with nothing new to show is cut), keep one long set piece at most, or cut a scene; the reading sections need room between them (references/scenes.md §7).' });
     }
 
     // --film: the scroll as a visitor sees it. Real wheel input and a frame every third of a screen, so a
     // scroll scene shows its in-between states, not only where each screen lands.
-    const filmSheets = [];
+    // Each step is also checked twice while it moves (about 120 and 280ms after the wheel) for texts drawn over
+    // each other and for which blocks of text can be read at all.
+    const filmSheets = [], filmChecks = [];
     if (film && w >= 1100) {
       await page.eval(`window.scrollTo({ top: 0, behavior: 'instant' })`).catch(() => {});
       await sleep(700);
       const shots = []; let lastY = -1, still = 0;
-      for (let i = 0; i < 96; i++) {
+      for (let i = 0; i < Math.min(150, Math.ceil(total / stride) * 3 + 6); i++) {
         shots.push(await page.screenshot({ quality: 70 }));
-        await page.wheel(Math.round(h / 3), { step: 100, pauseMs: 16 });
-        await sleep(420);
+        await page.wheel(Math.round(h / 3) * stride, { step: 100, pauseMs: 16 });
+        for (const ms of [120, 160]) { await sleep(ms); filmChecks.push(await check({ film: true })); }
+        await sleep(140);
         const y = await page.eval('Math.round(scrollY || document.scrollingElement.scrollTop || 0)').catch(() => -1);
         if (y === lastY) { if (++still >= 2) break; } else still = 0;
         lastY = y;
@@ -215,12 +249,43 @@ try {
       if (appM) findings.push(...judgeApp(appM, m, { width: w, allow }));
     }
     // what only shows up while scrolling: text hidden under something, and screens with almost nothing on them
-    const coveredText = [...new Map(frameChecks.filter(Boolean).flatMap((f, i) => f.covered.map((c) => [c.text, { ...c, screen: i + 1 }]))).values()];
+    const screenOf = (f, i) => (f && f.y != null ? Math.round(f.y / h) + 1 : i * stride + 1);
+    const coveredText = [...new Map(frameChecks.filter(Boolean).flatMap((f, i) => f.covered.map((c) => [c.text, { ...c, screen: screenOf(f, i) }]))).values()];
     if (coveredText.length && !allow.includes('covered-text')) findings.push({ level: 'FAIL', id: 'covered-text', width: w, message: `Large text lies under another element at some scroll position: ` + coveredText.slice(0, 4).map((c) => `"${c.text}" (screen ${c.screen}, ${Math.round(c.share * 100)}% hidden)`).join('; '), fix: 'Nothing may sit on top of a headline or statement. Move the picture, shorten the pinned run, or raise the text above it (z-index) and give it a ground.' });
-    const clippedText = [...new Map(frameChecks.filter(Boolean).flatMap((f, i) => (f.clipped || []).map((c) => [c.text, { ...c, screen: i + 1 }]))).values()];
+    const clippedText = [...new Map(frameChecks.filter(Boolean).flatMap((f, i) => (f.clipped || []).map((c) => [c.text, { ...c, screen: screenOf(f, i) }]))).values()];
     if (clippedText.length && !allow.includes('clipped-text')) findings.push({ level: 'FAIL', id: 'clipped-text', width: w, message: 'Large text is cut off along its top by the box that holds it: ' + clippedText.slice(0, 3).map((c) => `"${c.text}" (screen ${c.screen})`).join('; '), fix: 'Jurors read a wordmark sliced at the top as broken. Give the box room for the ascenders (line-height and padding), or crop at the bottom or a side edge on purpose.' });
-    const overPictures = [...new Map(frameChecks.filter(Boolean).flatMap((f, i) => (f.pinnedOver || []).map((c) => [c.text, { ...c, screen: i + 1 }]))).values()];
+    const overPictures = [...new Map(frameChecks.filter(Boolean).flatMap((f, i) => (f.pinnedOver || []).map((c) => [c.text, { ...c, screen: screenOf(f, i) }]))).values()];
     if (overPictures.length && !allow.includes('pinned-over-picture')) findings.push({ level: 'WARN', id: 'pinned-over-picture', width: w, message: 'Pinned large text slides across pictures while the page scrolls: ' + overPictures.slice(0, 3).map((c) => `"${c.text}" (screen ${c.screen}, ${Math.round(c.share * 100)}% over a picture)`).join('; '), fix: 'Jurors read a pinned title crossing drawings or photographs as a collision. Keep the pictures in the column the title does not occupy, or unpin it.' });
+    // two texts drawn over each other at some scroll position (walk and film frames)
+    const checks = [...frameChecks, ...filmChecks].filter(Boolean);
+    const overText = [...new Map(checks.flatMap((f) => (f.overText || []).map((o) => [o.a + '|' + o.b, { ...o, y: f.y }]))).values()];
+    if (overText.length && !allow.includes('text-over-text')) findings.push({ level: 'FAIL', id: 'text-over-text', width: w, message: 'Two texts are drawn on top of each other while the page scrolls: ' + overText.slice(0, 3).map((o) => `"${o.a}" over "${o.b}" (at ${o.y}px)`).join('; '), fix: 'Two text states never share pixels. A swap is out, then in (the incoming line starts when the outgoing one has gone), or a masked wipe; a card or caption that travels never crosses a line of text that is still on screen.' });
+    // a block of text that was in view and covered every time: a caption the visitor never gets to read
+    const sightings = new Map();
+    for (const f of checks) for (const [t, ok] of f.seen || []) { const s = sightings.get(t) || { n: 0, ok: 0, at: [] }; s.n++; s.ok += ok; if (s.at.length < 6) s.at.push(f.y); sightings.set(t, s); }
+    const unread = [...sightings.entries()].filter(([, s]) => s.n >= 2 && !s.ok).map(([t, s]) => ({ text: t, n: s.n, at: s.at }));
+    if (unread.length && !allow.includes('never-readable')) findings.push({ level: 'FAIL', id: 'never-readable', width: w, message: `${unread.length} block(s) of text are covered at every scroll position they were seen at: ` + unread.slice(0, 4).map((u) => `"${u.text.slice(0, 44)}" (${u.n} frames)`).join('; '), fix: 'Something lies on these words whenever they are in view (the next picture of a sequence, a pinned layer, a card). Give each its held moment on top: a longer slot before the next picture arrives, the caption above the layer that covers it, or the caption beside the picture instead of on it.' });
+    // loops that play for more than five seconds with nothing on the page to stop them (WCAG 2.2.2)
+    const playingVideos = [...new Set(checks.flatMap((f) => f.playing || []))];
+    if (playingVideos.length && !m.page.pauseControl && !allow.includes('no-pause')) findings.push({ level: 'WARN', id: 'no-pause', width: w, message: `${playingVideos.length} video loop(s) play with no control to pause them: ${playingVideos.slice(0, 3).join(', ')}.`, fix: 'Give moving pictures that run past five seconds a visible pause: one "Pause films" button in the navigation is enough for a page of loops, or a small pause on the clip itself. Loops still stop under reduced motion and off screen.' });
+    // small text set on a large picture: more than one short line, or captions and labels, belong beside or under it
+    const onMedia = new Map();
+    for (const f of frameChecks.filter(Boolean)) for (const o of f.onMedia || []) { const v = onMedia.get(o.media) || new Set(); for (const t of o.texts) v.add(t); onMedia.set(o.media, v); }
+    const captioned = [...onMedia.entries()].map(([media, set]) => ({ media, texts: [...set], words: [...set].join(' ').split(/\s+/).filter(Boolean).length })).filter((o) => o.texts.length >= 2 || o.words > 12);
+    if (captioned.length && !allow.includes('caption-on-media')) findings.push({ level: 'WARN', id: 'caption-on-media', width: w, message: `Small text is set on ${captioned.length} large picture(s): ` + captioned.slice(0, 3).map((o) => `${o.media} under ${o.texts.slice(0, 3).map((t) => `"${t.slice(0, 32)}"`).join(', ')}`).join('; '), fix: 'On a picture put only display text, one short line and one action (references/imagery.md, "Text over pictures"). A caption, a label or a description goes in the gutter beside or under the picture, or in a corner it leaves empty; never in a band across a piece of work.' });
+    // a picture's edge through a paragraph: half of it on the paper, half on the picture
+    const straddled = [...new Map(checks.flatMap((f, i) => (f.straddle || []).map((s) => [s.text, { ...s, screen: screenOf(f, i) }]))).values()];
+    if (straddled.length && !allow.includes('text-straddles-edge')) findings.push({ level: 'WARN', id: 'text-straddles-edge', width: w, message: 'A picture\'s edge runs through a paragraph, so part of it sits on the picture and part on the ground: ' + straddled.slice(0, 3).map((s) => `"${s.text}" (screen ${s.screen}, ${Math.round(s.share * 100)}% on the picture)`).join('; '), fix: 'Set the text wholly inside a calm part of the picture (4.5:1 there) or wholly outside it. When text interlocks with a picture, the overlap is whole lines and the edge falls in a line gap, never through a line.' });
+    // nav-lost: on a page over about 6 screens, a stretch of more than 3 screens with no way back to the navigation's
+    // anchors or the action. It fails over 10 screens; between 6 and 10 it warns (the v2.1 test pages ran 7-8
+    // screens without a bar and the judges did not miss one). A phone or tablet page runs longer for the same content.
+    const pageScreens = Math.round(((m.page.height || 0) / h) * 10) / 10;
+    const lengthScale = w >= 1100 ? 1 : w >= 600 ? 1.2 : 1.6;
+    if (!appMode && (metrics.reach?.dest?.length || metrics.reach?.labels?.length) && pageScreens > 6 * lengthScale && !(upReach && upReach.found) && !allow.includes('nav-lost')) {
+      let run = 0, worst = 0, from = 0, span = null;
+      reached.forEach((r, i) => { if (i === 0) return; if (r && r.found) { run = 0; return; } if (!run) from = i; run += stride; if (run > worst) { worst = run; span = [from * stride + 1, i * stride + 1]; } });
+      if (worst > 3) findings.push({ level: pageScreens > 10 * lengthScale ? 'FAIL' : 'WARN', id: 'nav-lost', width: w, message: `On this ${pageScreens}-screen page nothing leads back to the navigation or the main action from screen ${span[0]} to ${span[1]}: no bar stays or returns on scroll-up, and no link to its anchors is in view.`, fix: 'Keep one way back in reach after the first screen: a compact bar (the wordmark, a few links, the action) that is sticky, or hides on the way down and returns on scroll-up, on a solid ground where it passes pictures; on a phone the menu button and the action stay in that bar (references/layout.md §7).' });
+    }
     const empty = frameChecks.map((f, i) => ({ f, i })).filter(({ f }) => f && f.filled < 0.2);
     // the same large statement on screen for three screens or more in a row
     const runs = new Map();
@@ -233,10 +298,10 @@ try {
       if (moving < MOTION_MIN) findings.push({ level: 'FAIL', id: 'still-page', width: w, message: `Only ${motion.elements} element(s) moved while the page loaded and scrolled${motion.playingVideos ? ` (plus ${motion.playingVideos} playing video)` : ''}.`, fix: 'Build the motion layer (SKILL.md step 9, references/motion.md): the signature move, an entrance for the parts of every section, feedback on every control, and one moving picture. Transform and opacity only, with a reduced-motion fallback.' });
       else if (moving < MOTION_GOOD) findings.push({ level: 'WARN', id: 'still-page', width: w, message: `Little motion: ${motion.elements} element(s) moved while the page loaded and scrolled.`, fix: 'Give every section an entrance for its parts (not one fade of the whole block) and add one moving picture: a looping clip or a slow move on a photograph.' });
     }
-    if (w >= 1100 && empty.length >= 2 && !allow.includes('empty-screens')) findings.push({ level: 'FAIL', id: 'empty-screens', width: w, message: `${empty.length} of ${frameChecks.length} desktop screens are almost empty ground (under 20% of the screen holds text, a picture or a colour field): screens ${empty.map(({ i }) => i + 1).join(', ')}.`, fix: 'An empty screen is a rest only once per page. Elsewhere it means the section is underbuilt: set its content larger, give it the full information, put it on a colour field, or cut it.' });
-    report.viewports.push({ width: w, height: h, load: how, screens: frames.length, filled: frameChecks.map((f) => f?.filled ?? null), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5) });
+    if (w >= 1100 && empty.length >= 2 && !allow.includes('empty-screens')) findings.push({ level: 'FAIL', id: 'empty-screens', width: w, message: `${empty.length} of ${frameChecks.length} desktop screens are almost empty ground (under 20% of the screen holds text, a picture or a colour field): screens ${empty.map(({ f, i }) => screenOf(f, i)).join(', ')}.`, fix: 'An empty screen is a rest only once per page. Elsewhere it means the section is underbuilt: set its content larger, give it the full information, put it on a colour field, or cut it.' });
+    report.viewports.push({ width: w, height: h, load: how, screens: frames.length, pageScreens, stride, reached: reached.map((r) => (r ? r.found : null)), upReach: upReach ? upReach.found : null, unread, overText, frameErrors, filled: frameChecks.map((f) => f?.filled ?? null), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5) });
     report.findings.push(...(appMode ? findings.filter((f) => !APP_SKIP.has(f.id)) : findings));
-    report.images.push({ viewport: label, width: w, fold, pages: sheets, film: filmSheets });
+    report.images.push({ viewport: label, width: w, fold, pages: sheets, film: filmSheets, walked: frames.length, stride, pageScreens, atFoot });
     await page.close();
   }
   // Under prefers-reduced-motion the page is the finished page: nothing may stay hidden waiting for an
@@ -285,7 +350,7 @@ for (const v of report.viewports.slice(1)) if (v.metrics.hero) line(`  @${v.widt
 line(`  typefaces       ${d.type.families.filter((f) => f.share >= 0.02).map((f) => `${f.family} ${Math.round(f.share * 100)}%`).join(', ')}`);
 line(`  sizes in use    ${d.type.sizes.join(' / ')} px${d.type.body ? `   body ${d.type.body.size}px / ${d.type.body.leading}` : ''}`);
 line(`  colour          page ${d.color.bodyBg}${d.color.sectionBgs.length ? ' · sections ' + d.color.sectionBgs.map((s) => s.color).slice(0, 6).join(' ') : ''}${d.color.button ? ' · button ' + d.color.button.bg : ''}`);
-line(`  page            ${d.page.screens} screens · ${d.page.words} words · ${d.page.img} images · hero media ${d.heroMedia[0] ? Math.round(d.heroMedia[0].ratio * 100) + '% ' + d.heroMedia[0].type : 'none'}`);
+line(`  page            ${d.page.screens} screens · ${d.page.words} words (${Math.round(d.page.words / Math.max(0.1, d.page.screens))} a screen) · ${d.page.img} images · hero media ${d.heroMedia[0] ? Math.round(d.heroMedia[0].ratio * 100) + '% ' + d.heroMedia[0].type : 'none'}`);
 line(`  headings        ${d.headingSummary.count} · longest ${d.headingSummary.maxLines} line(s) · median ${d.headingSummary.medianWords ?? '-'} words`);
 line('');
 const fails = merged.filter((f) => f.level === 'FAIL'), warns = merged.filter((f) => f.level === 'WARN');
@@ -301,7 +366,11 @@ for (const [title, list] of [['FAIL — fix every one of these', fails], ['WARN 
 }
 line('LOOK AT THE RENDER — open these with your image viewer / Read tool before saying anything about quality:');
 const rel = (p) => relative(process.cwd(), p).split('\\').join('/');
-for (const im of report.images) { line(`  ${(im.viewport + ' ' + im.width + 'px').padEnd(15)} ${rel(im.fold)}`); for (const p of im.pages) line(`  ${''.padEnd(15)} ${rel(p)}`); for (const p of im.film || []) line(`  ${'scroll film'.padEnd(15)} ${rel(p)}  (6 frames a row, a third of a screen apart)`); }
+for (const im of report.images) {
+  line(`  ${(im.viewport + ' ' + im.width + 'px').padEnd(15)} ${rel(im.fold)}   (${im.walked} screens photographed and checked${im.stride > 1 ? `, one in every ${im.stride}` : ''}; ${im.atFoot ? 'the walk reached the foot of the page' : `the walk stopped before the foot of a ${im.pageScreens}-screen page`})`);
+  for (const p of im.pages) line(`  ${''.padEnd(15)} ${rel(p)}`);
+  for (const p of im.film || []) line(`  ${'scroll film'.padEnd(15)} ${rel(p)}  (6 frames a row, a third of a screen apart)`);
+}
 line('');
 line(`report: ${rel(join(outDir, 'report.json'))}`);
 line(fails.length ? `RESULT: ${fails.length} FAIL, ${warns.length} WARN — not done.` : `RESULT: 0 FAIL, ${warns.length} WARN — measurements pass. Passing the meter is the floor, not the grade: score the screenshots with references/critique.md.`);

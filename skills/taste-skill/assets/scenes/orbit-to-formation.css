@@ -4,7 +4,11 @@
    figures in a row. With .is-live the stage is held and orbit-to-formation.js places every card.
    Takes the page's tokens: --ground, --ink, --font-display, --font-text, and --orbit-lit for the
    lit figures (the ink by default). The live stage does not pass the shared stage's --p down to its
-   children (see below), so style this scene's content from the script's classes, not from --p. */
+   children (see below), so style this scene's content from the script's classes, not from --p.
+   Weights follow the page: --display-weight (the lede, the figure and the stat figures; 500 here when
+   the page sets none). A weight the page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="orbit-to-formation"] { font-synthesis-weight: none; }
 
 [data-scene="orbit-to-formation"] {
   --orbit-ground: var(--ground, #0f0e0c);
@@ -33,7 +37,7 @@
   margin: 0;
   max-width: 26ch;
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: clamp(32px, 7vw, 124px);
   line-height: .96;
   letter-spacing: -.035em;
@@ -84,7 +88,7 @@
 [data-scene="orbit-to-formation"] .orbit-figure {
   margin: 0;
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: min(clamp(96px, 14vw, 220px), calc(var(--S) * .24));
   line-height: .9;
   letter-spacing: -.04em;
@@ -131,7 +135,7 @@
 
 [data-scene="orbit-to-formation"] .orbit-stat-figure {
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: clamp(48px, 7vw, 124px);
   line-height: .9;
   letter-spacing: -.04em;

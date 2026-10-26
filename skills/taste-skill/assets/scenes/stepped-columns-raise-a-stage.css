@@ -8,8 +8,13 @@
    The live layouts sit under .is-live[data-sr-mode="cols"] and [data-sr-mode="rows"], set by the script.
 
    Two colours only. The stage, the gaps and the page around the ink must be the one flat --sr-page: the
-   drawing is printed in it, so anything else behind the stage (a tint, a texture, a backdrop) shows it. */
+   drawing is printed in it, so anything else behind the stage (a tint, a texture, a backdrop) shows it.
 
+   Weights come from the page: --display-weight (the title and the step titles), --strong-weight (the
+   notes) and --text-weight (the body). Set them to weights the page loads, or the browser draws the
+   nearest weight it has (fake bold is off). */
+
+[data-scene="stepped-columns-raise-a-stage"] { font-synthesis-weight: none; }
 [data-scene="stepped-columns-raise-a-stage"] {
   --sr-page: var(--ground, #ffffff);
   --sr-ink: var(--accent, #d2232a);
@@ -50,7 +55,7 @@
   min-width: 0;
   margin: 0;
   font-family: var(--font-display, inherit);
-  font-weight: 600;
+  font-weight: var(--display-weight, 500);
   font-size: clamp(34px, 5vw, 80px);
   line-height: 0.98;
   letter-spacing: -0.035em;
@@ -69,6 +74,7 @@
   column-gap: 14px;
   font-family: var(--font-text, inherit);
   font-size: 15px;
+  font-weight: var(--text-weight, 400);
   line-height: 1.2;
   color: var(--sr-ink);
 }
@@ -141,14 +147,14 @@
   padding-bottom: 16px;
   font-family: var(--font-text, inherit);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: var(--strong-weight, 600);
   line-height: 1.25;
   font-variant-numeric: tabular-nums;
 }
 [data-scene="stepped-columns-raise-a-stage"] .sr-col-title {
   margin: 0 0 12px;
   font-family: var(--font-display, inherit);
-  font-weight: 600;
+  font-weight: var(--display-weight, 500);
   font-size: clamp(22px, 9.6cqi, 38px);
   line-height: 1.04;
   letter-spacing: -0.02em;
@@ -159,6 +165,7 @@
   max-width: 36ch;
   font-family: var(--font-text, inherit);
   font-size: 15px;
+  font-weight: var(--text-weight, 400);
   line-height: 1.42;
   text-wrap: pretty;
 }
@@ -319,25 +326,34 @@ html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"
   grid-template-rows: repeat(var(--n, 4), minmax(0, 1fr));
 }
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-col { min-height: 0; }
+/* a row: the copy at its foot, the note on the title's line at the right, so a date always reads with
+   its own step (never under the step before) */
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-panel,
-html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-ghost { padding: 14px 16px 16px; }
-/* the note sits top right, so it is the last thing the ink reaches */
+html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-ghost {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  grid-template-areas: ". ." "title note" "text text";
+  align-items: last baseline;
+  column-gap: 16px;
+  padding: 14px 16px 16px;
+}
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-note {
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  max-width: 55%;
+  grid-area: note;
+  max-width: 40cqi;
   margin: 0;
   padding: 0;
   font-size: 14px;
   text-align: right;
 }
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-col-title {
+  grid-area: title;
   font-size: clamp(21px, 6vw, 28px);
   line-height: 1.06;
   margin-bottom: 6px;
 }
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-col-text {
+  grid-area: text;
   font-size: clamp(14px, 2vw, 17px);
   line-height: 1.35;
   max-width: 62ch;
@@ -431,14 +447,16 @@ html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"
 
 /* ---- live, both layouts -------------------------------------------------------------------------- */
 
-html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"] .sr-ghost,
-html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"]:not([data-sr-dense]) .sr-ghost { display: flex; }
-/* {"ghost": false}: pure mask in columns, the copy exists only where the ink is */
-html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"][data-sr-ghost="off"] .sr-ghost { display: none; }
+/* the ghost: the step's copy in ink on the page, under its panel, until the ink reaches it (rows keep
+   their grid from above) */
+html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"] .sr-ghost { display: flex; }
+/* {"ghost": false}, the default: the panel starts as a stub that already holds the copy, so the ghost
+   shows only the note, above the stub, until the ink jumps past it */
+html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"][data-sr-ghost="off"] .sr-ghost > :not(.sr-note) { visibility: hidden; }
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"] .sr-rail-dot,
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-rail-dot { left: 0; will-change: transform; }
-html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"] .sr-panel,
-html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-panel { will-change: clip-path; }
+html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"] .sr-panel { will-change: clip-path; }
+html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-panel { will-change: opacity; }
 
 /* ---- live, but the copy does not fit the screen: the finished composition, unheld ------------------- */
 

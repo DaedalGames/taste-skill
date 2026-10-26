@@ -153,6 +153,12 @@ Treatments stay within section 6: untouched, greyscale for the whole set, or mul
   plate of pasta, a smiling barista, a guest room), do not use it.
 - **Caption from the source** when a caption helps: what it is and when, as the archive describes it
   ("Gand, unloading a steamer, 1905"). Never write a caption that ties it to the client.
+- **A caption names only what the picture shows.** Read every caption, label and number beside a
+  picture against the picture at full size and against its source title: never a breed, a place, an
+  object or a use that neither supports ("a dog in a crate", not "a Labrador, crated", when the source
+  says only "a dog in a box behind the bicycle"). A picture placed to prove a claim shows the claim
+  (two children on the bike, not women riding ordinary bikes); when no photograph does, show the
+  page's own drawing of the product in that state.
 - **Record and credit every picture.** `--get` writes the source, creator, licence and page of each
   download to `assets/credits.json`. CC BY and CC BY-SA require a credit with the title, the creator,
   a link to the source and a link to the licence; `--credits` prints them as one line of HTML for
@@ -194,7 +200,13 @@ real footage with `--video` (section 11).
 - **Go large.** A photograph at full width, or at half the screen and full height, has presence. Six
   small ones in a grid have none. If the image is good, give it the room; if it is not, cut it.
 - **Crop with intent.** Use `object-fit: cover` with an `object-position` chosen per image so the
-  subject sits where the composition needs it (off-centre, on a third, against the text side).
+  subject sits where the composition needs it (off-centre, on a third, against the text side). The
+  first screen's crop shows the subject recognisably (the place with its water and its house, the
+  building), not a texture of it.
+- **Keep a picture's own type inside the crop.** A film, a poster or a product shot with type in it
+  (a title card, a gauge, an interface) is shown at its own ratio, or cropped so its type stays inside
+  the middle 90% at every width (`object-position` per breakpoint, `contain` on narrow screens). A
+  blind cover crop that cuts its words reads as broken.
 - **Let images touch edges.** Full-bleed, or bleeding off one side, reads as designed. An image
   floating with equal margins on all sides reads as placed by default.
 - **Overlap sparingly and on purpose:** a headline whose last line runs over the top edge of the
@@ -203,7 +215,13 @@ real footage with `--video` (section 11).
   for every image on the page.
 - **No frames:** no borders, no shadows, no device mock-ups, no browser chrome around pictures.
 - **Captions** are one short line in the small size and soft ink under the image, left-aligned to its
-  edge. Most images need none.
+  edge. Most images need none. A caption never crosses a piece of work ("Text over pictures", section
+  12).
+- **Each piece of work once.** On a portfolio, each piece appears at full size once and at most once
+  more as a thumbnail. A hero reel is a cut across all the pieces: it does not open on the piece the
+  first panel shows, and it opens on a frame without a client's brand mark (or with that mark smaller
+  than the site's own name). A scene's cards are as many as the distinct pieces, never padded with
+  repeats of the same few.
 - Where each picture goes on the page, how large, and what the phone does with it: section 12.
 
 ## 6. Treatment
@@ -266,6 +284,19 @@ found ones show the world around the client, the drawings show the client's own 
   of tiles, the footer mark. Small doodles scattered around read as filler.
 - **Let it carry the idea through the page,** the way a motif does: the same drawn object returns at
   different scales, the tile grid becomes the opening hours, the map becomes the booking section.
+- **A drawing that explains the work is information.** A plan, a section, an elevation or a diagram of
+  the building or the product is shown whole (`object-fit: contain`, no zoom past 1, crop only the
+  ground and the sky round it), fitting one screen with its caption, and the caption sits outside it or
+  in its margin. Cropped to a stair corner or a beam it explains nothing.
+- **Drawn rooms are read, not glanced at.** When drawings stand in for photographs of the rooms, the
+  table or the house (no `--have`), draw each room as a plan or an interior at least about 360px wide,
+  taking 40% of its frame or more, in ink lines on the paper colour and labelled (bed, window, door).
+  A 150px dark plan on a dark card reads as an app icon, and a bird or a snowfield in the room's slot
+  tells the guest nothing about where they will sleep.
+- **A drawn product is the product's picture.** When the product has no photographs, draw it in the
+  same language as the page's photographs (a precise line or technical drawing beside archive
+  photographs, not flat clip art beside them), in its normal pose, and show it at least once at 60%
+  of the screen's width or more, big enough to judge.
 - **Honesty:** say plainly, in small text near the first drawing or in the footer, that the pictures
   are drawn until photographs exist, if the client might otherwise be taken to be showing real
   products. In your report, list which drawings are placeholders for photography.
@@ -307,7 +338,9 @@ The credits, as `--credits` prints them, in the footer:
 ```
 
 - Always `width` and `height` (or `aspect-ratio` in CSS) so nothing jumps while loading.
-- `loading="lazy"` on everything except the hero image, which gets `fetchpriority="high"`.
+- `loading="lazy"` on everything except the hero image, which gets `fetchpriority="high"`, and except
+  a picture that an entrance reveal or a scene shows as it arrives: give that one `loading="eager"`,
+  or the reveal opens on an empty box.
 - `alt` describes the picture in plain words. Decorative repeats get `alt=""`. The script's suggested
   alt is the archive's title; rewrite it to say what the picture shows.
 - A coloured `background-color` on the image container (the ground or surface tone) so the layout is
@@ -365,6 +398,10 @@ shorter clip. Licences, credits and honesty work exactly as for pictures (sectio
   width="854" height="480" aria-hidden="true"><source src="assets/river.webm" type="video/webm"></video>`.
   No sound and no controls on a decorative loop. `aria-hidden` because it is decoration: whatever the
   clip says that matters belongs in the text beside it.
+- Anything that moves for more than five seconds can be stopped (WCAG 2.2.2): a page of loops carries
+  one visible pause control, and a "Pause films" toggle in the bar is enough for all of them. Footage
+  that is the work itself (a motion designer's films, a studio's reel) also offers a way to watch each
+  piece whole, with sound, behind a play button that opens a player with controls.
 - The poster shows before the clip plays, on slow connections and under reduced motion, so it must
   work as a picture on its own. If the source's still is a slate or a blur, take a frame from the clip
   yourself or use a found picture.
@@ -758,6 +795,13 @@ on the phone only, where the type covers more of the picture.
   up). If it fails, move the text to a calmer part, put it on a solid card in the ground colour, or use
   the scrim in section 6. A fixed navigation that passes over pictures gets a solid band, or hides
   while scrolling down.
+- **A caption never crosses a piece of work.** On a film, a project frame, a drawing or a product
+  shot, the title, the year and the description go in the gutter under or beside it, or in a corner
+  the piece leaves empty; never a band across its middle, translucent or not. The middle is where a
+  title card, a plan or a product puts its subject, so a band there covers the very thing the section
+  presents. A piece that carries its own type or detail (a title card, an interface, a wordmark, a
+  drawing's figures and labels) takes no text over it at all. The phone layout, where the caption
+  falls under the frame, is usually the right desktop layout too.
 
 ### Rules for a generator
 
@@ -789,3 +833,5 @@ on the phone only, where the type covers more of the picture.
 12. **Only display text on a picture:** a headline, one line and one action at most, with contrast
     measured at the text's position across the whole loop. Body text, 16px or more, goes beside or
     under the picture, never on it.
+13. **No text across a piece of work.** The title, year and description of a film, a project, a
+    drawing or a product go under or beside it, or in a corner it leaves empty.

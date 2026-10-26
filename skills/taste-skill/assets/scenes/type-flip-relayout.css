@@ -10,7 +10,12 @@
    Under .is-live the stage is held and absolutely laid out. The live words stay in the ragged setting
    for the whole scene and are only ever transformed; the three settings (ragged, .is-justified,
    .is-index) are applied to a hidden copy (.rl-ghost) that the script measures. The page's tokens are
-   used where they exist: --ground, --ink, --font-display, --font-text, --nav-h. */
+   used where they exist: --ground, --ink, --font-display, --font-text, --nav-h.
+   Weights follow the page: --display-weight (the heading and the blocks; 700 here when the page sets
+   none) and --text-weight (the body; 500 here when the page sets none). A weight the page has not
+   loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="type-flip-relayout"] { font-synthesis-weight: none; }
 
 [data-scene="type-flip-relayout"] {
   --m: 40px;                                            /* side margin */
@@ -48,7 +53,7 @@
 /* The heading: one word, bold, in the display face, large enough to be the section's title. */
 [data-scene="type-flip-relayout"] .rl-label {
   margin: 0;
-  font: 700 var(--rl-label)/1 var(--font-display, inherit);
+  font: var(--display-weight, 700) var(--rl-label)/1 var(--font-display, inherit);
   letter-spacing: -0.03em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -68,7 +73,7 @@
   margin: 56px calc((100% + var(--g)) * (12 - var(--rl-measure)) / 12) 0 0;
   padding: 0;
   list-style: none;
-  font: 700 var(--rl-fs, var(--rl-display))/1 var(--font-display, inherit);
+  font: var(--display-weight, 700) var(--rl-fs, var(--rl-display))/1 var(--font-display, inherit);
   letter-spacing: -0.035em;
   text-transform: uppercase;
   font-kerning: normal;
@@ -106,7 +111,7 @@
 [data-scene="type-flip-relayout"] .rl-body {
   margin: 64px 0 0 auto;
   width: min(calc((100% + var(--g)) * 7 / 12 - var(--g)), 22em);
-  font: 500 var(--rl-text)/1.2 var(--font-text, inherit);
+  font: var(--text-weight, 500) var(--rl-text)/1.2 var(--font-text, inherit);
   letter-spacing: -0.012em;
   text-wrap: pretty;
 }

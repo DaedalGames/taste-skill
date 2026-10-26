@@ -3,7 +3,13 @@
    the two labels beside it, then a feathered disc of light with the answer set in it. Under .is-live:
    the held stage, the claim at the centre, the pool of light behind it. The disc, the halo and the glow
    are flat circles feathered by a blur, never gradients; the scrim is one flat translucent fill of the
-   ground. */
+   ground.
+   Weights follow the page: --display-weight (the falling line; 750 here when the page sets none),
+   --strong-weight (the label and the cue; 500 here when the page sets none) and --text-weight (the
+   second line; 500 here when the page sets none). A weight the page has not loaded is never faked: the
+   nearest loaded one shows. */
+
+[data-scene="letter-physics"] { font-synthesis-weight: none; }
 
 /* The stage colour: --lp-ground when the page or the section sets it; else the page's own --ground when
    the script finds it dark enough (--lp-ground-page); else near-black. */
@@ -56,7 +62,7 @@
 [data-scene="letter-physics"] .lp-a {
   margin: 0;
   max-width: var(--lp-a-max, var(--lp-a-cap));
-  font: 750 calc(var(--lp-a-size) * var(--lp-fit, 1))/var(--lp-lh) var(--lp-display);
+  font: var(--display-weight, 750) calc(var(--lp-a-size) * var(--lp-fit, 1))/var(--lp-lh) var(--lp-display);
   letter-spacing: -.025em;
   color: var(--lp-paper);
   text-align: center;
@@ -141,7 +147,7 @@
   position: relative;
   margin: 0;
   max-width: calc(var(--lp-d) * .6);
-  font: 500 clamp(22px, calc(var(--lp-d) * .047), 32px)/1.25 var(--lp-text);
+  font: var(--text-weight, 500) clamp(22px, calc(var(--lp-d) * .047), 32px)/1.25 var(--lp-text);
   letter-spacing: -.005em;
   color: var(--lp-ink);
   text-align: center;
@@ -159,7 +165,7 @@
   width: max-content;
   max-width: 16ch;
   margin: 0;
-  font: 500 16px/1.35 var(--lp-text);
+  font: var(--strong-weight, 500) 16px/1.35 var(--lp-text);
   color: color-mix(in srgb, var(--lp-paper) 70%, transparent);
 }
 [data-scene="letter-physics"] .lp-label:first-child { grid-column: 1; justify-self: start; }
@@ -252,7 +258,7 @@ html.js [data-scene="letter-physics"].is-live > .scene-stage {
   right: 0;
   bottom: 32px;
   z-index: 3;
-  font: 500 16px/1.35 var(--lp-text);
+  font: var(--strong-weight, 500) 16px/1.35 var(--lp-text);
   color: color-mix(in srgb, var(--lp-paper) 70%, transparent);
   text-align: center;
   pointer-events: none;

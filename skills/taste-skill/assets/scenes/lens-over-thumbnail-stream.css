@@ -3,7 +3,12 @@
    title, then one row per project with its name as a link, its year and category, and every picture in
    full colour. Under .is-live it becomes the held stage: three bands (head, collage, caption), a strip of
    greyscale thumbnails on the lane and the playhead line. Takes the page's --ink, --ground, --accent,
-   --font-display and --font-text when they exist. */
+   --font-display and --font-text when they exist.
+   Weights follow the page: --display-weight (the title, the names and the caption; 500 here when the
+   page sets none) and --text-weight (the years; 400 here when the page sets none). A weight the page
+   has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="lens-over-thumbnail-stream"] { font-synthesis-weight: none; }
 
 [data-scene="lens-over-thumbnail-stream"] {
   --lens-ink: var(--ink, #151515);
@@ -32,7 +37,7 @@
   grid-column: 1 / -1;
   margin: 0;
   font-family: var(--lens-display);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: clamp(44px, 7.2vw, 128px);
   line-height: .9;
   letter-spacing: -.035em;
@@ -60,7 +65,7 @@
   grid-column: 1;
   margin: 0;
   font-family: var(--lens-display);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: clamp(28px, 3.6vw, 52px);
   line-height: 1;
   letter-spacing: -.03em;
@@ -73,7 +78,7 @@
   margin-top: 14px;
   font-family: var(--lens-text);
   font-size: 16px;
-  font-weight: 400;
+  font-weight: var(--text-weight, 400);
   letter-spacing: 0;
   line-height: 1.4;
   font-variant-numeric: tabular-nums;
@@ -285,7 +290,7 @@ html.js [data-scene="lens-over-thumbnail-stream"].is-live > .scene-stage {
   margin: 0;
   min-width: 0;
   font-family: var(--lens-display);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: clamp(44px, 7.2vw, 128px);
   line-height: .88;
   letter-spacing: -.035em;

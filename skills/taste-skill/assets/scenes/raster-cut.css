@@ -5,7 +5,11 @@
    on its striped beat: the last three slats of the A band in turn A, B, A, cut with a clip-path polygon
    (no gradient mask). A B picture stops short of the section's foot, so the next section joins on flat
    --b-ground.
-   Under .is-live the two layers stack on the held stage and the script prints B over A, slat by slat. */
+   Under .is-live the two layers stack on the held stage and the script prints B over A, slat by slat.
+   Weights follow the page: --display-weight (the title and the cut line; 700 here when the page sets
+   none). A weight the page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="raster-cut"] { font-synthesis-weight: none; }
 
 /* the script rewrites the clip on every step: kept out of inheritance, so only the B layer restyles */
 @property --rc-clip { syntax: "*"; inherits: false; }
@@ -90,7 +94,7 @@
   max-width: calc(12ch / var(--rc-fit, 1));
   font-family: var(--font-display, inherit);
   font-size: calc(clamp(56px, 11.5vw, 200px) * var(--rc-fit, 1));
-  font-weight: 700;
+  font-weight: var(--display-weight, 700);
   font-style: normal;
   line-height: .88;
   letter-spacing: -.04em;
@@ -170,7 +174,7 @@ html.js .scene.is-live[data-scene="raster-cut"] > .scene-stage { height: 100lvh;
   white-space: nowrap;
   font-family: var(--font-display, inherit);
   font-size: var(--rc-line-size, 9vw);
-  font-weight: 700;
+  font-weight: var(--display-weight, 700);
   line-height: var(--rc-line-h, 1);
   letter-spacing: -.03em;
   text-transform: uppercase;

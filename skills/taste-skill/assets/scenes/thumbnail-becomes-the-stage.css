@@ -6,7 +6,12 @@
    scene's last frame. With .is-live the stage holds and thumbnail-becomes-the-stage.js writes the geometry
    into custom properties on the elements that use them (--kh-t transform, --kh-o opacity, --kh-clip,
    --kh-win-o, --kh-band); every live default below is the p = 0 value, so nothing depends on a script
-   having run at a given point. */
+   having run at a given point.
+   Weights follow the page: --display-weight (the statement; 500 here when the page sets none) and
+   --strong-weight (the feature names; 600 here when the page sets none). A weight the page has not
+   loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="thumbnail-becomes-the-stage"] { font-synthesis-weight: none; }
 
 [data-scene="thumbnail-becomes-the-stage"] {
   --kh-gutter: var(--margin, clamp(16px, 2.8vw, 40px));
@@ -49,7 +54,7 @@
   margin: 0;
   max-width: none;
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: calc(var(--kh-size) * var(--kh-fit, 1));
   line-height: 1;
   letter-spacing: -0.03em;
@@ -172,7 +177,7 @@
   margin: 0 0 6px;
   font-family: var(--font-text, inherit);
   font-size: 17px;
-  font-weight: 600;
+  font-weight: var(--strong-weight, 600);
   line-height: 1.25;
   letter-spacing: -0.005em;
 }

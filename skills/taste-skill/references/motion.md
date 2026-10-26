@@ -21,7 +21,7 @@ Read this before adding any animation. The static page must already be finished 
 A page that does not move reads as a mock-up; the inspector counts what moves while the page loads and
 scrolls, and fails it under eight elements. The motion layer has five parts:
 
-- **Two or three scroll scenes:** the big, scroll-driven moments award sites are remembered for (a
+- **Two scroll scenes (three only on long, loud pages):** the big, scroll-driven moments award sites are remembered for (a
   camera flying through a field of pictures, a picture that grows from a window to the whole screen,
   type that crosses a held stage, cards that deal out and stack). The direction sheet deals them from
   `library/scenes.json` when the library has scenes for the brief; `references/scenes.md` says how to
@@ -145,7 +145,7 @@ How the study bears on each:
 | Behaviour | Pages of 99 | What it serves | House version |
 | --- | --- | --- | --- |
 | Smooth-scroll library | 67 | A feeling of weight; makes scrubbed scenes easier to build | Optional, through `Stage.smooth()`: Lenis at lerp 0.1-0.14, off for touch and reduced motion |
-| Held (sticky or pinned) stage | 44 | One picture or object carries several claims; chapters | Yes: the scroll scenes (`references/scenes.md`), two or three per page, one to four screens each; other sticky stages three screens at most |
+| Held (sticky or pinned) stage | 44 | One picture or object carries several claims; chapters | Yes: the scroll scenes (`references/scenes.md`), two per page (three only on long, loud pages), about six screens of hold in all; other sticky stages three screens at most |
 | Split text | 40 | Lines and words arriving as they are read; hover rolls | Lines for headings and statements; words only for the ink fill; characters only for a heading of one to three words |
 | Colour by chapter | 34 | Tells chapters apart without padding bands | Yes, as hard cuts at section edges; the header ink follows in 300ms |
 | Scroll-scrubbed scene (camera, object, image sequence) | 26 | Explains a product by moving it | Yes, from the scene library, built on the shared stage with a finished composition for reduced motion |
@@ -958,7 +958,7 @@ hard cuts; monospace HUD labels become small text in the text face.
    or from a line mask; nothing in view stays hidden for more than 900ms; nothing above the fold waits
    for scroll.
 7. **Scroll scenes are where the page is bold.** The big moves come from the scene library
-   (`references/scenes.md`): the direction sheet deals two or three per page, each built on
+   (`references/scenes.md`): the direction sheet deals two per page, each built on
    `assets/scenes/stage.js`, each held for one to four screens, each with a phone version and a
    finished composition. Inside a scene the scene's own numbers apply (a picture may grow from a
    window to the whole screen, type may cross the stage, a camera may fly through a field of

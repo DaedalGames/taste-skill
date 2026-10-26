@@ -37,7 +37,13 @@
    characters at 1440 wide and 28 at 1024. Write it in 5-7 words.
    Layers: ground 0, camera 1 (holding the before context 1, receiver 2, object 3), copy 4. The camera is
    a wrapper the JS makes around those three; it is display: contents here, so the finished composition
-   lays them out as if it were not there. */
+   lays them out as if it were not there.
+   Weights follow the page: --display-weight (the closing line; 500 here when the page sets none),
+   --strong-weight (the labels and the button; 500 here when the page sets none) and --text-weight (the
+   notes, the statement and the list; 400 and 500 here when the page sets none). A weight the page has
+   not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="scrubbed-transformation-sequence"] { font-synthesis-weight: none; }
 
 :where([data-scene="scrubbed-transformation-sequence"]) {
   --xf-before: var(--ground, #10100f);
@@ -132,7 +138,7 @@
 html.js [data-scene="scrubbed-transformation-sequence"] .xf-before:has(> img[data-src]) { display: none; }
 [data-scene="scrubbed-transformation-sequence"] .xf-before p {
   margin: 10px 0 0;
-  font: 400 14px/1.35 var(--font-text, inherit);
+  font: var(--text-weight, 400) 14px/1.35 var(--font-text, inherit);
   color: color-mix(in srgb, var(--xf-ink) 78%, var(--xf-after));
 }
 
@@ -159,7 +165,7 @@ html.js [data-scene="scrubbed-transformation-sequence"] .xf-before:has(> img[dat
   position: absolute;
   top: -0.66em;
   width: 11.5em;
-  font: 500 17px/1.3 var(--font-text, inherit);
+  font: var(--strong-weight, 500) 17px/1.3 var(--font-text, inherit);
   letter-spacing: -0.005em;
   color: var(--xf-ink);
 }
@@ -200,7 +206,7 @@ html.js [data-scene="scrubbed-transformation-sequence"] .xf-before:has(> img[dat
   order: 1;
   margin: 0;
   max-width: 24em;
-  font: 400 20px/1.35 var(--font-text, inherit);
+  font: var(--text-weight, 400) 20px/1.35 var(--font-text, inherit);
   letter-spacing: 0;
   color: color-mix(in srgb, var(--xf-ink) 72%, var(--xf-after));
   text-wrap: balance;
@@ -208,7 +214,7 @@ html.js [data-scene="scrubbed-transformation-sequence"] .xf-before:has(> img[dat
 [data-scene="scrubbed-transformation-sequence"] .xf-closing {
   order: 2;
   margin: 0;
-  font: 500 clamp(36px, 3.6vw, 56px)/1.02 var(--font-display, inherit);
+  font: var(--display-weight, 500) clamp(36px, 3.6vw, 56px)/1.02 var(--font-display, inherit);
   letter-spacing: -0.03em;
   color: var(--xf-ink);
   text-wrap: balance;
@@ -220,7 +226,7 @@ html.js [data-scene="scrubbed-transformation-sequence"] .xf-before:has(> img[dat
   padding: 15px 22px;
   background: var(--xf-accent);
   color: var(--xf-before);
-  font: 500 16px/1 var(--font-text, inherit);
+  font: var(--strong-weight, 500) 16px/1 var(--font-text, inherit);
   text-decoration: none;
 }
 [data-scene="scrubbed-transformation-sequence"] .xf-cta:hover { background: color-mix(in srgb, var(--xf-accent) 82%, var(--xf-ink)); }
@@ -370,7 +376,7 @@ html.js [data-scene="scrubbed-transformation-sequence"] .xf-before:has(> img[dat
 .scene.is-live[data-scene="scrubbed-transformation-sequence"] .xf-closing {
   grid-area: slot;
   align-self: end;
-  font: 500 clamp(34px, 4.4vw, 68px)/1 var(--font-display, inherit);
+  font: var(--display-weight, 500) clamp(34px, 4.4vw, 68px)/1 var(--font-display, inherit);
   letter-spacing: -0.035em;
   color: var(--xf-ink);
 }
@@ -437,7 +443,7 @@ html.js [data-scene="scrubbed-transformation-sequence"] .xf-before:has(> img[dat
     margin: 0;
     padding: 0;
     list-style: none;
-    font: 500 16px/1.3 var(--font-text, inherit);
+    font: var(--text-weight, 500) 16px/1.3 var(--font-text, inherit);
     color: var(--xf-ink);
   }
   /* at most four rows, so the stack stays under the receiver; every label is still read */

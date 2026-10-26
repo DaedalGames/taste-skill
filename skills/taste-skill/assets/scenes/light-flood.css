@@ -24,7 +24,11 @@
    the night).
    .lf--flood ends on the core (the section after starts on --lf-core).
    .lf-soft is one rung of the rack focus: a copy of the two lines the script blurs once to a fixed
-   radius; there are three, most blurred first, all under the h2 (added by the script, live only). */
+   radius; there are three, most blurred first, all under the h2 (added by the script, live only).
+   Weights follow the page: --display-weight (the statement; 500 here when the page sets none). A weight
+   the page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="light-flood"] { font-synthesis-weight: none; }
 
 [data-scene="light-flood"] {
   --lf-c-day: var(--lf-day, var(--ground, #e6ebee));
@@ -126,7 +130,7 @@
   text-align: center;
   font-family: var(--font-display, inherit);
   font-size: 1.5rem;
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-style: normal;
   letter-spacing: -0.035em;
   line-height: 1;

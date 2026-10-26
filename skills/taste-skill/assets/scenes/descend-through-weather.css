@@ -11,7 +11,12 @@
    --below-pos (object-position of the two photographs), --title-stretch (font-stretch of the title),
    --wx-letters (letters in the title, 10 by default: sizes the title when there is no script),
    --tagline-top / --phone-tagline-top (46svh / 54svh: put the tagline on the calmest part of the sky).
-   No gradients: every soft edge is a keyed photograph of cloud or a blurred flat fill. */
+   No gradients: every soft edge is a keyed photograph of cloud or a blurred flat fill.
+   Weights follow the page: --display-weight (the title, the note and the statement; 700 and 600 here
+   when the page sets none). A weight the page has not loaded is never faked: the nearest loaded one
+   shows. */
+
+[data-scene="descend-through-weather"] { font-synthesis-weight: none; }
 
 [data-scene="descend-through-weather"] {
   --wx-mist: var(--mist, #eef2f4);
@@ -78,7 +83,7 @@
   bottom: 5svh;
   margin: 0;
   font-family: var(--wx-display);
-  font-weight: 700;
+  font-weight: var(--display-weight, 700);
   font-stretch: var(--title-stretch, 75%);
   /* the script fits the word to the width (--wx-title-size); without it the size is worked out from
      --wx-letters (the word's length, 10 by default, so any 4-10 letter word fits inside 94vw) */
@@ -115,7 +120,7 @@
   margin: 0;
   padding: 0 6vw;
   font-family: var(--wx-display);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   font-stretch: 90%;
   font-size: clamp(34px, 4.6vw, 84px);
   line-height: 1;
@@ -172,7 +177,7 @@
   margin: 0 6vw 9svh;
   max-width: 88vw;
   font-family: var(--wx-display);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   font-stretch: 90%;
   font-size: clamp(40px, 4.6vw, 76px);
   line-height: 1;

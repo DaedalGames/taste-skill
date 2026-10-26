@@ -75,6 +75,13 @@ below are hand tallies from those notes, so read them as "about").
 - **Rows for long copy:** heading in the left third, body in the right two-thirds, the same split for
   every row on the page.
 - Stagger sparingly: a second line indented by a third so a two-line headline steps across the screen.
+- **Nothing crosses a held word.** In a section that holds one large word while its text scrolls past
+  (one verb at a time, a pinned title), the caption takes its own column or sits below the word's box,
+  never on a path that crosses the word.
+- **An edge falls between lines.** Where a picture's edge meets text (a paragraph interlocked with a
+  full-bleed picture, a headline over a picture's top edge), the edge lands in a line gap, never through
+  a line, and a paragraph sits wholly on a calm area of the picture at 4.5:1 or wholly off it. Half a
+  paragraph on paper and half on sky reads as an accident.
 
 ## 4. Empty space
 
@@ -169,7 +176,9 @@ are from the study of 97 Sites of the Day (October 2026).
   docked at the foot, the upper right holds something (the picture or film, one fact, the action) or
   the name grows up to meet them; in testing, 60% of a first screen left as plain ground under the
   navigation read as a hole, and the inspector now warns when one empty block takes 28% of the first
-  screen or more.
+  screen or more. In an inset-frame hero the column opposite the frame is closed by the name (spanning
+  the column, or raised to meet the top) or by a second element; a lone sentence floating in it does
+  not close it.
 - A display line fitted to the width is fitted by measurement (a small script that sets its size from
   the content box, or SVG text with `textLength`), never by a size guessed for one face: a name that
   starts on the margin and runs a few pixels off the other edge reads as a mistake.
@@ -215,14 +224,37 @@ points this way, including several above 7.5.
   masks carry it.
 - **No two neighbours share a layout.** Use the shape of each dealt blueprint (list, split, statement,
   full-bleed, mosaic, table, strip, pinned …). Count them in the screenshot; a shape used three times
-  is the template showing.
-- **Alternate dense and empty, image and type, light and dark** so the scroll has rhythm.
+  is the template showing. Three or more full-bleed picture screens in a row, each a picture with a
+  strip of text, count as one shape used three times, whichever sections they belong to.
+- **Take a blueprint's geometry, never its props.** A blueprint written for a café brings its
+  opening-hours bar, its scalloped menu sheet and its visit card; on an architecture practice the list
+  of buildings becomes a drawing register or a schedule, not a menu. Ask of every ornament whether it
+  would appear on this trade's own site.
+- **The work is shown whole.** A piece of work (a film, a building's drawing, a plan, a product) is
+  seen whole and large at least once: it fits one screen with its caption (100svh less the caption),
+  and the caption sits under or beside it, never across it (`imagery.md`, Text over pictures).
+- **Tables and price lists.** Size columns to their content (`table-layout: auto`, or `fr` ratios from
+  the content) and keep what is read together side by side (the time beside the price), never four
+  equal columns with the price alone at the far edge. A table whose cells wrap at some width switches
+  to its stacked layout at that width, not only below the phone breakpoint. In a stacked order form the
+  running total sits above the primary action, or rides in the button ("Pre-order · €4,630").
+- **Alternate dense and empty, image and type, light and dark** so the scroll has rhythm. A long page
+  on one dark ground still gets one lit or tinted section (the price list, the booking card on the
+  ink colour) as its planned exception; twenty screens of the same graphite read as one long screen.
 - **A repeated module is for archives only** (a work index, a menu, a schedule). Anywhere else,
   repetition reads as a kit.
 - **Break the system once.** After the page has established its rule, one planned exception (a single
   centred line, one inverted section, one image at a different scale) is what makes the rule visible.
 - **Short pages are fine.** A quarter of the studied sites are one or two screens. Do not add sections
   to seem complete; each one must carry a claim (see `copy.md` §1).
+- **Long pages have a budget.** The study's median page is 8.7 screens at 1440 with 575 words (the
+  middle half up to 14.4 screens; `research.md`). Keep a page to about 8-12 screens, and to about 12-16
+  with scroll scenes, which replace their sections' content rather than adding screens to it
+  (`scenes.md` §7). Under about 45 words a screen the content is stretched (§10, "thin content
+  stretched over many screens"): shorten the holds, merge the full-bleed screens that repeat one shape,
+  or cut a section. In testing, pages of 26-28 screens lost on content and usability whatever their
+  scenes did. However the page opens, the first piece of work at full size is on screen by about the
+  fourth screen.
 
 ## 7. Navigation
 
@@ -233,8 +265,20 @@ points this way, including several above 7.5.
 - If it stays fixed, it must never sit on top of content: check every scroll position in the
   screenshots, especially on the phone. Floating pill bars are where the panel most often recorded a
   nav covering text.
+- **On a long page it stays in reach.** Past about ten screens at 1440 (a page with scroll scenes
+  always is), the navigation, or at least the one action, can be reached from every screen. The plain
+  form: the bar scrolls away with the hero, stays hidden while the visitor scrolls down and comes back
+  on the first scroll up, on a solid band of the ground colour where it passes pictures and scenes
+  (never glass, never a pill). Or the wordmark and the one action stay fixed in two corners, each on a
+  solid ground. A hero that animates its bar away hands it on to that bar. In testing, three long
+  pages kept their navigation only inside the hero, leaving the booking twenty screens away with no
+  way back, and the blind judges named it on all three. Scenes that can keep their type clear of a
+  fixed bar take its selector as an option (`scenes.md` §4).
+- **Links land on what they name.** "Buildings" goes to the buildings, not to a scene that introduces
+  them; a link into a held scene points at the section that holds the content it names.
 - On a phone: wordmark and one action in view; the links go in a simple full-screen sheet opened by a
-  text button ("Menu"), or move to the footer when there are only three.
+  text button ("Menu"), or move to the footer when there are only three. The open sheet carries the
+  page's one action and the email address too, so opening the menu never hides the way to act.
 - Navigation is small furniture, however it is drawn. On desktop it takes no more than about a tenth
   of the first screen; on a phone it is one row. A blueprint that builds the navigation as a column of
   colour blocks or a stack of tabs gets that treatment on desktop only, and collapses to one row on
@@ -249,6 +293,9 @@ points this way, including several above 7.5.
   in the panel's notes only as criticism.
 - The full-width name is strong but already a studio habit; use it when the direction is name-led,
   otherwise prefer the blueprint dealt for the footer.
+- The last section carries a closing line at display size (the action as a statement, or the name),
+  never a label-sized heading: its title is at least the size of the other section headings. A card
+  set over a closing photograph sits on the page margin like everything else.
 - Put the practical facts (address, hours, email, legal line) in the text face at a readable size, on
   the same anchor lines as the rest of the page.
 

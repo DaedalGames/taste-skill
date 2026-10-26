@@ -9,7 +9,13 @@
    reel (names left, the picture drum on the right half running off the edge, the caption in a notch at
    the front picture's foot) | stack (a full-width picture window above the names, phones and portrait
    screens). Without the script, pictures are keyed on the <img>.
-   Page tokens: --ground, --ink, --accent (count number, accent highlight), --font-display. */
+   Page tokens: --ground, --ink, --accent (count number, accent highlight), --font-display.
+   Weights follow the page: --display-weight (the title, the names and the closing line; 500 and 650
+   here when the page sets none), --strong-weight (the button; 600 here when the page sets none) and
+   --text-weight (the meta line and the captions; 400 and 500 here when the page sets none). A weight
+   the page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="scroll-turned-drum"] { font-synthesis-weight: none; }
 
 /* What the script changes every frame: the drums' turn, each face's opacity, each caption's lit state. Not
    inherited, so writing one restyles that one element and not everything inside it. */
@@ -40,7 +46,7 @@
   max-width: 22ch;
   margin: 0 auto;
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: clamp(28px, 4vw, 64px);
   line-height: 1.06;
   letter-spacing: -0.03em;
@@ -55,7 +61,7 @@
 [data-scene="scroll-turned-drum"] .drum-item,
 [data-scene="scroll-turned-drum"] .drum-measure-name {
   font-family: var(--font-display, inherit);
-  font-weight: 650;
+  font-weight: var(--display-weight, 650);
   letter-spacing: -0.02em;
   font-kerning: normal;
 }
@@ -73,7 +79,7 @@
   display: inline-block;
   margin-left: 0.7em;
   font-size: clamp(15px, 1.15vw, 18px);
-  font-weight: 400;
+  font-weight: var(--text-weight, 400);
   letter-spacing: 0;
   color: color-mix(in srgb, var(--drum-ink) 66%, transparent);
 }
@@ -123,7 +129,7 @@
   max-width: 22ch;
   margin: 0 0 28px;
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: clamp(26px, 2.8vw, 46px);
   line-height: 1.08;
   letter-spacing: -0.025em;
@@ -136,7 +142,7 @@
   background: var(--drum-ink);
   color: var(--drum-ground);
   font-size: clamp(17px, 1.3vw, 20px);
-  font-weight: 600;
+  font-weight: var(--strong-weight, 600);
   line-height: 1.2;
   text-decoration: none;
 }
@@ -174,7 +180,7 @@
   line-height: 1;
   white-space: nowrap;
 }
-[data-scene="scroll-turned-drum"] .drum-measure-cap { font-family: var(--font-display, inherit); font-weight: 500; font-variant-numeric: tabular-nums; }
+[data-scene="scroll-turned-drum"] .drum-measure-cap { font-family: var(--font-display, inherit); font-weight: var(--text-weight, 500); font-variant-numeric: tabular-nums; }
 
 /* ---------- the live drum ---------- */
 
@@ -282,7 +288,7 @@
   display: block;
   grid-row: 1;
   font-size: var(--drum-cap-fs, 22px);
-  font-weight: 500;
+  font-weight: var(--text-weight, 500);
   line-height: 1.2;
   letter-spacing: 0;
   white-space: nowrap;
@@ -303,7 +309,7 @@
   max-width: calc(50% - 24px);
   margin: 0;
   font-size: var(--drum-cap-fs, 15px);
-  font-weight: 500;
+  font-weight: var(--text-weight, 500);
   line-height: 1.3;
   white-space: nowrap;
 }
@@ -379,7 +385,7 @@
   background: var(--drum-ground);
   color: var(--drum-ink);
   font-size: var(--drum-cap-fs, 22px);
-  font-weight: 500;
+  font-weight: var(--text-weight, 500);
   line-height: 1.15;
   white-space: nowrap;
   opacity: var(--drum-cap, 1);

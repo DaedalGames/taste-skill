@@ -17,7 +17,11 @@
                      keeps only that much of it
      --sl-word-ink   poster word colour (#f4f4f1)
      --sl-scrim      a flat translucent fill over the whole picture, for a word on a light photograph
-     --sl-flash      the lock flash colour (#fff) */
+     --sl-flash      the lock flash colour (#fff)
+   Weights follow the page: --display-weight (the headline and the words; 600 here when the page sets
+   none). A weight the page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="scatter-and-lock"] { font-synthesis-weight: none; }
 
 [data-scene="scatter-and-lock"] {
   --sl-bg: var(--ink, #0e0e0c);
@@ -42,7 +46,7 @@
 [data-scene="scatter-and-lock"] .sl-headline {
   margin: 0;
   font-family: var(--font-display, inherit);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   font-size: clamp(36px, 4.4vw, 72px);
   line-height: 1.02;
   letter-spacing: -0.025em;
@@ -79,7 +83,7 @@
   /* --sl-word-dx (set by the script, in cqi) moves the word a fraction of a letter off the grid lines */
   transform: translate(calc(-50% + var(--sl-word-dx, 0) * 1cqi), -50%);
   font-family: var(--font-display, inherit);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   font-size: var(--sl-word-size);
   line-height: 1;
   letter-spacing: 0.01em;

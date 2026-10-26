@@ -5,7 +5,12 @@
    two offset windows, the merge and the push (see the .js file for the DOM and the options).
    Page tokens: --ground (shutter and section), --ink (title, caption), --font-display (title, word),
    --sw-light (type on the photo; the script picks the lighter of ground and ink when it is unset),
-   --sw-focus (object-position of the photo, default 50% 50%). */
+   --sw-focus (object-position of the photo, default 50% 50%).
+   Weights follow the page: --display-weight (the title and the word; 650 and 800 here when the page
+   sets none) and --strong-weight (the link; 600 here when the page sets none). A weight the page has
+   not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="shaped-window-over-fixed-world"] { font-synthesis-weight: none; }
 
 [data-scene="shaped-window-over-fixed-world"] {
   position: relative;
@@ -65,7 +70,7 @@
 [data-scene="shaped-window-over-fixed-world"] .sw-title {
   margin: 0;
   font-family: var(--font-display, inherit);
-  font-weight: 650;
+  font-weight: var(--display-weight, 650);
   font-size: clamp(36px, 4.4vw, 72px);
   line-height: 0.95;
   letter-spacing: -0.02em;
@@ -96,7 +101,7 @@
   top: calc(40% - var(--sw-cap-gap));
   margin: 0;
   font-family: var(--font-display, inherit);
-  font-weight: 800;
+  font-weight: var(--display-weight, 800);
   font-stretch: 62%;
   text-transform: uppercase;
   /* fitted to 88% of the width, but held to the upper band of the window so it stays on the sky */
@@ -147,7 +152,7 @@
 [data-scene="shaped-window-over-fixed-world"] .sw-lede p { margin: 0 0 0.8em; text-wrap: pretty; }
 [data-scene="shaped-window-over-fixed-world"] .sw-link {
   color: inherit;
-  font-weight: 600;
+  font-weight: var(--strong-weight, 600);
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.22em;

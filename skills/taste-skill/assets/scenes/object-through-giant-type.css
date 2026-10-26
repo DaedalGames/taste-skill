@@ -6,7 +6,12 @@
      the object inside the middle line, the lines parted just around it. The script places it.
    - .is-live: the held stage the timeline runs on.
    Colours and faces come from the page (--ground, --ink, --font-display, --font-text); a variable display
-   face is set at --ott-stretch on desktop (default 100%) and --ott-stretch-phone on the phone (75%). */
+   face is set at --ott-stretch on desktop (default 100%) and --ott-stretch-phone on the phone (75%).
+   Weights follow the page: --display-weight (the quote; 600 here when the page sets none) and
+   --text-weight (the note and the credit; 400 here when the page sets none). A weight the page has not
+   loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="object-through-giant-type"] { font-synthesis-weight: none; }
 
 .ott {
   --ott-ground: var(--ground, #eeeae3);
@@ -36,7 +41,7 @@
   max-width: 100%;
   font-family: var(--font-display, inherit);
   font-size: var(--ott-F);
-  font-weight: var(--ott-weight, 600);
+  font-weight: var(--ott-weight, var(--display-weight, 600));
   font-stretch: var(--ott-stretch, 100%);
   line-height: var(--ott-lh);
   letter-spacing: -.01em;
@@ -70,14 +75,14 @@
   z-index: 3;
   max-width: 32ch;
   margin: 0;
-  font: 400 16px/1.4 var(--font-text, inherit);
+  font: var(--text-weight, 400) 16px/1.4 var(--font-text, inherit);
 }
 .ott-credit {
   order: 3;
   align-self: flex-end;
   max-width: 32ch;
   margin: calc(var(--ott-F) * .5) 0 0;
-  font: 400 16px/1.4 var(--font-text, inherit);
+  font: var(--text-weight, 400) 16px/1.4 var(--font-text, inherit);
   text-align: right;
 }
 .ott-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

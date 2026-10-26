@@ -14,7 +14,12 @@
    Tokens: --font-display, --chs-ground (stage ground), --chs-fill (progress bars), and per article
    --plate-bg, --scrim (the band's flat black, .45; .3-.4 suits a calm mid-toned sea, a bright or busy one
    needs .45-.55: check every body line at 4.5:1), --scrim-sky (above the horizon, 0), --obj-pos,
-   --obj-pos-phone, --inset-pos, --inset-zoom. */
+   --obj-pos-phone, --inset-pos, --inset-zoom.
+   Weights follow the page: --display-weight (the heading and the chapter titles; 600 here when the page
+   sets none) and --strong-weight (the count; 500 here when the page sets none). A weight the page has
+   not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="pinned-chapter-switcher"] { font-synthesis-weight: none; }
 
 [data-scene="pinned-chapter-switcher"] {
   --chs-gutter: clamp(20px, 5vw, 80px);
@@ -33,7 +38,7 @@
   max-width: 22ch;
   font-family: var(--font-display, inherit);
   font-size: clamp(30px, 3.4vw, 48px);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   line-height: 1.04;
   letter-spacing: -0.025em;
   text-wrap: balance;
@@ -134,7 +139,7 @@
   max-width: 11ch;
   font-family: var(--font-display, inherit);
   font-size: clamp(52px, 8vw, 128px);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   line-height: 0.92;
   letter-spacing: -0.035em;
   color: #fff;
@@ -249,7 +254,7 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
 [data-scene="pinned-chapter-switcher"].is-live .chs-heading,
 [data-scene="pinned-chapter-switcher"].is-live .chs-count {
   font-size: 19px;
-  font-weight: 500;
+  font-weight: var(--strong-weight, 500);
   line-height: 1.25;
   letter-spacing: -0.01em;
 }

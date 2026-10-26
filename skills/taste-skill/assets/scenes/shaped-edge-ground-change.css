@@ -29,7 +29,12 @@
 
    The headline is set in --ink straight on the sky, with no scrim: that needs open, even sky behind it.
    For any other photograph put the class seg--band on the section (or pass hero: "band"): the headline
-   block gets a flat translucent fill and white type. */
+   block gets a flat translucent fill and white type.
+   Weights follow the page: --display-weight (the headline, the words on the arch, the statement and the
+   chapter title; 500 here when the page sets none). A weight the page has not loaded is never faked:
+   the nearest loaded one shows. */
+
+[data-scene="shaped-edge-ground-change"] { font-synthesis-weight: none; }
 
 [data-scene="shaped-edge-ground-change"] {
   --seg-cap: min(50vw, 80svh);
@@ -85,7 +90,7 @@
 [data-scene="shaped-edge-ground-change"] .seg-hero__title {
   margin: 0;
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: var(--seg-hero-size);
   line-height: 0.9;
   letter-spacing: -0.01em;
@@ -143,7 +148,7 @@
   height: 100%;
   overflow: visible;
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: var(--seg-arc-size);
   letter-spacing: 0.01em;
   text-transform: uppercase;
@@ -188,7 +193,7 @@
   margin: 0 auto;
   max-width: 13em;
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: var(--seg-say-size);
   line-height: 1.02;
   letter-spacing: -0.005em;
@@ -204,7 +209,7 @@
 [data-scene="shaped-edge-ground-change"] .seg-title {
   margin: 0;
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: var(--seg-title-size);
   line-height: 0.92;
   letter-spacing: -0.01em;
@@ -254,7 +259,7 @@ html:not(.js) [data-scene="shaped-edge-ground-change"] svg.seg-arc { font-size: 
   white-space: normal;
   max-width: min(26ch, 100%);
   font-family: var(--font-display, inherit);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   font-size: var(--seg-flat-size);
   line-height: 1;
   letter-spacing: 0.01em;
@@ -317,7 +322,7 @@ html:not(.js) [data-scene="shaped-edge-ground-change"] svg.seg-arc { font-size: 
     white-space: normal;
     max-width: min(26ch, 100%);
     font-family: var(--font-display, inherit);
-    font-weight: 500;
+    font-weight: var(--display-weight, 500);
     font-size: var(--seg-flat-size);
     line-height: 1;
     text-transform: uppercase;

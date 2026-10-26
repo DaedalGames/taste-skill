@@ -82,6 +82,13 @@ tool you can call, or nothing. Do not plan around pictures you do not have. Noth
 rarely nothing at all: the subject's city, street, materials and history are in open archives and
 museums, free to use with a credit (step 6, `scripts/assets.mjs`).
 
+Name the pictures a visitor needs before deciding: for a place to stay, the rooms, the house and the
+table; for food, the plates and the room; for a product, the product; for a practice, its work. When
+the project has none of them, say in the report that they are missing (or ask, when the user is there
+to answer) and choose a direction that does not promise them. Their slots are then drawn from the
+subject (the room's plan at a size that can be read, the product in its normal pose;
+`references/imagery.md` §8), never filled with the place's birds or weather.
+
 If the request is vague, decide and state your reading in one line instead of asking. Ask only when a
 missing fact blocks the work (for example, no product name).
 
@@ -189,14 +196,19 @@ was recorded as "none beyond the standard formula".
 made from the idea: pick a wood and see the chair in it; type your name and see it cut in the
 foundry's letters; set the loan and read the real monthly figure; see whether the hut's stove is lit
 right now and how long until the last ferry; choose a size and see it against the room. In blind tests every winning page had one and the jurors named it first. Rules: it uses the subject's real content, it works on a phone with a thumb, it has a plain
-fallback without script, it never blocks reading, and it is one thing, not a playground. It is
-built in step 6 as part of the page, not added as motion in step 9.
+fallback without script, it never blocks reading, and it is one thing, not a playground. Its result
+stays in view while the visitor works the controls, at every width (on a phone, a small sticky result
+bar if the controls run long), and every heading beside it is true for every state it can reach. It is
+built in step 6 as part of the page, not added as motion in step 9; when it is built, drive every
+control to its extremes and look at the widest result at 1440, 768 and 390, since the inspector only
+sees the default state.
 
 **The scenes carry the idea too.** The scroll scenes on the sheet are devices waiting for a subject.
 Decide what each one shows from your inventory before building: the fly-through passes through this
 studio's own title cards, the route is the road this shipment really takes, the picture that opens to
 the whole screen is the room the guest will wake up in. A scene filled with pictures that could belong
-to anyone is a screensaver.
+to anyone is a screensaver, and one still filled with its demo's town, photographs or words is not
+started.
 
 ### 5. Write the words
 
@@ -234,9 +246,11 @@ not finished. Order of work:
 2. **The hero, exactly as the blueprint describes it,** at desktop and at phone width. Get the big
    thing big and the small things small before anything else exists.
 3. **Each section from its blueprint,** with this project's content. Keep the geometry, change the
-   subject. Neighbouring sections must not share a layout. **Carry the idea into every section,**
-   pricing, FAQ and footer included: the commonest failure in the study, even among good sites, is a
-   distinctive first screen followed by stock blocks.
+   subject, and leave the props behind: a café blueprint's opening-hours bar, scalloped menu sheet and
+   visit card stay with cafés, and on an architecture practice its list of buildings becomes a
+   drawing register, not a menu. Neighbouring sections must not share a layout. **Carry the idea into
+   every section,** pricing, FAQ and footer included: the commonest failure in the study, even among
+   good sites, is a distinctive first screen followed by stock blocks.
 4. **Imagery,** in this order of preference:
    1. the project's own;
    2. generated, if you have an image tool;
@@ -261,9 +275,10 @@ not finished. Order of work:
    When the project has footage or a real picture of its own process or product, the first screen
    shows it, large (about 40% of the screen or more). Never write a sentence on the page about where
    the pictures come from or what they are not ("none of these shows our bar"): a caption says what
-   the picture is, and the credit line sits small in the footer. A portfolio whose work is invented
-   for the brief draws each piece as a finished still of that work (its title card with its own type,
-   an end frame, a poster), with real detail, never as a pictogram of the client's product.
+   the picture shows and sits under or beside it, never across a piece of work, and the credit line
+   sits small in the footer. A portfolio whose work is invented for the brief draws each piece as a
+   finished still of that work (its title card with its own type, an end frame, a poster), with real
+   detail, never as a pictogram of the client's product.
 
    **The floor, which the inspector checks:** at least four real pictures on the page, usually six to
    twelve (photographs, archival images, maps, engravings, footage, raster artwork; for software, its
@@ -279,10 +294,15 @@ not finished. Order of work:
    moments, the camera that flies through the work, the picture that opens to the whole screen, the
    word that buckles under the scroll. Copy the shared stage and the scene's files from
    `<skill>/assets/scenes/`, fill the scene with this project's own pictures and words, and set the
-   page's tokens so it takes the page's look. A scene is composition: it decides how long the page is
-   and what each screen shows, so it is built now and seen in every look round, not added at the end.
-   `references/scenes.md` says how to put one on a page, fill it, fit it and check it;
-   `assets/scenes/demo/<id>.html` is a working example of each.
+   page's tokens so it takes the page's look. `assets/scenes/demo/<id>.html` is a working example of
+   each, and its content is a placeholder: every picture, word and drawn thing in your scene comes from
+   this subject, and a route map shows the real route, coast and relief. A scene whose pictures or
+   drawings are still the demo's, or the stand-in a script draws when it is given nothing (the route's
+   bare ground with only the road), is unfinished. A scene is composition: it decides how long the page is and what
+   each screen shows, so it is built now and seen in every look round, not added at the end. It
+   replaces the content of the section it carries, never adds screens of nothing in front of it, and a
+   page with scenes still has a length budget: about 12-16 screens at 1440 in all, of which the scenes
+   hold about six. `references/scenes.md` says how to put one on a page, fill it, fit it and check it.
 7. **Fullness.** Look at each desktop screen as a poster: one dominant thing and the content it
    carries. A screen that is mostly empty ground is an underbuilt section, not a rest; one deliberate
    rest per page is the limit, and the inspector fails a page with two or more near-empty screens.
@@ -295,11 +315,16 @@ not finished. Order of work:
    desktop. Every section the visitor came for opens with a heading that names it, and the first
    screen carries the page's title in an `h1`. These are what readers name first when a page looks
    wrong ("no clear title", "random empty space", "everything is pushed to one side"), and the
-   inspector measures each of them.
+   inspector measures each of them. On a page longer than about ten screens at 1440 (a page with
+   scenes always is), the navigation stays in reach after the hero: the plain bar hides while the
+   visitor scrolls down and comes back on the first scroll up, on a solid band of the ground where it
+   passes pictures, or at least the one action stays fixed in a corner. A hero that animates its bar
+   away hands it on to that bar (`references/layout.md` §7).
 9. **States and semantics.** Real links and buttons, visible focus, alt text, a phone layout that is
-   its own composition. Every control, the live thing included, works from the keyboard alone in
-   reading order and has an accessible name: its visible label, or `aria-label` when it shows only an
-   icon.
+   its own composition. Every navigation and skip link lands on the section that holds what it names,
+   never on a scene that only introduces it. Every control, the live thing included, works from the
+   keyboard alone in reading order and has an accessible name: its visible label, or `aria-label` when
+   it shows only an icon.
 
 Read `references/type.md`, `references/colour.md` and `references/layout.md` when you need the detail
 behind a decision; the laws below are the short form.
@@ -370,6 +395,8 @@ Do not report until all of these are true; each one was skipped in a test run th
   (desktop, phone, reduced motion).
 - A stranger reading the first screen for five seconds can say what this is and what to do.
 - Every section has a heading; the margins match on both sides; no stretch of the page is empty.
+- The page is about 16 screens or fewer at 1440 (the inspector's header counts them), and the
+  navigation or the one action can be reached from every screen.
 - The critique of your last round is written down in the shape of `references/critique.md` §4.
 
 Tell the user, briefly: the direction dealt (name and seed) and any redraws with reasons; the idea
@@ -465,7 +492,8 @@ Short form. Numbers are from the study unless marked as house style.
 - Buttons: flat, one fill colour, either square-cornered or fully round, decided once (top sites: 52%
   square, 23% pill; the 9–16px "soft" radius is the weak-site default). Most strong heroes have no
   button at all, or one.
-- Navigation: wordmark, three to five plain links, one action. No bar chrome.
+- Navigation: wordmark, three to five plain links, one action. No bar chrome. On a long page it stays
+  in reach: the plain bar returns on scroll up, or the one action stays fixed.
 - A control explains how to use it by its form, its label and its place. When it seems to need a
   sentence on how to operate it, redesign the control instead of adding the sentence. What a field
   accepts is different. First remove the limit where you can: a date picker, or a parser that takes

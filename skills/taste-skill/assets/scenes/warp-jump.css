@@ -2,7 +2,12 @@
    Without .is-live (no script, a failed CDN, reduced motion, phone 'rest') the section is the finished
    composition: the anchor large with its endings under it, the principles in a grid, the final line in a
    full-width accent panel. With script and no motion, warp-jump.js draws the field once, still, behind
-   the statement. Under .is-live the stage is held and everything sits on one centred stage. */
+   the statement. Under .is-live the stage is held and everything sits on one centred stage.
+   Weights follow the page: --display-weight (the statement; 800 here when the page sets none) and
+   --strong-weight (its endings at rest, the points, the lead and the count; 600 and 500 here when the
+   page sets none). A weight the page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="warp-jump"] { font-synthesis-weight: none; }
 
 [data-scene="warp-jump"] {
   --warp-ground: var(--ground-dark, #050607);
@@ -22,7 +27,7 @@
 [data-scene="warp-jump"] :is(.warp-anchor, .warp-tail, .warp-final) {
   margin: 0;
   font-family: var(--font-display, inherit);
-  font-weight: 800;
+  font-weight: var(--display-weight, 800);
   font-stretch: var(--warp-stretch, 112%);
   font-size: var(--warp-size);
   line-height: 0.9;
@@ -54,7 +59,7 @@
   max-width: 30ch;
   margin: 0.3em auto 0;
   font-family: var(--font-text, inherit);
-  font-weight: 600;
+  font-weight: var(--strong-weight, 600);
   font-stretch: normal;
   font-size: clamp(22px, 2.4vw, 36px);
   line-height: 1.2;
@@ -82,7 +87,7 @@
   border-radius: 2px;
   background: color-mix(in srgb, var(--warp-ink) 7%, var(--warp-ground));
   font-size: clamp(18px, 1.55vw, 26px);
-  font-weight: 600;
+  font-weight: var(--strong-weight, 600);
   line-height: 1.2;
   color: var(--warp-ink);
   text-wrap: pretty;
@@ -120,7 +125,7 @@
   border-radius: 2px;
   background: var(--warp-plate);
   font-size: clamp(20px, 2vw, 30px);
-  font-weight: 600;
+  font-weight: var(--strong-weight, 600);
   line-height: 1.25;
   color: var(--warp-ink);
 }
@@ -271,7 +276,7 @@
   z-index: 4;
   margin: 0;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: var(--strong-weight, 500);
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
   color: var(--warp-ink);

@@ -6,11 +6,14 @@
    Under .is-live: the held stage, where the camera runs over the ground and the cards fly out of the
    vanishing point (script).
    Tokens sit in :where() so a page overrides any of them with a plain `.fly { --fly-stage: … }`.
+   Weights come from the page: --display-weight (statements, captions) and --text-weight (the count); set
+   them to weights the page loads, or the browser draws the nearest weight it has (fake bold is off).
    Where the vanishing point sits decides how wide the statement box may be: at the default 56svh keep
    --fly-copy-w within 32vw (16vw each side of the axis, which no card reaches); with the vanishing point
    at 68svh or lower the cards only rise to the box when they are far out at the sides, so it may go to
    56vw for a larger statement. */
 
+[data-scene="depth-card-flythrough"] { font-synthesis-weight: none; }
 :where(.scene[data-scene="depth-card-flythrough"]) {
   --fly-stage: #8a8e91;                       /* the backdrop's horizon colour: ground of the finished wall */
   --fly-fog: var(--fly-stage);                /* haze over far cards */
@@ -77,17 +80,17 @@
 .scene[data-scene="depth-card-flythrough"] .fly__cap {
   position: absolute; left: 0; bottom: 100%;
   padding: .32em .6em .36em;
-  font: 500 16px/1.1 var(--fly-font);
+  font: var(--display-weight, 500) 16px/1.1 var(--fly-font);
   letter-spacing: -.005em;
   background: var(--fly-chip); color: var(--fly-chip-ink);
   white-space: nowrap;
 }
 .scene[data-scene="depth-card-flythrough"] .fly__lines { margin: 0; padding: 0; list-style: none; }
 .scene[data-scene="depth-card-flythrough"] .fly__line {
-  margin: 0; font-weight: 500; letter-spacing: -.022em; text-wrap: balance; color: var(--fly-ink);
+  margin: 0; font-weight: var(--display-weight, 500); letter-spacing: -.022em; text-wrap: balance; color: var(--fly-ink);
 }
 .scene[data-scene="depth-card-flythrough"] .fly__count {
-  margin: 0; font: 400 16px/1.2 var(--fly-font); font-variant-numeric: tabular-nums; color: var(--fly-ink);
+  margin: 0; font: var(--text-weight, 400) 16px/1.2 var(--fly-font); font-variant-numeric: tabular-nums; color: var(--fly-ink);
 }
 .scene[data-scene="depth-card-flythrough"].fly--no-count .fly__count { display: none; }
 .scene[data-scene="depth-card-flythrough"] .fly__sr { display: none; }   /* the script's copy of the statements for screen readers */
@@ -211,7 +214,7 @@
 .scene[data-scene="depth-card-flythrough"].is-live .fly__tag {
   position: absolute; left: 0; top: 0;
   padding: .32em .6em .36em;
-  font: 500 clamp(16px, 1.15vw, 20px)/1.1 var(--fly-font);
+  font: var(--display-weight, 500) clamp(16px, 1.15vw, 20px)/1.1 var(--fly-font);
   letter-spacing: -.005em;
   background: var(--fly-chip); color: var(--fly-chip-ink);
   white-space: nowrap; opacity: 0;

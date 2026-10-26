@@ -1,7 +1,11 @@
 /* tasteskill / scenes / instrument-dial-stage.css — the instrument dial stage (see instrument-dial-stage.js
    for the DOM and the options). By default: the finished composition that reduced motion, no script and
    a phone set to 'rest' show, every item a small stage of its own (its note, its name standing on its
-   ground, its picture and its number on that ground). Under .is-live: the held dial. */
+   ground, its picture and its number on that ground). Under .is-live: the held dial.
+   Weights follow the page: --display-weight (the title, the word and the value; 600 and 500 here when
+   the page sets none). A weight the page has not loaded is never faked: the nearest loaded one shows. */
+
+[data-scene="instrument-dial-stage"] { font-synthesis-weight: none; }
 
 [data-scene="instrument-dial-stage"] {
   --idl-ink: var(--ink, #111);
@@ -29,7 +33,7 @@
 [data-scene="instrument-dial-stage"] .idl-title {
   margin: 0;
   font-family: var(--idl-display);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   font-size: clamp(36px, 4.6vw, 72px);
   line-height: 1;
   letter-spacing: -0.025em;
@@ -63,7 +67,7 @@
   grid-column: 1 / -1;
   margin: 0;
   font-family: var(--idl-display);
-  font-weight: 600;
+  font-weight: var(--display-weight, 600);
   font-size: min(clamp(48px, 7vw, 120px), 16.5cqi);
   line-height: 1;
   letter-spacing: -0.02em;
@@ -102,7 +106,7 @@
 [data-scene="instrument-dial-stage"] .idl-value {
   font-family: var(--idl-display);
   font-size: clamp(28px, 7.4cqi, 52px);
-  font-weight: 500;
+  font-weight: var(--display-weight, 500);
   line-height: 1;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;

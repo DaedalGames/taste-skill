@@ -2,7 +2,15 @@
    Default: the finished composition, a vertical column of the same rooms in the same colour order,
    everything visible (no script, reduced motion, failed CDN). .rw-v: that column with small scrubbed
    moves (phones, portrait, narrow screens). .rw-walk: the pinned sideways walk (wide landscape).
-   Colours and faces come from the page when it defines them. */
+   Colours and faces come from the page when it defines them.
+   Weights follow the page: --display-weight (the display words; 400 here when the page sets none),
+   --strong-weight (the mark and the chip; 600 and 500 here when the page sets none) and --text-weight
+   (the third value; 400 here when the page sets none). The values strip alternates a thin and a heavy
+   cut of the display face (--rw-thin 150, --rw-heavy 900): set them to the lightest and heaviest
+   weights the page loads. A weight the page has not loaded is never faked: the nearest loaded one
+   shows. */
+
+[data-scene="room-walk-track"] { font-synthesis-weight: none; }
 
 [data-scene="room-walk-track"] {
   --rw-paper: var(--paper, var(--ground, #efeeea));
@@ -55,7 +63,7 @@
 [data-scene="room-walk-track"] .rw-q,
 [data-scene="room-walk-track"] .rw-exit__title {
   font-family: var(--rw-display);
-  font-weight: 400;
+  font-weight: var(--display-weight, 400);
   letter-spacing: -0.02em;
 }
 
@@ -119,9 +127,9 @@
 [data-scene="room-walk-track"] .rw-values { background: var(--rw-powder); padding: 64px var(--rw-gut) 72px; overflow: clip; }
 [data-scene="room-walk-track"] .rw-vals { --rw-vs: 15vw; list-style: none; margin: 0; padding: 0; }
 [data-scene="room-walk-track"] .rw-val { font-size: var(--rw-vs); line-height: 1.04; white-space: nowrap; }
-[data-scene="room-walk-track"] .rw-val:nth-child(3n + 1) { font-weight: 150; }
-[data-scene="room-walk-track"] .rw-val:nth-child(3n + 2) { font-weight: 900; letter-spacing: -0.035em; }
-[data-scene="room-walk-track"] .rw-val:nth-child(3n) { font-family: var(--rw-text); font-weight: 400; letter-spacing: -0.06em; }
+[data-scene="room-walk-track"] .rw-val:nth-child(3n + 1) { font-weight: var(--rw-thin, 150); }
+[data-scene="room-walk-track"] .rw-val:nth-child(3n + 2) { font-weight: var(--rw-heavy, 900); letter-spacing: -0.035em; }
+[data-scene="room-walk-track"] .rw-val:nth-child(3n) { font-family: var(--rw-text); font-weight: var(--text-weight, 400); letter-spacing: -0.06em; }
 [data-scene="room-walk-track"] .rw-vals__note { max-width: 30em; margin-top: 28px; font-size: var(--rw-small); line-height: 1.5; }
 
 [data-scene="room-walk-track"] .rw-relay { display: grid; grid-template-columns: minmax(0, 1fr); }
@@ -399,11 +407,11 @@ html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-exit__title { font-si
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-chip {
   position: absolute; pointer-events: auto; margin: 0;
   background: var(--rw-paper); color: var(--rw-ink);
-  font: 500 16px/1 var(--rw-text);
+  font: var(--strong-weight, 500) 16px/1 var(--rw-text);
   padding: 12px 14px; border-radius: 3px;
   text-decoration: none;
 }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-mark { top: 16px; left: 16px; font-weight: 600; }
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-mark { top: 16px; left: 16px; font-weight: var(--strong-weight, 600); }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-where { bottom: 16px; left: 16px; display: flex; align-items: center; gap: 12px; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-where__count { opacity: 0.62; font-variant-numeric: tabular-nums; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-bar { display: block; width: 56px; height: 4px; border-radius: 2px; background: rgb(21 19 17 / 0.14); overflow: hidden; }

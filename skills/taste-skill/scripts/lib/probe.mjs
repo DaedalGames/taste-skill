@@ -58,13 +58,20 @@ export function probe() {
   const all = [...document.body.querySelectorAll('*')].slice(0, 9000);
   const texts = [];
   const big = [];
+  const waiting = []; // text hidden at this moment (a scene or reveal not yet run): still judged for its face
   for (const el of all) {
     const tag = el.tagName;
     if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'TEMPLATE') continue;
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     const cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+    if (cs.display === 'none') continue;
+    if (cs.visibility === 'hidden') {
+      let own = ''; for (const n of el.childNodes) if (n.nodeType === 3) own += n.nodeValue;
+      own = own.replace(/\s+/g, ' ').trim();
+      if (own && !el.closest('svg')) waiting.push({ el, text: own, chars: own.length, fam: firstFam(cs.fontFamily), weight: +cs.fontWeight || 400, slanted: /italic|oblique/.test(cs.fontStyle), fakeBoldOff: cs.fontSynthesisWeight === 'none', fakeItalicOff: cs.fontSynthesisStyle === 'none', inCode: !!el.closest('pre, code, kbd, samp, textarea') });
+      continue;
+    }
     const area = r.width * r.height;
     if (area >= 60 * 30) big.push({ el, r, cs, area, top: r.top + SY });
     let direct = '';
@@ -80,7 +87,8 @@ export function probe() {
       el, tag, text: direct, chars: direct.length, fam: firstFam(cs.fontFamily), ff: cs.fontFamily,
       size: round(size, 1), weight: +cs.fontWeight || 400, ls: round(ls, 3), lh: round(lh, 2),
       upper: cs.textTransform === 'uppercase' || (direct.length > 2 && direct === direct.toUpperCase() && /[A-Z]{2}/.test(direct)),
-      italic: cs.fontStyle === 'italic', align: cs.textAlign, color: cs.color,
+      italic: cs.fontStyle === 'italic', slanted: /italic|oblique/.test(cs.fontStyle), align: cs.textAlign, color: cs.color,
+      fakeBoldOff: cs.fontSynthesisWeight === 'none', fakeItalicOff: cs.fontSynthesisStyle === 'none',
       top: r.top + SY, bottom: r.bottom + SY, left: r.left, right: r.right, w: r.width, h: r.height,
       clipText: (cs.webkitBackgroundClip || cs.backgroundClip || '').includes('text'),
       inCode: !!el.closest('pre, code, kbd, samp, textarea'), inUI: !!el.closest('[data-ui]'), textShadow: cs.textShadow !== 'none',
@@ -175,6 +183,25 @@ export function probe() {
     const cs = getComputedStyle(h1el); const size = parseFloat(cs.fontSize);
     const text = (h1el.innerText || '').replace(/\s+/g, ' ').trim();
     h1 = { text: text.slice(0, 200), words: text.split(' ').filter(Boolean).length, lines: linesOf(h1el, size), size: round(size, 1), font: firstFam(cs.fontFamily) };
+    // A title spread across the measure by tracking, justify or flex gaps rather than by size: the room each
+    // letter takes beyond its own advance (measured on a canvas in the same face), as a share of the type size.
+    const STRETCH = [[56, 'ultra-condensed'], [68, 'extra-condensed'], [81, 'condensed'], [94, 'semi-condensed'], [106, 'normal'], [118, 'semi-expanded'], [137, 'expanded'], [175, 'extra-expanded'], [Infinity, 'ultra-expanded']];
+    const glyphs = []; const gw = document.createTreeWalker(h1el, NodeFilter.SHOW_TEXT); const gr = document.createRange();
+    for (let n = gw.nextNode(); n && glyphs.length < 80; n = gw.nextNode()) {
+      if (!n.parentElement || n.parentElement.closest('svg') || srHidden(n.parentElement)) continue;
+      const pcs = getComputedStyle(n.parentElement); mctx.font = `${pcs.fontStyle} ${pcs.fontWeight} ${pcs.fontSize} ${pcs.fontFamily}`;
+      try { mctx.fontStretch = STRETCH.find(([p]) => (parseFloat(pcs.fontStretch) || 100) < p)[1]; } catch {}
+      const s = n.nodeValue;
+      for (let i = 0; i < s.length && glyphs.length < 80; i++) {
+        if (/\s/.test(s[i])) { const g = glyphs[glyphs.length - 1]; if (g && !g.space) { g.space = true; g.adv += mctx.measureText(' ').width; } continue; }
+        gr.setStart(n, i); gr.setEnd(n, i + 1); const r = gr.getBoundingClientRect(); if (r.width <= 0) continue;
+        glyphs.push({ l: r.left, mid: (r.top + r.bottom) / 2, adv: mctx.measureText(s[i]).width, size: parseFloat(pcs.fontSize) });
+      }
+    }
+    try { mctx.fontStretch = 'normal'; } catch {}
+    const extra = [];
+    for (let i = 1; i < glyphs.length; i++) { const a = glyphs[i - 1], b = glyphs[i]; if (Math.abs(a.mid - b.mid) < a.size * 0.5 && b.l > a.l) extra.push((b.l - a.l - a.adv) / a.size); }
+    if (extra.length) { extra.sort((a, b) => a - b); h1.spacing = round(extra[Math.floor(extra.length / 2)]); h1.pairs = extra.length; }
   }
 
   // --- eyebrows: a small short label sitting directly above a heading block
@@ -234,6 +261,34 @@ export function probe() {
   const loaded = new Set([...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/["']/g, '').toLowerCase()));
   const declared = new Set([...document.fonts].map((f) => f.family.replace(/["']/g, '').toLowerCase()));
   const notLoaded = families.map((f) => f.family).filter((f) => !GENERIC.test(f) && !loaded.has(f.toLowerCase()) && (declared.has(f.toLowerCase()) || declared.size > 0));
+  // Text set at a weight or slant its family has no face for: the browser smears a fake bold (or slants the
+  // roman) instead. Matching follows the browser: style first, then weight; a bold (600 and up) is faked when
+  // no face of that style reaches 600. Families the page does not declare (system faces) are not judged.
+  const faces = new Map();
+  for (const f of document.fonts) {
+    if (f.status === 'error') continue;
+    const fam = f.family.replace(/["']/g, '').trim().toLowerCase();
+    const w = String(f.weight).split(/\s+/).map((x) => (x === 'normal' ? 400 : x === 'bold' ? 700 : parseFloat(x))).filter(Number.isFinite);
+    if (!faces.has(fam)) faces.set(fam, []);
+    faces.get(fam).push({ max: w.length ? Math.max(...w) : 400, slanted: /italic|oblique/.test(f.style) });
+  }
+  const fakes = new Map();
+  for (const t of [...texts, ...waiting]) {
+    if (t.inCode) continue;
+    const list = faces.get(t.fam.toLowerCase()); if (!list || !list.length) continue;
+    const pool = list.filter((f) => f.slanted === t.slanted);
+    const kinds = [];
+    if (t.slanted && !pool.length && !t.fakeItalicOff) kinds.push('italic');
+    const has = Math.max(...(pool.length ? pool : list).map((f) => f.max));
+    if (t.weight >= 600 && has < 600 && !t.fakeBoldOff) kinds.push('bold');
+    for (const kind of kinds) {
+      const k = kind + '|' + t.fam + '|' + t.weight + '|' + t.slanted;
+      const v = fakes.get(k) || { kind, family: t.fam, weight: t.weight, italic: t.slanted, has: kind === 'bold' ? has : null, chars: 0, samples: [] };
+      const line = ((t.el.closest('h1, h2, h3, h4, h5, h6, p, li, blockquote, a, button, figcaption') || t.el).textContent || t.text).replace(/\s+/g, ' ').trim().slice(0, 40);
+      v.chars += t.chars; if (v.samples.length < 3 && !v.samples.includes(line)) v.samples.push(line); fakes.set(k, v);
+    }
+  }
+  const synthetic = [...fakes.values()].sort((a, b) => b.chars - a.chars);
 
   // --- colours
   const bodyBg = (() => {
@@ -271,8 +326,9 @@ export function probe() {
     return false;
   };
   const lowContrast = [];
+  // the whole page, not its first screens: a long page keeps its menus and price lists far down
   for (const t of texts) {
-    if (t.chars < 4 || t.top - SY > H * 6) continue;
+    if (t.chars < 4) continue;
     const fg = rgba(t.color); if (fg.a < 0.99) continue;
     if (overMedia(t)) continue; // cannot know the pixels behind it; judge that from the screenshot
     // text blended with difference or exclusion inverts whatever lies under it; its colour alone says nothing
@@ -286,6 +342,8 @@ export function probe() {
   lowContrast.sort((a, b) => a.ratio - b.ratio);
 
   // --- buttons
+  // where a link leads, as the nav-lost check compares it: an anchor on this page by its hash, anything else by its URL
+  const hrefKey = (a) => { const raw = a.getAttribute('href') || ''; if (!raw || /^javascript:/i.test(raw)) return null; try { const u = new URL(a.href); return u.origin === location.origin && u.pathname === location.pathname && u.search === location.search ? (u.hash || '#') : u.href; } catch { return raw; } };
   const buttons = [];
   for (const el of document.querySelectorAll('a, button, [role="button"], input[type="submit"]')) {
     const r = el.getBoundingClientRect(); if (r.height < 28 || r.height > 84 || r.width < 64 || r.width > Math.min(W * 0.96, 900)) continue;
@@ -298,6 +356,7 @@ export function probe() {
       text: (el.innerText || el.value || '').replace(/\s+/g, ' ').trim().slice(0, 40), filled: bg.a >= 0.5, bg: bg.a >= 0.5 ? hex(bg) : null, bgHsl: bg.a >= 0.5 ? hsl(bg) : null, fg: hex(rgba(cs.color)),
       radius: rad >= r.height / 2 - 1 ? 'pill' : Math.round(rad), h: Math.round(r.height), top: Math.round(r.top + SY),
       shadow: cs.boxShadow !== 'none' && !/^rgba?\(0, 0, 0, 0\)/.test(cs.boxShadow), gradient: grad, upper: cs.textTransform === 'uppercase', mono: isMono(cs.fontFamily),
+      href: el.matches('a[href]') ? hrefKey(el) : null,
     });
   }
   const mode = (arr) => { const m = new Map(); for (const a of arr) m.set(JSON.stringify(a), (m.get(JSON.stringify(a)) || 0) + 1); const top = [...m.entries()].sort((a, b) => b[1] - a[1])[0]; return top ? JSON.parse(top[0]) : undefined; };
@@ -395,6 +454,14 @@ export function probe() {
     const links = [...navEl.querySelectorAll('a')].filter((a) => { const r = a.getBoundingClientRect(); return r.width > 0 && r.top < 140; });
     nav = { links: links.length, fixed, height: Math.round(hr.height), floatingPill: hr.width < W * 0.92 && parseFloat(hcs.borderTopLeftRadius) >= 16 && hr.top > 4, blur: (hcs.backdropFilter || 'none') !== 'none' };
   }
+  // where the navigation and the first screen's buttons lead; further down the page the nav-lost check looks
+  // for a visible way back to one of them
+  const dest = new Set(), destLabels = new Set();
+  if (navEl) for (const a of navEl.querySelectorAll('a[href]')) { const k = hrefKey(a); if (k && k !== '#') dest.add(k); }
+  for (const b of buttons) if (b.top < H) { if (b.href && b.href !== '#') dest.add(b.href); if (b.text) destLabels.add(b.text.toLowerCase()); }
+  // a loop that plays for more than five seconds needs a way to stop it (WCAG 2.2.2): a control that names it
+  const pauseControl = [...document.querySelectorAll('button, [role="button"], [role="switch"], [aria-pressed], input[type="checkbox"], a[href]')].some((b) => /\b(pause|stop|play|motion)\b/i.test(`${b.innerText || ''} ${b.getAttribute('aria-label') || ''} ${b.getAttribute('title') || ''}`))
+    || [...document.querySelectorAll('video')].some((v) => v.controls);
 
   // data-ui is for cropped interface fragments, not for wrapping the page
   const uiAbuse = [...document.querySelectorAll('[data-ui]')].some((el) => el.querySelector('h1') || el.getBoundingClientRect().height > H * 1.6 || el === document.body);
@@ -418,16 +485,42 @@ export function probe() {
   const uiPictures = [...document.querySelectorAll('[data-ui]')].filter((el) => { const r = el.getBoundingClientRect(); return r.width >= 300 && r.height >= 200; }).length;
   // which elements push the page wider than the viewport (the deepest ones that are not clipped by an ancestor)
   let overflowCulprits = [];
-  if (document.documentElement.scrollWidth > W + 2) {
+  // on a phone even 1px sideways lets the page wobble under the thumb; desktop keeps 2px for rounding
+  const slack = W < 600 ? 0 : 2;
+  if (document.documentElement.scrollWidth > W + slack) {
     const clippedByAncestor = (el) => { for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) { if (getComputedStyle(p).overflowX !== 'visible' && p.getBoundingClientRect().right <= W + 2) return true; } return false; };
-    const wide = all.filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.right > W + 2 && !clippedByAncestor(el); });
+    const wide = all.filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.right > W + slack && !clippedByAncestor(el); });
     overflowCulprits = wide.filter((el) => !wide.some((o) => o !== el && el.contains(o))).slice(0, 3).map((el) => `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : ''} (+${Math.round(el.getBoundingClientRect().right - W)}px)`);
   }
   // rows that scroll sideways with content past their edge (read as clipped in screenshots and by most visitors)
   const sideScrollers = all.filter((el) => { if (el.closest('[data-ui], table, pre, code')) return false; const cs = getComputedStyle(el); return /auto|scroll/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 24 && el.clientHeight > 40; }).length;
   const blendText = texts.filter((t) => { for (let p = t.el, i = 0; p && p !== document.body && i < 6; p = p.parentElement, i++) if (/difference|exclusion/.test(getComputedStyle(p).mixBlendMode)) return true; return false; }).length;
+  // section titles (h2), each at the largest size set inside it, to find one that has dropped off the page's step
+  const h2s = [...document.querySelectorAll('h2')].filter((h) => { const r = h.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !h.closest('[data-ui], nav, dialog, [role="dialog"]') && !srHidden(h); })
+    .map((h) => ({ text: (h.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 50), size: round(Math.max(parseFloat(getComputedStyle(h).fontSize), ...texts.filter((t) => h.contains(t.el)).map((t) => t.size)), 1), top: Math.round(h.getBoundingClientRect().top + SY) }))
+    .filter((h) => h.text);
+  // tables whose columns float apart: in a typical row (the median), the empty ground between one cell's text and
+  // the next cell's, against the table's width
+  const tableGaps = [];
+  for (const tb of document.querySelectorAll('table')) {
+    if (tb.closest('[data-ui]')) continue;
+    const tr = tb.getBoundingClientRect(); if (tr.width < 480 || tr.height < 60) continue;
+    const rows = [...tb.rows].filter((r) => r.cells.length >= 3 && [...r.cells].every((c) => c.colSpan === 1) && r.getBoundingClientRect().height > 0);
+    if (rows.length < 3) continue;
+    const n = rows[0].cells.length; const gaps = Array.from({ length: n - 1 }, () => []);
+    const cr = document.createRange();
+    const span = (c) => { let l = Infinity, r = -Infinity; const tw = document.createTreeWalker(c, NodeFilter.SHOW_TEXT); for (let t = tw.nextNode(); t; t = tw.nextNode()) { if (!t.nodeValue.trim()) continue; cr.selectNodeContents(t); for (const rc of cr.getClientRects()) if (rc.width >= 1) { l = Math.min(l, rc.left); r = Math.max(r, rc.right); } } return Number.isFinite(l) ? { l, r } : null; };
+    for (const row of rows) {
+      if (row.cells.length !== n) continue;
+      const s = [...row.cells].map(span);
+      for (let j = 0; j < n - 1; j++) if (s[j] && s[j + 1]) gaps[j].push(s[j + 1].l - s[j].r);
+    }
+    let worst = null;
+    gaps.forEach((list, j) => { if (list.length < 3) return; const g = list.sort((a, b) => a - b)[Math.floor(list.length / 2)]; if (!worst || g > worst.gap) worst = { gap: Math.round(g), after: (rows[0].cells[j].innerText || '').trim().slice(0, 24), before: (rows[0].cells[j + 1].innerText || '').trim().slice(0, 24) }; });
+    if (worst && worst.gap > tr.width * 0.2) tableGaps.push({ ...worst, width: Math.round(tr.width), share: round(worst.gap / tr.width), table: ((tb.caption && tb.caption.innerText) || tb.getAttribute('aria-label') || tb.className || 'table').replace(/\s+/g, ' ').trim().slice(0, 40) });
+  }
   const bodyText = document.body.innerText || '';
-  const emoji = (bodyText.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu) || []);
+  const emoji =(bodyText.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu) || []);
   const doc = document.documentElement; const pageH = Math.max(doc.scrollHeight, document.body.scrollHeight);
   const headingStats = headings.map(({ _el, ...h }) => h);
   const heroOut = hero ? (({ _el, ...h }) => h)(hero) : null;
@@ -437,13 +530,14 @@ export function probe() {
     viewport: { w: W, h: H },
     page: { height: pageH, screens: round(pageH / H, 1), words: bodyText.split(/\s+/).filter(Boolean).length,
       img: document.images.length, video: document.querySelectorAll('video').length, canvas: document.querySelectorAll('canvas').length, svg: document.querySelectorAll('svg').length, sections: document.querySelectorAll('section').length,
-      horizontalOverflow: doc.scrollWidth > W + 2 ? doc.scrollWidth - W : 0, overflowCulprits, uiFragments, uiAbuse, realPictures, videoCount, uiPictures, pictureSamples, blendText, sideScrollers, brokenImages, emoji: [...new Set(emoji)].slice(0, 10),
-      videosNoPoster: [...document.querySelectorAll('video')].filter((v) => !v.getAttribute('poster') && v.getBoundingClientRect().width >= 160).length },
-    hero: heroOut, h1,
+      horizontalOverflow: doc.scrollWidth > W + slack ? doc.scrollWidth - W : 0, overflowCulprits, pauseControl, uiFragments, uiAbuse, realPictures, videoCount, uiPictures, pictureSamples, blendText, sideScrollers, brokenImages, emoji: [...new Set(emoji)].slice(0, 10),
+      videosNoPoster: [...document.querySelectorAll('video')].filter((v) => !v.getAttribute('poster') && v.getBoundingClientRect().width >= 160).length, tableGaps: tableGaps.slice(0, 4) },
+    hero: heroOut, h1, h2s: h2s.slice(0, 30),
+    reach: { dest: [...dest].slice(0, 30), labels: [...destLabels].slice(0, 8) },
     headings: headingStats.slice(0, 40),
     headingSummary: { count: headingStats.length, maxLines: Math.max(0, ...headingStats.map((h) => h.lines)), over2Lines: headingStats.filter((h) => h.lines > 2 && h.kind !== 'statement').length, statements: headingStats.filter((h) => h.kind === 'statement').length, centered: headingStats.filter((h) => h.align === 'center').length, medianWords: below.length ? below.map((h) => h.words).sort((a, b) => a - b)[Math.floor(below.length / 2)] : null, mixedFontHeadings: headingStats.filter((h) => h.mixedFonts).length },
     type: {
-      families, familyCount: famChars.size, sizes, sizeCount: sizes.length, notLoaded,
+      families, familyCount: famChars.size, sizes, sizeCount: sizes.length, notLoaded, synthetic: synthetic.slice(0, 6),
       body: bodySample ? { font: bodySample.fam, size: bodySample.size, leading: bodySample.lh, weight: bodySample.weight, tracking: bodySample.ls, contrast: (() => { const bg = bgBehind(bodySample.el); return bg ? contrast(rgba(bodySample.color), bg) : null; })() } : null,
       measureChars: longest ? Math.round(longest.w / (longest.size * 0.5)) : null,
       max: maxText ? { size: maxText.size, vw: round((maxText.size / W) * 100, 1), font: maxText.fam, text: maxText.text.slice(0, 40) } : null,
@@ -466,7 +560,10 @@ export function probe() {
 
 // frame() runs at each scroll position the inspector photographs. It reports large text that something
 // else is lying on top of (a picture sliding over a headline), and how much of the screen holds anything.
-export function frame() {
+// With { film: true } (each frame of the scroll film) it only reports what changes between scroll steps:
+// texts drawn over each other, which blocks of text can be read, a paragraph a picture's edge runs through,
+// and the loops that are playing.
+export function frame(opts = {}) {
   const W = innerWidth, H = innerHeight;
   const pinnedTop = (el) => { for (let p = el; p && p !== document.body; p = p.parentElement) { const cs = getComputedStyle(p); if ((cs.position === 'fixed' || cs.position === 'sticky') && p.getBoundingClientRect().top < 140 && p.getBoundingClientRect().height < 180) return true; } return false; };
   // 1. covered text. Hit-testing skips elements with pointer-events: none (a pinned title usually has it),
@@ -477,9 +574,12 @@ export function frame() {
   const covered = [], clipped = [], pinnedOver = [];
   const label = (el, direct) => (el.innerText || direct).replace(/\s+/g, ' ').trim().slice(0, 48);
   const pinnedLow = (el) => { for (let p = el; p && p !== document.body; p = p.parentElement) { const pcs = getComputedStyle(p); if (pcs.position === 'fixed' || pcs.position === 'sticky') return !pinnedTop(el); } return false; };
-  // Does the element found on top actually paint anything there? A transparent layout box does not hide text.
+  // Does the element found on top actually paint anything there? A transparent layout box does not hide text, and
+  // neither does a layer faded to almost nothing (a scene's shading at rest, a picture waiting to fade in).
+  const faint = (p) => { let o = 1; for (let q = p; q && q !== document.documentElement; q = q.parentElement) { o *= +getComputedStyle(q).opacity; if (o < 0.35) return true; } return false; };
   const paints = (hit, el) => {
     for (let p = hit; p && p !== document.body && !p.contains(el); p = p.parentElement) {
+      if (faint(p)) continue;
       if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME|svg)$/.test(p.tagName) || p.closest('svg')) return true;
       const pcs = getComputedStyle(p);
       if (pcs.backgroundImage !== 'none') return true;
@@ -489,7 +589,126 @@ export function frame() {
     }
     return false;
   };
-  const pictures = [...document.querySelectorAll('img, picture, svg, canvas, video')].filter((m) => !m.parentElement?.closest('svg')).map((m) => ({ m, r: m.getBoundingClientRect() })).filter(({ r }) => r.width >= 80 && r.height >= 80 && r.bottom > 0 && r.top < H);
+
+  // --- text as a visitor sees it here: each line box, cut to what its clipping ancestors let through
+  const UNITS = 'h1, h2, h3, h4, h5, h6, p, blockquote, li, figcaption, dd, dt, td, th, label, button, a, caption, summary';
+  const opMemo = new Map();
+  const opacityOf = (el) => { if (!el || el === document.documentElement) return 1; if (opMemo.has(el)) return opMemo.get(el); const cs = getComputedStyle(el); const v = cs.visibility === 'hidden' ? 0 : +cs.opacity * opacityOf(el.parentElement); opMemo.set(el, v); return v; };
+  // a clip-path inset() cuts the box; anything else (calc(), shapes, url()) is taken as the whole box
+  const insetOf = (cp, r) => {
+    const whole = { l: r.left, r: r.right, t: r.top, b: r.bottom };
+    const m = /^inset\(([^()]*)\)$/.exec(cp.trim()); if (!m) return whole;
+    const p = m[1].split(/\s+round\s+/)[0].trim().split(/\s+/); const v = (s, len) => (s.endsWith('%') ? (parseFloat(s) / 100) * len : parseFloat(s));
+    const [a, b = a, c = a, d = b] = p; const box = { t: r.top + v(a, r.height), r: r.right - v(b, r.width), b: r.bottom - v(c, r.height), l: r.left + v(d, r.width) };
+    return Object.values(box).every(Number.isFinite) ? box : whole;
+  };
+  const clipMemo = new Map();
+  const clipOf = (el) => {
+    if (!el || el === document.body || el === document.documentElement) return null;
+    if (clipMemo.has(el)) return clipMemo.get(el);
+    const cs = getComputedStyle(el); let box = cs.position === 'fixed' ? null : clipOf(el.parentElement);
+    if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible' || cs.clipPath !== 'none') {
+      const r = el.getBoundingClientRect();
+      const own = cs.clipPath !== 'none' ? insetOf(cs.clipPath, r) : { l: cs.overflowX !== 'visible' ? r.left : -Infinity, r: cs.overflowX !== 'visible' ? r.right : Infinity, t: cs.overflowY !== 'visible' ? r.top : -Infinity, b: cs.overflowY !== 'visible' ? r.bottom : Infinity };
+      box = box ? { l: Math.max(box.l, own.l), r: Math.min(box.r, own.r), t: Math.max(box.t, own.t), b: Math.min(box.b, own.b) } : own;
+    }
+    clipMemo.set(el, box); return box;
+  };
+  const inkless = (cs) => { const m = cs.color.match(/rgba?\(([^)]+)\)/); const p = m ? m[1].split(/[,\s/]+/).filter(Boolean) : []; return p.length === 4 && parseFloat(p[3]) < 0.1 && !(parseFloat(cs.webkitTextStrokeWidth) > 0); };
+  const lines = []; const units = new Map();
+  const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const lr = document.createRange();
+  for (let n = tw.nextNode(); n && lines.length < 1500; n = tw.nextNode()) {
+    const t = n.nodeValue.replace(/\s+/g, ' ').trim(); const el = n.parentElement;
+    if (t.length < 2 || !el || /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE|OPTION)$/.test(el.tagName) || el.closest('svg, [data-ui]')) continue;
+    lr.selectNodeContents(n); const rects = [...lr.getClientRects()].filter((r) => r.width >= 2 && r.bottom > 0 && r.top < H && r.right > 0 && r.left < W);
+    if (!rects.length) continue;
+    const cs = getComputedStyle(el); const op = opacityOf(el); const size = parseFloat(cs.fontSize);
+    if (op < 0.3 || size < 13 || inkless(cs)) continue;
+    const c = clipOf(el); const unit = el.closest(UNITS) || el;
+    for (const r of rects) {
+      const b = c ? { l: Math.max(r.left, c.l), r: Math.min(r.right, c.r), t: Math.max(r.top, c.t), b: Math.min(r.bottom, c.b) } : { l: r.left, r: r.right, t: r.top, b: r.bottom };
+      if (!(b.r - b.l >= 2) || !(b.b - b.t >= size * 0.4)) continue; // also drops anything not finite
+      // the band the letters' ink fills (about the x-height to the cap height round the line's middle); a line box
+      // reaches well above and below it, so tightly led lines touch boxes without their letters meeting
+      const mid = (r.top + r.bottom) / 2, ct = Math.max(b.t, mid - size * 0.35), cb = Math.min(b.b, mid + size * 0.35);
+      const line = { el, unit, op, size, ...b, ct, cb, area: (b.r - b.l) * Math.max(0, cb - ct) }; lines.push(line);
+      if (!units.has(unit)) units.set(unit, { el: unit, lines: [], size, op });
+      units.get(unit).lines.push(line);
+    }
+  }
+  const unitText = (u) => (u.el.innerText || '').replace(/\s+/g, ' ').trim();
+  // 1a. two texts drawn over each other: an incoming line faded in on an outgoing one, a card's words sliding across
+  // a heading. Only when nothing opaque lies between them at the overlap (a solid bar over text is the covered check).
+  const opaqueAt = (p) => { const pcs = getComputedStyle(p); if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME)$/.test(p.tagName) || pcs.backgroundImage.includes('url(')) return true; const m = pcs.backgroundColor.match(/rgba?\(([^)]+)\)/); const q = m ? m[1].split(/[,\s/]+/).filter(Boolean) : []; return q.length >= 3 && (q.length < 4 || parseFloat(q[3]) >= 0.6); };
+  const overText = [], pairs = new Set();
+  for (let i = 0; i < lines.length && overText.length < 6; i++) for (let k = i + 1; k < lines.length; k++) {
+    const a = lines[i], b = lines[k]; if (a.unit === b.unit || a.el.contains(b.el) || b.el.contains(a.el) || a.unit.contains(b.el) || b.unit.contains(a.el)) continue;
+    const ox = Math.min(a.r, b.r) - Math.max(a.l, b.l), oy = Math.min(a.cb, b.cb) - Math.max(a.ct, b.ct); if (ox <= 0 || oy <= 0 || !a.area || !b.area || ox * oy < 0.3 * Math.min(a.area, b.area)) continue;
+    if (pinnedTop(a.el) || pinnedTop(b.el)) continue;
+    const x = (Math.max(a.l, b.l) + Math.min(a.r, b.r)) / 2, y = (Math.max(a.ct, b.ct) + Math.min(a.cb, b.cb)) / 2; if (x < 0 || x >= W || y < 0 || y >= H) continue;
+    const stack = document.elementsFromPoint(x, y); const ia = stack.indexOf(a.el), ib = stack.indexOf(b.el); if (ia < 0 || ib < 0) continue;
+    const [top, low] = ia < ib ? [ia, ib] : [ib, ia]; const lowEl = stack[low];
+    if (stack.slice(top + 1, low).some((e) => !e.contains(lowEl) && !e.contains(stack[top]) && opaqueAt(e))) continue;
+    const ta = unitText(units.get(a.unit)).slice(0, 40), tb = unitText(units.get(b.unit)).slice(0, 40); if (!ta || !tb || ta === tb || pairs.has(ta + '|' + tb)) continue;
+    pairs.add(ta + '|' + tb); overText.push({ a: ta, b: tb, size: Math.round(Math.max(a.size, b.size)) });
+  }
+  // 1b. each block of text in the middle of the screen, and whether it can be read here (nothing painted over it);
+  // a caption covered in every frame it was in view is never read at all
+  const seen = [];
+  for (const u of units.values()) {
+    if (u.op < 0.5) continue;
+    const txt = unitText(u); if (txt.split(' ').length < 3) continue;
+    const top = Math.min(...u.lines.map((l) => l.t)), bot = Math.max(...u.lines.map((l) => l.b)), mid = (top + bot) / 2;
+    if (mid < H * 0.1 || mid > H * 0.9 || bot - top > H * 0.8) continue;
+    let pts = 0, hid = 0;
+    for (const l of u.lines.slice(0, 4)) for (const fx of [0.25, 0.75]) {
+      const x = l.l + (l.r - l.l) * fx, y = (l.t + l.b) / 2; if (x < 0 || x >= W || y < 0 || y >= H) continue;
+      pts++; const hit = document.elementFromPoint(x, y);
+      if (hit && hit !== l.el && !l.el.contains(hit) && !hit.contains(l.el) && !pinnedTop(hit) && paints(hit, l.el)) hid++;
+    }
+    if (pts) seen.push([txt.slice(0, 60), hid / pts < 0.5 ? 1 : 0]);
+  }
+  // 1c. loops playing here (a pause control is then owed)
+  const playing = [...document.querySelectorAll('video')].filter((v) => { const r = v.getBoundingClientRect(); return !v.paused && !v.controls && r.width >= 160 && r.height >= 90 && (v.loop || v.duration > 5); }).map((v, i) => (v.currentSrc || v.getAttribute('poster') || 'video ' + i).split('/').pop().split('?')[0].slice(0, 40));
+  // 1d. the ground under small text: a picture (through any translucent band), a solid surface, or the page
+  const groundAt = (el, x, y) => {
+    const stack = document.elementsFromPoint(x, y); const i = stack.findIndex((e) => e === el || el.contains(e)); if (i < 0) return null;
+    for (const e of stack.slice(i + 1)) {
+      if (e === document.body || e === document.documentElement) break;
+      const ecs = getComputedStyle(e);
+      // a background is a picture when it keeps its proportions (cover, contain, or set once); a repeating tile, an
+      // image stretched to the box (a ticket's paper, a torn edge), or a few hundred bytes inlined as data is a surface
+      const url = (ecs.backgroundImage.match(/url\(["']?([^"')]+)/) || [])[1] || '';
+      const size = ecs.backgroundSize.split(',')[0].trim(), stretched = /^\S+\s+\S+$/.test(size) && !/auto|cover|contain/.test(size);
+      const picture = /^(IMG|VIDEO|CANVAS|PICTURE|IFRAME)$/.test(e.tagName) || (url && !(/^data:/.test(url) && url.length < 4000) && !stretched && (/cover|contain|%/.test(size) || /no-repeat/.test(ecs.backgroundRepeat)));
+      if (picture) { const r = e.getBoundingClientRect(); return { media: e, area: (Math.min(r.right, W) - Math.max(r.left, 0)) * (Math.min(r.bottom, H) - Math.max(r.top, 0)) }; }
+      const m = ecs.backgroundColor.match(/rgba?\(([^)]+)\)/); const q = m ? m[1].split(/[,\s/]+/).filter(Boolean) : [];
+      if (q.length >= 3 && (q.length < 4 || parseFloat(q[3]) >= 0.9)) return { solid: e };
+    }
+    return { page: true };
+  };
+  const mediaKey = (e) => { const s = e.currentSrc || e.getAttribute('poster') || (getComputedStyle(e).backgroundImage.match(/url\(["']?([^"')]+)/) || [])[1] || e.tagName.toLowerCase(); return /^data:/.test(s) ? `${e.tagName.toLowerCase()} (inline ${e.getAttribute('alt') ? '"' + e.getAttribute('alt').slice(0, 30) + '"' : 'image'})` : s.split('/').pop().split('?')[0].slice(0, 48); };
+  // 1e. small text set on a picture (captions, labels and body go beside or under it), and a picture's edge
+  // running through a paragraph (half of it on the paper, half on the picture)
+  const onMedia = new Map(), straddle = [];
+  for (const u of units.values()) {
+    if (u.op < 0.5 || pinnedTop(u.el)) continue;
+    const txt = unitText(u); if (!txt) continue;
+    if (!opts.film && u.size < 24 && !u.el.matches('a, button') && !u.el.closest('a, button')) {
+      const l = u.lines.find((q) => (q.t + q.b) / 2 >= 0 && (q.t + q.b) / 2 < H) || u.lines[0], g = groundAt(l.el, Math.min(W - 1, Math.max(0, (l.l + l.r) / 2)), (l.t + l.b) / 2);
+      if (g && g.media && g.area >= W * H * 0.25) { const k = mediaKey(g.media); const v = onMedia.get(k) || { media: k, texts: [] }; if (!v.texts.includes(txt.slice(0, 80))) v.texts.push(txt.slice(0, 80)); onMedia.set(k, v); }
+    }
+    if (u.el.matches('p, li, blockquote, figcaption, dd') && u.lines.length >= 2 && u.size <= 32) {
+      let on = 0, all = 0;
+      for (const l of u.lines.slice(0, 12)) for (const fy of [0.3, 0.7]) for (const fx of [0.2, 0.8]) {
+        const x = l.l + (l.r - l.l) * fx, y = l.t + (l.b - l.t) * fy; if (x < 0 || x >= W || y < 0 || y >= H) continue;
+        const g = groundAt(l.el, x, y); if (!g) continue; all++; if (g.media) on++;
+      }
+      if (all >= 8 && on / all >= 0.2 && on / all <= 0.8) straddle.push({ text: txt.slice(0, 48), share: Math.round((on / all) * 100) / 100 });
+    }
+  }
+  if (opts.film) { hitStyle.remove(); return { overText, seen, playing, straddle, y: Math.round(scrollY) }; }
+  const pictures =[...document.querySelectorAll('img, picture, svg, canvas, video')].filter((m) => !m.parentElement?.closest('svg')).map((m) => ({ m, r: m.getBoundingClientRect() })).filter(({ r }) => r.width >= 80 && r.height >= 80 && r.bottom > 0 && r.top < H);
   for (const el of document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote, li, a, button, span, div')) {
     let direct = ''; for (const n of el.childNodes) if (n.nodeType === 3) direct += n.nodeValue;
     if (direct.trim().length < 3) continue;
@@ -550,7 +769,31 @@ export function frame() {
   }
   // 3. the large text in view, to spot one statement held on screen for screen after screen
   const big = [...new Set([...document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote')].filter((el) => { const r = el.getBoundingClientRect(); return !el.closest('.scene.is-live') && parseFloat(getComputedStyle(el).fontSize) >= 32 && r.top >= -4 && r.bottom <= H + 4 && r.height > 0; }).map((el) => (el.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 60)).filter((t) => t.length >= 4))];
-  return { covered, clipped, pinnedOver, filled: Math.round((filled / samples) * 100) / 100, big, y: Math.round(scrollY) };
+  return { covered, clipped, pinnedOver, overText, seen, playing, onMedia: [...onMedia.values()], straddle, filled: Math.round((filled / samples) * 100) / 100, big, y: Math.round(scrollY) };
+}
+
+// reach() runs at each screen of the walk: is there a visible way back to the navigation's anchors or the
+// first screen's action here? A link to one of them (fixed, sticky or in the flow), a back-to-top link, or a
+// menu button or the action's button in a fixed or sticky bar. `to` is probe()'s reach: { dest, labels }.
+export function reach(to) {
+  const W = innerWidth, H = innerHeight;
+  const want = new Set([...(to?.dest || []), '#', '#top']); const labels = new Set(to?.labels || []);
+  const key = (a) => { const raw = a.getAttribute('href') || ''; if (!raw || /^javascript:/i.test(raw)) return null; try { const u = new URL(a.href); return u.origin === location.origin && u.pathname === location.pathname && u.search === location.search ? (u.hash || '#') : u.href; } catch { return raw; } };
+  const pinned = (el) => { for (let p = el; p && p !== document.body; p = p.parentElement) { const pos = getComputedStyle(p).position; if (pos === 'fixed' || pos === 'sticky') return true; } return false; };
+  const shown = (el) => {
+    const r = el.getBoundingClientRect(); if (r.width < 8 || r.height < 8 || r.bottom <= 0 || r.top >= H || r.right <= 0 || r.left >= W) return false;
+    for (let p = el; p && p !== document.documentElement; p = p.parentElement) { const cs = getComputedStyle(p); if (cs.visibility === 'hidden' || +cs.opacity < 0.5) return false; }
+    const hit = document.elementFromPoint(Math.min(W - 1, Math.max(0, r.left + r.width / 2)), Math.min(H - 1, Math.max(0, r.top + r.height / 2)));
+    return !!hit && (el.contains(hit) || hit.contains(el));
+  };
+  for (const el of document.querySelectorAll('a[href], button, [role="button"]')) {
+    if (el.closest('[data-ui]')) continue;
+    const name = (el.innerText || el.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const k = el.matches('a[href]') ? key(el) : null;
+    const ok = (k && want.has(k)) || ((el.hasAttribute('aria-controls') || el.hasAttribute('aria-expanded') || /^(menu|index|contents)\b/.test(name) || labels.has(name)) && pinned(el));
+    if (ok && shown(el)) return { found: true, what: name.slice(0, 30) || k, pinned: pinned(el) };
+  }
+  return { found: false };
 }
 
 // layout() runs once, back at the top after the page has been scrolled through (so reveals have fired).
@@ -672,16 +915,36 @@ export function layout() {
   // display type that runs off one edge by a sliver while it starts inside the margin: a fit error, not a bleed
   const slivers = boxes.filter((b) => b.kind === 'text' && b.size >= 40 && b.chars >= 3 && ((b.l >= 8 && b.r > W + 1 && b.r - W < b.size * 0.25) || (b.r <= W - 8 && b.l < -1 && -b.l < b.size * 0.25))).slice(0, 4).map((b) => ({ text: b.text.slice(0, 30), px: Math.round(b.r > W ? b.r - W : -b.l), side: b.r > W ? 'right' : 'left' }));
   // the largest empty rectangle on the first screen (below a 90px band for the navigation), on a 24 x 15 grid
-  let voidShare = 0, voidBox = null;
+  // and the same for each half of it, with how much of each half a picture holds: a picture inset in one half
+  // leaves the other half to close, and a lone sentence floating in it does not
+  let voidShare = 0, voidBox = null, halves = null;
   if (W >= 1000) {
-    const C = 24, Rn = 15, cw = W / C, ch = H / Rn, occ2 = Array.from({ length: Rn }, () => new Array(C).fill(0));
-    for (const b of boxes) { if (b.t - SY > H || b.b - SY < 0) continue; const c0 = Math.max(0, Math.floor(b.l / cw)), c1 = Math.min(C - 1, Math.floor((b.r - 1) / cw)), r0 = Math.max(0, Math.floor((b.t - SY) / ch)), r1 = Math.min(Rn - 1, Math.floor((b.b - SY - 1) / ch)); for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) occ2[r][c] = 1; }
-    const top = Math.ceil(90 / ch), hgt = new Array(C).fill(0);
-    for (let r = top; r < Rn; r++) {
-      for (let c = 0; c < C; c++) hgt[c] = occ2[r][c] ? 0 : hgt[c] + 1;
-      for (let c = 0; c < C; c++) { let mn = Infinity; for (let k = c; k < C && hgt[k]; k++) { mn = Math.min(mn, hgt[k]); const a = mn * (k - c + 1); if (a > voidShare) { voidShare = a; voidBox = { x: Math.round(c * cw), y: Math.round((r - mn + 1) * ch), w: Math.round((k - c + 1) * cw), h: Math.round(mn * ch) }; } } }
-    }
-    voidShare = Math.round((voidShare / (C * Rn)) * 100) / 100;
+    const C = 24, Rn = 15, cw = W / C, ch = H / Rn, occ2 = Array.from({ length: Rn }, () => new Array(C).fill(0)), med = Array.from({ length: Rn }, () => new Array(C).fill(0));
+    for (const b of boxes) { if (b.t - SY > H || b.b - SY < 0) continue; const c0 = Math.max(0, Math.floor(b.l / cw)), c1 = Math.min(C - 1, Math.floor((b.r - 1) / cw)), r0 = Math.max(0, Math.floor((b.t - SY) / ch)), r1 = Math.min(Rn - 1, Math.floor((b.b - SY - 1) / ch)); for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { occ2[r][c] = 1; if (b.kind === 'media') med[r][c] = 1; } }
+    const top = Math.ceil(90 / ch);
+    const largest = (c0, c1) => {
+      const hgt = new Array(C).fill(0); let best = 0, box = null;
+      for (let r = top; r < Rn; r++) {
+        for (let c = c0; c < c1; c++) hgt[c] = occ2[r][c] ? 0 : hgt[c] + 1;
+        for (let c = c0; c < c1; c++) { let mn = Infinity; for (let k = c; k < c1 && hgt[k]; k++) { mn = Math.min(mn, hgt[k]); const a = mn * (k - c + 1); if (a > best) { best = a; box = { x: Math.round(c * cw), y: Math.round((r - mn + 1) * ch), w: Math.round((k - c + 1) * cw), h: Math.round(mn * ch) }; } } }
+      }
+      return { area: best, box };
+    };
+    const whole = largest(0, C); voidBox = whole.box;
+    voidShare = Math.round((whole.area / (C * Rn)) * 100) / 100;
+    // a cell with nothing in it still counts as held when it lies on a panel or field of its own colour (a lit sheet
+    // carrying the title is composed; the bare page ground around a floating sentence is not)
+    const opaqueBg = (c) => { const m = c.match(/rgba?\(([^)]+)\)/); const q = m ? m[1].split(/[,\s/]+/).filter(Boolean) : []; return q.length >= 3 && (q.length < 4 || parseFloat(q[3]) > 0.5); };
+    const pageBg = [B, D].map((e) => getComputedStyle(e).backgroundColor).find(opaqueBg) || 'rgb(255, 255, 255)';
+    const fld = occ2.map((row, r) => row.map((v, c) => {
+      if (v || r < top) return v;
+      let el = document.elementFromPoint((c + 0.5) * cw, (r + 0.5) * ch);
+      for (let i = 0; el && i < 8 && el !== B && el !== D; i++, el = el.parentElement) { const ecs = getComputedStyle(el); if (ecs.backgroundImage !== 'none') return 1; if (opaqueBg(ecs.backgroundColor)) return ecs.backgroundColor !== pageBg ? 1 : 0; }
+      return 0;
+    }));
+    const share = (c0, c1, r0, r1, grid) => { let n = 0; for (let r = r0; r < r1; r++) for (let c = c0; c < c1; c++) n += grid[r][c]; return Math.round((n / ((r1 - r0) * (c1 - c0))) * 100) / 100; };
+    const half = (c0, c1) => { const cells = (Rn - top) * (c1 - c0); const mid = Math.round((top + Rn) / 2); return { void: Math.round((largest(c0, c1).area / cells) * 100) / 100, media: share(c0, c1, top, Rn, med), held: share(c0, c1, top, Rn, fld), upper: share(c0, c1, top, mid, fld), lower: share(c0, c1, mid, Rn, fld) }; };
+    halves = { left: half(0, C / 2), right: half(C / 2, C) };
   }
   // a fixed picture layer that covers the screen (a canvas scene, a film) hides what the DOM cannot see
   const stage = boxes.some((b) => b.layer === 'fixed' && b.kind === 'media' && (b.r - b.l) * (b.b - b.t) >= W * H * 0.9);
@@ -693,7 +956,7 @@ export function layout() {
   const lefts = flow.filter((b) => b.kind === 'text' && b.size >= 14 && !/center|right|end/.test(b.align) && b.l >= 0 && (b.el.closest('h1, h2, h3') || (b.chars >= 60 && b.el.closest('p, blockquote'))) && !b.el.closest('nav, footer, [data-ui], table, li, figcaption')).map((b) => b.l).sort((a, b) => a - b);
   const edges = []; for (const x of lefts) { const e = edges.find((g) => Math.abs(g.x - x) <= 10); if (e) e.n++; else edges.push({ x: Math.round(x), n: 1 }); }
   edges.sort((a, b) => b.n - a.n);
-  return { viewport: { w: W, h: H }, pageH, margins: { left: L == null ? null : Math.round(L), right: R == null ? null : Math.round(R) }, sections, gaps, h1s, edgeText, edges: edges.slice(0, 12), leftBlocks: lefts.length, bodySize, stage, explains, slivers, voidShare, voidBox };
+  return { viewport: { w: W, h: H }, pageH, margins: { left: L == null ? null : Math.round(L), right: R == null ? null : Math.round(R) }, sections, gaps, h1s, edgeText, edges: edges.slice(0, 12), leftBlocks: lefts.length, bodySize, stage, explains, slivers, voidShare, voidBox, halves };
 }
 
 // app() measures what an app screen (dashboard, admin, settings, inbox) gets right or wrong: the shell,
