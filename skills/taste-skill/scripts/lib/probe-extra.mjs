@@ -161,6 +161,21 @@ export function extra() {
   out.uiWords = [...document.querySelectorAll('[data-ui]')].filter((u) => !u.parentElement?.closest('[data-ui]') && visible(u)).map((u) => ({ words: words(textOf(u)), text: textOf(u).slice(0, 40) }));
   out.sentences = [...document.querySelectorAll('p, li, td, dd, figcaption')].filter((p) => visible(p) && words(textOf(p)) > 12).length;
 
+  // --- text inside mock-ups too small to read, placeholder contacts, notes the builder left for the client
+  out.tinyUi = 0; out.placeholders = []; out.builderNotes = [];
+  {
+    const tw = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); let n, k = 0;
+    const noteRe = /\b(until|once)\b[^.]{0,40}\b(are|is|have been|has been|get|gets)\s+(photographed|shot|supplied)|\bplaceholder (image|photo|picture|text|copy)|\bstand-?in (picture|photo|image|drawing)|\bto be replaced\b|\breplace (this|these) (picture|photo|image)s?\b|\bsample (content|copy|text)\b|\blorem ipsum\b/i;
+    while ((n = tw.nextNode()) && k < 6000) {
+      const t = n.nodeValue.trim(); if (!t) continue; k++;
+      const el = n.parentElement; if (!el || !visible(el)) continue;
+      if (el.closest('[data-ui]') && parseFloat(getComputedStyle(el).fontSize) < 11.5) out.tinyUi++;
+      if (noteRe.test(t) && out.builderNotes.length < 4) out.builderNotes.push(t.slice(0, 70));
+      if (/[\w.-]+@[\w-]+\.example\b|\bexample\.(com|org)\b|\b555-0\d{3}\b/i.test(t) && out.placeholders.length < 4) out.placeholders.push(t.slice(0, 50));
+    }
+    for (const a of document.querySelectorAll('a[href]')) { const h = a.getAttribute('href') || ''; if (/\.example\b|example\.(com|org)/i.test(h) && out.placeholders.length < 4) out.placeholders.push(h.slice(0, 50)); }
+  }
+
   // --- breakage at narrow widths (most of the reviewed pages' high-severity faults were phone or tablet only)
   // text cut by the screen edge or by a clipping box, mock-ups included: a 520px sheet in a 390px screen reads "Sub"
   out.cutText = [];

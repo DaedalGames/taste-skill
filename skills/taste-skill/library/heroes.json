@@ -751,7 +751,8 @@
   "motion": "shutter-image",
   "seenIn": [
    "aww-aspen-search"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "name-band-and-rails",
@@ -769,7 +770,8 @@
   "seenIn": [
    "opl-shawn-golden",
    "aww-seasats"
-  ]
+  ],
+  "banned": true
  },
  {
   "id": "stepped-title-two-photos",

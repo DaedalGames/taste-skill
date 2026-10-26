@@ -236,6 +236,13 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
 - **No labels that carry nothing.** No timestamps, "connected source", status chips, tags, kickers or
   captions on cards unless the visitor needs that fact. A caption under a picture says what a visitor
   needs to know about it, or is not there.
+- **The sections that convert are complete.** The price says what it includes and the terms (trial,
+  billing, cancelling) as a short list; booking asks for what a booking needs (dates, guests, room);
+  proof is facts the page can stand behind (what the file format is, how many rooms face the fjord,
+  the warranty), never invented customers or quotes.
+- **Nothing on the page talks to the client.** No "drawn until the rooms are photographed", no "sample
+  content", no `.example` addresses: what is missing goes in the report (the inspector fails notes and
+  warns on placeholder contacts).
 - Sample details are expected where the brief leaves gaps (dish names, room names and rates, project
   titles) so the design is seen at full density; list them in the report for the client to confirm.
   Proof is never invented: no customers, quotes, reviews, press, logos or business statistics.
@@ -272,9 +279,12 @@ not finished. Order of work:
 
    Rules: every picture shows this subject's world and is requested at least 1.5 times the size it is
    shown (twice for the hero); one treatment for all (section 0); three to eight good pictures beat
-   twelve weak ones. Old postcards, engravings, maps and archive scans only when the subject is
-   historical, and never in a large slot. Never a picture inside a headline or a thumbnail inside a
-   sentence. Credits a licence requires go in one "Image credits" dialog opened from a small footer link
+   twelve weak ones. Archive photographs, old maps and engravings only when they are the idea itself
+   (the history this subject continues, like the slip boxes behind a notes app), sharp, large and of
+   one family; never as filler or a random old picture of the place. Never a picture inside a headline
+   or a thumbnail inside a sentence. Software shows itself large on the first screen, at a size a
+   visitor can read, and at least one other large picture that is not an interface card; never more
+   than two sections in a row made of interface cards. Credits a licence requires go in one "Image credits" dialog opened from a small footer link
    (`assets.mjs --credits` prints it), never as a list across the footer, never as a sentence on the
    page. When the project has footage or a real picture of its own product, the first screen shows it,
    large. A portfolio whose work is invented for the brief shows each piece as a finished still of that
@@ -531,9 +541,10 @@ asset, say so in the report, and pass `--allow <rule>` to the inspector for that
 Match the surrounding design, apply the house rules and the laws, and still inspect the result.
 
 **No checkout, no form backend.** The primary button goes to the real destination when the brief names
-one. Otherwise it opens an email with a written subject and body (`mailto:` with the visitor's choices
-filled in), or, for a shop, it points at `#checkout` and the report says it must be wired before
-launch. Never fake a payment form.
+one. Otherwise it opens an email to the client's real address with a written subject and body (`mailto:`
+with the visitor's choices filled in); with no real address, it points at the page's own contact or
+`#checkout` section and the report says it must be wired before launch. Never a made-up `.example`
+address, never a fake payment form.
 
 **No Chrome or Node 22.** Run `lint.mjs` (Node 18+), take screenshots with whatever browser tool you
 have, and critique those. Say in the report that the inspector could not run.

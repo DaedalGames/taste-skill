@@ -156,7 +156,7 @@ if (opt('redraw')) {
   const dir = L.directions.find((d) => d.id === sheet.direction.id);
   if (what === 'direction') sheet = deal({ ...sheet.input, direction: null, avoid: [...(sheet.input.avoid || []), sheet.direction.id] }, sheet.redraws);
   else if (what === 'hero') sheet.hero = dealHero(dir, sheet.input, [sheet.hero?.id]);
-  else if (what === 'type') sheet.type = dealType(dir, [sheet.type?.id], sheet.input.tone);
+  else if (what === 'type') sheet.type = dealType(dir, [sheet.type?.id], sheet.input.tone, isDark(sheet.palette));
   else if (what === 'palette') sheet.palette = dealPalette(dir, sheet.input, [sheet.palette?.id]);
   else if (what === 'photos') sheet.photos = dealPhotos(dir, sheet.input);
   else if (what === 'scenes') sheet.scenes = dealScenes(dir, sheet.input, (sheet.scenes || []).map((x) => x.id));
@@ -256,12 +256,13 @@ function deal(input, redraws) {
   const dir = forced || wpick(fresh(pool, recent('direction', Math.min(5, pool.length - 1))).map((d) => [d, d.weight ?? 1]));
   const s = { version: 1, at: new Date().toISOString(), seed: startSeed, redraws, input, imagery: imageryMode(input), allow: dir.allow || [], direction: dir };
   s.hero = dealHero(dir, input, []);
-  s.type = input.keep.includes('type') ? null : dealType(dir, [], input.tone);
+  // colour first, so a dark ground never gets a hairline text face
   s.palette = input.keep.includes('palette') ? null : dealPalette(dir, input, []);
+  s.type = input.keep.includes('type') ? null : dealType(dir, [], input.tone, isDark(s.palette));
   s.photos = dealPhotos(dir, input);
   // signature moves that built the reviewed pages' worst parts (drag rails, a scaling giant name, colour
   // chapters) are not dealt; another move is drawn instead
-  const NO_MOTION = new Set(['drag-row', 'scaling-wordmark', 'colour-on-scroll']);
+  const NO_MOTION = new Set(['drag-row', 'scaling-wordmark', 'colour-on-scroll', 'curtain-footer']);
   // the hero's own move most of the time; otherwise any allowed move, so the same few do not repeat
   const wanted = rnd() < 0.4 ? null : [s.hero?.motion, dir.motion].find((id) => id && !NO_MOTION.has(id));
   s.motion = L.motions.find((m) => m.id === wanted) || wpick(L.motions.filter((m) => !NO_MOTION.has(m.id) && !['carried-picture', 'index-preview'].includes(m.id)).map((m) => [m, m.id === 'stillness' ? 0.5 : 1]));
@@ -286,8 +287,13 @@ function dealScenes(dir, input, exclude) {
   const LONG = 3;     // a scene over this is the page's one long scene, and never carries the work
   const has = (need) => input.have.includes(need) || need === 'photography';
   const fits = (sc) => !exclude.includes(sc.id) && (sc.sectors || ['*']).some((x) => x === '*' || x === input.sector) && (sc.needs || []).every(has);
-  let pool = L.scenes.filter(fits);
-  if (pool.length < 2) pool = L.scenes.filter((sc) => !exclude.includes(sc.id) && (sc.needs || []).every(has));
+  // Atmosphere scenes (light, a burst of lines, letters) carry one line and no information. In round 1 of the
+  // v2.5 tests every one of them was the stretch judges called dead scroll on a product page. They are dealt
+  // only to loud or creative pages, one at most; everywhere else a scene carries the section's real content.
+  const ATMOSPHERE = new Set(['warp-jump', 'light-flood', 'letter-physics', 'wordmark-under-strain', 'object-through-giant-type']);
+  const creative = ['bold', 'playful'].includes(input.tone) || ['agency', 'studio-portfolio', 'personal-portfolio', 'music', 'fashion', 'event', 'culture'].includes(input.sector);
+  let pool = L.scenes.filter((sc) => fits(sc) && (creative || !ATMOSPHERE.has(sc.id)));
+  if (pool.length < 2) pool = L.scenes.filter((sc) => !exclude.includes(sc.id) && (sc.needs || []).every(has) && (creative || !ATMOSPHERE.has(sc.id)));
   if (!pool.length) return [];
   const roles = ['hero', ...input.sections];
   const loud = ['bold', 'playful'].includes(input.tone) || (!input.tone && ['agency', 'fashion', 'music', 'event'].includes(input.sector));
@@ -308,7 +314,7 @@ function dealScenes(dir, input, exclude) {
     return sc.position === 'closing' ? ok.sort((a, b) => roles.indexOf(b) - roles.indexOf(a))[0] : ok[0];
   };
   const held = () => out.reduce((s, x) => s + holdOf(x), 0);
-  const allowed = (sc) => !out.some((o) => o.id === sc.id) && !families.has(sc.family) && place(sc) && !(holdOf(sc) > LONG && out.some((o) => holdOf(o) > LONG)) && held() + holdOf(sc) <= BUDGET;
+  const allowed = (sc) => !out.some((o) => o.id === sc.id) && !families.has(sc.family) && place(sc) && !(holdOf(sc) > LONG && out.some((o) => holdOf(o) > LONG)) && held() + holdOf(sc) <= BUDGET && !(ATMOSPHERE.has(sc.id) && out.some((o) => ATMOSPHERE.has(o.id)));
   while (out.length < n) {
     let cands = fresh(pool, recentIds).filter(allowed);
     if (!cands.length) cands = pool.filter(allowed);
@@ -331,10 +337,11 @@ function dealHero(dir, input, exclude) {
 }
 // Type is dealt from the font collection (library/fonts.json): the kind of pairing, the faces, weights,
 // case and a six-step scale, avoiding the faces of recent builds. The direction leans the deal, never fixes it.
-function dealType(dir, exclude, tone) {
+function isDark(p) { if (!p?.bg || !/^#[0-9a-f]{6}$/i.test(p.bg)) return false; const n = parseInt(p.bg.slice(1), 16); return (0.2126 * (n >> 16) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255 < 0.35; }
+function dealType(dir, exclude, tone, dark = false) {
   const recentFamilies = hist.slice(0, 6).flatMap((h) => h.families || []);
   const without = exclude.filter(Boolean).flatMap((id) => L.fonts.filter((f) => String(id).includes(f.family.toLowerCase().replace(/\s+/g, '-'))).map((f) => f.family));
-  return dealTypeSystem({ rnd, fonts: L.fonts, tone: tone || null, dirClasses: dir.typeClasses || [], recentFamilies, exclude: without });
+  return dealTypeSystem({ rnd, fonts: L.fonts, tone: tone || null, dirClasses: dir.typeClasses || [], recentFamilies, exclude: without, dark });
 }
 // Colour: about half the time a restrained palette generated for this page (one ground, one ink, one
 // accent), otherwise a studied palette from the library. Loud, many-field palettes are dealt only for a
@@ -570,9 +577,9 @@ function render(s) {
   const find = qs.length
     ? `\`${ASSETS_CMD} "${qs[0]}"\`${qs.length > 1 ? `, then ${qs.slice(1).map((q) => `"${q}"`).join(' and ')}` : ''}, then queries from your inventory (its street, its materials, its trade's tools and history)`
     : `\`${ASSETS_CMD} "<a place, material or object from your inventory>"\``;
-  const SOURCES = 'Order of sources: (1) the project\'s own pictures; (2) pictures you generate, if you have an image tool (the best way to show this exact subject); (3) the dealt photographs below and the rest of the library (`node <skill>/scripts/draw.mjs --photos <words>`): sharp, modern and free of credits; (4) real photographs from the open collections (' + find + '), only sharp modern photographs at 1800px or more, credited in the Image credits dialog (`--credits` prints it), never in the footer; (5) drawn in code. Old postcards, engravings, maps and archive scans only when the subject itself is historical, and never in a large slot.';
+  const SOURCES = 'Order of sources: (1) the project\'s own pictures; (2) pictures you generate, if you have an image tool (the best way to show this exact subject); (3) the dealt photographs below and the rest of the library (`node <skill>/scripts/draw.mjs --photos <words>`): sharp, modern and free of credits; (4) real photographs from the open collections (' + find + '), only sharp modern photographs at 1800px or more, credited in the Image credits dialog (`--credits` prints it), never in the footer; (5) drawn in code. Archive photographs, old maps and engravings only when they are the idea itself (the history this subject continues, shown sharp and large as one family, like the slip boxes behind a notes app), never as filler, never small, never a random old picture of the place.';
   const MODE = {
-    interface: '**This subject is software and there are no screenshots, so its pictures are its own interface.** Wherever this sheet says photograph, image or object, build a believable fragment of the product in HTML at real size (real labels, numbers that add up, one item hovered or selected) by the app-screen rules (references/app-screens.md: deal its style once with `node <skill>/scripts/draw.mjs --app --kind <kind> --keep palette,type --out .taste-skill/app`, and build it with assets/app.css and assets/charts.js), put the attribute `data-ui` on its root, and crop or scale it the way the blueprint treats a photograph: a full-bleed close crop, a tile, the fixed half of a split. Where a fragment makes no sense, use a flat colour field with type on it. Never a fake dashboard of grey bars, never a device frame. If the product works on something physical (ships, plants, buildings, a city), one real picture of that world can carry a section: find it with `' + ASSETS_CMD + ' "<that world>"`, download it with `--get`, credit it in the Image credits dialog if its licence asks, and never let it pass for the product or its customers.',
+    interface: '**This subject is software and there are no screenshots, so its pictures are its own interface.** Wherever this sheet says photograph, image or object, build a believable fragment of the product in HTML at real size (real labels, numbers that add up, one item hovered or selected) by the app-screen rules (references/app-screens.md: deal its style once with `node <skill>/scripts/draw.mjs --app --kind <kind> --keep palette,type --out .taste-skill/app`, and build it with assets/app.css and assets/charts.js), put the attribute `data-ui` on its root, and crop or scale it the way the blueprint treats a photograph: a full-bleed close crop, a tile, the fixed half of a split. Where a fragment makes no sense, use a flat colour field with type on it. Never a fake dashboard of grey bars, never a device frame. The first screen shows the product large (at least half the screen) at a size a visitor can read (labels 12px or more, its main text 14px or more; crop to fewer rows rather than shrink it). Further down, at least one more large picture that is not an interface card (a photograph of the world the product works in, a large figure, a drawn object), and never more than two sections in a row built from interface cards: a page of dark cards on a dark ground reads as one long screenshot. If the product works on something physical (ships, plants, buildings, a city), one real picture of that world can carry a section: find it with `' + ASSETS_CMD + ' "<that world>"`, download it with `--get`, credit it in the Image credits dialog if its licence asks, and never let it pass for the product or its customers.',
     'no-product-photo': '**There are no photographs of the product, and none can be faked.** If you have an image tool, generate the product as it really is (its shape, material and colour from the brief) and say so in the report. Otherwise draw it in code, large and precise, in one graphic language and its real colours (references/imagery.md §8), or carry the slot with type and the product\'s facts. Around it, sharp photographs of its world (its material up close, where it is used) that no visitor could take for the product. In your report, say that product photography is needed and which slots it will fill.',
     atmosphere: '**The project has no photographs of its own yet.** Plan the set before building: three to six sharp pictures of one family (one light, one treatment) that show the subject\'s world, reused at different crops instead of a new picture for every slot. They show the world around the client and never pretend to be the client\'s own room, dish, product, person or team. Where no honest picture exists, leave the slot to type and space, or draw the subject\'s own things in code, large and precise (references/imagery.md §8). List every picture and its source in your report.',
     own: '**Use the images that belong to the project in every picture slot.** For slots they cannot fill, the dealt photographs or sharp photographs of the subject\'s world come next.',

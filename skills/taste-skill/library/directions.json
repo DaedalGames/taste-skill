@@ -920,7 +920,8 @@
    "aww-realevate",
    "opl-justin-lerner"
   ],
-  "allow": []
+  "allow": [],
+  "weight": 0.25
  },
  {
   "id": "uneven-photographs",

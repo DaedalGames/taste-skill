@@ -55,10 +55,12 @@ In order of preference:
    stand in for a specific product, dish, room, person or screen.
 4. **Sharp modern photographs from the open collections** (section 3), 1800px or wider, of the
    subject's world as it looks now: its city, its materials, its kind of work. Honest means nobody
-   could take one for the client's own product, room, dish, person or team. Old postcards,
-   engravings, maps and archive scans only when the subject itself is historical (a museum, a
-   restoration, a century-old firm), and never in a large slot: in the October 2026 review, archive
-   imagery on about half the pages was the most common reason a page looked cheap.
+   could take one for the client's own product, room, dish, person or team. Archive
+   photographs, old maps and engravings only when they are the idea itself (the history this subject
+   continues: a century-old firm's first workshop, the slip boxes behind a notes app), sharp, large and
+   of one family: in the October 2026 review, random archive scans on about half the pages were the most
+   common reason a page looked cheap, while sharp archive photographs that carried the idea were what
+   blind judges praised most.
 5. **Pictures you draw in code from the subject itself** (section 8), for what no honest picture
    exists of: the product's own objects, the document a tool produces, the interface of a piece of
    software. Only when drawn with real care and precision; a rough drawing is worse than none.
@@ -111,8 +113,9 @@ people's bakeries. The subject's world is specific:
 - **Its materials,** close enough to read as a surface: the stone of its quay, the grain of its oak,
   its glaze, its tiles ("azulejo tiles", "basalt cobblestones", "oak grain").
 - **Its kind of work, today:** hands at the craft, the tools in use, the landscape it works in.
-- **Only for a historical subject:** old photographs and postcards of the place, old maps, museum
-  objects of its kind (`--source museums`), engravings. Small slots, one family, never the hero.
+- **Only when the history is the idea:** old photographs of the subject's own lineage (the first
+  workshop, the tool it replaces, the people who invented its kind), museum objects of its kind
+  (`--source museums`). Sharp, large, one family; never random old pictures of the place.
 
 Search in the place's own words (azulejo, not "blue tile"; Korenmarkt, not "market square") and try
 two or three queries per idea. If nothing sharp and fitting turns up, do not fill the slot.

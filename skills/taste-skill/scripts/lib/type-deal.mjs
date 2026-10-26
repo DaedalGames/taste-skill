@@ -49,7 +49,10 @@ const RATIOS = [[1.2, 1], [1.25, 2], [1.333, 3], [1.414, 2], [1.5, 1.5], [1.618,
 // professional sites set body at 14-16px (median 15); generated pages drift to 19px, which reads as a children's book
 const BODY = [[16, 5], [17, 2.5], [18, 1]];
 
-export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamilies = [], exclude = [] }) {
+// text faces too fine for running text on a dark ground (judges read them as grey and thin)
+const THIN_TEXT = new Set(['Cardo', 'EB Garamond', 'Cormorant', 'Radley', 'Gentium Book Plus', 'Lusitana', 'Crimson Pro', 'Spectral', 'Libre Caslon Text', 'Castoro', 'Prata', 'Rufina']);
+
+export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamilies = [], exclude = [], dark = false }) {
   const wpick = (pairs) => { const t = pairs.reduce((s, [, w]) => s + w, 0); let r = rnd() * t; for (const [v, w] of pairs) { r -= w; if (r <= 0) return v; } return pairs.at(-1)[0]; };
   const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
   const range = ([a, b], d = 3) => +(a + rnd() * (b - a)).toFixed(d);
@@ -76,16 +79,16 @@ export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamili
   else {
     tClass = tc;
     // a text face needs a regular and a bold, and must differ from the display face
-    const pool = inClass(tc).filter((f) => f.family !== display.family && f.weights.includes(400) && f.weights.some((w) => w >= 600));
+    const pool = inClass(tc).filter((f) => f.family !== display.family && f.weights.includes(400) && f.weights.some((w) => w >= 600) && !(dark && THIN_TEXT.has(f.family)));
     text = pick(freshOf(pool.length ? pool : inClass('neo')));
   }
   // a display face with one weight can still set a whole page only if it is a real text face; otherwise pair it
-  if (text === display && !(display.weights.includes(400) && display.weights.some((w) => w >= 600))) {
+  if (text === display && (!(display.weights.includes(400) && display.weights.some((w) => w >= 600)) || (dark && THIN_TEXT.has(display.family)))) {
     tClass = 'neo'; text = pick(freshOf(inClass('neo').filter((f) => f.family !== display.family)));
   }
 
   const avail = (f, pairs) => { const ok = pairs.filter(([w]) => f.weights.includes(w)); return ok.length ? ok : f.weights.map((w) => [w, 1]); };
-  const dWeight = wpick(avail(display, DISPLAY_WEIGHTS[dClass] || DISPLAY_WEIGHTS.neo));
+  let dWeight = wpick(avail(display, DISPLAY_WEIGHTS[dClass] || DISPLAY_WEIGHTS.neo));
   const tWeight = text.weights.includes(400) ? 400 : text.weights.reduce((a, b) => (Math.abs(b - 400) < Math.abs(a - 400) ? b : a));
   const strong = [600, 700, 500].find((w) => text.weights.includes(w) && w > tWeight) || null;
   const caps = dClass === 'condensed' ? rnd() < 0.45 : dClass === 'wide' ? rnd() < 0.3 : false;
@@ -98,12 +101,16 @@ export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamili
   // professional sites: largest type median 3.9vw (P75 4.5vw); award sites 5.6vw (P75 9.6vw); generated pages 14vw.
   // Most pages get a confident professional size; a giant headline is a rare, dealt event, never the default.
   const displayVw = wpick([[3.4, 2], [4, 3.5], [4.8, 3.5], [5.6, 2.5], [6.6, 1.6], [8, 1], [10, 0.5], [12.5, 0.2]]) * (dClass === 'condensed' ? 1.25 : dClass === 'wide' ? 0.8 : 1);
+  // a light weight reads as thin below a large size: at a modest display size it steps up to regular
+  if (dWeight < 400 && displayVw < 5.5 && display.weights.includes(400)) dWeight = 400;
   const px = (n) => Math.round(n * 10) / 10;
   const small = Math.max(13, px(body / ratio));
   const lead2 = px(body * Math.min(ratio, 1.333));
-  const head = px(body * ratio ** 3);
-  const sub = px(body * ratio ** 2);
-  const disp = px(1440 * displayVw / 100);
+  // section headings at least 2.25 times the body and the headline at least three times it: on a 1.2 scale
+  // the third step is only 1.7 times the body, and judges read such headings as timid
+  const head = px(Math.max(body * ratio ** 3, body * 2.25));
+  const sub = px(Math.max(body * ratio ** 2, Math.sqrt(head * lead2)));
+  const disp = px(Math.max(1440 * displayVw / 100, body * 3, head * 1.3));
   const fluid = (min, max, vwAt1440) => `clamp(${(min / 16).toFixed(3)}rem, ${((min * 0.6) / 16).toFixed(3)}rem + ${vwAt1440.toFixed(2)}vw, ${(max / 16).toFixed(3)}rem)`;
   const scale = {
     'step-small': `${(small / 16).toFixed(4)}rem`,
@@ -111,7 +118,7 @@ export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamili
     'step-lead': fluid(Math.max(body + 1, lead2 * 0.9), lead2, (lead2 * 0.4 / 1440) * 100),
     'step-sub': fluid(Math.max(lead2, sub * 0.8), sub, (sub * 0.45 / 1440) * 100),
     'step-head': fluid(Math.max(sub, head * 0.62), head, (head * 0.5 / 1440) * 100),
-    'step-display': fluid(Math.max(head * 0.8, Math.min(disp * 0.42, 64)), disp, displayVw * 0.62),
+    'step-display': fluid(Math.max(head * 0.8, Math.min(disp * 0.42, 64)), disp, (disp / 14.4) * 0.62),
   };
 
   const link = (f, ws, italic) => {

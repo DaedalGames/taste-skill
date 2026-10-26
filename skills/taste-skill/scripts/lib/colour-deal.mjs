@@ -57,7 +57,8 @@ export function dealPaletteV25({ rnd, tone, recent = [] }) {
   let muted = hex(oklch(light ? range([0.44, 0.5]) : range([0.74, 0.8]), inkC, groundHue));
   if (gid === 'field' && contrast(ink, bg) < 7) ink = hex(oklch(0.14, 0.01, groundHue));
   // accent: chroma level dealt; vivid is rare. A monochrome page (the ink is the accent) is dealt too.
-  const mono = rnd() < (tone === 'luxury' || tone === 'quiet' ? 0.3 : 0.16);
+  // a page on a coloured ground keeps that one hue: its action is set in the ink
+  const mono = gid === 'field' || rnd() < (tone === 'luxury' || tone === 'quiet' ? 0.3 : 0.16);
   const chroma = wpick([[['muted', [0.07, 0.1]], 2], [['rich', [0.12, 0.16]], 3], [['vivid', [0.18, 0.23]], tone === 'bold' || tone === 'playful' ? 2 : 0.6]])[0];
   let accent, accentInk, accentWord;
   if (mono) { accent = ink; accentInk = bg; accentWord = 'no colour but the ink'; }

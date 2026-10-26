@@ -707,7 +707,31 @@ export function frame(opts = {}) {
       if (all >= 8 && on / all >= 0.2 && on / all <= 0.8) straddle.push({ text: txt.slice(0, 48), share: Math.round((on / all) * 100) / 100 });
     }
   }
-  if (opts.film) { hitStyle.remove(); return { overText, seen, playing, straddle, y: Math.round(scrollY) }; }
+  // scenes that paint only light, lines or letters on their canvas: their canvas is not a picture
+  const ATMOSPHERE = new Set(['warp-jump', 'light-flood', 'letter-physics', 'wordmark-under-strain']);
+  // the share of the screen that holds words or real pictures. Tested against the boxes of visible text and
+  // media, not the topmost element, so a transparent layer over a picture does not hide it; a glow, a burst
+  // of lines or a coloured stage with nothing on it is not content.
+  function contentShare() {
+    const seenOpacity = (el) => { let o = 1; for (let e = el, i = 0; e && e !== document.body && i < 8; e = e.parentElement, i++) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return 0; o *= +cs.opacity; } return o; };
+    const boxes = [];
+    const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const rr = document.createRange();
+    for (let n = tw.nextNode(); n; n = tw.nextNode()) { if (!n.nodeValue.trim() || !n.parentElement) continue; if (seenOpacity(n.parentElement) < 0.2) continue; rr.selectNodeContents(n); for (const r of rr.getClientRects()) if (r.bottom > 0 && r.top < H && r.width > 1) boxes.push({ l: r.left - 6, r: r.right + 6, t: r.top - 4, b: r.bottom + 4 }); }
+    for (const el of document.querySelectorAll('img, video, picture, iframe, canvas, svg, [style*="background-image"], [class]')) {
+      const tag = el.tagName;
+      let media = /^(IMG|VIDEO|PICTURE|IFRAME)$/.test(tag) || (tag === 'CANVAS' && !ATMOSPHERE.has(el.closest('[data-scene]')?.dataset.scene)) || (tag === 'svg' && !el.parentElement?.closest('svg'));
+      if (!media && !/^(IMG|VIDEO|PICTURE|IFRAME|CANVAS|svg)$/.test(tag)) { const bi = getComputedStyle(el).backgroundImage; media = /url\(/.test(bi); }
+      if (!media) continue;
+      const r = el.getBoundingClientRect(); if (r.width < 40 || r.height < 40 || r.bottom <= 0 || r.top >= H || r.right <= 0 || r.left >= W) continue;
+      if (seenOpacity(el) < 0.2) continue;
+      boxes.push({ l: r.left, r: r.right, t: r.top, b: r.bottom });
+      if (boxes.length > 4000) break;
+    }
+    let hits = 0, all = 0;
+    for (let gx = 0; gx < 24; gx++) for (let gy = 0; gy < 15; gy++) { const x = (gx + 0.5) * (W / 24), y = (gy + 0.5) * (H / 15); all++; if (boxes.some((b) => x >= b.l && x <= b.r && y >= b.t && y <= b.b)) hits++; }
+    return Math.round((hits / all) * 100) / 100;
+  }
+  if (opts.film) { hitStyle.remove(); return { overText, seen, playing, straddle, content: contentShare(), y: Math.round(scrollY) }; }
   const pictures =[...document.querySelectorAll('img, picture, svg, canvas, video')].filter((m) => !m.parentElement?.closest('svg')).map((m) => ({ m, r: m.getBoundingClientRect() })).filter(({ r }) => r.width >= 80 && r.height >= 80 && r.bottom > 0 && r.top < H);
   for (const el of document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote, li, a, button, span, div')) {
     let direct = ''; for (const n of el.childNodes) if (n.nodeType === 3) direct += n.nodeValue;
@@ -755,21 +779,24 @@ export function frame(opts = {}) {
     if (!n.nodeValue.trim() || !n.parentElement) continue; const pcs = getComputedStyle(n.parentElement); if (pcs.visibility === 'hidden' || +pcs.opacity < 0.2) continue;
     rg.selectNodeContents(n); for (const r of rg.getClientRects()) if (r.bottom > 0 && r.top < H && r.width > 1) textRects.push(r);
   }
-  let filled = 0, samples = 0;
+  // filled: anything on the screen but the page ground; content: words and real pictures only (a glow on a
+  // canvas or a coloured stage with nothing on it is filled but has no content)
+  let filled = 0, content = 0, samples = 0;
   for (let gx = 0; gx < 24; gx++) for (let gy = 0; gy < 15; gy++) {
     const x = (gx + 0.5) * (W / 24), y = (gy + 0.5) * (H / 15); samples++;
-    if (textRects.some((r) => x >= r.left - 6 && x <= r.right + 6 && y >= r.top - 4 && y <= r.bottom + 4)) { filled++; continue; }
+    if (textRects.some((r) => x >= r.left - 6 && x <= r.right + 6 && y >= r.top - 4 && y <= r.bottom + 4)) { filled++; content++; continue; }
     let el = document.elementFromPoint(x, y);
     for (let i = 0; el && i < 6 && el !== document.body && el !== document.documentElement; i++, el = el.parentElement) {
-      if (/^(IMG|VIDEO|CANVAS|PICTURE|svg|IFRAME)$/.test(el.tagName) || el.closest('svg')) { filled++; break; }
+      if (/^(IMG|VIDEO|PICTURE|IFRAME)$/.test(el.tagName) || (el.closest('svg') && el.closest('svg').getBoundingClientRect().width > 40)) { filled++; content++; break; }
+      if (el.tagName === 'CANVAS') { filled++; if (!ATMOSPHERE.has(el.closest('[data-scene]')?.dataset.scene)) content++; break; }
       const cs = getComputedStyle(el);
-      if (cs.backgroundImage !== 'none') { filled++; break; }
+      if (cs.backgroundImage !== 'none') { filled++; if (/url\(/.test(cs.backgroundImage)) content++; break; }
       const bg = cs.backgroundColor; if (bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') { if (bg !== pageBg) filled++; break; }
     }
   }
   // 3. the large text in view, to spot one statement held on screen for screen after screen
   const big = [...new Set([...document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote')].filter((el) => { const r = el.getBoundingClientRect(); return !el.closest('.scene.is-live') && parseFloat(getComputedStyle(el).fontSize) >= 32 && r.top >= -4 && r.bottom <= H + 4 && r.height > 0; }).map((el) => (el.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 60)).filter((t) => t.length >= 4))];
-  return { covered, clipped, pinnedOver, overText, seen, playing, onMedia: [...onMedia.values()], straddle, filled: Math.round((filled / samples) * 100) / 100, big, y: Math.round(scrollY) };
+  return { covered, clipped, pinnedOver, overText, seen, playing, onMedia: [...onMedia.values()], straddle, filled: Math.round((filled / samples) * 100) / 100, content: contentShare(), big, y: Math.round(scrollY) };
 }
 
 // reach() runs at each screen of the walk: is there a visible way back to the navigation's anchors or the
