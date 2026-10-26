@@ -253,49 +253,27 @@ or a fade from 55% black to transparent over the lower third. Never a coloured o
   tell it apart from page styles.
 - If the user supplies real screenshots, show them large and uncropped at least once.
 
-## 8. Drawing the subject
+## 8. Drawings: only when they are information
 
-When nothing real can be photographed and the open collections hold no honest picture of it, draw it,
-and draw it well. Inline SVG and CSS are enough. Drawings and found pictures can share a page: the
-found ones show the world around the client, the drawings show the client's own things.
+Do not illustrate. Drawn objects, products, people, rooms, buildings, food, animals, landscapes,
+mascots and decorative motifs in SVG or CSS were the commonest reason reviewers called a page amateur:
+next to award sites they read as clip art, however carefully they are drawn. When there is no picture
+of something, the section is set in type, or it shows the product's own interface, or a real photograph
+of the subject's world; it never gets a drawing in place of a photograph.
 
-- **Draw the subject's own things,** not decoration: the stool's three legs and the grain of its seat,
-  the enamel sign over the bakery door, the hut's two windows and its stove pipe, the street plan, the
-  invoice the tool produces, the festival's stage. If you cannot name what a drawing depicts in the subject's world, it is decoration.
-- **One graphic language for the whole page:** flat filled shapes, no outlines or one consistent
-  stroke weight, the same corner and curve vocabulary everywhere, drawn in the palette's real colours
-  (fields and accent at full strength, not greys). A set of drawings that obviously belong together
-  reads as an identity; a mix of styles reads as clip art.
-- **Colour is the material.** A product sold on its finish is drawn in that finish's colours; a sea house in the
-  sea's blues and the sand; never a page of grey placeholders.
-- **Draw with three levels of detail.** Jurors called simple drawings "basic" every time. Give each
-  drawing big shapes that read at a glance, middle shapes that describe the thing (the handle, the
-  window frame, the step), and small details that reward a second look (the maker's mark, the house
-  number, the chipped tile, the hinge, a bird on the roof). Make light with flat tone steps (a lit face
-  and a shaded face of each volume), not gradients. A drawing that would pass as a placeholder icon at
-  full size is not finished.
-- **Draw large and let it work:** the drawing is the hero's dominant element, a full-width band, a set
-  of tiles, the footer mark. Small doodles scattered around read as filler.
-- **Let it carry the idea through the page,** the way a motif does: the same drawn object returns at
-  different scales, the tile grid becomes the opening hours, the map becomes the booking section.
-- **A drawing that explains the work is information.** A plan, a section, an elevation or a diagram of
-  the building or the product is shown whole (`object-fit: contain`, no zoom past 1, crop only the
-  ground and the sky round it), fitting one screen with its caption, and the caption sits outside it or
-  in its margin. Cropped to a stair corner or a beam it explains nothing.
-- **Drawn rooms are read, not glanced at.** When drawings stand in for photographs of the rooms, the
-  table or the house (no `--have`), draw each room as a plan or an interior at least about 360px wide,
-  taking 40% of its frame or more, in ink lines on the paper colour and labelled (bed, window, door).
-  A 150px dark plan on a dark card reads as an app icon, and a bird or a snowfield in the room's slot
-  tells the guest nothing about where they will sleep.
-- **A drawn product is the product's picture.** When the product has no photographs, draw it in the
-  same language as the page's photographs (a precise line or technical drawing beside archive
-  photographs, not flat clip art beside them), in its normal pose, and show it at least once at 60%
-  of the screen's width or more, big enough to judge.
-- **Honesty:** say plainly, in small text near the first drawing or in the footer, that the pictures
-  are drawn until photographs exist, if the client might otherwise be taken to be showing real
-  products. In your report, list which drawings are placeholders for photography.
-- **Not this:** gradient-shaded 3D-looking blobs, isometric clip art, generic line illustrations of
-  people at laptops, abstract floating shapes, icons in squares. Those are the generated look.
+SVG is right for these, and only these:
+
+- **The logo and the wordmark.**
+- **Information drawn exactly:** a chart of real numbers, a route or a site map with its real geometry,
+  a floor plan or a technical drawing that a buyer needs (dimensions, rooms, parts), labelled, shown
+  whole, in thin lines of one weight, as a draughtsman would draw it. If it carries no labels and no
+  numbers, it is an illustration.
+- **Icons inside a product fragment** (`data-ui`), and an arrow in a button.
+
+Never: hand-built illustrations of the product or the place, drawn people, scenes or skylines, blobs
+and abstract shapes, isometric art, rows of small drawn motifs, a drawn version of the brand idea
+(stones, leaves, waves) repeated as decoration. The inspector fails a large drawn illustration
+(`drawn-illustration`) and warns on scattered small ones (`svg-doodles`).
 
 ## 9. Type and colour alone
 

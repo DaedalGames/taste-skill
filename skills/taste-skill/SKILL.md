@@ -89,9 +89,9 @@ carry the rest; it never fills slots with whatever a search returns.
 Name the pictures a visitor needs before deciding: for a place to stay, the rooms, the house and the
 table; for food, the plates and the room; for a product, the product; for a practice, its work. When
 the project has none of them, say in the report that they are missing (or ask, when the user is there
-to answer) and choose a direction that does not promise them. Their slots are then drawn from the
-subject (the room's plan at a size that can be read, the product in its normal pose;
-`references/imagery.md` §8), never filled with the place's birds or weather.
+to answer) and choose a direction that does not promise them. Their slots are then set in type with
+the facts a visitor needs (the room's size, its view, its price), never filled with a drawing or with
+the place's birds and weather (`references/imagery.md` §8).
 
 If the request is vague, decide and state your reading in one line instead of asking. Ask only when a
 missing fact blocks the work (for example, no product name).
@@ -138,7 +138,8 @@ and say why in the report.
   that can make them), `product-ui` (real screenshots), `illustration`, `video`. Leave it out if you
   have none: the draw then avoids compositions that depend on them and the sheet says how to fill
   picture slots honestly (software shows its own interface built in HTML; a product with no photographs
-  is drawn and set among real pictures of its world, never a fake product shot). Pictures you will
+  is carried by its facts in type among real pictures of its world, never a drawing and never a fake
+  product shot). Pictures you will
   find in the open collections are not the project's own; leave them out of `--have`.
 - `--keep palette,type`: when the brand already fixes colours or typefaces. The draw then deals only
   the composition, and you map the brand's values onto the roles.
@@ -229,6 +230,8 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
   For a product: what it is and what it costs or does. For a person: who and what they do. Every
   section the visitor came for (the line-up, the menu, the rooms, the price) has its own heading and
   its own place in the navigation.
+- **The whole page is about 300-500 words** (award sites carry about 27 words a screen, professional
+  sites about 79; the inspector warns past 70 a screen and fails past 95). Count before you build.
 - **The full content, in few words.** Every section the brief asks for delivers its information
   completely (the whole menu with prices, each room with its details, every speaker, the price with
   what it includes, an answer for each real question), as facts: lists, tables, names and numbers, not
@@ -277,7 +280,8 @@ not finished. Order of work:
    4. sharp modern photographs of the subject's world from the open collections
       (`node <skill>/scripts/assets.mjs "<query>"`, 1800px or wider by default). Look at each one at
       full size before using it;
-   5. drawn in code, large and precise, for the subject's own things that no picture shows;
+   5. never a drawing in place of a picture: SVG is for the logo, real charts, maps and plans that
+      carry labels and numbers, and icons inside product fragments (references/imagery.md §8);
    6. type and space alone. An empty slot is better than a bad picture.
 
    Rules: every picture shows this subject's world and is requested at least 1.5 times the size it is
@@ -554,8 +558,8 @@ address, never a fake payment form.
 **No Chrome or Node 22.** Run `lint.mjs` (Node 18+), take screenshots with whatever browser tool you
 have, and critique those. Say in the report that the inspector could not run.
 
-**No network.** If `assets.mjs` reaches no source, draw the pictures and say in the report that the
-open collections could not be searched.
+**No network.** If `assets.mjs` reaches no source, use the dealt photographs and type, and say in the
+report that the open collections could not be searched.
 
 ## Files
 

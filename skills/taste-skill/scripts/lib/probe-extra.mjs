@@ -202,6 +202,23 @@ export function extra() {
     out.switchList = [...document.querySelectorAll('input[type=checkbox], [role=switch], input[type=radio]')].filter((i) => visible(i) && !i.closest('form, [data-ui], dialog, [role=dialog]')).length;
   }
 
+  // --- drawn illustrations (inline SVG pictures of things), and words in the first screen and per section
+  out.drawings = [];
+  for (const svg of document.querySelectorAll('svg')) {
+    if (svg.parentElement?.closest('svg') || !visible(svg) || svg.closest('[data-ui], header, nav, footer, .scene, [data-scene], button, a')) continue;
+    const r = svg.getBoundingClientRect(); const share = (r.width * r.height) / (W * H); if (share < 0.012) continue;
+    const shapes = svg.querySelectorAll('path, circle, ellipse, rect, polygon, polyline, line').length;
+    const labels = [...svg.querySelectorAll('text')].filter((t) => t.textContent.trim()).length;
+    if (shapes >= 6 && labels <= 2) out.drawings.push({ share: +share.toFixed(3), shapes, near: textOf(svg.closest('section, article, div') || svg).slice(0, 40) });
+    if (out.drawings.length >= 12) break;
+  }
+  {
+    let first = 0; const tw = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); let n;
+    while ((n = tw.nextNode())) { const el = n.parentElement; if (!el || !visible(el) || el.closest('nav, header, [data-ui]')) continue; const r = el.getBoundingClientRect(); if (r.top + sy < H && r.bottom + sy > 0) first += words(n.nodeValue); }
+    out.firstScreenWords = first;
+    out.wordySections = [...document.querySelectorAll('main > section, body > section, main > div > section, section')].filter((s) => visible(s) && !s.parentElement?.closest('section')).map((s) => ({ words: [...s.querySelectorAll('p, li, dd, td, blockquote, figcaption')].filter((p) => visible(p) && !p.closest('[data-ui], footer')).reduce((a, p) => a + words(textOf(p)), 0), head: textOf(s.querySelector('h1, h2, h3') || s).slice(0, 40) })).filter((s) => s.words > 130).slice(0, 6);
+  }
+
   // --- breakage at narrow widths (most of the reviewed pages' high-severity faults were phone or tablet only)
   // text cut by the screen edge or by a clipping box, mock-ups included: a 520px sheet in a 390px screen reads "Sub"
   out.cutText = [];
