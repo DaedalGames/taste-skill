@@ -31,7 +31,7 @@ Branch `v2.5` in `D:\taste-skill` (pushed; last commit 2549095). Main is v2.1.5.
 
 ## Test results
 
-Round 1: v2.5 won 3 of 5. Round 2: 3 of 6. Round 3 (the three round-2 losses rebuilt): 2 of 3; Mara Lind (Sonnet) still loses: work slots showed stock skylines, kinetic wordmark ended broken. All fixes are committed (5dabfc2, 0f9a7a3, 7daebfd no drawn illustrations and word budgets, 2549095); the last two are untested.
+Round 1: v2.5 won 3 of 5. Round 2: 3 of 6. Round 3 (the three round-2 losses rebuilt): 2 of 3; Mara Lind (Sonnet) still loses: work slots showed stock skylines, kinetic wordmark ended broken. All fixes are committed (5dabfc2, 0f9a7a3, 7daebfd no drawn illustrations and word budgets, 2549095); round 3 ran with 7daebfd, so only 2549095 is untested.
 
 Judges reward a strong idea and brand world. They mark down:
 - long or broken-looking scroll scenes;
