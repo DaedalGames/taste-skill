@@ -4,14 +4,16 @@
 // name: a scale of long ticks that reads each item's own number (a height, a weight, a price), lit one
 // whole tick at a time, with a pin where every item reads; under it a bezel that clicks round, a notch
 // at a time, until the item in hand sits under the pointer in the accent. The name stands huge on the
-// horizon. Below it the whole width of the stage is the item's ground, and its picture stands in front
-// of the foot of the name. At each beat the next picture rises from the bottom of the screen in front
-// of the last one, which sinks back, and overshoots up in front of the lower half of the name that is
-// leaving; its ground surges up behind it on a full-width scan line, washes over the name while the
-// letters are swapped, and falls back to the horizon with the picture as the new letters jump up; the
-// scale climbs to the new reading and the number rolls in on the new ground. Built on
-// stage.js. The finished composition (reduced motion, no script) shows every item as a small stage of
-// its own: its note, its name standing on its ground, its picture, its number and its reading.
+// horizon. Below it the whole width of the stage is the item's ground, and its picture stands on that
+// ground just under the name, never on a letter. At each beat the last note and number roll out, then
+// the next picture rises from the bottom of the screen in front of the last one, which sinks back; its
+// ground surges up behind it on a full-width scan line, washes over the name while the letters are
+// swapped, and falls back to the horizon with the picture as the new letters jump up; the scale
+// climbs to the new reading and the number rolls in on the new ground. Built on stage.js. The
+// finished composition (reduced motion, no script) shows every item as a small stage of its own: its
+// note, its name standing on its ground, its picture, its number and its reading.
+//
+// crosses words: `.idl-field` the incoming ground (wash) covers the outgoing name and uncovers the new one within a quarter screen
 //
 // DOM the scene expects (the script draws the dial, the grounds and the scan line itself, all
 // aria-hidden, and splits the names and numbers into masked letters):
@@ -323,7 +325,7 @@
   //   the stage, or from under the heading when the heading crosses the middle (a phone);
   // - the name size F, one size for every name, fitted from the longest and kept under that stack;
   // - each item's ground line (the baseline, plus the overshoot of round letters, or the descenders);
-  // - the picture box, standing in front of the lower fifth of the name;
+  // - the picture box, standing on the ground a clear gap under the lowest ground line;
   // - the dial's arc: a circle through the stack whose scale spans about 62% of the stage width
   //   (86% on a phone) where it meets the names' band. The scale and the bezel's window are the widest
   //   arcs about 12 o'clock that keep clear of the names, the heading and the stage's edges.
@@ -386,10 +388,10 @@
     const pk = Math.round(hz - cap - 16);
     root.style.setProperty('--idl-pt', pk + 'px');
 
-    // the picture: its top a tenth of the cap height above the horizon, in front of the foot of the
-    // name (no deeper, so an L keeps its foot and an E its last bar); down to the foot of the stage on
+    // the picture: standing on the ground under the name, its top a clear gap below the lowest ground
+    // line (the foot of the name's ink), so it never lies on a letter; down to the foot of the stage on
     // desktop, down to the note and number on a phone
-    const pic = Math.round(hz - 0.1 * cap);
+    const pic = Math.round(Math.max(...fz) + Math.max(12, 0.08 * cap));
     const it0 = D.its[0];
     const codeP = it0 && it0.code ? it0.code.parentNode : null;
     const pad = codeP && codeP.offsetLeft > 0 ? codeP.offsetLeft : clamp(0.034 * window.innerWidth, 20, 48);
@@ -475,9 +477,9 @@
 
     // where the first picture waits before the intro stands it up: on its ground, under the horizon
     const p0 = clamp(1 - Math.max(0, fz[0] + clamp(Math.round(H * 0.02), 12, 20) - pic) / (H - pic + 40), 0, 1);
-    // how far a rising picture overshoots its place during a change: up in front of the lower half of
-    // the name that is leaving, before it settles with its ground
-    const lift = Math.round(0.45 * cap);
+    // how far a rising picture overshoots its place during a change, before it settles with its
+    // ground: inside the gap under the name, so it never reaches the letters
+    const lift = Math.max(0, Math.round(Math.min(0.5 * (pic - Math.max(...fz)), 0.04 * cap)));
     live.geo = { W, H, hz, fz, pk, pic, bh, g, p0, lift, pinC };
   }
 
@@ -595,9 +597,9 @@
       };
 
       // INTRO: the stage arrives whole (the first ground, its picture lying under the horizon and a
-      // small name right of centre); the name grows to its full size as the picture stands up in front
-      // of its foot, the bezel clicks round to the first item, the scale climbs to the first reading,
-      // and the note and number roll in
+      // small name right of centre); the name grows to its full size as the picture stands up under
+      // it, the bezel clicks round to the first item, the scale climbs to the first reading, and the
+      // note and number roll in
       tl.fromTo(dial, { deg: start }, { deg: 0, duration: 0.07, ease: 'expo.inOut', ...IR }, 0.01);
       if (its[0].word.vis) tl.fromTo(its[0].word.vis, { scale: o.grow }, { scale: 1, duration: 0.07, ease: 'power3.inOut', immediateRender: true }, 0);
       tl.fromTo(plates[0], { p: () => (live.geo ? live.geo.p0 : 1) }, { p: 1, duration: 0.07, ease: 'power3.inOut', immediateRender: true }, 0);
@@ -609,7 +611,8 @@
       tl.fromTo(fill, { f: -0.05 }, { f: D.fr[0], duration: 0.055, ...IR }, 0.05);
       tl.fromTo(pinA[0], { a: 0 }, { a: 1, duration: 0.012, ease: 'power3.out', ...IR }, 0.1);
 
-      // BEATS: the next picture rises from below the stage in front of the last one, which sinks back.
+      // BEATS: the last note and number roll out; then the next picture rises from below the stage in
+      // front of the last one, which sinks back, and settles under the name (never on it).
       // Its ground surges up behind it on the scan line. With wash the ground runs on over the name
       // (a fast clean cut across a still word), the letters are swapped at its crest, and it falls
       // back to the horizon as the new letters jump up out of it. Without wash it stops on the horizon
@@ -619,11 +622,11 @@
         const T = Tk(k); const a = its[k - 1]; const b = its[k];
         tl.fromTo(plates[k], { p: 0 }, { p: 1, duration: (o.wash ? 0.026 : 0.03) * u, ease: 'power3.out', ...IR }, T - 0.03 * u);
         enter(b, T - 0.03 * u, 0.06 * u);
-        // the last note and number roll out before the new picture and ground pass over them
-        // (quick, all gone by T - 0.022, so no letter is caught half out while the new picture rises)
-        if (a.code) tl.fromTo(a.code, { yPercent: 0 }, { yPercent: -RR, duration: 0.007 * u, ease: 'power2.in', ...IR }, T - 0.03 * u);
-        if (a.value.chars.length) tl.fromTo(a.value.chars, { yPercent: 0 }, { yPercent: -VR, duration: 0.006 * u, ease: 'power2.in', stagger: { amount: 0.002 * u }, ...IR }, T - 0.03 * u);
-        if (a.caption) tl.fromTo(a.caption, { yPercent: 0 }, { yPercent: -RR, duration: 0.007 * u, ease: 'power2.in', ...IR }, T - 0.029 * u);
+        // the last note and number roll out before the new picture and ground set off (quick, all
+        // gone by T - 0.032, so no letter is still there when the new picture rises over its place)
+        if (a.code) tl.fromTo(a.code, { yPercent: 0 }, { yPercent: -RR, duration: 0.007 * u, ease: 'power2.in', ...IR }, T - 0.04 * u);
+        if (a.value.chars.length) tl.fromTo(a.value.chars, { yPercent: 0 }, { yPercent: -VR, duration: 0.006 * u, ease: 'power2.in', stagger: { amount: 0.002 * u }, ...IR }, T - 0.04 * u);
+        if (a.caption) tl.fromTo(a.caption, { yPercent: 0 }, { yPercent: -RR, duration: 0.007 * u, ease: 'power2.in', ...IR }, T - 0.039 * u);
         if (o.wash) {
           tl.fromTo(plates[k], { r: 0 }, { r: 1, duration: 0.032 * u, ease: 'power2.in', ...IR }, T - 0.032 * u);
           tl.fromTo(a.word.chars, { yPercent: 0 }, { yPercent: -WR, duration: 0.0003 * u, ...IR }, T - 0.0002 * u);
@@ -743,7 +746,7 @@
       // or undoes it, whichever is nearer
       if (o.snap) {
         const wins = [[0.004, 0.125]];
-        for (let k = 1; k < N; k++) wins.push([Tk(k) - 0.034 * u, Tk(k) + 0.03 * u]);
+        for (let k = 1; k < N; k++) wins.push([Tk(k) - 0.046 * u, Tk(k) + 0.03 * u]);
         const snapTo = (v) => { for (const [a, b] of wins) if (v > a && v < b) return v - a < b - v ? Math.max(0, a - 0.004) : b; return v; };
         ScrollTrigger.create({ trigger: root, start: 'top top', end: 'bottom bottom', snap: { snapTo, duration: { min: 0.25, max: 0.6 }, delay: 0.12, ease: 'power1.inOut' } });
       }

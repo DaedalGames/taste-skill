@@ -53,7 +53,10 @@ if (!/^https?:\/\//.test(target)) {
   const file = resolve(target);
   if (!existsSync(file)) { console.error('No such file: ' + file); process.exit(2); }
   const cwd = resolve('.');
-  const root = file.startsWith(cwd + sep) ? cwd : dirname(file);
+  // serve from high enough that the page's ../ references resolve (a scene demo loads ../stage.js)
+  const ups = Math.max(0, ...[...readFileSync(file, 'utf8').matchAll(/(?:src|href)\s*=\s*["']((?:\.\.\/)+)/g)].map((m) => m[1].length / 3));
+  let base = dirname(file); for (let i = 0; i < ups; i++) base = dirname(base);
+  const root = file.startsWith(cwd + sep) && (base === cwd || base.startsWith(cwd + sep)) ? cwd : base;
   const MIME = { '.html': 'text/html; charset=utf-8', '.htm': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.avif': 'image/avif', '.gif': 'image/gif', '.ico': 'image/x-icon', '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.otf': 'font/otf', '.mp4': 'video/mp4', '.webm': 'video/webm', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml', '.webmanifest': 'application/manifest+json' };
   server = createServer((req, res) => {
     try {

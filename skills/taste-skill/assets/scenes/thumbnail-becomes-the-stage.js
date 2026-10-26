@@ -79,6 +79,11 @@
 // (--kh-t transform, --kh-o opacity, --kh-clip, --kh-win-o, --kh-band), each written on the element that uses
 // it. The CSS gives every one its p = 0 value as the live default, so a fresh load or a ScrollTrigger refresh at
 // any point of the scene shows the right frame.
+//
+// crosses words: `.kh-window` the keyhole opens behind line 1, never over it: the statement stays above the
+// window, and line 1 carries its own paper copy (.kh-paper-ink, made by the script), clipped to the window, so
+// where the edge passes the line it recolours each glyph whole (ink outside, paper inside). The second line
+// has faded before the window reaches it.
 (() => {
   const ID = 'thumbnail-becomes-the-stage';
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -103,7 +108,7 @@
     try {
       const c = ctx2d();
       setFont(c, cs);
-      const t = c.measureText(line.textContent.trim());
+      const t = c.measureText(textOf(line).trim());
       if (!t.fontBoundingBoxAscent) return pad;
       const lh = parseFloat(cs.lineHeight) || fs;
       const base = (lh - (t.fontBoundingBoxAscent + t.fontBoundingBoxDescent)) / 2 + t.fontBoundingBoxAscent;
@@ -114,6 +119,15 @@
 
   // a style property written only when its string changes
   const writer = (el, prop) => { let last = ''; return (v) => { if (v !== last) { last = v; el.style.setProperty(prop, v); } }; };
+
+  // a line's own words, without the paper copy the script nests in line 1
+  const PAPER = 'kh-paper-ink';
+  const textOf = (el) => {
+    let s = '';
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) if (!n.parentElement.closest('.' + PAPER)) s += n.nodeValue;
+    return s;
+  };
 
   function make(root, opts = {}) {
     const o = {
@@ -156,6 +170,17 @@
     const inkLines = [...inkBox.querySelectorAll('.kh-line')];
     const inkLead = inkBox.querySelector('.kh-line--lead') || inkLines[0];
     const statementEl = inkBox.querySelector('.kh-statement') || inkBox;
+    // line 1's paper copy, nested in the ink line itself (after the window's copy was cloned, so that one
+    // has none): while the scene runs it is clipped to the window, so the line is recoloured in place
+    const leadIn = inkLead ? inkLead.querySelector('.kh-in') || inkLead : null;
+    let veil = leadIn ? leadIn.querySelector(':scope > .' + PAPER) : null;
+    if (leadIn && !veil) {
+      veil = document.createElement('span');
+      veil.className = PAPER;
+      veil.setAttribute('aria-hidden', 'true');
+      veil.textContent = textOf(leadIn).trim();
+      leadIn.appendChild(veil);
+    }
     const fit = (phone) => {
       const W = stageEl.clientWidth || root.clientWidth;
       if (!W || !inkLead) return 1;
@@ -167,7 +192,7 @@
         const gutter = parseFloat(getComputedStyle(paperBox).paddingLeft) || Math.round(W * 0.03);
         const room = W - 2 * gutter - 2; // a little under, so the finished composition never wraps on a rounding
         for (const l of inkLines) {
-          const natural = c.measureText(l.textContent.replace(/\s+/g, ' ').trim()).width / now; // at the CSS size
+          const natural = c.measureText(textOf(l).replace(/\s+/g, ' ').trim()).width / now; // at the CSS size
           const cap = l === inkLead ? Math.min(room, (phone ? LEAD_SHARE_PHONE : LEAD_SHARE) * W) : room;
           if (natural > 0) f = Math.min(f, cap / natural);
         }
@@ -211,7 +236,8 @@
         clip: writer(win, '--kh-clip'), winO: writer(win, '--kh-win-o'), // its own name: --kh-o would be inherited by the notes
         media: media ? writer(media, '--kh-t') : () => {},
         row: writer(row, '--kh-t'),
-        inkLead: writer(ink.lead, '--kh-t'), inkLeadV: writer(ink.lead, '--kh-vis'),
+        inkLead: writer(ink.lead, '--kh-t'),
+        inkColour: leadIn ? writer(leadIn, 'color') : () => {}, veil: veil ? writer(veil, 'clip-path') : () => {},
         paperLead: writer(paper.lead, '--kh-t'),
         rest: ink.rest.map((l) => ({ t: writer(l, '--kh-t'), o: writer(l, '--kh-o'), v: writer(l, '--kh-vis') })),
         shade: shade ? writer(shade, '--kh-o') : () => {},
@@ -240,12 +266,18 @@
         const lo = offset(ink.lead);
         const ib = inkBounds(ink.lead);
         const gutter = parseFloat(getComputedStyle(paperBox).paddingLeft) || Math.round(W * 0.03);
+        const vo = veil ? offset(veil) : lo;
+        // the lowest edge of the other lines, which must have faded before the window reaches them
+        const restBottom = ink.rest.reduce((b, l) => Math.max(b, offset(l).y + l.offsetHeight), -Infinity);
         return {
           W, H, tw, th, gap, cx0: so.x + tw / 2, cy0: so.y + th / 2,
           s0: Math.min(1, 1.3 * Math.max(tw / W, th / H)),
           dx: gutter - lo.x, dy: o.heading * H - lo.y,
           // line 1's inked box at rest (where its glyphs actually paint), in stage pixels
           lx: lo.x + ib.x, ly: lo.y + ib.y, lw: ib.w, lh: ib.h,
+          // its paper copy's box at rest
+          vx: vo.x, vy: vo.y, vw: veil ? veil.offsetWidth : 0, vh: veil ? veil.offsetHeight : 0,
+          restBottom,
           navY: nav ? navLine() : 0,
         };
       };
@@ -273,8 +305,6 @@
           s.o(String(px(F.v * v)));
         }
         w.row(`translate3d(0,${px((H / 2 - cy0) * k)}px,0)`);
-        const restO = clamp(1 - 1.6 * alt, 0, 1);
-        for (const r of w.rest) { r.o(String(px(restO))); r.v(restO > 0 ? 'visible' : 'hidden'); r.t(`translate3d(0,${px(-24 * alt)}px,0)`); }
 
         // the window: rises (k), grows (e), loses its radius last (R); the media is centred on it and zooms with it
         const cy = cy0 + (H / 2 - cy0) * k + 16 * (1 - vSlot);
@@ -289,13 +319,27 @@
         w.media(`translate3d(${px(cx - W / 2)}px,${px(cy - H / 2)}px,0) scale(${Math.round(s * 10000) / 10000})`);
         w.shade(String(px(S.v)));
 
+        // the other lines leave as the neighbours tuck in, and in any case 12px before the rising window
+        // would reach them: the statement lies above the window, so nothing may be left of them there
+        const lift = -24 * alt;
+        const room = vSlot > 0 ? (top - (g.restBottom + lift) - 12) / 48 : 1;
+        const restO = clamp(Math.min(1 - 1.6 * alt, room), 0, 1);
+        for (const rl of w.rest) { rl.o(String(px(restO))); rl.v(restO > 0 ? 'visible' : 'hidden'); rl.t(`translate3d(0,${px(lift)}px,0)`); }
+
         // line 1 travels to the heading spot; the ink copy and the paper copy move as one
         const lt = `translate3d(${px(dx * m)}px,${px(dy * m)}px,0)`;
         w.inkLead(lt); w.paperLead(lt);
-        // the ink copy is switched off exactly while the whole line is inside the (opaque) window, and back on if it ever leaves
+        // line 1's nested paper copy shows exactly where the window lies behind it (the same rectangle and
+        // corners, in its own coordinates), so the edge recolours the line instead of passing over it
+        if (veil) {
+          const vx = g.vx + dx * m, vy = g.vy + dy * m;
+          w.veil(vSlot > 0 ? `inset(${px(top - vy)}px ${px(vx + g.vw - (W - right))}px ${px(vy + g.vh - (H - bottom))}px ${px(left - vx)}px round ${px(r)}px)` : 'inset(100%)');
+        }
+        // under a wholly covered line the ink has nothing left to show: it goes clear, so no ink fringe
+        // lines the paper letters, and comes back if the line ever leaves the window
         const gx = lx + dx * m, gy = ly + dy * m;
         const within = vSlot >= 1 && gx >= left && gx + lw <= W - right && gy >= top && gy + lh <= H - bottom;
-        w.inkLeadV(within ? 'hidden' : 'visible');
+        w.inkColour(within && veil ? 'transparent' : '');
 
         // the chapter: the band draws in from the left, the note and the feature notes rise into place
         w.band(String(px(B.v)));
@@ -353,7 +397,12 @@
         });
       }
       // what the timeline does not own is put back by hand when the scene stops (reduced motion turned on, a resize to 'rest')
-      gsap.context(() => () => { alive = false; setNav(false); if (video) video.pause(); });
+      gsap.context(() => () => {
+        alive = false; setNav(false); if (video) video.pause();
+        // the finished composition shows line 1 in ink again (the paper copy is not drawn there)
+        if (leadIn) leadIn.style.removeProperty('color');
+        if (veil) veil.style.removeProperty('clip-path');
+      });
       const again = () => { if (alive) { g = null; render(); } };
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(again);
       const pics = [...root.querySelectorAll('.kh-media img, .kh-sat img')].filter((i) => !i.complete);

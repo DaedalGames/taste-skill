@@ -139,8 +139,10 @@ html.js [data-scene="lens-over-thumbnail-stream"].is-live > .scene-stage {
   padding: 0;
   background: var(--lens-paper);
 }
+/* the names' link and year are hidden the same way, so no box of theirs is wider than what shows of it */
 [data-scene="lens-over-thumbnail-stream"].is-live .lens-title,
 [data-scene="lens-over-thumbnail-stream"].is-live .lens-name,
+[data-scene="lens-over-thumbnail-stream"].is-live .lens-name > *,
 [data-scene="lens-over-thumbnail-stream"].is-live .lens-count {
   position: absolute;
   width: 1px;

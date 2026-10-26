@@ -4,6 +4,10 @@
 // then the parts it found are named. For "under the hood" moments: machines, objects, buildings, before
 // and after. Needs stage.js and stage.css.
 //
+// crosses words: `.ts-layer--b` the scan rewrites the headline in place: B repeats it word for word in
+// register (same box, same --ts-fit), so the edge recolours every glyph whole, and the line passes the
+// words in about one step (the slow band ends 24px under them). Keep B's copy identical to A's.
+//
 // MARKUP (copy it, fill it; the B layer repeats the copy word for word, only the colours change)
 //
 //   <section class="scene" data-scene="twin-image-scanner" data-options='{"hold":2.5}' aria-labelledby="ts-title"

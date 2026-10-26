@@ -142,6 +142,11 @@
 }
 [data-scene="warp-jump"].warp-drawn.warp-enter-photo:not(.is-live) .warp-field { top: min(78svh, 56vw); }
 
+/* a tablet held upright: the statement takes the phone's measure of the height, so it fills the stage
+   as it does on a phone instead of shrinking with the narrow width */
+@media (min-width: 768px) and (max-aspect-ratio: 1/1) {
+  [data-scene="warp-jump"] { --warp-size: min(10vw, 7.5svh); }
+}
 @media (min-width: 768px) and (max-width: 1100px) {
   [data-scene="warp-jump"] .warp-points,
   [data-scene="warp-jump"] .warp-points:has(> :nth-child(5)),
@@ -194,7 +199,8 @@
 /* the moving parts of a beat change always carry a transform: the script's inline transform then only
    ever changes a value, never adds or removes one (adding or removing a transform re-lays out the line) */
 .scene.is-live[data-scene="warp-jump"] .warp-c { transform: translate(0px, 0px); }
-.scene.is-live[data-scene="warp-jump"] :is(.warp-plate, .warp-lead) { transform: scale(1); }
+.scene.is-live[data-scene="warp-jump"] .warp-plate { transform: translate(0px, 0px) scale(1); }
+.scene.is-live[data-scene="warp-jump"] .warp-lead { transform: scale(1); }
 /* each line carries its own --warp-fit (set by the script) */
 .scene.is-live[data-scene="warp-jump"] :is(.warp-anchor, .warp-tail) { font-size: calc(var(--warp-size) * var(--warp-fit, 1)); }
 .scene.is-live[data-scene="warp-jump"] .warp-final { font-size: calc(var(--warp-size) * var(--warp-final-fit, 1)); }

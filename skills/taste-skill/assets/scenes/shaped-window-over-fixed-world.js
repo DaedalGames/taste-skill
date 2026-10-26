@@ -2,11 +2,13 @@
 //
 // One full-bleed photograph of a place stays still behind a shutter painted in the page's own ground.
 // Two tall windows are cut into the shutter, one high and one low, with a narrow bar of ground between
-// them. Scroll slides the windows level (their edges wipe the title and the caption off the ground as
-// they pass), closes the bar into one window, holds a beat, then scales the shutter past the screen
-// edges so the reader pushes through into the place while one chapter word rises in, centre letters
-// first. The lede settles last. Before the hold the photo is counter-moved so it stays fixed to the
-// viewport while the ground and its windows rise over it; after the hold it sinks at 0.8x.
+// them. Scroll slides the windows level (the low one rises to meet the title above it, the high one comes
+// down to the caption under it), closes the bar into one window, holds a beat, then scales the shutter
+// past the screen edges so the reader pushes through into the place while one chapter word rises in,
+// centre letters first. The lede settles last. No window edge ever passes over a word: the title and the
+// caption sit on ground the windows never reach, and they fade as the push begins. Before the hold the
+// photo is counter-moved so it stays fixed to the viewport while the ground and its windows rise over
+// it; after the hold it sinks at 0.8x.
 //
 // Needs gsap + ScrollTrigger (SplitText optional: without it the word rises whole), stage.js, and
 // shaped-window-over-fixed-world.css. Use it for one strong, wide picture of a place that has to carry
@@ -33,8 +35,10 @@
 //         <header class="sw-intro"><h2 class="sw-title" id="sw-title">4-7 words, two lines</h2></header>
 //                                                              the title is as wide as one window, so keep it
 //                                                              to about 25 characters; a longer one is stepped
-//                                                              down in size until it sits on two lines
-//         <p class="sw-caption">10-18 words</p>                (wide screens only; repeat its key fact in the lede)
+//                                                              down in size until it sits on two lines in the
+//                                                              ground above the windows
+//         <p class="sw-caption">10-18 words</p>                (wide screens only, and only where it fits under
+//                                                              the windows; repeat its key fact in the lede)
 //         <img class="sw-prop sw-prop--l" src alt="" aria-hidden="true">   optional foreground props for the
 //         <img class="sw-prop sw-prop--r" src alt="" aria-hidden="true">   bottom corners (see Props below)
 //       </div>
@@ -64,9 +68,12 @@
 // Props are live-only: the finished composition hides them.
 //
 // Two geometries: "wide" (the default) and "narrow" (any width under 768px, or any screen narrower than
-// 1.1:1, such as a portrait tablet). Narrow screens get the phone numbers: two slim windows spanning 85%
-// of the width, the title full width on the ground above both (it fades as the push carries it up,
-// rather than being wiped), no caption, and the word fitted to 86% of the width.
+// 1.1:1, such as a portrait tablet). Wide: the title stands over the low window, in the ground above the
+// band the windows level to (it rises to meet the title and stops short of it), and the caption under
+// the high window, below that band. Narrow screens get the phone numbers: two slim windows spanning 85%
+// of the width, the title full width on the ground above both, no caption, and the word fitted to 86%
+// of the width. On both the title is stepped down until it fits its ground (two lines at most, 16px
+// clear of the stage's top) and fades as the push begins, before the scale can carry it off the screen.
 //
 // Options (data-options JSON; defaults, ranges):
 //   hold          2.4    1.8-3     screens the stage is held on wide screens
@@ -108,9 +115,8 @@
   const EDGE = 4; // px the shutter halves overhang the stage on every side (matches .sw-half in the CSS)
   // the narrow geometry; the CSS uses the same query for the title, the caption and the scrims
   const NARROW = '(max-width: 767px), (max-aspect-ratio: 11/10)';
-  // the share of the title (or caption) a window's edge has wiped before the rest fades out, so the wipe
-  // never ends on a sliver of letter tops (title) or an orphaned last line (caption)
-  const TITLE_FADE = [0.35, 0.65], CAPTION_FADE = [0.35, 0.7];
+  // px the title keeps clear of the stage's top, and the caption of its foot
+  const MARGIN = 16;
   // the bar closes on the first 80% of the merge (power2.inOut reaches 0.8 at 70% of its time, so 0.41
   // of the hold), leaving a clean still beat with no lingering hairline
   const BAR_CLOSE = 0.8;
@@ -240,11 +246,11 @@
       const propL = $('.sw-prop--l'), propR = $('.sw-prop--r');
       if (!world || !shutter || !halfL || !halfR) { console.warn(`${ID}: needs .sw-world, .sw-shutter and two .sw-half elements`); return; }
 
-      const p = { level: 0, merge: 0, push: 0, lift: 0 }; // the phases, each 0-1 (lift: the narrow title's fade)
+      const p = { level: 0, merge: 0, push: 0, lift: 0 }; // the phases, each 0-1 (lift: the title and caption's fade)
       const g = {};                               // geometry, re-measured on every refresh
       let dead = false;                           // set once this build is reverted
       const highRight = o.high === 'right';
-      const vars = ['--sw-s0', '--sw-x0', '--sw-hole-w', '--sw-span-w', '--sw-low-x', '--sw-high-x', '--sw-low-top', '--sw-high-top', '--sw-high-bottom', '--sw-cap-x', '--sw-cap-w'];
+      const vars = ['--sw-s0', '--sw-x0', '--sw-hole-w', '--sw-span-w', '--sw-low-x', '--sw-high-x', '--sw-low-top', '--sw-high-top', '--sw-high-bottom', '--sw-top', '--sw-bottom', '--sw-gap', '--sw-cap-x', '--sw-cap-w'];
       // the last strings written, so a frame that changes nothing writes nothing
       const last = new Map();
       const write = (el, prop, v) => {
@@ -313,23 +319,23 @@
       halfR.after(frame);
 
       // The title is as wide as one window (wide) or both (narrow): step its size down until it sits on
-      // two lines, so a long title never runs to three or four.
-      const fitTitle = () => {
+      // two lines and fits the ground above the windows (`room` px tall), so a long title never runs to
+      // three or four lines, nor up past the top of the stage.
+      const fitTitle = (room) => {
         if (!title) return;
         title.style.removeProperty('font-size');
         const base = parseFloat(getComputedStyle(title).fontSize) || 40;
         let fs = base;
         const lines = () => { const cs = getComputedStyle(title); const lh = cs.lineHeight === 'normal' ? 1.2 * fs : parseFloat(cs.lineHeight); return title.offsetHeight / lh; };
-        for (let i = 0; i < 24 && lines() > 2.5 && fs > base * 0.5; i++) { fs *= 0.94; title.style.fontSize = px(fs); }
+        const tall = () => (intro || title).offsetHeight > room;
+        for (let i = 0; i < 30 && (lines() > 2.5 || tall()) && fs > base * 0.5; i++) { fs *= 0.94; title.style.fontSize = px(fs); }
       };
 
-      // An element the window's edge wipes: until `from` of its height has gone it only wipes; past that
-      // the rest fades out by `to`, so a reader who stops there never sees a sliver of clipped letters.
+      // the title and the caption fade as the push begins (opacity only: no edge ever cuts them)
       const fade = (el, a) => {
         write(el, 'opacity', a >= 1 ? '' : a.toFixed(3));
         write(el, 'visibility', a <= 0 ? 'hidden' : '');
       };
-      const wipeFade = (cut, h, [from, to]) => 1 - clamp((cut / (h || 1) - from) / (to - from), 0, 1);
 
       // Fit the chapter word to the width (cap height held to a share of the stage) and put its cap-top
       // exactly at wordTop. A hidden probe in the same face gives the advance and the cap metrics.
@@ -342,7 +348,11 @@
         const probe = document.createElement('div');
         probe.setAttribute('aria-hidden', 'true');
         probe.style.cssText = `position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;white-space:nowrap;font-family:${cs.fontFamily};font-weight:${cs.fontWeight};font-style:${cs.fontStyle};font-stretch:${cs.fontStretch};text-transform:${cs.textTransform};letter-spacing:${ls}em;font-size:100px;line-height:${lh}`;
-        const t = document.createElement('span'); t.textContent = (word.getAttribute('aria-label') || word.textContent).trim();
+        // letters split apart lose their kerning, so the probe sets them apart too: the word is fitted
+        // as it is drawn and never runs past the width it was fitted to
+        const t = document.createElement('span'), text = (word.getAttribute('aria-label') || word.textContent).trim();
+        if (g.splitChars) for (const ch of text) { const c = document.createElement('span'); c.style.display = 'inline-block'; c.textContent = ch; t.append(c); }
+        else t.textContent = text;
         const cap = document.createElement('span'); cap.style.cssText = 'display:inline-block;width:0;height:1cap';
         const base = document.createElement('span'); base.style.cssText = 'display:inline-block;width:0;height:0';
         probe.append(t, cap, base);
@@ -379,9 +389,13 @@
         set('--sw-x0', px(x0)); set('--sw-hole-w', px(holeW)); set('--sw-span-w', px(x3 - x0));
         set('--sw-low-x', px(highRight ? x0 : cx + m / 2)); set('--sw-high-x', px(highRight ? cx + m / 2 : x0));
         set('--sw-low-top', px(y0 + D)); set('--sw-high-top', px(y0 - D)); set('--sw-high-bottom', px(y1 - D));
+        // the band the windows level to (y0-y1): wide, the title stands above it and the caption below
+        // it, on ground no window edge ever reaches; narrow, the title stands above the high window
+        const gap = n ? 28 : clamp(0.032 * H, 20, 34);
+        set('--sw-top', px(y0)); set('--sw-bottom', px(y1)); set('--sw-gap', px(gap));
         // the caption hangs under the high window against the bar (its outer side is the prop's)
-        const capW = Math.min(0.22 * W, holeW);
-        set('--sw-cap-w', px(capW)); set('--sw-cap-x', px(highRight ? cx + m / 2 : cx - m / 2 - capW));
+        const capAt = (w) => { set('--sw-cap-w', px(w)); set('--sw-cap-x', px(highRight ? cx + m / 2 : cx - m / 2 - w)); };
+        capAt(Math.min(0.22 * W, holeW));
         // the four bars around the merged window x0-x3 by y0-y1; each overlaps its neighbours by 2px and
         // runs EDGE px past the stage, so no seam or photo edge can show at any scale
         const box = (el, l, t, w, h) => { el.style.left = px(l); el.style.top = px(t); el.style.width = px(w); el.style.height = px(h); };
@@ -396,15 +410,21 @@
           if (hs.backgroundImage !== 'none') Object.assign(b.style, { backgroundImage: hs.backgroundImage, backgroundSize: hs.backgroundSize, backgroundRepeat: hs.backgroundRepeat, backgroundAttachment: hs.backgroundAttachment });
         }
         last.clear();
-        fitTitle();
-        if (intro) { g.introBottom = intro.offsetTop + intro.offsetHeight; g.introH = intro.offsetHeight; }
-        if (caption) { g.capTop = caption.offsetTop; g.capH = caption.offsetHeight; }
+        fitTitle((n ? y0 - D : y0) - gap - MARGIN);
+        // a caption too tall for the ground under the band takes the window's full width, and is left
+        // out when even that does not fit (its key fact is repeated in the lede)
+        root.classList.remove('sw--no-caption');
+        if (caption && !n) {
+          const room = H - y1 - gap - MARGIN;
+          if (caption.offsetHeight > room) capAt(holeW);
+          if (caption.offsetHeight > room) root.classList.add('sw--no-caption');
+        }
         fitWord();
         guard();
       };
 
       // Every frame: both halves as the same 11-point evenodd polygon (the zero-width slit runs only
-      // through the bar), the shutter's push scale, and the wipes that follow the windows' edges.
+      // through the bar), the shutter's push scale, and the fade of the title and the caption.
       // The halves overhang the stage by EDGE px (see the CSS), so their outer edges never sit on the
       // stage's edge where the photo could bleed through the anti-aliasing; X() maps stage px to half px.
       const X = (v) => px(v + EDGE);
@@ -425,23 +445,9 @@
         write(halfR, 'clipPath', `polygon(evenodd, ${R} 0, ${X(cx)} 0, ${X(cx)} ${X(rT)}, ${X(rL)} ${X(rT)}, ${X(x3)} ${X(rT)}, ${X(x3)} ${X(rB)}, ${X(rL)} ${X(rB)}, ${X(rL)} ${X(rT)}, ${X(cx)} ${X(rT)}, ${X(cx)} ${B}, ${R} ${B})`);
         const s = 1 + (g.S - 1) * p.push;
         write(shutter, 'transform', s > 1.0001 ? `scale(${s.toFixed(5)})` : 'none');
-        if (g.narrow) {
-          // narrow: the title sits above both windows and is never wiped; it fades while the push lifts it
-          if (intro) { write(intro, 'clipPath', ''); fade(intro, 1 - p.lift); }
-        } else {
-          // wide: the rising low window wipes the title bottom-up, the falling high one the caption top-down
-          const lowTop = highRight ? lT : rT, highBottom = highRight ? rB : lB;
-          if (intro) {
-            const cut = clamp(g.introBottom - lowTop, 0, g.introH);
-            write(intro, 'clipPath', cut > 0 ? `inset(0 0 ${px(cut)} 0)` : '');
-            fade(intro, wipeFade(cut, g.introH, TITLE_FADE));
-          }
-          if (caption) {
-            const cut = clamp(highBottom - g.capTop, 0, g.capH);
-            write(caption, 'clipPath', cut > 0 ? `inset(${px(cut)} 0 0 0)` : '');
-            fade(caption, wipeFade(cut, g.capH, CAPTION_FADE));
-          }
-        }
+        // the title and the caption stand on ground the windows never reach; both fade as the push begins
+        if (intro) fade(intro, 1 - p.lift);
+        if (caption) fade(caption, 1 - p.lift);
       };
 
       // A nested context: reverted with the stage's matchMedia, and its cleanup clears the inline
@@ -449,6 +455,7 @@
       gsap.context(() => {
         // the chapter word, split into characters inside a line mask
         const chars = word ? Stage.split(word, 'chars') : [];
+        g.splitChars = !!(chars.length && window.SplitText);
 
         measure();
 
@@ -461,8 +468,9 @@
         if (word) tl.fromTo(word, { scale: 0.92, transformOrigin: '50% 0%' }, { scale: 1, duration: 0.38, ease: 'power1.inOut' }, 0.5);
         if (propL) tl.fromTo(propL, { xPercent: 0 }, { xPercent: -55, duration: 0.38, ease: 'power2.in' }, 0.5);
         if (propR) tl.fromTo(propR, { xPercent: 0 }, { xPercent: 55, duration: 0.38, ease: 'power2.in' }, 0.5);
-        // narrow screens: the title fades while the push carries it up (render() applies it)
-        tl.to(p, { lift: 1, duration: 0.08 }, 0.52);
+        // the title and the caption fade as the push begins, gone before its scale can carry them off the
+        // screen (render() applies it)
+        tl.to(p, { lift: 1, duration: 0.08 }, 0.46);
         // 8-10. scrims and the word: centre letters land first, inside the growing window
         if (scrimTop) tl.fromTo(scrimTop, { opacity: 0 }, { opacity: 1, duration: 0.18 }, 0.62);
         if (chars.length) {
@@ -522,14 +530,13 @@
           if (document.fonts) document.fonts.removeEventListener('loadingdone', onFonts);
           if (io) io.disconnect();
           for (const el of [propL, propR]) if (el) { el.removeEventListener('load', onProp); el.removeEventListener('sw-keyed', onProp); el.style.removeProperty('translate'); }
-          for (const el of [halfL, halfR, intro, caption]) if (el) el.style.removeProperty('clip-path');
-          for (const el of [halfL, halfR]) el.style.removeProperty('visibility');
+          for (const el of [halfL, halfR]) { el.style.removeProperty('clip-path'); el.style.removeProperty('visibility'); }
           frame.remove();
           for (const el of [intro, caption]) if (el) { el.style.removeProperty('opacity'); el.style.removeProperty('visibility'); }
           shutter.style.removeProperty('transform'); shutter.style.removeProperty('transform-origin');
           if (word) { word.style.removeProperty('font-size'); word.style.removeProperty('top'); }
           if (title) title.style.removeProperty('font-size');
-          root.classList.remove('sw--narrow');
+          root.classList.remove('sw--narrow', 'sw--no-caption');
           for (const k of vars) root.style.removeProperty(k);
         };
       });

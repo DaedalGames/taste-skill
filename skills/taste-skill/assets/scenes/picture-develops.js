@@ -9,9 +9,10 @@
 // close on the heart of the drawing (scale 1.6) and pulls back to the whole sheet as it fills, so the
 // scene opens on wet marks filling the stage, runs off the frame's edges while it draws, and ends on a
 // wide establishing view. The page is never blank: seed strokes are already on the sheet when it arrives.
-// The title is static and readable from the first frame; once the drawing is finished a short note rises
-// in beside the title (on a phone it waits under the sheet from the start), then a still read before the
-// page moves on.
+// The title is static and readable from the first frame; once the heavy outlines are down a short note
+// rises in beside the title (on a phone it waits under the sheet from the start) while the hatching and
+// the construction lines go on arriving, so every stretch of the hold adds something; the drawing
+// dries and completes near the end, then a short still read before the page moves on.
 // Use it when the subject owns high-contrast drawn material (sketches, plans, maps, scans) and the story
 // is process. For a photograph use mode 'darkroom': the print develops, shadows first.
 //
@@ -64,8 +65,8 @@
 //
 // Options (data-options JSON)      default       range
 //   mode         'ink'        'ink' (a drawing) | 'darkroom' (a photograph develops, shadows first)
-//   hold         2.4          screens held on desktop, 1.6-3.5
-//   phoneHold    1.8          screens held on a phone, 1.2-2.6
+//   hold         2            screens held on desktop, 1.6-3.5
+//   phoneHold    1.5          screens held on a phone, 1.2-2.6
 //   phone        'same'       'same' | 'rest' (the phone shows the finished composition)
 //   sweep        'radial'     'radial' (outward from where the camera starts) | 'tl-down' | 'down' | 'up'
 //                             | 'right' | 'left'
@@ -86,30 +87,31 @@
 //   start        0.16         0.06-0.24: share of the order already on the sheet at progress 0 (never blank)
 //   phoneStart   0.24         0.06-0.28: the same on a phone
 //   scale        1.6          1-1.8: the camera's opening close-up; it pulls back to 1 as the drawing
-//                             completes (power1.out, done at 0.70; even-paced on a phone); 1 turns the camera off
+//                             completes (power1.out, done at 0.88; even-paced on a phone); 1 turns the camera off
 //   zoomFocus    '44% 46%'    the point of the drawing the camera starts on, brought to the frame's
 //                             middle: put it on the densest mass of the drawing
 //   phoneZoomFocus '50% 50%'  the same on a phone (the portrait art when there is one)
 //   scrub        0.6          seconds of catch-up; true locks it to the scrollbar
 //
-// Progress map (desktop 1440x900, hold 2.4, ink mode, the demo's sheet; coverage = share of the final
-// ink, which follows r: 0.16 + 0.94 x progress / 0.70; the camera's scale in brackets)
+// Progress map (desktop 1440x900, hold 2, ink mode, the demo's sheet; coverage = share of the final
+// ink, which follows r: 0.16 + 0.94 x progress / 0.88; the camera's scale in brackets). The drawing runs
+// over the whole hold, so no stretch of it stands still but the last read.
 //   0          16%: the seed, seen close (1.6): the house's heaviest outlines round the middle of the
 //              opening view as long strokes partly drawn, their newest stretches wet (vermilion), the first
 //              ones already dried black; title readable, note not shown; the section arrives showing this
-//   0.10       29%: the outlines grow along themselves toward the frame's edges, the dark windows filling,
-//              wet tips on every growing stroke (1.44)
-//   0.25       50%: the house's outlines nearly all in, the first hatching growing stroke by stroke from the
-//              middle, the trees and the lowest terrace still arriving at the edges (1.25)
-//   0.50       83%: every outline and most of the hatching in, the ground and the construction lines
-//              arriving (1.05)
-//   0.64-0.70  the wet edge dries; complete at 0.70: pure ink, scale 1, the finished drawing (the 2D
+//   0.10       27%: the outlines grow along themselves toward the frame's edges, the dark windows filling,
+//              wet tips on every growing stroke (1.47)
+//   0.25       43%: the house's outlines nearly all in, the first hatching growing stroke by stroke from the
+//              middle, the trees and the lowest terrace still arriving at the edges (1.31)
+//   0.36-0.54  the note rises line by line out of its masks, beside the title, while the hatching goes on
+//   0.50       69%: every outline and most of the hatching in (1.11)
+//   0.70       91%: the ground and the construction lines arriving (1.03)
+//   0.80-0.88  the wet edge dries; complete at 0.88: pure ink, scale 1, the finished drawing (the 2D
 //              fallback hands over to the img here and takes the stage back if the page scrolls up)
-//   0.70-0.88  the note rises line by line out of its masks
 //   0.88-1     a still read; the pin releases on the finished composition
-// Phone (390x844, hold 1.8): the same camera on the portrait sheet (a close crop of the house, 0.8-0.95:1,
+// Phone (390x844, hold 1.5): the same camera on the portrait sheet (a close crop of the house, 0.8-0.95:1,
 // so the frame is full from the first frame), from 50% 50%, pulling back at an even pace, with more seed
-// (24% / 36% / 55% / 85% at 0 / 0.10 / 0.25 / 0.50); the note sits under the sheet from the first frame,
+// (24% / 34% / 48% / 73% at 0 / 0.10 / 0.25 / 0.50); the note sits under the sheet from the first frame,
 // so the screen is a whole page (title, drawing, note) all the way through. Coverage follows r within a
 // few % on any suitable art (the order is equalised by ink).
 //
@@ -125,16 +127,16 @@
 // each pixel takes the time of the stroke whose darkness it matches; the finished frame matches the img,
 // and a frame costs one draw call (nothing at all while the scroll stands still). Without WebGL2 a 2D
 // canvas does the same on the CPU (a frame rewrites only the marks inside the moving front, the camera a CSS transform, the img
-// taking over at 0.70). Preparing starts as soon as the picture has decoded and runs in tasks of about
+// taking over at 0.88). Preparing starts as soon as the picture has decoded and runs in tasks of about
 // 8ms that give the page a turn between them (the one longer task is the browser creating the WebGL
 // context): the order and a first texture first, so the seed shows within a few frames of the picture,
 // then the art again at the resolution the close-up needs, strip by strip (an SVG is redrawn sharp, up to
 // 4096px).
 (() => {
   const Scenes = (window.Scenes = window.Scenes || {});
-  const DRAW = 0.7;        // the drawing is complete here (r reaches its end)
-  const DRY = [0.64, 0.7]; // the wet edge dries over this span
-  const NOTE = 0.7;        // the note starts rising here
+  const DRAW = 0.88;        // the drawing is complete here (r reaches its end): it runs over the whole hold
+  const DRY = [0.8, 0.88];  // the wet edge dries over this span
+  const NOTE = 0.36;        // the note starts rising here (desktop), once the heavy outlines are down
   const R_END = 1.1;       // 1 + the widest band, so no tint is ever left
   const RAMP = 0.005;      // a mark goes from nothing to full ink over this much order: a crisp pen end, not a fade
   const WET = 0.004;       // ...and from wet (accent) to dry (ink) over this much: fresh ink, not a glow
@@ -330,8 +332,8 @@ void main() {
     if (!frame || !art || !img) return Stage.scene(root, { build: null });
 
     let mode = opts.mode === 'darkroom' ? 'darkroom' : 'ink';
-    const hold = clamp(num(opts.hold, 2.4), 1.6, 3.5);
-    const phoneHold = clamp(num(opts.phoneHold, 1.8), 1.2, 2.6);
+    const hold = clamp(num(opts.hold, 2), 1.6, 3.5);
+    const phoneHold = clamp(num(opts.phoneHold, 1.5), 1.2, 2.6);
     const sweep = SWEEPS.includes(opts.sweep) ? opts.sweep : 'radial';
     const focusOpt = opts.focus ? point(opts.focus, '50% 50%') : null;
     const zoomDesk = point(opts.zoomFocus, '44% 46%');
@@ -386,7 +388,7 @@ void main() {
     let lastR = -1, lastA = -1, lastCam = '', reqToken = 0, job = null, prepTimer = 0;
     let inkRGB = [20, 20, 19], accRGB = [229, 64, 26], colourKey = '', invert = false, handOff = true;
     const tone = [0.95, 0.88, 0, 0]; // paper luminance, ink-paper span, inverted, flat
-    // the camera at timeline time t: the pull-back runs with the drawing, done at 0.70 (power1.out on a
+    // the camera at timeline time t: the pull-back runs with the drawing, done at 0.88 (power1.out on a
     // wide frame; on a phone's tall frame at an even pace, so the close-up stays on drawn marks while the
     // sheet's top and bottom are still arriving). The scale and the pan come from the aim read at the last
     // measure, so a resize never leaves stale numbers. origin is the point it starts on (box px).
@@ -1087,7 +1089,7 @@ void main() {
     // ---- drawing a frame ----
     // (2D) once the drawing is complete (pure ink, scale 1) the img takes over and the canvas is hidden
     // (the 2D canvas is a bitmap of at most 1.5 device pixels to the CSS px, softer than the img);
-    // scrolling back under 0.70 hands the stage back to the canvas in the same frame. The GPU canvas is
+    // scrolling back under 0.88 hands the stage back to the canvas in the same frame. The GPU canvas is
     // drawn at device resolution and keeps the stage to the end: showing the img would make the browser
     // rasterise the drawing for the first time in the middle of the scroll, a stall of 70-200ms on a
     // complex SVG.

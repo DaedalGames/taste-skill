@@ -126,6 +126,9 @@
   background: var(--ws-ground);
   clip-path: var(--ws-sky, none);
 }
+/* the copies behind the front one carry their letters as generated content: the echo is drawn, and
+   the page's text holds the word once (in .ws-sr and the front copy) */
+[data-scene="wordmark-under-strain"] .ws-copy[data-text]::after { content: attr(data-text); }
 [data-scene="wordmark-under-strain"] .ws-l { display: inline; }
 
 /* the call to action: in the finished composition a plain button under the word, centred on the

@@ -4,9 +4,10 @@
 // a clock face, a stone, a watch head) falls down the wall: each line parts at its word gap and the halves
 // open around the object in a bell-shaped wake, then close behind it; each line turns from a muted tone
 // to full ink as the object reaches it, while the wall itself climbs. In the last line the object swells
-// toward the camera and smashes the lines around it into letters that tumble out across the stage (two
-// of them swell to giant size behind it) while it tips and drops out; then every letter flies home and
-// the whole quote stands closed, in full ink, with its credit. Use it once per page, for a statement
+// toward the camera and smashes the lines around it into letters that tumble out across the stage, none
+// over another (two of them swell to giant size low at its sides), while it tips and drops out behind
+// them; then every letter flies home and the whole quote stands closed, in full ink, with its credit.
+// Use it once per page, for a statement
 // worth reading slowly, paired with one clean cut-out (or a photograph of a round thing, see below).
 //
 // DOM. One element per line, class ott-line (a <p> or a <span>; without any, each <p> of the quote is a
@@ -85,8 +86,8 @@
 //   shatter     3        break: how many lines, counted up from the last, break into letters (1-6); the
 //                        throw weakens line by line away from the object. Two lines in five always stay
 //                        whole (a 3-line quote breaks only its last line), so the quote is never all letters
-//   giants      2        break: letters of the last line that swell to half the stage height behind the
-//                        object (0-3)
+//   giants      2        break: letters of the last line that swell low at the object's sides, as large as
+//                        the room under the whole lines allows, set back in a faint tone while swollen (0-3)
 //   seed        7        break: the throw is seeded, so scrubbing back and forth shows the same picture;
 //                        another number deals another throw
 //   grow        2.4      scale the object swells to as it leaves (1.2-2.8)
@@ -107,10 +108,14 @@
 // muted, line 1 starting to part under it; 8% it has dropped into line 1, which is parted and in ink;
 // it meets one line every 13% (line 2 at 21%, line 3 at 34%, line 4 at 47%), a face (flip) in each,
 // edge-on between, the halves parting before it and closing behind it, the wall climbing; 60% it sits
-// in the last line. Exit 'break': 60-62% it swells and the last three lines burst into letters, nearest
-// first, thrown out and up, tumbling in depth, many past the stage edges, two swelling to giant size low
-// behind it; 62-74% it tips, falls and leaves; 70-79% every letter flies home (power3.inOut) and the
-// lines close; 75-85% the credit comes in; 79-100% the closed quote is held in ink. Exit 'fall': the
+// in the last line. Exit 'break': 60-62% it swells and the last three lines burst into letters all at
+// once, the block opening like a fan from its top edge (out and down), each letter shrinking into depth
+// and tumbling as it goes, every one inside the stage, below the lines that stay
+// whole and clear of every other letter all the way out and home (each throw is played through before
+// it is kept); two dim in their place and swell to giant size low at its sides, in a faint tone, until
+// they are home; from the break the object is drawn
+// behind the burst; 62-74% it tips, falls and leaves; 70-79% every letter flies home (power3.inOut) and
+// the lines close; 79-89% the credit comes in; 79-100% the closed quote is held in ink. Exit 'fall': the
 // object swells (1.9x by 65%) while the last lines open wide, then drops out by 74%; credit 74-84%.
 // The phone: the same with phone lines and a longer hold. A travelling wall: the object falls through
 // the middle third of the stage while the taller wall climbs past it, lines fading as the stage edge cuts
@@ -366,7 +371,8 @@
       const els = [quote, obj, credit, rimBar, ...S.lines, ...S.A, ...S.B].filter(Boolean);
       if (window.gsap) gsap.set(els, { clearProps: 'transform,opacity,visibility' });
       else for (const el of els) { el.style.transform = ''; el.style.opacity = ''; el.style.visibility = ''; }
-      for (const L of S.L) { L.el.style.transform = ''; L.tr = ''; }
+      for (const L of S.L) { L.el.style.transform = ''; L.el.style.opacity = ''; L.tr = ''; L.op = ''; }
+      obj.style.zIndex = '';
       for (const l of S.lines) l.classList.remove('is-broken');
       S.on = S.lines.map(() => false);
     };
@@ -543,6 +549,12 @@
 
     // The throw (exit 'break'): for every letter of the breaking lines, where it flies, how it turns and
     // when, all dealt from the seed and the measured geometry, so the frame at any progress is fixed.
+    // The deal is then played through in small steps of progress before it is kept: a letter's throw is
+    // taken only when, all the way out and home, its glyph box stays on the stage, below the words of
+    // the lines that stay whole, and off every other flying letter (and theirs off it), so no two texts
+    // are ever drawn over each other. A letter whose dealt throw would touch another tries a gentler or
+    // a turned one; one that finds no clean way flies a short way and fades while it is out. The object
+    // is drawn behind the burst from the moment the wall breaks, so it never lies on a letter.
     const throwOf = (g, Lm, cap) => {
       const { W, H, n, cx, cy, F } = g;
       const rand = seeded(o.seed);
@@ -560,62 +572,231 @@
         if (!cand.length) continue;
         giants.set(cand[Math.floor(rand() * Math.min(2, cand.length))], h === S.B[n - 1] ? 1 : -1);
       }
-      // nothing thrown crosses the lines that stay whole: every letter's path and every giant stays below
-      // the lowest of them (a line being read is never covered)
       const whole = n - 1 - N;
-      const floor = whole >= 0 ? cy[whole] + g.byA + (cap * F) / 2 + 0.3 * F : 0;
-      return S.L.map((L, j) => {
+      // each letter's draw from the seed, its timing, and how hard it is thrown (harder the nearer the
+      // object)
+      const deal = S.L.map((L, j) => {
         const u = Array.from({ length: 9 }, rand);
         const lx = Lm[j].x, ly = cy[L.i] + g.byA;
         const vx = lx - ox, vy = ly - oy, d0 = Math.hypot(vx, vy);
         const k = n - 1 - L.i, e = Math.pow(Math.max(0, 1 - (k / N) * (k / N)), 1.5);
+        let t;
         if (giants.has(j)) {
-          // swelling low on its own side, cut by the stage's bottom edge, behind the object; the first
-          // one large, the next one smaller and higher, so the two never read as a pair of initials
-          const side = giants.get(j), first = giants.size < 2 || side < 0;
-          let capT = (first ? 0.42 + 0.08 * u[0] : 0.27 + 0.06 * u[0]) * Math.min(H, 1.3 * W);
-          capT = Math.min(capT, (H - floor) / (first ? 0.8 : 1.1));
-          const tx = W / 2 + side * (first ? 0.2 + 0.06 * u[1] : 0.25 + 0.06 * u[1]) * W;
-          const ty = first ? H - 0.3 * capT : H - 0.62 * capT;
-          return {
-            pin: true, dx: tx - lx, dy: ty - ly, rot: side * (first ? 4 + 6 * u[2] : 10 + 8 * u[2]), rx: 0, ry: -side * (12 + 14 * u[3]),
-            sc: capT / (cap * F), t0: BREAK + (first ? 0.004 : 0.012), t1: BREAK + (first ? 0.09 : 0.085), b0: first ? 0.7 : 0.694, b1: HOME, persp: 4 * M,
-          };
+          const first = giants.get(j) < 0 || giants.size < 2;
+          // a giant dims in its place as the burst leaves, then travels and swells (late, once it has
+          // drawn away from the line)
+          t = { t0: BREAK + 0.008, t1: BREAK + (first ? 0.09 : 0.085), b0: first ? 0.7 : 0.694, b1: HOME };
+        } else {
+          // the burst leaves all at once and comes home all at once: one timing, so no letter closes
+          // on a neighbour that has not left yet or is already home
+          t = { t0: BREAK + 0.002, t1: BREAK + 0.077, b0: 0.708, b1: HOME - 0.002 };
         }
-        // thrown out to its own side, fanning up and down, harder the nearer the object; a letter that
-        // would rise into the whole lines above is sent down instead
-        const dirX = (vx < 0 ? -1 : 1) * (0.7 + 0.3 * u[0]);
-        const dirY = (u[5] - 0.42) * 0.95 + 0.25 * clamp(vy / (2 * g.P), -1, 0);
-        const reach = e * (0.2 + 0.5 * u[1]) * W;
-        const sc = 0.6 + 1.3 * u[2] * e + (1 - e) * 0.4;
-        let dy = dirY * reach;
-        const lim = floor + 0.45 * F * sc;
-        if (ly + dy < lim) dy = Math.max(lim - ly, Math.abs(dy) * 0.6);
-        const t0 = BREAK + 0.02 * Math.min(1, d0 / (0.5 * W)) + 0.004 * u[2];
-        const t1 = t0 + 0.065 + 0.025 * u[3];
-        const b0 = Math.max(t1 + 0.004, 0.695 + 0.02 * u[4]);
-        return {
-          pin: false,
-          dx: dirX * reach,
-          dy,
-          rot: (u[6] * 2 - 1) * 200 * Math.sqrt(e),
-          rx: (u[7] * 2 - 1) * 140 * e,
-          ry: (u[8] * 2 - 1) * 320 * e,
-          sc,
-          t0, t1, b0, b1: Math.min(HOME, b0 + 0.065 + 0.01 * u[4]),
-          persp: Math.max(500, 6 * F),
-        };
+        return { u, vx, vy, d0, e, ...t };
       });
+      // a line breaks when its first letter leaves
+      const brk0 = [];
+      deal.forEach((d, j) => { const i = S.L[j].i; brk0[i] = Math.min(brk0[i] ?? 1, d.t0); });
+
+      // the steps of progress the throw is played through, and where the wall stands at each
+      const ps = [];
+      for (let p = BREAK; p < HOME + 0.0012; p += 0.0025) ps.push(Math.min(p, HOME));
+      const walls = ps.map((p) => wallAt(g, p));
+      // where each half of a breaking line stands (the wake's place): at each step until the line breaks,
+      // and when it breaks; its letters keep that place until they turn home
+      const halfX = new Map();
+      const placeOf = (i, sd) => {
+        const key = i * 2 + sd;
+        if (!halfX.has(key)) halfX.set(key, { at: ps.map((p) => (p < brk0[i] ? halfAt(g, i, sd, p) : 0)), x0: halfAt(g, i, sd, brk0[i]) });
+        return halfX.get(key);
+      };
+      const shiftAt = (j, f, k) => {
+        const L = S.L[j], X = placeOf(L.i, L.half === S.B[L.i] ? 1 : 0), p = ps[k];
+        return p < brk0[L.i] ? X.at[k] : X.x0 * keep(f, p);
+      };
+      // a letter on the screen at step k, turned and scaled about its own middle and carried by the
+      // wall (its climb and, for a travelling wall, its pull-back): its glyph box (the box its words are
+      // read in) and its own box, turned (where it is hit; glyph boxes of tightly set lines overlap,
+      // their own boxes only touch)
+      const boxAt = (j, f, k) => {
+        const L = Lm[j], p = ps[k], [a, as, ar] = thrown(f, p);
+        const th = (f.rot * ar * Math.PI) / 180, c = Math.cos(th), s = Math.sin(th);
+        const w = walls[k], sc = (1 + (f.sc - 1) * as) * w.sq;
+        const px = W / 2 + (L.px + shiftAt(j, f, k) + f.dx * a - W / 2) * w.sq, py = H / 2 + (L.py + f.dy * a - H / 2) * w.sq + w.by;
+        let l = Infinity, r = -Infinity, t = Infinity, b = -Infinity;
+        for (let q = 0; q < 4; q++) {
+          const x = q & 1 ? L.q[2] : L.q[0], y = q & 2 ? L.q[3] : L.q[1];
+          const X = (x * c - y * s) * sc, Y = (x * s + y * c) * sc;
+          if (X < l) l = X; if (X > r) r = X; if (Y < t) t = Y; if (Y > b) b = Y;
+        }
+        // a turn in depth (and its perspective) can draw a letter a little larger than its flat box
+        const grow = 1 + (f.pin ? 0.03 : 0.08) * Math.min(1, a);
+        return {
+          l: px + l, r: px + r, t: py + t, b: py + b, x: px, y: py, c, s, hw: (L.ow / 2) * sc, hh: (L.oh / 2) * sc, grow,
+          fs: (f.pin ? Math.max(1, f.sc) : 1) * F, op: inkOf(f, a, p),
+        };
+      };
+      // inside a letter's own (turned) box, and inside its glyph box
+      const hits = (B, x, y, k = 1) => {
+        const dx = x - B.x, dy = y - B.y, u = dx * B.c + dy * B.s, v = -dx * B.s + dy * B.c;
+        return Math.abs(u) <= B.hw * k + 0.5 && Math.abs(v) <= B.hh * k + 0.5;
+      };
+      const inGlyph = (B, x, y, k = 1) => { const e = (k - 1) * Math.max(B.r - B.l, B.b - B.t) + 0.5; return x >= B.l - e && x <= B.r + e && y >= B.t - e && y <= B.b + e; };
+      // the points the eye (and the scene check) reads a line of words at: across its glyph box, at a
+      // third, half and two thirds of its height, where the letter itself is
+      const pts = (bx) => {
+        if (bx.pts) return bx.pts;
+        const w = bx.r - bx.l, h = bx.b - bx.t, out = [];
+        const nx = Math.max(2, Math.min(16, Math.round(w / Math.max(12, bx.fs * 0.7))));
+        const ys = bx.fs >= 40 ? [0.3, 0.5, 0.7] : [0.3, 0.7];
+        for (let i = 0; i < nx; i++) for (const fy of ys) { const x = bx.l + (w * (i + 0.5)) / nx, y = bx.t + h * fy; if (hits(bx, x, y)) out.push(x, y); }
+        return (bx.pts = out);
+      };
+      // one letter lies on another's words: one of the points it is read at is inside the other's own box
+      // and glyph box
+      const onto = (A, B) => { const P = pts(A); for (let i = 0; i < P.length; i += 2) if (hits(B, P[i], P[i + 1], B.grow) && inGlyph(B, P[i], P[i + 1], B.grow)) return true; return false; };
+      const clash = (A, B) => A.op >= 0.25 && B.op >= 0.25 && !(A.r < B.l - 40 || B.r < A.l - 40 || A.b < B.t - 40 || B.b < A.t - 40) && (onto(A, B) || onto(B, A));
+      // the foot of the whole lines (their own boxes), on the screen at step k
+      const foot = whole >= 0 ? g.band[whole][1] : -Infinity;
+      const floorAt = (k) => H / 2 + (foot - H / 2) * walls[k].sq + walls[k].by;
+      const low = (bx) => { const P = pts(bx); let m = Infinity; for (let i = 1; i < P.length; i += 2) m = Math.min(m, P[i]); return m; };
+      // a throw played through: its boxes at every step, or null where it leaves the stage, rises into
+      // the whole lines or touches a letter already placed
+      const placed = [];
+      // every letter at its place while it waits to leave and once it is home: a throw must keep off
+      // those too, also for letters not placed yet
+      const homes = S.L.map((_, m) => { const d = deal[m], f = { pin: false, dx: 0, dy: 0, rot: 0, sc: 1, t0: d.t0, t1: d.t1, b0: d.b0, b1: d.b1 }; return ps.map((p, k) => boxAt(m, f, k)); });
+      const waiting = S.L.map((_, m) => ps.map((p, k) => (p <= deal[m].t0 || p >= deal[m].b1 ? homes[m][k] : null)));
+      const free = new Set(S.L.map((_, m) => m));
+      const play = (j, f, loose) => {
+        const boxes = [];
+        for (let k = 0; k < ps.length; k++) {
+          const bx = boxAt(j, f, k);
+          boxes.push(bx);
+          if (bx.op < 0.25 || loose) continue;
+          const b0 = homes[j][k];
+          if (bx.l < Math.min(2, b0.l) || bx.r > Math.max(W - 2, b0.r) || bx.b > Math.max(H - 2, b0.b)) return null;
+          if (low(bx) < Math.min(floorAt(k), low(b0)) - 0.5) return null;
+          for (const [m, P] of placed) if (clash(bx, P[k])) return null;
+          for (const m of free) if (m !== j && waiting[m][k] && clash(bx, waiting[m][k])) return null;
+        }
+        return boxes;
+      };
+      const out = new Array(S.L.length);
+      const keepThrow = (j, f, boxes) => { const L = S.L[j]; f.x0 = placeOf(L.i, L.half === S.B[L.i] ? 1 : 0).x0; out[j] = f; placed.push([j, boxes]); free.delete(j); };
+      // the giants first: swelling low on their own side, inside the stage and under the whole lines, set
+      // back in a faint tone while they are swollen; the first one large, the next one smaller and higher,
+      // so the two never read as a pair of initials. A giant that cannot swell clear of the whole lines and
+      // the stage's edges is thrown as a letter.
+      for (const [j, side] of giants) {
+        const d = deal[j], u = d.u, L = Lm[j];
+        const first = side < 0 || giants.size < 2;
+        const rot = side * (first ? 4 + 6 * u[2] : 10 + 8 * u[2]);
+        const capT0 = (first ? 0.42 + 0.08 * u[0] : 0.27 + 0.06 * u[0]) * Math.min(H, 1.3 * W);
+        const k1 = Math.min(ps.length - 1, Math.max(0, Math.round((d.t1 - BREAK) / 0.0025)));
+        const X0 = placeOf(S.L[j].i, side > 0 ? 1 : 0).x0;
+        const th = (rot * Math.PI) / 180, c = Math.cos(th), s = Math.sin(th);
+        // as large as the room under the whole lines allows (the second one stands a quarter higher)
+        let h1 = 0;
+        { let t = Infinity, b = -Infinity; for (let q = 0; q < 4; q++) { const x = q & 1 ? L.q[2] : L.q[0], y = q & 2 ? L.q[3] : L.q[1], Y = (x * s + y * c) * 1.06; t = Math.min(t, Y); b = Math.max(b, Y); } h1 = b - t; }
+        const room = H - 10 - floorAt(k1) - 4;
+        const sc0 = Math.min(capT0 / (cap * F), room / (h1 * (first ? 1 : 1.25)));
+        for (const shrink of [1, 0.9, 0.8, 0.7, 0.6, 0.5]) {
+          const sc = sc0 * shrink;
+          if (sc < 1.4) break;
+          let l = Infinity, r = -Infinity, t = Infinity, b = -Infinity;
+          for (let q = 0; q < 4; q++) {
+            const x = q & 1 ? L.q[2] : L.q[0], y = q & 2 ? L.q[3] : L.q[1];
+            const X = (x * c - y * s) * sc * 1.06, Y = (x * s + y * c) * sc * 1.06;
+            if (X < l) l = X; if (X > r) r = X; if (Y < t) t = Y; if (Y > b) b = Y;
+          }
+          const tx = clamp(W / 2 + side * (first ? 0.2 + 0.06 * u[1] : 0.25 + 0.06 * u[1]) * W, 4 - l, W - 4 - r);
+          const ty = H - 6 - b - (first ? 0 : 0.25 * (b - t));
+          // faint as it is, a giant never stands behind the lines that stay whole
+          if (ty + t < floorAt(k1) + 4) continue;
+          const f = { pin: true, dx: (tx - L.px - X0) / 1.03, dy: (ty - walls[k1].by - L.py) / 1.03, rot, rx: 0, ry: -side * (12 + 14 * u[3]), sc, t0: d.t0, t1: d.t1, b0: d.b0, b1: d.b1, persp: 4 * M };
+          const boxes = play(j, f, false);
+          if (boxes) { keepThrow(j, f, boxes); break; }
+        }
+      }
+      // then every other letter. The block of breaking lines opens like a fan from its top edge above the
+      // object: each letter flies out along its own ray from there (a little sideways, as far down as the
+      // stage allows), shrinking into depth and turning as it goes, all on one timing, so neighbours only
+      // ever draw apart. A letter whose flight would still touch a giant tries a gentler one.
+      const normal = S.L.map((_, j) => j).filter((j) => !out[j]);
+      if (normal.length) {
+        const top = whole >= 0 ? g.band[whole][1] : Math.min(...normal.map((j) => Lm[j].py - Lm[j].oh / 2));
+        const cxA = ox;
+        const m = Math.max(4, g.gut / 2);
+        let rl = 1, rr = 1, foot = top + 1;
+        for (const j of normal) {
+          const L = Lm[j], x0 = placeOf(S.L[j].i, S.L[j].half === S.B[S.L[j].i] ? 1 : 0).x0;
+          rl = Math.max(rl, cxA - (L.px + x0 - L.ow / 2)); rr = Math.max(rr, L.px + x0 + L.ow / 2 - cxA);
+          foot = Math.max(foot, L.py + L.oh / 2);
+        }
+        const kT = Math.min(ps.length - 1, Math.round((deal[normal[0]].t1 - BREAK) / 0.0025));
+        const Kx = clamp(Math.min((cxA - m) / rl, (W - m - cxA) / rr), 1, 1.25);
+        const Ky = clamp((H - 8 - walls[kT].by - top) / (foot - top), 1, 2.4);
+        const order = normal.sort((a, b) => deal[a].d0 - deal[b].d0 || a - b);
+        for (const j of order) {
+          const d = deal[j], u = d.u, e = d.e, L = Lm[j];
+          const x0 = placeOf(S.L[j].i, S.L[j].half === S.B[S.L[j].i] ? 1 : 0).x0;
+          const base = {
+            pin: false, dx: (L.px + x0 - cxA) * (Kx - 1), dy: (L.py - top) * (Ky - 1),
+            rot: (u[6] * 2 - 1) * 160 * Math.sqrt(e), rx: (u[7] * 2 - 1) * 100 * e, ry: (u[8] * 2 - 1) * 240 * e,
+            sc: 0.5 + 0.2 * u[2], t0: d.t0, t1: d.t1, b0: d.b0, b1: d.b1, persp: Math.max(500, 6 * F),
+          };
+          let done = false;
+          for (const rf of [1, 0.5, 0.2]) {
+            for (const mf of [1, 0.85, 0.7, 0.5, 0.3, 0]) {
+              const f = { ...base, dx: base.dx * mf, dy: base.dy * mf, rot: base.rot * rf, rx: base.rx * rf, ry: base.ry * rf, sc: rf < 1 ? Math.min(base.sc, 0.5) : base.sc };
+              const boxes = play(j, f, false);
+              if (boxes) { keepThrow(j, f, boxes); done = true; break; }
+            }
+            if (done) break;
+          }
+          if (!done) {
+            // no clean way out: it stays near its place, shrinks into depth and fades while it is out
+            const f = { ...base, dx: base.dx * 0.3, dy: base.dy * 0.3, sc: 0.5, rot: base.rot * 0.3, rx: base.rx * 0.3, ry: base.ry * 0.3, fade: true };
+            keepThrow(j, f, play(j, f, true));
+          }
+        }
+      }
+      return out;
+    };
+    // how much ink a thrown letter keeps: a giant falls back to a faint tone (under a quarter of the ink)
+    // as it draws away from the line, so the burst reads over it; a letter with no clean way out fades
+    // (a giant dims in its place before it leaves and lights up again only once it is home)
+    const inkOf = (f, a, p) => (f.pin ? 1 - 0.78 * Math.min(smooth(clamp((p - BREAK - 0.002) / 0.004, 0, 1)), smooth(clamp((f.b1 - 0.001 - p) / 0.005, 0, 1))) : f.fade ? clamp(1 - a / 0.3, 0, 1) : 1);
+    // how much of its parted place a thrown letter keeps (it flies out from where its half stood when
+    // the line broke, and back to the closed line)
+    const keep = (f, p) => (p < f.b0 ? 1 : p >= f.b1 ? 0 : 1 - inOut3((p - f.b0) / (f.b1 - f.b0)));
+    // where the wall stands at progress p: its climb and, at the end of a travelling wall, the scale of
+    // its pull-back about the stage centre (the timeline's own curves)
+    const wallAt = (g, p) => {
+      if (p <= TRAVEL) return { by: g.by0 + ((g.byA - g.by0) * p) / TRAVEL, sq: 1 };
+      if (p <= FIT0) return { by: g.byA + ((g.byE - g.byA) * (p - TRAVEL)) / (FIT0 - TRAVEL), sq: 1 };
+      if (p <= FIT1) { const t = (p - FIT0) / (FIT1 - FIT0), e = g.travel ? inOut3(t) : t; return { by: g.byE + (g.byM - g.byE) * e, sq: 1 + (g.scale - 1) * e }; }
+      return { by: g.byM + ((g.by1 - g.byM) * (p - FIT1)) / (1 - FIT1), sq: g.scale };
+    };
+    // the object in its exit (power3.in down, power2.out swelling), and the place the wake gives half sd
+    // of line i at progress p
+    const objAt = (g, p) => { const t = clamp((p - TRAVEL) / EXIT, 0, 1); return { y: g.yA + (g.yEnd - g.yA) * t ** 4, s: 1 + (o.grow - 1) * out3(t) }; };
+    const halfAt = (g, i, sd, p) => {
+      const ob = objAt(g, p), w = wallAt(g, p);
+      const yb = (ob.y - w.by - g.H / 2) / w.sq + g.H / 2;
+      return wakeAt(g, yb, ob.s, leanAt(g, yb), i, g.gut)[sd] || 0;
     };
     // how far along its throw a letter is at progress p: out (power3.out), drifting on, home (power3.inOut);
     // and how much of its swell it keeps (a giant shrinks back sooner than it travels, so two giants
     // flying home never stack into one blot)
+    // and how far it has turned (a letter turns once it is under way, so it has drawn clear of its
+    // neighbours before it spins)
     const thrown = (f, p) => {
-      if (p <= f.t0 || p >= f.b1) return [0, 0];
-      if (p < f.t1) { const a = out3((p - f.t0) / (f.t1 - f.t0)); return [a, a]; }
-      if (p < f.b0) return [1 + (0.06 * (p - f.t1)) / (f.b0 - f.t1), 1];
+      if (p <= f.t0 || p >= f.b1) return [0, 0, 0];
+      if (p < f.t1) { const a = out3((p - f.t0) / (f.t1 - f.t0)); return [a, f.pin ? a * a * a : a, f.pin ? a : a * a]; }
+      if (p < f.b0) { const a = 1 + (0.06 * (p - f.t1)) / (f.b0 - f.t1); return [a, 1, a]; }
       const a = 1 - inOut3((p - f.b0) / (f.b1 - f.b0));
-      return [1.06 * a, f.pin ? Math.pow(a, 2.5) : a];
+      return [1.06 * a, f.pin ? Math.pow(a, 2.5) : a, f.pin ? 1.06 * a : 1.06 * a * a];
     };
 
     // Type size and geometry, measured with every transform cleared.
@@ -725,18 +906,34 @@
         le.push(a.left - st.left);
         re.push((b || a).right - st.left);
       });
-      // the letters of the breaking lines: each laid exactly over its own glyph (kerning kept)
+      // the letters of the breaking lines: each laid exactly over its own glyph (kerning kept); its middle
+      // (the point it turns and swells about) and its glyph box about that middle, for the throw
       const rg = document.createRange();
       const Lm = S.L.map((L) => {
         const t = L.half.firstChild;
-        if (!t || t.nodeType !== 3) return { x: 0, w: 0 };
+        L.el.style.fontSize = '';
+        L.el.style.transformOrigin = '';
+        if (!t || t.nodeType !== 3) return { x: 0, w: 0, l: 0, px: 0, py: 0, ow: 0, oh: 0, q: [0, 0, 0, 0] };
         rg.setStart(t, L.off);
         rg.setEnd(t, L.off + L.len);
         const r = rg.getBoundingClientRect(), hr = L.half.getBoundingClientRect();
-        L.el.style.fontSize = '';
-        L.el.style.transformOrigin = '';
         L.el.style.left = ((r.left - hr.left) / F).toFixed(4) + 'em';
-        return { x: r.left + r.width / 2 - st.left, w: r.width, l: (r.left - hr.left) / F };
+        const box = L.el.parentNode.getBoundingClientRect();
+        const px = box.left - st.left + L.el.offsetLeft + L.el.offsetWidth / 2, py = box.top - st.top + L.el.offsetTop + L.el.offsetHeight / 2;
+        return {
+          x: r.left + r.width / 2 - st.left, w: r.width, l: (r.left - hr.left) / F, px, py, ow: L.el.offsetWidth, oh: L.el.offsetHeight,
+          q: [r.left - st.left - px, r.top - st.top - py, r.right - st.left - px, r.bottom - st.top - py],
+        };
+      });
+      // the band each line's halves fill (their own boxes, top and foot), in the wall's own px
+      const band = S.lines.map((l, i) => {
+        let t0 = Infinity, b0 = -Infinity;
+        for (const h of [S.A[i], S.B[i]]) {
+          if (!h) continue;
+          const q = h.getBoundingClientRect();
+          t0 = Math.min(t0, q.top - st.top); b0 = Math.max(b0, q.bottom - st.top);
+        }
+        return [t0, b0];
       });
       root.classList.remove('ott-measure');
       const r = (k * F) / 2;
@@ -767,7 +964,7 @@
       // (TRAVEL - enter) / (n - 1)
       const enter = above ? ENTER : 0;
       const g = {
-        W, H, F, P, r, n, cx, cy, sp, aw, le, re, D, gut, travel, enter, capH: cap * F,
+        W, H, F, P, r, n, cx, cy, sp, aw, le, re, D, gut, travel, enter, capH: cap * F, band,
         side: S.side, push: phone ? o.phonePush : o.push,
         fx: sp.map((x, i) => (S.side[i] ? 0 : o.follow * (x - cx))),
         by0, byA, by1: byZ, byE, byM, scale,
@@ -784,8 +981,8 @@
         if (!f.pin) return;
         const L = S.L[j];
         f.m = Math.max(1, f.sc);
-        f.cx = Lm[j].w / 2;
-        f.cy = (lh * F) / 2;
+        f.cx = Lm[j].ow / 2;
+        f.cy = Lm[j].oh / 2;
         L.el.style.fontSize = f.m.toFixed(3) + 'em';
         L.el.style.left = ((Lm[j].l || 0) / f.m).toFixed(4) + 'em';
         L.el.style.transformOrigin = '0 0';
@@ -868,27 +1065,33 @@
         });
         S.L.forEach((L, j) => {
           const f = g.fl[j];
-          const [a, as] = f ? thrown(f, p) : [0, 0];
-          let tr = '';
-          if (f && f.m) {
-            // a giant (set at its swollen size, origin at its corner): turned about its glyph's centre and
-            // scaled down by its own size, so at rest it is exactly its glyph
-            let dx = 0, dy = 0;
-            if (a > 0) {
-              // it lands where it was thrown, wherever its half has moved meanwhile
-              if (!hx.has(L.half)) hx.set(L.half, gsap.getProperty(L.half, 'x') || 0);
-              dx = f.dx * a - hx.get(L.half) * Math.min(1, a);
-              dy = f.dy * a;
+          const on = !!f && S.on[L.i];
+          const [a, as, ar] = on ? thrown(f, p) : [0, 0, 0];
+          let tr = '', op = '';
+          if (on) {
+            // it flies from where its half stood when the line broke and comes back to the closed line,
+            // wherever the (hidden) half has moved meanwhile
+            if (!hx.has(L.half)) hx.set(L.half, gsap.getProperty(L.half, 'x') || 0);
+            const dx = f.x0 * keep(f, p) - hx.get(L.half) + f.dx * a, dy = f.dy * a;
+            if (f.m) {
+              // a giant (set at its swollen size, origin at its corner): turned about its glyph's centre and
+              // scaled down by its own size, so at rest it is exactly its glyph
+              const sc = (1 + (f.sc - 1) * as) / f.m;
+              tr = `translate3d(${(dx + f.cx).toFixed(1)}px,${(dy + f.cy).toFixed(1)}px,0) perspective(${Math.round(f.persp)}px) rotate(${(f.rot * ar).toFixed(1)}deg) rotateY(${(f.ry * ar).toFixed(1)}deg) scale(${sc.toFixed(4)}) translate(${(-f.cx * f.m).toFixed(1)}px,${(-f.cy * f.m).toFixed(1)}px)`;
+            } else {
+              const sc = 1 + (f.sc - 1) * as;
+              tr = `perspective(${Math.round(f.persp)}px) translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0) rotate(${(f.rot * ar).toFixed(1)}deg) rotateX(${(f.rx * ar).toFixed(1)}deg) rotateY(${(f.ry * ar).toFixed(1)}deg) scale(${sc.toFixed(3)})`;
             }
-            const sc = (1 + (f.sc - 1) * as) / f.m;
-            tr = `translate3d(${(dx + f.cx).toFixed(1)}px,${(dy + f.cy).toFixed(1)}px,0) perspective(${Math.round(f.persp)}px) rotate(${(f.rot * a).toFixed(1)}deg) rotateY(${(f.ry * a).toFixed(1)}deg) scale(${sc.toFixed(4)}) translate(${(-f.cx * f.m).toFixed(1)}px,${(-f.cy * f.m).toFixed(1)}px)`;
-          } else if (a > 0) {
-            const dx = f.dx * a, dy = f.dy * a;
-            const sc = 1 + (f.sc - 1) * as;
-            tr = `perspective(${Math.round(f.persp)}px) translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0) rotate(${(f.rot * a).toFixed(1)}deg) rotateX(${(f.rx * a).toFixed(1)}deg) rotateY(${(f.ry * a).toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+            // a giant is set back in a faint tone while it is swollen; a letter that found no clean way out
+            // fades while it is out
+            if (f.fade || f.pin) op = String(Math.round(inkOf(f, a, p) * 100) / 100);
           }
           if (tr !== L.tr) { L.el.style.transform = tr; L.tr = tr; }
+          if (op !== L.op) { L.el.style.opacity = op; L.op = op; }
         });
+        // from the moment the wall breaks the object is drawn behind the burst, so it never lies on a letter
+        const z = p >= BREAK ? '0' : '';
+        if (obj.style.zIndex !== z) obj.style.zIndex = z;
       }
       // the bar across the edge shows only near edge-on; face-on it would read as a line across the face
       if (rimBar) {
@@ -930,7 +1133,7 @@
           .fromTo(obj, { rotationY: turn }, { rotationY: () => turn() + 180, duration: EXIT, ease: 'power2.in', immediateRender: false }, TRAVEL);
       }
       // the credit comes in once the object has gone (and, after a break, once the letters are nearly home)
-      if (credit) tl.fromTo(credit, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.1, ease: 'power2.out' }, o.exit === 'break' ? 0.75 : TRAVEL + EXIT);
+      if (credit) tl.fromTo(credit, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.1, ease: 'power2.out' }, o.exit === 'break' ? HOME : TRAVEL + EXIT);
       tl.eventCallback('onUpdate', wake);
       wake(true);
     };
@@ -976,6 +1179,8 @@
     if (window.ResizeObserver) new ResizeObserver(again).observe(stage);
     if (window.ScrollTrigger) ScrollTrigger.addEventListener('refresh', () => { if (S.live) wake(true); });
 
+    // for test pages: the live geometry (each letter's throw, and whether it found a clean way out)
+    root.ottGeometry = () => S.geo;
     if (!window.Stage) return null;
     if (Stage.live && Stage.touch) ScrollTrigger.config({ ignoreMobileResize: true });
     const scrub = o.scrub !== null ? o.scrub : (Stage.lenis ? true : 0.6);

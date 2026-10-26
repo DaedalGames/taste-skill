@@ -241,7 +241,7 @@ html.js [data-scene="instrument-dial-stage"].is-live > .scene-stage {
    frame than repainting a name during its short roll */
 
 /* each item: its ground, the full width under the horizon, laid out from the wash's crest (--idl-pt)
-   and slid by the script; and its picture, standing in front of the foot of the name. Each item stacks
+   and slid by the script; and its picture, standing on that ground a clear gap under the name. Each item stacks
    above the one before, so its ground and picture cover the last item as they rise */
 [data-scene="instrument-dial-stage"].is-live .idl-subject {
   position: absolute;

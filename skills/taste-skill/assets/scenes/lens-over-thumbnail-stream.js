@@ -19,7 +19,8 @@
 //       </header>
 //       <div class="lens-field">
 //         <ol class="lens-track">
-//           <li class="lens-cap" aria-hidden="true">Index</li>          optional label left of the strip
+//           <li class="lens-cap" aria-hidden="true">Index</li>          optional label left of the strip (shown
+//                                                                       only where it fits inside the margin)
 //           <li class="lens-group" data-year="2019" data-cat="Editorial series">
 //             <h3 class="lens-name"><a class="lens-link" href="/work/tidewater">Tidewater</a> <span class="lens-year">2019</span></h3>
 //             <ul class="lens-thumbs">
@@ -100,19 +101,21 @@
     return chars;
   };
 
-  // Two stacked lines that swap roles: the outgoing letters leave, the incoming ones rise in a beat later.
-  // Changes less than 120ms apart (a fling) only retarget the incoming line, so only the last name relays.
+  // Two stacked lines that take turns: the outgoing letters leave, and only once the last of them has gone
+  // (and its line is emptied) do the incoming ones rise in, so two names never share a pixel or the DOM.
+  // A change while letters are still leaving only replaces the name that will rise next, and changes less
+  // than 120ms apart (a fling) only retarget the arriving line, so only the last name relays.
   // dress(line, text) sizes a line for its text (the caption fits long names to its band).
   const relay = (lines, t, dress) => {
-    let cur = 0, last = -1e9, text = null;
+    let cur = 0, last = -1e9, text = null, next = null;
     const put = (line, s) => { const chars = fill(line, s); line.__text = s; if (dress) dress(line, s); return chars; };
     // each line keeps a handle on its own tween: killing that handle stops every staggered letter, where
     // killTweensOf can leave letters whose stagger slot has not started yet to wake up later
     const kill = (l) => { if (l.__tw) { l.__tw.kill(); l.__tw = null; } };
-    const arrive = (line, chars, dir, delay) => { line.__tw = gsap.fromTo(chars, { yPercent: 110 * dir, opacity: 0 }, { yPercent: 0, opacity: 1, duration: t.inn, ease: 'expo.out', stagger: { each: t.inEach, from: dir > 0 ? 'start' : 'end' }, delay }); };
+    const arrive = (line, s, dir) => { line.__tw = gsap.fromTo(put(line, s), { yPercent: 110 * dir, opacity: 0 }, { yPercent: 0, opacity: 1, duration: t.inn, ease: 'expo.out', stagger: { each: t.inEach, from: dir > 0 ? 'start' : 'end' } }); };
     return {
       set(s) {
-        text = s; last = -1e9;
+        text = s; last = -1e9; next = null;
         lines.forEach(kill);
         gsap.set(put(lines[cur], s), { yPercent: 0, opacity: 1 });
         put(lines[1 - cur], '');
@@ -123,14 +126,22 @@
         const now = performance.now();
         const quick = now - last < 120;
         last = now;
-        if (quick) { const l = lines[cur]; kill(l); arrive(l, put(l, s), dir, 0); return; }
-        const out = lines[cur], inn = lines[1 - cur];
-        cur = 1 - cur;
-        kill(inn);
+        // letters still leaving: the newest name waits for them
+        if (next) { next.s = s; next.dir = dir; return; }
+        const out = lines[cur];
         kill(out); // a line still arriving leaves from wherever its letters are
-        // once gone, the outgoing line is emptied: at rest the caption holds exactly one name
-        if (out.__chars && out.__chars.length) out.__tw = gsap.to(out.__chars, { yPercent: -110 * dir, opacity: 0, duration: t.out, ease: 'power2.in', stagger: { each: t.outEach, from: dir > 0 ? 'start' : 'end' }, onComplete: () => { out.__tw = null; put(out, ''); } });
-        arrive(inn, put(inn, s), dir, t.delay);
+        if (quick || !(out.__chars && out.__chars.length)) { arrive(out, s, dir); return; }
+        next = { s, dir };
+        out.__tw = gsap.to(out.__chars, {
+          yPercent: -110 * dir, opacity: 0, duration: t.out, ease: 'power2.in', stagger: { each: t.outEach, from: dir > 0 ? 'start' : 'end' },
+          onComplete: () => {
+            out.__tw = null;
+            put(out, ''); // at rest the caption holds exactly one name
+            const n = next; next = null;
+            cur = 1 - cur;
+            if (n) arrive(lines[cur], n.s, n.dir);
+          },
+        });
       },
     };
   };
@@ -272,8 +283,9 @@
       for (const l of capLines) if (l.__text != null) dress(l, l.__text);
     };
 
-    const capRelay = caption ? relay(capLines, { out: 0.35, outEach: 0.012, inn: 0.7, inEach: 0.022, delay: 0.12 }, dress) : null;
-    const countRelay = countLive ? relay([...countLive.children], { out: 0.3, outEach: 0.01, inn: 0.45, inEach: 0.018, delay: 0.08 }) : null;
+    // the outgoing name is quick to leave, since the incoming one waits for it
+    const capRelay = caption ? relay(capLines, { out: 0.22, outEach: 0.008, inn: 0.7, inEach: 0.022 }, dress) : null;
+    const countRelay = countLive ? relay([...countLive.children], { out: 0.18, outEach: 0.008, inn: 0.45, inEach: 0.018 }) : null;
 
     // keyboard: focusing a project's (visually hidden) link scrolls to the point where it blooms
     let live = null;
@@ -392,6 +404,11 @@
           // z order inside a group, set once: the key underneath, smaller satellites over larger ones
           vis.sort((x, y) => (x === keyIt ? -1 : y === keyIt ? 1 : y.s - x.s)).forEach((it, z) => { it.li.style.zIndex = String(z + 1); });
         });
+        // a label before the strip shows only where its first frame leaves it whole inside the margin (on a
+        // tablet the strip starts at the edge, and a label there would be cut)
+        const margin = head ? parseFloat(getComputedStyle(head).paddingLeft) || P.gutter : P.gutter;
+        const T0 = W * P.a - groups[0].C;
+        M.capFit = caps.map((cap) => cap.getBoundingClientRect().left - tr.left + T0 >= margin);
         const pitch = (groups[N - 1].C - groups[0].C) / (N - 1) || M.W;
         M.gateW = P.gateW * pitch;
         M.R = P.reach * M.W;
@@ -454,7 +471,7 @@
 
         // the label before the strip steps aside as the first bloom opens
         caps.forEach((cap, i) => {
-          const op = +(1 - sm(gain / 0.2)).toFixed(2);
+          const op = M.capFit && M.capFit[i] ? +(1 - sm(gain / 0.2)).toFixed(2) : 0;
           if (capOp[i] !== op) { capOp[i] = op; cap.style.opacity = String(op); }
         });
 

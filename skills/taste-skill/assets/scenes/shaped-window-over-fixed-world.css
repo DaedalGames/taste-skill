@@ -215,20 +215,33 @@ html.js .scene[data-scene="shaped-window-over-fixed-world"].is-live > .scene-sta
 }
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-world-media { will-change: transform; }
 
+/* The title stands over the low window and the caption under the high one, each on ground no window
+   edge ever reaches: the title above the band the windows level to (--sw-top), the caption below it
+   (--sw-bottom). The low window rises to meet the title and the high one comes down to the caption. Both
+   lie above the props (whose solid parts the script keeps 16px clear of them) and fade as the push
+   begins. */
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-intro {
   left: var(--sw-low-x, 22.22%);
   width: var(--sw-hole-w, 27%);
   top: auto;
-  bottom: calc(100% - var(--sw-low-top, 34.5%) + clamp(20px, 3.2svh, 34px));
+  bottom: calc(100% - var(--sw-top, 18.5%) + var(--sw-gap, 28px));
+  z-index: 2;
 }
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-title { font-size: min(4.2vw, 6.6svh, 68px); }
 /* the caption hangs under the high window against the bar, so the outer corner stays free for the prop */
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-caption {
   left: var(--sw-cap-x, 50.6%);
   width: var(--sw-cap-w, 22vw);
-  top: calc(var(--sw-high-bottom, 65.5%) + clamp(20px, 3.6svh, 36px));
+  top: calc(var(--sw-bottom, 81.5%) + var(--sw-gap, 28px));
   bottom: auto;
+  z-index: 2;
 }
+/* a caption that does not fit under the windows is left out (its key fact is repeated in the lede) */
+[data-scene="shaped-window-over-fixed-world"].is-live.sw--no-caption .sw-caption { display: none; }
+/* the shutter's own box is empty where the windows are: it lets the pointer (and the page checks) through
+   to the place behind them, and only its words take it */
+[data-scene="shaped-window-over-fixed-world"].is-live .sw-shutter { pointer-events: none; }
+[data-scene="shaped-window-over-fixed-world"].is-live :is(.sw-intro, .sw-caption) { pointer-events: auto; }
 
 /* the merged window during the push: four flat bars of ground the script adds and places, each on its
    own layer so the compositor scales them with crisp edges and nothing is repainted per frame */
@@ -243,13 +256,16 @@ html.js .scene[data-scene="shaped-window-over-fixed-world"].is-live > .scene-sta
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-lede { will-change: transform, opacity; }
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-scrim--top { top: -20%; height: 62%; }
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-scrim--bottom { bottom: -20%; height: 62%; }
-[data-scene="shaped-window-over-fixed-world"].is-live .sw-lede { left: 4%; bottom: 7%; max-width: 40ch; }
+/* the lede and anything set in it (a link, a chip) stay inside the stage at every width */
+[data-scene="shaped-window-over-fixed-world"].is-live .sw-lede { left: 4%; bottom: 7%; max-width: min(40ch, 92%); overflow-wrap: break-word; }
+[data-scene="shaped-window-over-fixed-world"].is-live .sw-lede > * { max-width: 100%; }
 
 /* the props: the foreground plane, in front of the shutter in the bottom corners. The one on the high
    window's side is the tall one. A photograph keyed by the script stays hidden until it is keyed. */
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-prop {
   display: block;
   position: absolute;
+  z-index: 1;
   width: auto;
   max-width: none;
   pointer-events: none;
@@ -290,7 +306,7 @@ html.js .scene[data-scene="shaped-window-over-fixed-world"].is-live > .scene-sta
     top: auto;
     left: var(--sw-x0, 7.4%);
     width: var(--sw-span-w, 85.2%);
-    bottom: calc(100% - var(--sw-high-top, 22%) + 28px);
+    bottom: calc(100% - var(--sw-high-top, 22%) + var(--sw-gap, 28px));
   }
   [data-scene="shaped-window-over-fixed-world"].is-live .sw-title { font-size: min(10.6vw, 6.4svh, 84px); }
   [data-scene="shaped-window-over-fixed-world"].is-live .sw-caption { display: none; }

@@ -1,11 +1,12 @@
 // tasteskill / scenes / descend-through-weather.js — the hero sinks through a cloud deck onto the place below.
 //
 // A held full-bleed photograph is a camera going down through the weather. The giant place name creeps
-// up and loses focus while two cloud layers rise past it at different speeds; a soft wall of cloud then
-// fills the frame with mist while one line in the display face rises slowly through it; the frame clears
-// from the bottom, under a ceiling of cloud, onto a second photograph where a two-line statement rises
-// out of its masks. A signature hero exit for travel, hospitality, outdoor, architecture or wellness pages
-// with two strong pictures.
+// up and loses focus with the cloud tops rising just under it; once the sharp word has gone, two cloud
+// layers rise past its soft copies at different speeds (no cloud crosses the word while it is read); a
+// soft wall of cloud then fills the frame with mist while one line in the display face rises slowly
+// through it; the frame clears from the bottom, under a ceiling of cloud, onto a second photograph where
+// a two-line statement rises out of its masks. A signature hero exit for travel, hospitality, outdoor,
+// architecture or wellness pages with two strong pictures.
 //
 // The cloud. By default the scene grows its own: warped fractal noise gathered into rounded billows,
 // laid on a plane in perspective, lit from above, solid toward the deck and graded to --mist exactly so
@@ -91,8 +92,10 @@
 // foot of the picture, tagline read in the sky, a 4svh cloud lip below the title. 0-50% photo A zooms 1
 // to 1.12 and drifts up 8svh; the title rises 42svh (0.28x). 10-20% a 5px copy of the title fades in over
 // it and 17-25% the sharp copy leaves (soft, still read to about 24%); 28-40% the 14px copy takes over
-// and 40-48% fades to a ghost and out. 14-22% the tagline leaves. Far cloud 96 to 14svh (0.55x), near
-// veil 118 to -30svh (1.07x, scale 1.25). 24-48% the deck rises 100 to -60svh (power1.in) and the
+// and 40-48% fades to a ghost and out. 14-22% the tagline leaves. 0-25% the far cloud rises with the
+// title, its top 1svh under the title's foot (96 to 75svh); 25-50% it rises on to 14svh past the soft
+// copies, and the near veil 118 to -30svh (scale 1.25): nothing crosses the sharp word while it shows.
+// 24-48% the deck rises 100 to -60svh (power1.in) and the
 // frame is mist from 48%; 42-58% the note rises 14 to -14svh through the mist (read 45-55%). 50% photo
 // A, title and clouds are switched off under the deck; photo B settles 1.2 to 1 (to 100%, power2.out).
 // 41-48% photo A pales to 0.4 into the mist. 52-78% the deck leaves upward (power1.out) and the frame
@@ -100,8 +103,8 @@
 // behind it (a 64svh layer, 6 to -64svh, power2.in): it lingers, its dense part in the top quarter of
 // the frame to about 72%, then lifts away; 58-84% the haze clears; 66-80% the ground band darkens the
 // bottom; 74-85% the statement rises line by line; 85-100% held.
-// Phone (hold 2.2): the far cloud on a narrower layer (114 to 10svh) and the near veil 122 to -30svh
-// (scale 1.15, no sideways drift), both starting lower so the word is still read at 24%; the title fitted
+// Phone (hold 2.2): the far cloud on a narrower layer (114 to 97svh with the title to 28%, then to
+// 10svh) and the near veil 122 to -30svh from 28% (scale 1.15, no sideways drift); the title fitted
 // to 0.96 of the width, rising 30svh with a 10px lost copy, each blur step 0.03 later; deck feathers of
 // 40svh (180svh deck); ceiling 4 to -50svh; photo B settles from 1.12. Same fractions otherwise.
 //
@@ -855,11 +858,15 @@
       }
       if (r.tagline) tl.fromTo(r.tagline, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: sv(-3), duration: 0.08, ease: 'power1.in' }, P ? 0.16 : 0.14);
 
-      // clouds above the deck: the far sea of cloud tops and the near veil cross the word (on the phone
-      // both start lower, so the cloud reaches the word's lower half only as the read window closes)
-      tl.fromTo(r.far, { y: sv(P ? 114 : 96), x: 0 }, { y: sv(P ? 10 : 14), x: vw(P ? -10 : -6), duration: 0.5 }, 0)
+      // clouds above the deck. Nothing crosses the sharp word while it is read: until it has gone (0.25,
+      // 0.28 on the phone) the far sea of cloud tops rises with it, its crests just under the word's foot,
+      // and the near veil waits below the frame. Then both rise past the soft copies at their own speeds.
+      const gone = 0.25 + (P ? 0.03 : 0), rise = P ? 30 : 42;
+      const far0 = P ? 114 : 96, far1 = far0 - (rise * gone) / 0.5, farEnd = P ? 10 : 14, farX = P ? -10 : -6;
+      tl.fromTo(r.far, { y: sv(far0), x: 0 }, { y: sv(far1), x: vw((farX * (far0 - far1)) / (far0 - farEnd)), duration: gone }, 0)
+        .to(r.far, { y: sv(farEnd), x: vw(farX), duration: 0.5 - gone }, gone)
         .fromTo(r.far, { autoAlpha: 0.9 }, { autoAlpha: 0, duration: 0.01 }, 0.5);
-      tl.fromTo(r.near, { y: sv(P ? 122 : 118), x: 0, scale: 1 }, { y: sv(-30), x: P ? 0 : vw(8), scale: P ? 1.15 : 1.25, duration: 0.46 }, 0.04)
+      tl.fromTo(r.near, { y: sv(P ? 122 : 118), x: 0, scale: 1 }, { y: sv(-30), x: P ? 0 : vw(8), scale: P ? 1.15 : 1.25, duration: 0.5 - gone }, gone)
         .fromTo(r.near, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.01 }, 0.5);
 
       // the deck: in with power1.in (it accelerates into the cloud), out with power1.out

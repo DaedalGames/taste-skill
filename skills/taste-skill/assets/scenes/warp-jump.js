@@ -41,10 +41,10 @@
 // Any part may be left out (no endings, no points, no final line); the beats close up. With no final
 // line, whatever is on the stage when the jump starts flies past the camera, so the disc opens on the
 // bare field and the stage still lands flat accent. The principles come four at most to a beat (5-6
-// make two beats of three, 12 make three of four), so the hold grows with them. Each statement line is
-// fitted to the stage on its own: a longer ending than the guide is set smaller (never under 0.6 of the
-// anchor; past that it breaks into two balanced lines) and never shrinks the anchor, which keeps at
-// least 0.8 of its size. The final line takes a wider measure first, then a smaller size down to 0.6,
+// make two beats of three, 12 make three of four), so the hold grows with them, one screen a beat.
+// Each statement line is fitted to the stage on its own: a longer ending than the guide is set smaller
+// (never under 0.6 of the anchor; past that it breaks into two balanced lines) and never shrinks the
+// anchor, which keeps at least 0.8 of its size. The final line takes a wider measure first, then a smaller size down to 0.6,
 // then a third line (live and at rest alike).
 //
 // Tokens (on :root or the section): --warp-ground (default var(--ground-dark, #050607): a near-black, or
@@ -71,7 +71,7 @@
 //   accentMax  0.5       0.2-0.7  most of the rays the accent may take
 //   rays       1100      600-1600 rays at full speed on desktop (under 1024px 700; phones 800); 60%
 //                        of them are already drawn at 0
-//   hold       auto      3-8      screens held on desktop; auto = beats + 1 (+1 for 'photo')
+//   hold       auto      3-8      screens held on desktop; auto = beats (+1 for 'photo'): one screen a beat
 //   phoneHold  auto      3-7      screens held under 768px; auto = beats (+1 for 'photo')
 //   phone      'same'    'same' runs the phone plan (fewer rays, a centred column of principles);
 //                        'rest' shows the finished composition on phones
@@ -81,7 +81,8 @@
 //                        scrolled frame, and a custom property changing on the section restyles every
 //                        letter inside it (2-3ms a frame); nothing in this scene reads it
 //
-// Progress map (desktop 1440x900, 2 endings + 4 points + final = 4 beats, hold 5). Beat k starts at
+// Progress map (desktop 1440x900, 2 endings + 4 points + final = 4 beats, hold 4: one screen a beat,
+// the jump inside the last). Beat k starts at
 // k x 0.84 / beats: 0, 0.21, 0.42, 0.63; the jump runs 0.84 to 1. Field speed d = (p / 0.84)^0.9;
 // rays drawn = rays x (0.6 + 0.4d); trail = 0.24 + 0.33d^1.1 (+0.4 in the jump); rim width 4 + 2.8d px
 // (narrower toward the vanishing point, never under 2px: a streak is a line that is the content). The
@@ -89,20 +90,26 @@
 // edge of the mouth, an ellipse through the corners of the widest statement line and the final line
 // (with a margin), each ray at its own jittered radius, and the first 30% of a streak outside it is drawn
 // at 0.38 of its alpha, so the edge of the dark is soft without a gradient or a blur. The text changes
-// in timed beats (0.6s in, 0.32s out) when the playhead crosses a start, never scrubbed, so every rest
-// shows whole words at full opacity; each change of beat also surges the field's speed.
+// in timed beats when the playhead crosses a start, never scrubbed: the leaving words go first (0.32s
+// out) and the next arrive only once they are gone (0.3s later, 0.6s in), so two beats never share
+// pixels, even for the length of a swap, and every rest shows whole words at full opacity; each change
+// of beat also surges the field's speed.
 //   0%    anchor + ending 1 read, centred in the dark mouth; 660 streaks already running around it (rim
 //         streaks about 220px long, 4px wide; the field never stops: it has its own clock, and
 //         scrolling pushes it), mostly ink, 15% accent. "1 of 4".
-//   21%   ending 1 flies past the camera, ending 2 arrives out of the centre; the anchor stays.
+//   21%   ending 1 flies past the camera, then ending 2 arrives out of the centre; the anchor stays.
 //   25%   anchor + ending 2; about 810 rays, rim streaks about 300px and 4.9px wide, 27% accent.
-//   42%   the statement flies out; four principles stream out of the centre onto ground plates (0.9)
-//         around the vanishing point, 0.09s apart, settled within 0.9s. Over 42-46% the mouth closes
-//         to a small dark core and the streaks rush in between the plates (field at 0.88).
+//   42%   the statement flies out; then four principles stream out of the centre onto ground plates
+//         (0.9) around the vanishing point, 0.09s apart, settled within 0.9s. Over 42-46% the mouth
+//         closes to a small dark core and the streaks rush in between the plates (field at 0.88). On an
+//         upright stage (a phone, a tablet held upright) the plates stand in a centred column instead,
+//         and the mouth does not close: it takes the column's shape, so the column stands on the clean
+//         ground with the streaks around it, never behind its words.
 //   50%   the principles fly past: each drifts outward along its ray (-1.5% to +6% of the width) and
 //         grows from 0.9 to 1.25 over its beat, as if the camera passed between them.
 //   59-63% the mouth opens again around where the final line will stand.
-//   63%   the principles leave; the final line arrives and pushes from scale 1 to 1.06 until 84%.
+//   63%   the principles leave, each fading outward along its own ray (apart from the others, never
+//         over them); then the final line arrives and pushes from scale 1 to 1.06 until 84%.
 //   75%   dense, long, thick rays (about 470px at the rim, 6.5px wide), 47% accent, all around the mouth.
 //   82%   the field accelerates into the jump (trails run from the mouth to the rim).
 //   84%   the count fades; the accent disc opens at the vanishing point (power1.in, radius growing with
@@ -114,8 +121,10 @@
 //   100%  a flat accent stage with the final line in the exit ink; the next section carries on.
 // Phone (390x844): hold 4, 800 rays at DPR 1 (480 at 0), rim width x 0.85 (3.4 to 5.8px), type
 // min(11vw, 7.5svh) fitted to 90% of the width; the mouth is wider than the screen, so it reads as a
-// dark slot across the tunnel. The principles stand in a centred column (four at most a beat), char
-// stagger 0.012s, canvas lurch 1.08. Same fractions.
+// dark slot across the tunnel. The principles stand in a centred column (four at most a beat) inside a
+// mouth of the column's shape, char stagger 0.012s, canvas lurch 1.08. Same fractions. A tablet held
+// upright (768x1024) runs the desktop plan with the phone's column and a larger type,
+// min(10vw, 7.5svh).
 //
 // Cost. The field is one WebGL canvas: every streak is a quad in one vertex buffer, drawn with a single
 // call (about 0.2ms of script a frame, no garbage, next to nothing for the GPU); without WebGL it falls
@@ -143,6 +152,11 @@
 // House rules applied to the source idea: no monospace HUD, no 01/04 counter, no hairline progress bar,
 // no scrim, gradient or fan (the dark around the type is the mouth the streaks leave from), no glow
 // ('lighter' blending or shadowBlur), no numbers on the principles, no violet, no streak under 2px.
+//
+// crosses words: `.warp-exit` recolours the final line only (the jump, from 84%)
+//   Its ink copy of the line, set in register on the white line, shows inside the accent's edge to the
+//   pixel, so every letter stays whole on its own ground; then the flat accent holds the stage with the
+//   ink copy on it.
 (() => {
   const ID = 'warp-jump';
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -297,7 +311,8 @@
       p: 0, lastP: 0, travel: 0.37, kick: 0, dim: 1, cover: 0, disc: 0,
       // the mouth: an ellipse around the statement that the streaks leave from, so the type stands on
       // the clean ground (no scrim, no halo). ma/mb are its half-axes open; open 0 shrinks it to the core.
-      ma: 0, mb: 0, open: 1, shut: 0,
+      // col 0-1 turns it into the mouth around a column of principles (colA/colB), on an upright stage.
+      ma: 0, mb: 0, open: 1, shut: 0, col: 0, colA: 0, colB: 0,
       ground: 'rgb(5 6 7)', tones: ['#fff', '#fff', '#fff'], alphas: [0.9, 0.85, 1], accent: '#ff5b24',
       groundRgb: [5, 6, 7], accentRgb: [255, 91, 36], toneRgb: [[238, 238, 234], [246, 164, 135], [255, 91, 36]],
     };
@@ -317,13 +332,16 @@
     };
     // the mouth around a box of text (the statement, the final line): an ellipse that holds the box's
     // corners with a margin, never wider than the stage allows
-    f.mouthFor = (boxW, boxH, pad) => {
+    const mouthOf = (boxW, boxH, pad, capB) => {
       const a = Math.min((boxW / 2) * 1.16 + pad, f.W * 0.62);
       // the ellipse through the box corner (boxW/2, boxH/2) with half-axis a
       const q = Math.min(0.92, Math.pow(boxW / 2 / a, 2));
-      const b = Math.min((boxH / 2) / Math.sqrt(1 - q) + pad * 0.6, f.H * 0.42);
-      f.ma = a; f.mb = b;
+      const b = Math.min((boxH / 2) / Math.sqrt(1 - q) + pad * 0.6, f.H * capB);
+      return [a, b];
     };
+    f.mouthFor = (boxW, boxH, pad) => { [f.ma, f.mb] = mouthOf(boxW, boxH, pad, 0.42); };
+    // a column of principles is tall and narrow: its mouth may reach nearer the top and bottom
+    f.columnFor = (boxW, boxH, pad) => { [f.colA, f.colB] = mouthOf(boxW, boxH, pad, 0.47); };
 
     // The field is already at warp speed at 0: half the rays, trails a fifth of the radius, 4px rims.
     // d rises quickly (t^0.9), so a quarter of the way in the field is dense and long. (One state object,
@@ -352,8 +370,10 @@
       const acc = st.acc, tint = Math.min(1, acc * 1.6);
       const b1 = 0.25 * R, b2 = 0.5 * R, b3 = 0.75 * R, travel = f.travel, cover = f.cover;
       // the mouth: from a small core (open 0) to the ellipse around the text (open 1)
-      const core = 0.035 * R, op = clamp(f.open, 0, 1);
-      const ma0 = core + (Math.max(core, f.ma) - core) * op, mb0 = core + (Math.max(core, f.mb) - core) * op;
+      const core = 0.035 * R, op = clamp(f.open, 0, 1), cm = f.colA > 0 ? clamp(f.col, 0, 1) : 0;
+      let ma0 = core + (Math.max(core, f.ma) - core) * op, mb0 = core + (Math.max(core, f.mb) - core) * op;
+      // (an upright stage: the mouth takes the column's shape while the principles stand in it)
+      if (cm) { ma0 += (Math.max(core, f.colA) - ma0) * cm; mb0 += (Math.max(core, f.colB) - mb0) * cm; }
       // 'flood': the iris (shut 0 to 1) closes the whole mouth, its core too
       const shut = st.fl ? clamp(f.shut, 0, 1) : 0, iris = 1 - shut;
       const ma = Math.max(0.5, ma0 * iris), mb = Math.max(0.5, mb0 * iris);
@@ -707,7 +727,8 @@
       return { beats, groups, pointGroups, slot, total: story.length, at, base };
     }
     const countBeats = (phone) => makePlan(phone).total;
-    const holdDesk = o.hold || clamp(countBeats(false) + 1 + (isPhoto ? 1 : 0), 3, 8);
+    // one screen a beat (the jump runs inside the last one); 'photo' adds the screen of the picture
+    const holdDesk = o.hold || clamp(countBeats(false) + (isPhoto ? 1 : 0), 3, 8);
     const holdPhone = o.phoneHold || clamp(countBeats(true) + (isPhoto ? 1 : 0), 3, 7);
 
     // ---------- state ----------
@@ -899,7 +920,8 @@
             const i = points.indexOf(li), plate = li.querySelector('.warp-plate'), p = pos[i] || { x: vx, y: vy, w: 0, h: 0 };
             const base = (c) => { const q = posIn(c, li); return { x: q.x + p.x - p.w / 2, y: q.y + p.y - p.h / 2 }; };
             g.plates.push(items.length);
-            items.push(item(plate, null, 'p'));
+            // (a plate leaves outward along its own ray: its unit vector from the vanishing point)
+            items.push(Object.assign(item(plate, null, 'p'), { ux: p.ux || 0, uy: p.uy || 0 }));
             const from = items.length;
             // the principles' words travel whole (a plate's few words, not every letter, each its own layer)
             for (const c of plate.querySelectorAll('.warp-w')) items.push(item(c, null, 'c', base));
@@ -957,6 +979,11 @@
       // line at its pushed-in scale
       const box = textBox();
       field.mouthFor(Math.min(box.w, W), box.h, Math.min(W, H) * 0.035);
+      // an upright stage: the mouth of the principles is the tallest column of plates at its largest
+      if (column && plan.pointGroups.length) {
+        const cb = columnBox();
+        field.columnFor(Math.min(cb.w, W), cb.h, Math.min(W, H) * 0.035);
+      } else { field.colA = field.colB = 0; }
       // the final line's box on the stage (the ink copy sits in the same place in the exit layer, which is
       // out of the render tree until the jump, so it is measured on the white line)
       if (final) { const q = posIn(final, stage); inkBox = { x: q.x, y: q.y, w: final.offsetWidth, h: final.offsetHeight }; }
@@ -975,6 +1002,18 @@
       if (final) { const s = final.querySelectorAll('.warp-w').length ? 1.06 : 1; w = Math.max(w, wide(final) * s); h = Math.max(h, final.offsetHeight * s); }
       if (lead && !lines.length && !final) { w = lead.offsetWidth; h = lead.offsetHeight; }
       return { w: Math.max(w, W * 0.2), h: Math.max(h, 40) };
+    }
+    // the principles' column on an upright stage: its widest plate and its tallest beat, at the end of
+    // the drift's growth (the gap is placePoints' 14px)
+    function columnBox() {
+      let w = 0, h = 0;
+      const s = DRIFT_PHONE.s1;
+      for (const g of plan.pointGroups) {
+        let gh = 0;
+        for (const li of g) { w = Math.max(w, li.offsetWidth); gh += li.offsetHeight; }
+        h = Math.max(h, gh + 14 * (g.length - 1));
+      }
+      return { w: w * s, h: h * s };
     }
 
     // ---------- quality: step down when frames drop, back up after a long clean stretch ----------
@@ -1055,9 +1094,11 @@
     const WA = typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
     // the same curves as EASES, for the browser
     const CSS_E = ['cubic-bezier(0.16, 1, 0.3, 1)', 'cubic-bezier(0.32, 0, 0.67, 0)', 'cubic-bezier(0.11, 0, 0.5, 0)', 'cubic-bezier(0.5, 1, 0.89, 1)', 'linear'];
+    // (letters and plates move and scale; the lead only scales)
     const tfOf = (it, x, y, s) => (it.kind === 'c'
       ? 'translate(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ')'
-      : 'scale(' + s.toFixed(4) + ')');
+      : it.kind === 'p' ? 'translate(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px) scale(' + s.toFixed(4) + ')'
+        : 'scale(' + s.toFixed(4) + ')');
 
     function stopItem(g, i) {
       const a = g.anims && g.anims[i];
@@ -1106,7 +1147,7 @@
       if (!tChanged && !oChanged) return;
       const it = g.list[i];
       if (tChanged) {
-        const tf = x === 0 && y === 0 && s === 1 ? '' : it.kind === 'c' ? 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ')' : 'scale(' + s.toFixed(4) + ')';
+        const tf = x === 0 && y === 0 && s === 1 ? '' : tfOf(it, x, y, s);
         it.el.style.transform = tf;
         if (it.twin) it.twin.style.transform = tf;
         c[k] = x; c[k + 1] = y; c[k + 2] = s;
@@ -1202,9 +1243,12 @@
       g.out = true;
       const L = g.list;
       if (g.kind === 'points') {
-        // the plates fall away past the camera; their letters ride on them
+        // the plates fall away past the camera, each outward along its own ray, so they part from each
+        // other as they fade and never grow into a neighbour (a column only fades); their letters ride
+        // on them
+        const D = column ? 0 : 0.05 * W, S = column ? 1.02 : 1.06;
         for (let i = 0; i < L.length; i++) {
-          if (L[i].kind === 'p') setItem(g, i, 0, 0.25, 0.25, E_P2_IN, E_P2_IN, 0, 0, 1.3, 0);
+          if (L[i].kind === 'p') setItem(g, i, 0, 0.25, 0.25, E_P2_IN, E_P2_IN, L[i].ux * D, L[i].uy * D, S, 0);
           else g.done[i] = 1;
         }
       } else {
@@ -1270,7 +1314,9 @@
       } else {
         let leaving = false;
         for (const key of had) if (!want.has(key)) { exitGroup(plan.groups.get(key)); leaving = true; }
-        for (const key of want) if (!had.has(key)) enterGroup(plan.groups.get(key), leaving ? 0.2 : 0);
+        // the next words arrive only once the leaving ones are gone (0.32s out): two beats never share
+        // pixels, even for the length of a swap
+        for (const key of want) if (!had.has(key)) enterGroup(plan.groups.get(key), leaving ? 0.3 : 0);
         // a fling that skipped beats: anything else still showing leaves too
         for (const [key, g] of plan.groups) if (g.on && !want.has(key)) exitGroup(g);
         // a surge of speed with every change of beat, halving every 0.3s
@@ -1425,7 +1471,7 @@
       const cx = clamp(sr.left + sr.width / 2 - cr.left, 0, w);
       const cy = clamp(sr.top + sr.height / 2 - cr.top, h * 0.2, h * 0.6);
       field.aim(cx, cy);
-      field.dim = 1; field.open = 1;
+      field.dim = 1; field.open = 1; field.col = 0;
       // the mouth around the statement's ink (the block is a centred measure wider than its lines)
       let l = Infinity, r = -Infinity;
       for (const el of [anchor, ...tails, ...(statement ? [] : [final])].filter(Boolean)) {
@@ -1476,7 +1522,7 @@
       H = stage.clientHeight || window.innerHeight;
       lastW = W; lastH = H;
       field.N = rayCount();
-      field.dim = 1; field.open = 1; field.shut = 0;
+      field.dim = 1; field.open = 1; field.shut = 0; field.col = 0;
       layout();
       if (photoImg && photoImg.decode) photoImg.decode().catch(() => {});
 
@@ -1495,10 +1541,17 @@
       // between the plates, as if the camera had gone deeper down the tunnel
       if (ps !== null) {
         // it closes once the statement has flown out, and is open again before the final line arrives
-        // (with no final line the principles are the last beat, and the mouth stays shut to the end)
+        // (with no final line the principles are the last beat, and the mouth stays shut to the end).
+        // An upright stage keeps it open (open stays 1): there it takes the shape of the column of
+        // plates as they arrive (col), and the final line's shape only once they have left, so the
+        // column stands on the clean ground and no streak runs behind its words. Function values: a
+        // tablet turned between upright and wide changes the layout on refresh.
         const back = (final ? fs : JUMP) - 0.04;
-        tl.fromTo(field, { dim: 1, open: 1 }, { dim: 0.88, open: 0, duration: 0.04 }, ps)
-          .fromTo(field, { dim: 0.88, open: 0 }, { dim: 1, open: final ? 1 : 0, duration: 0.04, immediateRender: false }, back);
+        const upright = () => (column ? 1 : 0);
+        tl.fromTo(field, { dim: 1, open: 1 }, { dim: 0.88, open: upright, duration: 0.04 }, ps)
+          .fromTo(field, { dim: 0.88, open: upright }, { dim: 1, open: () => (final || column ? 1 : 0), duration: 0.04, immediateRender: false }, back)
+          .fromTo(field, { col: 0 }, { col: upright, duration: 0.04 }, ps);
+        if (final) tl.fromTo(field, { col: upright }, { col: 0, duration: 0.03, immediateRender: false }, fs);
         // function values: a tablet turned between upright and wide changes the layout on refresh
         const dr = { get from() { return drift().from; }, get to() { return drift().to; } };
         plan.pointGroups.forEach((g, gi) => {
@@ -1572,7 +1625,7 @@
       wasMoving = false; root.classList.remove('warp-moving');
       phone = !!(ctx && ctx.phone);
       cur = null;
-      field.shut = 0; field.open = 1;
+      field.shut = 0; field.open = 1; field.col = 0;
       clearText();
       if (splitDone) for (const pl of $$('.warp-plate')) pl.style.removeProperty('width');
       restLater();

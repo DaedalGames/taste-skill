@@ -6,7 +6,8 @@
 // ground colour and one label; use it once per page, as the closing section.
 //
 // DOM. Only the heading (with its visually hidden word) and the link are required; the script builds the
-// stack of copies to the plan. Authoring the copies as below gives the stepped word without script too.
+// stack of copies to the plan. Authoring the copies as below gives the stepped word without script too;
+// the copies behind the front one carry the word in data-text, drawn by the stylesheet, not as text.
 //
 //   <section class="scene ws" data-scene="wordmark-under-strain" aria-labelledby="ws-title" data-options='{}'>
 //     <div class="scene-stage">
@@ -14,8 +15,8 @@
 //       <h2 class="ws-word" id="ws-title">
 //         <span class="ws-sr">FLINT</span>
 //         <span class="ws-stack" aria-hidden="true">
-//           <span class="ws-copy" style="--i:0">FL<span class="ws-l">I</span>NT</span>
-//           …  --i:1 to --i:4, the same
+//           <span class="ws-copy" style="--i:0" data-text="FLINT"></span>      drawn copies: the letters are
+//           …  --i:1 to --i:4, the same                                        generated content (data-text)
 //           <span class="ws-copy ws-copy--front" style="--i:5">FL<span class="ws-l ws-slot">I</span>NT</span>
 //         </span>
 //       </h2>
@@ -78,21 +79,25 @@
 // 16-52% the echo opens (front copy to 61.5%). The copies behind never fade: each one steps out at full
 // ink, nearest first and one at a time, the moment its edge is 6px or more — first its side strips
 // (from about 33%), then its top band (about 36-40%) — so the echo grows outward from the word and
-// never shows a hairline. 52% the straight letter becomes a bar of the same size; 52-60% it loosens
-// (tilts up to 8 degrees and sags); from 55-57% it drops with gravity, slipping out of its slot, and
-// turns once it is out (from 60-75%, flat at 80%). It swings on a hinge on its own axis. Its path (the
-// side it tips to, the hinge, the loosening tilt, when it turns, how it drops, whether it first eases
-// off the closer neighbour) is chosen when the scene is measured: each candidate is moved over a 1:1
-// drawing of the word in 0.005 steps, and only a path that keeps at least 4px of ground between the bar
-// and every letter (or, for a letter set tighter than that, its own gap at rest) is taken, the most
-// natural of those first; bar and letters are one ink, so a touch would fuse them. A letter with little
-// room at rest (a condensed face on the phone) loosens less or not at all and drops straight before it
-// turns. It drifts to its landing point late, stays the size of the letter while it crosses the word and
-// stretches into the button as it clears it; the label is written on it once it is below the word's ink
-// and big enough to carry it (about 74-82%); 80-88% it lands with a squash; 84% clickable; 88-100% held.
-// It lands under the word's centre (on desktop, straight under its slot when the letter came from near
-// one end of the word). With drop: false the echo opens over 16-85%, fast first, and is complete by half
-// the hold.
+// never shows a hairline. The copies behind are drawn, not written (their letters are generated
+// content), so the page's text holds the word once. 52% the straight letter becomes a bar of the same
+// size; 52-60% it loosens (tilts up to 8 degrees, as far as its own place in the word allows, and
+// sags); from 55-57% it drops with gravity, slipping straight out of its slot, and turns over only once
+// it has left the word (flat at 80%). It swings on a hinge on its own axis. Its path (the side it tips
+// to, the hinge, the loosening tilt, when it turns, how it drops, whether it first eases off the closer
+// neighbour) is chosen when the scene is measured: each candidate is moved over a 1:1 drawing of the
+// word in 0.005 steps, and only a path that keeps at least 4px of ground between the bar and every
+// letter (or, for a letter set tighter than that, its own gap at rest), and keeps the bar inside the
+// letter's own column of the word while any of it is above the baseline, is taken, the most natural of
+// those first; bar and letters are one ink, so a touch would fuse them, and a bar lying across a
+// neighbour's place reads as crossing the name. A letter with little room at rest (a condensed face on
+// the phone) loosens less or not at all. It drifts to its landing point late, stays the size of the
+// letter while it leaves the word and stretches into the button as it clears it; the label is written
+// on it once it is below the word's ink and big enough to carry it (about 74-82%); 80-88% it lands with
+// a squash; 84% clickable; 88-100% held. It lands under the word's centre (on desktop, straight under
+// its slot when the letter came from near one end of the word), at least half the letter's height
+// below the baseline, so the upright letter is out of the word before it turns. With drop: false the
+// echo opens over 16-85%, fast first, and is complete by half the hold.
 // Eases: the studied progress map is quadratic where it says power2 (0.979 at 10%, e = 0.778 at 40%),
 // and GSAP's power2 is cubic, so the curves here are one GSAP step lower (power1 for power2, power2 for
 // power3). Ease 'none' everywhere else; back.out only for the spring and the landing, as the spec asks.
@@ -370,8 +375,10 @@
           const c = document.createElement('span');
           c.className = 'ws-copy' + (front ? ' ws-copy--front' : '');
           c.style.setProperty('--i', i);
-          if (slotAt < 0) c.textContent = chars.join('');
-          else if (added && !front) c.textContent = chars.slice(0, real).join('');
+          // the copies behind are drawn, not written: their letters are generated content (data-text),
+          // so the page's text holds the word once and no echo counts as words covered by the next copy
+          if (!front) c.dataset.text = chars.slice(0, real).join('');
+          else if (slotAt < 0) c.textContent = chars.join('');
           else {
             const l = document.createElement('span');
             l.className = 'ws-l' + (front ? ' ws-slot' : '');
@@ -537,6 +544,8 @@
       const m = shape();
       stack.style.transform = keep[0]; S.front.style.transform = keep[1];
       S.m = m;
+      // the falling letter's height in cap heights (a tall l rises above the capitals)
+      S.kl = slotAt >= 0 && m.cols[slotAt] && m.cols[slotAt].rise > 0 ? 1 + m.cols[slotAt].rise / m.cap : 1;
       const rise = m.rise / m.cap;
       let size = Math.min(o.fill * stageW, innerW) / (m.RAll - m.L);
       size = Math.min(size, (o.maxHeight * stageH) / m.cap);
@@ -552,12 +561,18 @@
       s.setProperty('--ws-size', size.toFixed(2) + 'px');
       s.setProperty('--ws-h0', h0.toFixed(2) + 'px');
       s.setProperty('--ws-lift', Math.max(0, (avail - need(h0)) * 0.5).toFixed(1) + 'px');
+      // the landing as a share of the word height, for the finished composition's button
+      s.setProperty('--ws-land', (land(h0) / h0).toFixed(4));
       place(m, p);
       return { h0, stageH, half: ((m.R - m.L) / 2) * size };
     };
     // the button's centre below the front copy's baseline: a share of the word height, but never so
-    // close that a short word sits on the button
-    const land = (h) => Math.max(S.land * h, S.btn[1] / 2 + S.gap);
+    // close that a short word sits on the button, and (with the drop) low enough that the falling
+    // letter, still upright, has wholly left the word before it turns over
+    const land = (h) => {
+      const sF = S.plan ? 1 - (S.plan.n - 1) * S.plan.step : 1;
+      return Math.max(S.land * h, S.btn[1] / 2 + S.gap, dropOn ? 0.5 * sF * (S.kl || 1) * h + 12 : 0);
+    };
 
     // The bar's whole path from the handoff to the landing, as one function of the progress p, so the
     // timeline and the clearance test below move exactly the same bar. x, y: centre in stage px; r:
@@ -568,7 +583,9 @@
     // swings about it from t0, flat at 0.80. A high hinge keeps the part of the bar still inside the word
     // in the slot's own column while its foot swings out below the baseline; a late t0 lets it drop clear
     // of the word before it turns.
-    const FALLS = { g: [0.57, 0.23, 2], q: [0.55, 0.25, 1.6] };
+    // falls of the hinge, [start, duration, power]: g gravity over the whole fall, q a softer one, d a
+    // short drop that has the letter out of the word early, so it can turn over once it is clear
+    const FALLS = { g: [0.57, 0.23, 2], q: [0.55, 0.25, 1.6], d: [0.55, 0.12, 2] };
     const bar = (p, g, v = g.v) => {
       const seg = (a, d) => clamp((p - a) / d, 0, 1);
       const { dir, lam } = v;
@@ -712,12 +729,27 @@
       const poses = [];
       for (let p = P0; p <= P1 + 1e-9; p += DP) poses.push([p, Math.round(recoilAt(p, g))]);
       poses.sort((a, b) => [0, 3, 2, 3][Math.round((a[0] - P0) / DP) % 4] - [0, 3, 2, 3][Math.round((b[0] - P0) / DP) % 4]);
+      // pixels of the bar outside the letter's own column in rows above the word's baseline (there the
+      // bar would lie on its neighbours' place in the word, ink or not), and any reaching down to the
+      // bottom row of text
+      const cl = Math.ceil(g.colL - 0.5) - 1, cr = Math.floor(g.colR - 0.5) + 1;
+      const beside = (s, ry) => {
+        let n = 0;
+        const yb = g.base + ry;
+        rows(s, (y, xa, xb) => {
+          if (y + 0.5 >= g.metaY - 8) { n += xb - xa + 1; return; }
+          if (y + 0.5 >= yb) return;
+          if (xa <= cl) n += Math.min(xb, cl) - xa + 1;
+          if (xb >= cr) n += xb - Math.max(xa, cr) + 1;
+        });
+        return n;
+      };
       // a pose that rules a path out goes to the front: the next, similar path is tested there first
       const run = (v, quit) => {
         let over = 0, near = 0;
         for (let i = 0; i < poses.length; i++) {
           const [p, ry] = poses[i];
-          const s = bar(p, g, v), h = hits(PH, s, ry);
+          const s = bar(p, g, v), h = hits(PH, s, ry) + beside(s, ry);
           if (h) {
             over += h;
             if (quit) { if (i) poses.unshift(poses.splice(i, 1)[0]); return null; }
@@ -729,10 +761,10 @@
       const [bw] = S.btn;
       const step = clamp(rest - hard, 2, 12);
       const cands = [];
-      [8, 5, 2.5, 0].forEach((tilt, ti) => [0.6, 0.63, 0.66, 0.69, 0.72, 0.75].forEach((t0, k) => ['g', 'q'].forEach((fall) =>
+      [8, 5, 2.5, 0].forEach((tilt, ti) => [0.6, 0.63, 0.66, 0.69, 0.72, 0.75].forEach((t0, k) => ['g', 'q', 'd'].forEach((fall) =>
         [0.9, 0.45, 0, -0.45, -0.9].forEach((lam, li) => [g.dir, -g.dir].forEach((dir) => [0, step, -step].forEach((nudge) => {
           const slide = Math.abs(g.tx + (lam * bw * dir) / 2 - g.sx);
-          cands.push({ v: { dir, lam, tilt, t0, fall, nudge }, cost: ti + 0.9 * k + (fall === 'q' ? 0.7 : 0) + (nudge ? 1.4 : 0) + (dir !== g.dir ? 0.4 : 0) + [0, 0.1, 0.2, 0.5, 0.6][li] + slide / 200 });
+          cands.push({ v: { dir, lam, tilt, t0, fall, nudge }, cost: ti + 0.9 * k + (fall === 'q' ? 0.7 : fall === 'd' ? 0.3 : 0) + (nudge ? 1.4 : 0) + (dir !== g.dir ? 0.4 : 0) + [0, 0.1, 0.2, 0.5, 0.6][li] + slide / 200 });
         }))))));
       cands.sort((a, b) => a.cost - b.cost);
       let pick = null, first = null;
@@ -820,12 +852,18 @@
         g.sy = oy + (cy - oy) * s + sh * H;
         g.w0 = (r - l) * s;
         g.h0 = (b - t) * s;
+        // the letter's own column in the word (its advance box, or its ink where that reaches further):
+        // while any of the bar is still beside the letters, above the baseline, it stays inside it
+        g.colL = ox + (Math.min(sl.x, l) - ox) * s - 0.5;
+        g.colR = ox + (Math.max(sl.x + sl.w, r) - ox) * s + 0.5;
         g.kx = g.w0 / bh; g.ky = g.h0 / bw;
         // landing centre: under the word's centre; on desktop, straight under its slot when the letter
         // came from near one end of the word (anything between reads as a near miss). On whole pixels.
         const off = Math.abs(ox - g.sx);
         const tx = S.phone || off <= 0.2 * stageW ? ox : g.sx;
         g.tx = Math.round(clamp(tx, gut + bw / 2, stageW - gut - bw / 2));
+        // the bottom row's words: the falling bar keeps clear of them
+        g.metaY = meta ? Math.min(...[...meta.children, meta].map((e) => rel(e, base).y + (e === meta ? parseFloat(getComputedStyle(meta).paddingTop) || 0 : 0))) : base.height;
         const floor = meta ? rel(meta, base).y - bh / 2 : base.height - bh;
         g.ty = Math.round(Math.min(g.base + land(H), floor));
         g.dir = g.sx <= ox ? 1 : -1;

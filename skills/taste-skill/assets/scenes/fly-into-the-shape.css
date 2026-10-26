@@ -5,9 +5,9 @@
    a flat scrim), the mark sits above the title in the accent, the sub-line below. "out": the paper the
    reader returns to, the closing title in ink and the solid mark under it.
    With .is-live the stage is held while the script writes the mark's outline into the world's clip-path
-   every frame. Layers, bottom to top: the paper, the ink title, the extruded side (dark accent, clipped
-   to the mark swept along the side), the world (clipped to the mark's face), and a light copy of the
-   title clipped to the whole mark, face and side (both made by the script).
+   every frame. Layers, bottom to top: the paper, the extruded side (dark accent, clipped to the mark
+   swept along the side, made by the script), the world (clipped to the mark's face), and the title in
+   light type, which the script keeps inside the face at every moment, so no edge crosses it.
    Weights follow the page: --display-weight (the title; 800 here when the page sets none). A weight the
    page has not loaded is never faked: the nearest loaded one shows. */
 
@@ -187,7 +187,8 @@ html.js .scene.is-live[data-scene="fly-into-the-shape"] > .scene-stage {
 .scene.is-live[data-scene="fly-into-the-shape"][data-dir="out"] .portal-cue { display: none; }
 .scene.is-live[data-scene="fly-into-the-shape"][data-dir="out"] .portal-aside { opacity: 0; }
 
-/* the title copies: centred on the stage, scaled about their centre, never moved */
+/* the title: centred on the stage, scaled about its centre, never moved; light type on the mark's face,
+   above the world */
 .scene.is-live[data-scene="fly-into-the-shape"] .portal-title {
   position: absolute;
   left: 50%;
@@ -195,10 +196,11 @@ html.js .scene.is-live[data-scene="fly-into-the-shape"] > .scene-stage {
   translate: -50% -50%;
   transform-origin: 50% 50%;
 }
-.scene.is-live[data-scene="fly-into-the-shape"] .portal-title--out { z-index: 1; color: var(--_ink); }
+.scene.is-live[data-scene="fly-into-the-shape"] .portal-title--out { z-index: 4; color: var(--_light); }
+.scene.is-live[data-scene="fly-into-the-shape"] .portal-lit { display: none; }
 
-/* the extruded side: the mark swept down and to the right (the script writes its clip-path), over the
-   ink title and under the world */
+/* the extruded side: the mark swept down and to the right (the script writes its clip-path), on the
+   paper and under the world */
 .scene.is-live[data-scene="fly-into-the-shape"] .portal-depth {
   display: block;
   position: absolute;
@@ -216,16 +218,6 @@ html.js .scene.is-live[data-scene="fly-into-the-shape"] > .scene-stage {
   background: var(--_night);
   opacity: 0;
 }
-
-/* the light title, over the world, clipped to the whole mark (face and side) by the script */
-.scene.is-live[data-scene="fly-into-the-shape"] .portal-lit {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  clip-path: inset(50%);
-  pointer-events: none;
-}
-.scene.is-live[data-scene="fly-into-the-shape"] .portal-title--light { color: var(--_light); }
 
 /* the world inside the mark: never transformed, only clipped (the script writes its clip-path) */
 .scene.is-live[data-scene="fly-into-the-shape"] .portal-world {

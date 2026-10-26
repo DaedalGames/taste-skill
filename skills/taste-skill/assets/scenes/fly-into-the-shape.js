@@ -1,15 +1,16 @@
 // tasteskill / scenes / fly-into-the-shape.js — the brand's own mark turns to face you, then you fly into it.
 //
 // The mark rides up with the content and arrives at the centre of the screen exactly as the stage is
-// held: a big, solid mark with a real extruded side, standing behind a large centred title. It turns to
+// held: a big, solid mark with a real extruded side, the title set in light type on its face. It turns to
 // face you, then you fly at it: the camera moves at a steady speed, so the mark grows slowly while it
 // turns and the next chapter (a photograph of its world) shows through its face, then rushes past every
 // edge of the screen, the way a near object does when you fly through it. It grows about the centre of
 // its largest inscribed circle, and the world inside keeps coming towards you for the rest of the hold.
-// The title is never faded: two identical copies split it along the mark's edges (ink on the paper,
-// light on the face and on the dark side), so every fragment of every glyph sits on its own ground. The
-// face starts as the solid accent and clears to the picture while the mark is still a shape on the
-// paper; the chapter's first sentence settles last.
+// The title rides on the face and is never faded or split: at rest every line of it sits inside the face
+// at every angle of the turn (set smaller when the mark is smaller than the title), and it grows with the
+// mark to its full size, never faster, so no edge of the mark ever crosses a word. The face starts as the
+// solid accent and clears to the picture while the mark is still a shape on the paper; the chapter's
+// first sentence settles last.
 // data-dir="out" plays it backwards at a chapter's end: the world shrinks back into the mark, the face
 // fills with the accent, and the mark turns upright as it lands behind the closing title, so a pair of
 // scenes lets the reader leave the way they came in.
@@ -27,7 +28,7 @@
 //         <p class="portal-aside">3-6 words</p>               optional: top-left, fades as the dive starts
 //         <p class="portal-cue" aria-hidden="true">Scroll</p>  optional: bottom centre (live only)
 //       </div>
-//       <h2 class="portal-title portal-title--out" id="t">    the title, ink on the paper
+//       <h2 class="portal-title portal-title--out" id="t">    the title: light on the mark's face while it runs
 //         <span class="portal-line">Line one</span> <span class="portal-line">line two</span>
 //       </h2>                                                2-6 words on 2 lines, 12 characters a line at most
 //       <div class="portal-world">                            the next chapter; never transformed, only clipped
@@ -43,18 +44,12 @@
 //       </svg>
 //     </div>
 //   </section>
-// While it runs, the script adds the extruded side (<div class="portal-depth">, between the ink title
-// and the world) and the light copy of the title (<div class="portal-lit">, over the world, clipped to
-// the whole mark). An older .portal-title--in inside the world is not needed and stays hidden.
+// While it runs, the script adds the extruded side (<div class="portal-depth">, under the world), and the
+// h2 itself is the title on the face: light, above the world, scaled about the stage's centre. An older
+// .portal-title--in inside the world or a .portal-lit copy is not needed and stays hidden.
 // The picture may be sized and placed by the page (for example taller than the stage, hanging below
 // it, so a bright foreground stays out of sight): the script grows it about the stage's centre,
 // wherever its box is.
-//
-// The split title and the page inspector: scripts/inspect.mjs reports "covered-text" for this scene,
-// because the ink h2 lies under the mark, and the light copy over it is what the reader sees there.
-// That is the design, not a collision: run the inspector with --allow covered-text for a page that
-// uses this scene, and never "fix" it by removing a copy of the title (the mark's edge would then pass
-// over ink on blue, or white on paper).
 //
 // The mark: one closed path in its viewBox (a 100x100 box is usual), any SVG commands (relative,
 // shorthand and arcs are converted on load). It needs a solid core: an inscribed circle of at least
@@ -67,19 +62,23 @@
 //   hold       2        1.4-2.6   screens the stage is held on desktop
 //   phoneHold  1.6      1.2-2.4   screens on a phone (under 768px)
 //   size       0.4      0.2-0.6   height of the mark's box at rest, as a share of the stage's height (and
-//                                 at most 0.45 of its width): the hero of the first frame, behind the
-//                                 title, which its edges split. A number above 1 is read as px (96-720).
-//                                 "fit": the smallest mark that holds the whole title inside its face.
-//                                 When a size leaves the mark only a little smaller than the title (65%
-//                                 or more of the size that would hold it, as on a portrait tablet), its
-//                                 edges would cut just the ends of the lines into small ink chips, so the
-//                                 mark grows to hold the whole title instead.
+//                                 at most 0.45 of its width): the hero of the first frame, with the title
+//                                 on its face. A number above 1 is read as px (96-720). "fit": the
+//                                 smallest mark that holds the whole title at its full rest size.
+//                                 The face always holds every line of the title at rest, at every angle
+//                                 of the turn: when the mark is smaller than that, the title is set
+//                                 smaller on it and grows with the mark to its full size. A mark of 65%
+//                                 or more of the size that would hold the full title (as on a portrait
+//                                 tablet) grows to that size instead, and one that would set the title
+//                                 under half its size grows until it holds half (the mark itself at most
+//                                 0.98 of the width and half the height). At any size the mark at rest,
+//                                 turned as it rests and with its side, stays 16px inside the stage.
 //   phoneSize  "fit"    "fit" | 0.3-0.75 | px 64-420   on a phone. "fit" (default): the smallest mark,
 //                                 from half the width up to 0.98 of the width (the mark itself, not its
-//                                 box) and half the height, whose face holds every line of the title at
-//                                 rest (turned and upright), so no glyph is cut into small ink chips on a
-//                                 narrow screen; when the title is too wide for that, a mark of 0.45 of
-//                                 the width sits behind the middle of the title and splits it.
+//                                 box; 16px clear of the edges with its side) and half the height, whose
+//                                 face holds every line of the title at
+//                                 its full rest size (turned and upright); when the title is too wide for
+//                                 that, the largest such mark with the title set smaller on its face.
 //                                 A share is of the stage's width (at most 0.4 of its height).
 //   turn       45       0-180     degrees of the turn: "in" runs -turn -> 0 while the mark is still
 //                                 small, "out" lands from +turn -> 0 as the mark shrinks home
@@ -100,8 +99,9 @@
 //   scrub      true with Lenis, else 0.8   seconds of catch-up, or true (locked to the scrollbar)
 //   phone      "same"   "same" | "rest" (the phone gets the finished composition)
 //
-// Colours come from the page: var(--ground) paper, var(--ink) title outside, var(--accent) the mark's
-// face (light type sits on it, so keep 3:1 or more against --portal-light), --portal-side the extruded
+// Colours come from the page: var(--ground) paper, var(--ink) the notes on it (and the title of the
+// finished "out" composition), var(--accent) the mark's face (the light title sits on it, so keep 3:1
+// or more against --portal-light), --portal-side the extruded
 // side (default: the accent mixed with 45% black), --portal-night the world's ground (give the next
 // section exactly this ground), --portal-light the title inside, --portal-soft the sub-line.
 // --portal-focus sets the picture's focal point (object-position, default 50% 50%); the picture always
@@ -118,8 +118,9 @@
 // clip of 4MB or less (stars turning, snow falling through a lamp's light, traffic trails). It plays
 // only while the section is on screen, grows like a picture, and keeps the world alive in the dwell.
 //
-// Testing: the section carries data-z, data-rot, data-cover, data-box (the mark's box at rest, px)
-// and data-fit (the box that would hold the whole title, px; 0 when none fits) while it runs.
+// Testing: the section carries data-z, data-rot, data-cover, data-box (the mark's box at rest, px),
+// data-fit (the box that would hold the whole title at its full rest size, px) and data-ts (the title's
+// scale at rest, 0.94 when it is held at full size) while it runs.
 // Cover is reached at 76% of the hold ("in") and left at 10% ("out"), on every screen and mark.
 (() => {
   const ID = 'fly-into-the-shape';
@@ -459,14 +460,14 @@
       const depthOpt = phone ? o.phoneDepth : o.depth;
       const blurPx = phone ? 0 : o.blur;
       const FLY = o.ease === 'fly';
-      const TS0 = 0.94; // the title's scale at rest
+      const TS0 = 0.94; // the title's full scale at rest (set smaller on a mark that cannot hold it)
       let dead = false;
       const made = [];
 
       gsap.context(() => {
-        // the extruded side: a dark accent layer between the ink title and the world, clipped to the
-        // mark swept along the side's vector. A night layer inside it deepens it as the face clears,
-        // so the side always reads darker than the face (solid accent, then the picture)
+        // the extruded side: a dark accent layer under the world, clipped to the mark swept along the
+        // side's vector. A night layer inside it deepens it as the face clears, so the side always reads
+        // darker than the face (solid accent, then the picture)
         let side = null, sideNight = null;
         if (depthOpt > 0) {
           side = document.createElement('div');
@@ -478,28 +479,10 @@
           outTitle.parentNode.insertBefore(side, outTitle.nextSibling);
           made.push(side);
         }
-        // the light title: one copy over the world, clipped to the whole mark (face and side), so every
-        // glyph is light wherever the mark is and ink wherever the paper is. One copy, not one in the
-        // world and another on the side: Chrome antialiases text and boxes differently under one clip,
-        // and two light copies meeting at the face's edge leave a 1px dark seam through the letters.
-        // The clip sits on a stage-sized layer (stage px); the title inside it scales freely. To the eye
-        // it is a heading (so page checks read it as one block); assistive tech hears only the h2.
-        const lit = document.createElement('div');
-        lit.className = 'portal-lit';
-        lit.setAttribute('aria-hidden', 'true');
-        const light = document.createElement('div');
-        light.className = 'portal-title portal-title--light';
-        light.setAttribute('role', 'heading');
-        light.setAttribute('aria-level', /^H[1-6]$/.test(outTitle.tagName) ? outTitle.tagName[1] : '2');
-        light.innerHTML = outTitle.innerHTML;
-        light.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
-        lit.appendChild(light);
-        world.parentNode.insertBefore(lit, world.nextSibling);
-        made.push(lit);
-        const titles = [outTitle, light];
 
-        const st = { zl: 0, rot: 0, tint: 1, ts: 1, note: 1, sub: 0, bl: 0, mz: 1 };
-        const g = { W: 0, H: 0, s0: 1, k0: 0, zCover: 1, key: '', box: 0 };
+        // st.ts: how far the title has grown from its rest scale (g.ts0) towards its full size (0-1)
+        const st = { zl: 0, rot: 0, tint: 1, ts: 0, note: 1, sub: 0, bl: 0, mz: 1 };
+        const g = { W: 0, H: 0, s0: 1, k0: 0, zCover: 1, key: '', box: 0, ts0: TS0 };
         const last = {};
         // writes a style only when it changed (this build's own memory, so a rebuild starts clean)
         const written = new Map();
@@ -510,48 +493,89 @@
           if (m[prop] !== v) { m[prop] = v; el.style[prop] = v; }
         };
 
-        // "fit": the smallest mark whose face holds every line of the title at rest, turned and upright.
-        // The lines' ink boxes are read at the title's rest scale, around the stage's centre (the anchor).
-        const fitBox = (W, H, from) => {
+        // The title rides on the face: at rest every line of it lies inside the face at every angle the
+        // turn passes through, 6px clear of the edge. The lines' ink boxes are read at scale 1, around the
+        // stage's centre (the anchor); holds(B, s) tests the title at scale s on a mark whose box is B px.
+        const M = 6;
+        const inkBoxes = () => {
           const tw = outTitle.offsetWidth;
-          if (!tw) return 0;
+          if (!tw) return [];
           const tr = outTitle.getBoundingClientRect();
-          const k = TS0 / ((tr.width / tw) || 1), cx = tr.left + tr.width / 2, cy = tr.top + tr.height / 2, M = 6;
+          const k = 1 / ((tr.width / tw) || 1), cx = tr.left + tr.width / 2, cy = tr.top + tr.height / 2;
           const els = outTitle.querySelectorAll('.portal-line').length ? [...outTitle.querySelectorAll('.portal-line')] : [outTitle];
-          const pts = [];
+          const out = [];
           for (const el of els) {
             const rg = document.createRange();
             rg.selectNodeContents(el);
             const a = rg.getBoundingClientRect(), b = el.getBoundingClientRect();
-            if (!a.width) continue;
-            const x0 = (a.left - cx) * k - M, x1 = (a.right - cx) * k + M, y0 = (b.top - cy) * k - M, y1 = (b.bottom - cy) * k + M;
-            for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([x0 + (x1 - x0) * t, y0], [x0 + (x1 - x0) * t, y1], [x0, y0 + (y1 - y0) * t], [x1, y0 + (y1 - y0) * t]); }
+            if (a.width) out.push([(a.left - cx) * k, (a.right - cx) * k, (b.top - cy) * k, (b.bottom - cy) * k]);
           }
-          if (!pts.length) return 0;
-          const holds = (B, rot) => {
-            const s = B / mark.box, a = (-rot * Math.PI) / 180, c = Math.cos(a), n = Math.sin(a);
-            return pts.every(([x, y]) => inside(mark.coarse, mark.ax + (c * x - n * y) / s, mark.ay + (n * x + c * y) / s));
-          };
-          const rots = IN ? [-turn, 0] : [0];
-          // the mark itself (not its box) may be at most 0.98 of the width and half the height
-          const hi = Math.min((0.98 * W) / (mark.bw || 1), (0.5 * H) / (mark.bh || 1)), step = Math.max(4, 0.02 * Math.min(W, H));
-          for (let B = from; B < hi + step; B += step) if (rots.every((r) => holds(Math.min(B, hi), r))) return Math.min(B, hi);
-          return 0;
+          return out;
         };
-        // the mark's box at rest: a share of the stage (its height on desktop, its width on a phone)
-        const boxPx = (W, H) => {
-          if (sizeWant === 'fit') {
-            const F = fitBox(W, H, phone ? 0.5 * W : 0.25 * H);
-            root.dataset.fit = Math.round(F);
-            return F || (phone ? 0.45 * W : Math.min(0.4 * H, 0.45 * W));
+        // the angles of the turn, every 7.5 degrees or closer ("in" turns -turn -> 0, "out" +turn -> 0)
+        const angles = () => { const n = Math.max(1, Math.ceil(turn / 7.5)); return Array.from({ length: n + 1 }, (_, i) => (IN ? -turn : turn) * (1 - i / n)); };
+        const holds = (boxes, rots, B, s) => {
+          const sc = B / mark.box;
+          for (const rot of rots) {
+            const a = (-rot * Math.PI) / 180, c = Math.cos(a), n = Math.sin(a);
+            const ok = (x, y) => inside(mark.coarse, mark.ax + (c * x - n * y) / sc, mark.ay + (n * x + c * y) / sc);
+            for (const [l, r, t, b] of boxes) {
+              const x0 = l * s - M, x1 = r * s + M, y0 = t * s - M, y1 = b * s + M;
+              for (let i = 0; i <= 10; i++) {
+                const u = i / 10, x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u;
+                if (!ok(x, y0) || !ok(x, y1) || !ok(x0, y) || !ok(x1, y)) return false;
+              }
+            }
           }
-          const B = phone ? (sizeWant > 1 ? sizeWant : Math.min(sizeWant * W, 0.4 * H)) : sizeWant > 1 ? sizeWant : Math.min(sizeWant * H, 0.45 * W);
-          // a mark a little smaller than the title cuts only the ends of its lines, into small ink chips
-          // (a narrow window turns this up): within 65% of the size that holds the whole title, grow it
-          // to that size instead. data-fit tells a test which size that was (0: none on this screen)
-          const F = fitBox(W, H, 0.65 * B);
-          root.dataset.fit = Math.round(F);
-          return F && B < F && B >= 0.65 * F ? F : B;
+          return true;
+        };
+        // the smallest mark that holds the whole title at its full rest size (TS0)
+        const fullFit = (boxes, rots, W, H) => {
+          let lo = 8, hi = 24 * Math.max(W, H);
+          if (!holds(boxes, rots, hi, TS0)) return Infinity;
+          for (let i = 0; i < 24 && hi - lo > 1; i++) { const mid = (lo + hi) / 2; if (holds(boxes, rots, mid, TS0)) hi = mid; else lo = mid; }
+          return hi;
+        };
+        // the largest box whose mark at rest (turned as it rests, with its extruded side) stays 16px inside
+        // the stage on every side, so nothing of it is cut by the screen's edge before the dive
+        const fitScreen = (W, H) => {
+          const G = 16, d = depthOpt > 1 ? 0 : depthOpt, dpx = depthOpt > 1 ? depthOpt : 0;
+          const a = ((IN ? -turn : 0) * Math.PI) / 180, c = Math.cos(a), n = Math.sin(a);
+          let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+          for (const r of mark.coarse) for (const [mx, my] of r) {
+            const dx = c * (mx - mark.ax) - n * (my - mark.ay), dy = n * (mx - mark.ax) + c * (my - mark.ay);
+            x0 = Math.min(x0, dx); x1 = Math.max(x1, dx); y0 = Math.min(y0, dy); y1 = Math.max(y1, dy);
+          }
+          const lim = (room, extent, perBox) => { const k = extent / mark.box + perBox; return k > 0 ? Math.max(0, room) / k : Infinity; };
+          return Math.min(lim(W / 2 - G, -x0, 0), lim(W / 2 - G - VX * dpx, x1, VX * d), lim(H / 2 - G, -y0, 0), lim(H / 2 - G - VY * dpx, y1, VY * d));
+        };
+        // the mark's box at rest (a share of the stage: its height on desktop, its width on a phone) and
+        // the title's scale on it
+        const boxPx = (W, H) => {
+          const boxes = inkBoxes(), rots = angles(), scr = fitScreen(W, H);
+          if (!boxes.length) return { box: Math.min(scr, phone ? 0.45 * W : Math.min(0.4 * H, 0.45 * W)), ts: TS0 };
+          const F = fullFit(boxes, rots, W, H);
+          root.dataset.fit = isFinite(F) ? Math.round(F) : 0;
+          // the mark itself (not its box) may be at most 0.98 of the width and half the height, and stays
+          // on the stage
+          const hi = Math.min((0.98 * W) / (mark.bw || 1), (0.5 * H) / (mark.bh || 1), scr);
+          let box;
+          if (sizeWant === 'fit') {
+            const from = phone ? 0.5 * W : 0.25 * H;
+            box = Math.max(Math.min(F, hi), Math.min(from, hi));
+          } else {
+            const B = Math.min(scr, phone ? (sizeWant > 1 ? sizeWant : Math.min(sizeWant * W, 0.4 * H)) : sizeWant > 1 ? sizeWant : Math.min(sizeWant * H, 0.45 * W));
+            // a mark a little smaller than the title grows to hold it at full size (a portrait tablet);
+            // one that would set the title under half its size grows until it holds half
+            if (B >= F) box = B;
+            else if (B >= 0.65 * F && F <= Math.max(hi, B)) box = F;
+            else box = Math.max(B, Math.min(hi, (0.5 * F) / TS0));
+          }
+          if (!isFinite(F)) return { box, ts: TS0 };
+          // the title set smaller on a mark that cannot hold it at full size (the margin is kept in px)
+          let ts = Math.min(TS0, (TS0 * box) / F);
+          for (let i = 0; i < 40 && ts > 0.05 && !holds(boxes, rots, box, ts); i++) ts *= 0.97;
+          return { box, ts };
         };
         const measure = () => {
           if (dead) return;
@@ -563,7 +587,9 @@
           const ink = outTitle.offsetHeight + ' ' + Math.round(rg.getBoundingClientRect().width);
           const key = [W, phone ? Math.round(H / 120) : H, outTitle.offsetWidth, ink].join(' ');
           if (key !== g.key) {
-            g.box = boxPx(W, H);
+            const fit = boxPx(W, H);
+            g.box = fit.box;
+            g.ts0 = fit.ts;
             g.s0 = g.box / mark.box;
             // "in" covers once it is upright; "out" leaves the cover still turned
             g.zCover = coverZoom(mark.table, mark.rin, g.s0, W, H, IN ? 0 : turn);
@@ -574,6 +600,7 @@
           root.style.setProperty('--portal-th', outTitle.offsetHeight + 'px');
           root.dataset.cover = g.zCover.toFixed(2);
           root.dataset.box = Math.round(g.box);
+          root.dataset.ts = g.ts0.toFixed(3);
           // the picture grows about the stage's centre, wherever the page put its box
           if (media) put(media, 'transformOrigin', `${f1(W / 2 - media.offsetLeft)}px ${f1(H / 2 - media.offsetTop)}px`);
         };
@@ -617,11 +644,8 @@
           const covered = zl >= 0.9999;
           const face = covered ? '' : subsPath(mark.subs, c, n, tx, ty);
           put(world, 'clipPath', covered ? 'none' : `path(${mark.rule}"${face}")`);
-          // once the world covers the stage the paper side is out of sight: stop painting it, and clip
-          // the ink h2 to nothing the screen-reader way (it stays the section's accessible name)
+          // once the world covers the stage the paper side is out of sight: stop painting it
           put(outside, 'visibility', covered ? 'hidden' : '');
-          put(outTitle, 'clipPath', covered ? 'inset(50%)' : '');
-          let whole = `path(${mark.rule}"${face}")`;
           if (side) {
             // the side thickens as the mark comes closer (z^0.35: perspective, not a drop shadow)
             const k = g.k0 * Math.pow(z, 0.35);
@@ -634,16 +658,16 @@
               const near = subsPath(mark.sideSubs, c, n, tx, ty);
               const sp = near + subsPath(mark.sideSubs, c, n, tx, ty, vx, vy) + ribbons(subsScreen(mark.subs, c, n, tx, ty), vx, vy, mark.sg);
               put(side, 'clipPath', `path("${sp}")`);
-              whole = `path("${sp}")`;
               // the side deepens with the face: accent-dark on the solid face, towards the night once it
               // clears, so its lightness stays about half the face's (measured 0.5-0.55 at 40-60%)
               put(sideNight, 'opacity', ((1 - clamp(st.tint, 0, 1)) * 0.55).toFixed(3));
             }
           }
-          put(lit, 'clipPath', covered ? 'none' : whole);
           put(tint, 'opacity', st.tint.toFixed(3));
-          const ts = `scale(${st.ts.toFixed(4)})`;
-          for (const t of titles) put(t, 'transform', ts);
+          // the title grows from its rest scale towards its full size, but never faster than the mark
+          // (ts / z stays at or under the rest scale the face was fitted to), so it stays on the face
+          const ts = Math.min(g.ts0 * z, g.ts0 + (1 - g.ts0) * clamp(st.ts, 0, 1));
+          put(outTitle, 'transform', `scale(${ts.toFixed(4)})`);
           if (media) {
             // the world comes towards you for the whole hold; the picture stays still until it decoded
             const ms = mediaOk ? st.mz : 1;
@@ -666,7 +690,7 @@
             // the face clears while the mark is still a shape on the paper, so the next chapter is
             // already alive inside it well before it covers the screen
             .fromTo(st, { tint: 1 }, { tint: 0, duration: 0.44, ease: 'sine.inOut' }, 0.14)
-            .fromTo(st, { ts: TS0 }, { ts: 1, duration: 0.7, ease: 'sine.inOut' }, 0.06)
+            .fromTo(st, { ts: 0 }, { ts: 1, duration: 0.7, ease: 'sine.inOut' }, 0.06)
             .fromTo(st, { note: 1 }, { note: 0, duration: 0.08 }, 0.06)
             .fromTo(st, { sub: 0 }, { sub: 1, duration: 0.1, ease: 'power2.out' }, 0.8)
             // the world keeps coming at a steady rate, through the rush and on through the dwell
@@ -680,7 +704,7 @@
             .fromTo(st, { tint: 0 }, { tint: 1, duration: 0.44, ease: 'sine.inOut' }, 0.26)
             // still turned as its edge comes into view, the mark rights itself as it lands
             .fromTo(st, { rot: turn }, { rot: 0, duration: 0.33, ease: 'power2.out' }, 0.45)
-            .fromTo(st, { ts: 1 }, { ts: TS0, duration: 0.7, ease: 'sine.inOut' }, 0.1)
+            .fromTo(st, { ts: 1 }, { ts: 0, duration: 0.7, ease: 'sine.inOut' }, 0.1)
             .fromTo(st, { sub: 1 }, { sub: 0, duration: 0.08 }, 0.04)
             .fromTo(st, { note: 0 }, { note: 1, duration: 0.08 }, 0.8)
             .fromTo(st, { mz: o.zoom }, { mz: 1, duration: 0.8 }, 0)
@@ -721,11 +745,10 @@
           if (io) io.disconnect();
           for (const el of made) el.remove();
           world.style.removeProperty('clip-path');
-          outTitle.style.removeProperty('clip-path');
           if (outside) outside.style.removeProperty('visibility');
           if (media) { media.style.removeProperty('filter'); media.style.removeProperty('will-change'); media.style.removeProperty('transform-origin'); }
           for (const el of [outTitle, media, tint, sub, ...notes]) if (el) { el.style.removeProperty('transform'); el.style.removeProperty('opacity'); }
-          for (const k of ['z', 'rot', 'cover', 'box', 'fit']) delete root.dataset[k];
+          for (const k of ['z', 'rot', 'cover', 'box', 'fit', 'ts']) delete root.dataset[k];
           root.style.removeProperty('--portal-th');
         };
       });

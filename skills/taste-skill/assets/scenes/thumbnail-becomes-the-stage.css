@@ -65,6 +65,8 @@
 [data-scene="thumbnail-becomes-the-stage"] .kh-mask,
 [data-scene="thumbnail-becomes-the-stage"] .kh-in { display: block; }
 [data-scene="thumbnail-becomes-the-stage"] .kh-mask { overflow: hidden; padding-bottom: 0.1em; margin-bottom: -0.1em; }
+/* line 1's paper copy (made by the script) is drawn only while the scene runs */
+[data-scene="thumbnail-becomes-the-stage"] .kh-paper-ink { display: none; }
 
 [data-scene="thumbnail-becomes-the-stage"] .kh-row {
   flex: none;
@@ -209,6 +211,8 @@ html.js [data-scene="thumbnail-becomes-the-stage"].is-live > .scene-stage {
   padding: var(--kh-top) var(--kh-gutter) 0;
   text-align: center;
 }
+/* the statement lies above the window: the keyhole opens behind it, never over it */
+[data-scene="thumbnail-becomes-the-stage"].is-live .kh-statement-box:not(.kh-statement-box--paper) { z-index: 4; pointer-events: none; }
 [data-scene="thumbnail-becomes-the-stage"].is-live .kh-line {
   width: max-content;
   margin-inline: auto;
@@ -217,6 +221,18 @@ html.js [data-scene="thumbnail-becomes-the-stage"].is-live > .scene-stage {
   opacity: var(--kh-o, 1);
   visibility: var(--kh-vis, visible);
   will-change: transform, opacity;
+}
+/* line 1 in paper, laid exactly on its ink letters and clipped by the script to the window behind them */
+[data-scene="thumbnail-becomes-the-stage"].is-live .kh-in { position: relative; }
+[data-scene="thumbnail-becomes-the-stage"].is-live .kh-paper-ink {
+  display: block;
+  position: absolute;
+  inset: 0;
+  color: var(--kh-paper);
+  white-space: nowrap;
+  clip-path: inset(100%);
+  pointer-events: none;
+  user-select: none;
 }
 [data-scene="thumbnail-becomes-the-stage"].is-live .kh-row {
   position: absolute;
@@ -253,11 +269,15 @@ html.js [data-scene="thumbnail-becomes-the-stage"].is-live > .scene-stage {
   will-change: transform;
 }
 [data-scene="thumbnail-becomes-the-stage"].is-live .kh-shade { opacity: var(--kh-o, 0); }
+/* the window's own copy is for the finished composition; while the scene runs, line 1's nested paper copy
+   takes its part (it keeps its layout, which the script reads for the gutter) */
 [data-scene="thumbnail-becomes-the-stage"].is-live .kh-statement-box--paper {
   position: absolute;
   padding: var(--kh-top) var(--kh-gutter) 0;
   text-align: center;
+  visibility: hidden;
 }
+[data-scene="thumbnail-becomes-the-stage"].is-live .kh-statement-box--paper .kh-line { visibility: hidden; }
 /* the paper copy keeps the ink copy's layout exactly: its other lines hold their place, unseen */
 [data-scene="thumbnail-becomes-the-stage"].is-live .kh-statement-box--paper .kh-line + .kh-line { display: block; visibility: hidden; }
 [data-scene="thumbnail-becomes-the-stage"].is-live .kh-chapter { display: block; position: absolute; inset: 0; pointer-events: none; }

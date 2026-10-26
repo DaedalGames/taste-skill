@@ -271,7 +271,7 @@ drawings, or with type alone.
   and tile plot are placeholders; a coast, a fjord or a mountain road drawn as an inland town is the
   demo showing.
 - **Warp jump** (`warp-jump`): a manifesto in timed beats over a field of streaks that speeds up, then a
-  jump into the accent. 35-60 words, no pictures; three beats hold four screens.
+  jump into the accent. 35-60 words, no pictures; three beats hold three screens, one a beat.
 
 **Colour and ground**
 - **Light flood** (`light-flood`): one sentence plays out a day: light rises, floods the screen, night
@@ -311,8 +311,9 @@ drawings, or with type alone.
   rounded pricing cards with a photograph on top, and the section's heading stays readable.
 
 **Mask and reveal**
-- **Fly into the shape** (`fly-into-the-shape`): the camera flies into the brand's mark and the next
-  chapter opens inside it. An ownable solid mark and one dark photograph of the chapter's world.
+- **Fly into the shape** (`fly-into-the-shape`): the camera flies into the brand's mark, the title riding
+  on its face, and the next chapter opens inside it. An ownable solid mark and one dark photograph of the
+  chapter's world.
 - **Shape-shifting window over a fixed world** (`shaped-window-over-fixed-world`): two windows in a
   shutter slide level, merge and push through into a photograph of a place. One wide photograph of
   the place. First screen.
@@ -322,7 +323,7 @@ drawings, or with type alone.
 
 **Media sequence**
 - **Instrument dial stage** (`instrument-dial-stage`): a dial reads off 3-6 items, each name huge on
-  the horizon with its picture in front. One 4:5 picture and one number an item.
+  the horizon with its picture standing under it. One 4:5 picture and one number an item.
 - **Lens over a thumbnail stream** (`lens-over-thumbnail-stream`): a strip of thumbnails slides under
   a playhead and each project blooms into a collage. Five or six of the client's own projects, five to
   ten pictures each (*product-photo*); five hold about three screens.

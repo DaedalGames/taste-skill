@@ -58,6 +58,7 @@
   .close h2 { grid-column: 1 / 8; margin: 0; font: 800 clamp(34px, 4.4vw, 64px)/1 var(--font-display); letter-spacing: -.03em; }
   .close p { grid-column: 1 / 7; margin: 0; max-width: 44ch; color: var(--muted); }
   .close a.close__action { grid-column: 9 / 13; grid-row: 1 / 3; align-self: end; justify-self: end; padding: 16px 24px; background: var(--ink); color: var(--ground); text-decoration: none; font-weight: 600; }
+  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; padding: 28px var(--gutter) 36px; background: #151916; color: var(--muted); font-size: 16px; }
 
   @media (max-width: 767px) {
     .bar { gap: 16px; padding: 18px var(--gutter); }
@@ -141,6 +142,11 @@
     <a class="close__action" href="#walks">Book a night walk</a>
   </section>
 </main>
+
+<footer class="foot">
+  <span>Halflicht, lighting design, Ghent</span>
+  <span>Photographs from picsum.photos</span>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>

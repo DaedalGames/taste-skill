@@ -49,8 +49,8 @@
 // flat fill of the ground over the picture); faces from the page's --font-display and --font-text.
 //
 // Options (data-options JSON). Default, then range:
-//   hold       2.5       screens the stage is held on desktop (2-3.2)
-//   phoneHold  2         screens held under 768px (1.6-2.6)
+//   hold       1.8       screens the stage is held on desktop (1.4-2.4): the claim, the burst, the answer
+//   phoneHold  1.5       screens held under 768px (1.2-2.2)
 //   phone      'same'    'same' runs the scene with phone numbers; 'rest' shows the finished composition
 //   scrub      auto      true when Lenis smooths the page, else 0.8 (seconds of catch-up); set to override
 //   exit       'burst'   how A leaves: 'burst' (3D, drag, spin, gravity), 'detonate' (flung flat, wider,
@@ -61,11 +61,12 @@
 //   depth      520       how near the centre letters come, px (380-540; perspective is 900)
 //   gravity    0.22      fall over the burst as a share of the stage height (0.12-0.3)
 //   light      'white'   the disc: 'white', 'warm' (#fff6e8), any CSS colour, or 'none' (no pool: B lands
-//                        in the paper colour on the dark ground, flying in from 0.30 instead of 0.50 so
+//                        in the paper colour on the dark ground, flying in from 0.30 instead of 0.36 so
 //                        it meets A's last letters (0.42 with crumble), and the picture dims only to 0.7)
 //   disc       1.1       disc diameter as a share of the stage height on desktop (0.5-1.2; at most 1.1
 //                        of the width): the outer edge of the feather; the light reads about 0.87 of the
-//                        stage tall and floods it at the payoff
+//                        stage tall once open, and keeps opening to about 1.08 while B is read: it
+//                        floods the stage from top to bottom at the payoff
 //   phoneDisc  1.15      disc diameter as a share of the stage width on the phone (0.9-1.3)
 //   payoff     'land'    'land' holds B to the end; 'pass' carries B through the screen plane and away
 //                        over 0.84-0.98 (only when the next section continues the statement)
@@ -75,13 +76,16 @@
 //                        the device has 4 cores or fewer)
 //   seed       0         any integer; changes every letter's path (paths are always the same on every pass)
 //
-// Progress map (desktop 1440x900, hold 2.5): 0-6% A at rest, labels in; 6-16% A breathes in to 95.5%;
-// 16-60% the burst (A unreadable from about 25%, every letter gone by 51%; letters rising into the top
-// 96px are at 0.4 or less, for a sticky nav); 20-34% the light comes on at the centre: a soft glow, white
-// at its heart with no edge at any size, in a wide faint halo; 38-46% the disc condenses in that glow
-// once it is half grown (so it never shows as a small coin), and opens to about 0.87 of the stage
-// height by 62%, the halo with it, the picture dims to 0.42; 50-80% B flies in from depth in reading order and
-// lands; 80-100% B held, ink on light.
+// Progress map (desktop 1440x900, hold 1.8; the phone runs the same fractions): 0-6% A at rest, labels
+// in; 6-16% A breathes in to 95.5%; 16-60% the burst (A unreadable from about 25%, every letter gone by
+// 51%; letters rising into the top 96px are at 0.4 or less, for a sticky nav); 20-30% the light comes on
+// at the centre: a soft glow, white at its heart with no edge at any size, in a wide faint halo; 35-41%
+// the disc condenses in that glow once it is half grown (so it never shows as a small coin), and opens
+// to about 0.87 of the stage height by 54%, the halo with it, the picture dims to 0.42; 36-74% B flies in
+// from depth in reading order and lands word by word on the light as it opens (it starts once A's
+// letters have left the middle, so no letter of A ever lies on it, and the stage is never left with
+// only the glow); 58-90% the light keeps opening, disc and halo to 1.24 (it floods the stage from top to
+// bottom) while B is read, ink on light; 90-100% a still read.
 //
 // Performance: the light is painted once per size into bitmaps shown as images, so the scrub only scales
 // and fades finished pictures on their own layers (will-change while the stage is on screen, hidden while
@@ -100,8 +104,8 @@
   const navFade = (top) => clamp01((top - 32) / 160);
 
   const settings = (o) => ({
-    hold: num(o.hold, 2.5, 2, 3.2),
-    phoneHold: num(o.phoneHold, 2, 1.6, 2.6),
+    hold: num(o.hold, 1.8, 1.4, 2.4),
+    phoneHold: num(o.phoneHold, 1.5, 1.2, 2.2),
     phone: o.phone === 'rest' ? 'rest' : 'same',
     scrub: typeof o.scrub === 'boolean' || typeof o.scrub === 'number' ? o.scrub : null,
     exit: pick(o.exit, ['burst', 'detonate', 'crumble'], 'burst'),
@@ -497,17 +501,22 @@
         tl.fromTo(bg, { opacity: 1 }, { opacity: lightOn ? 0.42 : 0.7, duration: 0.42, ease: 'power1.inOut', immediateRender: false }, 0.18)
           .fromTo(bg, { scale: 1 }, { scale: 1.04, duration: 1, ease: 'none' }, 0);
       }
-      // The light, written for the default window (0.20 → full at 0.62). Crumble keeps its letters in place
-      // longer, so there the same moves run later and faster (0.30 → 0.62), out of the hole the crumbling
-      // middle leaves; the light never opens behind letters that still stand.
-      // T7 the glow comes on at the headline's centre (0.20-0.32): white at its heart, soft all the way
+      // The light, written for a window of 0.20 → full at 0.62 and run in the default window 0.20 → 0.54
+      // (at() maps it). Crumble keeps its letters in place longer, so there the same moves run later
+      // (0.30 → 0.60), out of the hole the crumbling middle leaves; the light never opens behind letters
+      // that still stand.
+      // T7 the glow comes on at the headline's centre (0.20-0.30): white at its heart, soft all the way
       // out, growing with the disc's own curve; the halo spills wide and faint round it. T8 the disc
-      // condenses in the glow only once it is about half grown (0.38-0.46), where its feather is wide and
+      // condenses in the glow only once it is about half grown (0.35-0.41), where its feather is wide and
       // the glow under it already white, so it never shows as a small coin with an edge; it opens to full
-      // by 0.62, and the glow thins away under it. T9 the halo settles to a skirt. The fades use
-      // autoAlpha: a light at 0 is not composited at all.
+      // by 0.54, and the glow thins away under it. T9 the halo settles to a skirt. T9b while B is read the
+      // light keeps opening, disc and halo to 1.24 by 0.90 (an even pace: every stretch of the scroll shows
+      // it grow), until it floods the stage from top to bottom; B, set inside the disc's solid core at
+      // full size, stays on the light. The fades use autoAlpha: a light at 0 is not composited at all.
+      const crumble = o.exit === 'crumble';
+      const END = crumble ? 0.6 : 0.54;
       if (lightOn) {
-        const L0 = o.exit === 'crumble' ? 0.3 : 0.2, k = (0.62 - L0) / 0.42;
+        const L0 = crumble ? 0.3 : 0.2, k = (END - L0) / 0.42;
         const at = (t) => L0 + (t - 0.2) * k;
         const fade = (el, from, to, t, d, ease = 'none') => tl.fromTo(el, { autoAlpha: from }, { autoAlpha: to, duration: d * k, ease }, at(t));
         tl.fromTo(core, { scale: 0.06 }, { scale: 1, duration: 0.42 * k, ease: 'power2.inOut' }, at(0.2));
@@ -520,15 +529,19 @@
           fade(halo, 0, 0.9, 0.22, 0.18, 'power1.out');
           tl.to(halo, { autoAlpha: 0.55, duration: 0.26 * k, ease: 'power1.inOut' }, at(0.4));
         }
+        // T9b, once the halo's own growth and settle are over (at(0.66), just before END + 0.04)
+        const SP = END + 0.04, SE = 0.9;
+        tl.fromTo([disc, halo].filter(Boolean), { scale: 1 }, { scale: 1.24, duration: SE - SP, ease: 'none', immediateRender: false }, SP);
       }
-      // T10 B flies out of depth in reading order, shuffled inside each word, and lands by 0.80. Without the
-      // light nothing else fills the middle of the scene, so there B starts at 0.30, while A's last letters
-      // are still leaving the frame, and focuses in word by word until 0.70 (crumble: 0.42-0.76, as its
-      // letters stand at the centre until about 0.42): the screen is never left with neither text nor light.
+      // T10 B flies out of depth in reading order, shuffled inside each word, and lands word by word. With
+      // the light it starts at 0.36 (crumble 0.44), as soon as A's letters have left the middle (none of
+      // them is still on its lines there), and lands by 0.74 (crumble 0.80) on the light as it opens: the
+      // stage is never left with only the glow. Without the light nothing else fills the middle of the
+      // scene, so there B starts at 0.30, while A's last letters are still leaving the frame, and focuses in
+      // word by word until 0.80 (crumble: 0.42-0.80, as its letters stand at the centre until about 0.42).
       if (b && S.pb.length) {
-        const crumble = o.exit === 'crumble';
-        const b0 = lightOn ? 0.5 : crumble ? 0.42 : 0.3;
-        const span = Math.max(1, S.nW - 1), bw = lightOn ? 0.1 : crumble ? 0.14 : 0.2;
+        const b0 = lightOn ? (crumble ? 0.44 : 0.36) : crumble ? 0.42 : 0.3;
+        const span = Math.max(1, S.nW - 1), bw = lightOn ? (crumble ? 0.16 : 0.18) : crumble ? 0.18 : 0.3;
         S.pb.forEach((p, i) => {
           const at = b0 + bw * (p.wi / span) + 0.04 * p.r;
           tl.fromTo(p.el,
