@@ -274,6 +274,10 @@ drawings, or with type alone.
   jump into the accent. 35-60 words, no pictures; three beats hold three screens, one a beat.
 
 **Colour and ground**
+- **Dither-field opener** (`dither-field-opener`): the first screen is live print: one huge numeral,
+  year or initial in the display face turns inside a one-bit dither field, and a fast scroll sends bands
+  of accent dots across it that settle back to ink. One mark of 1-4 characters, a headline on clear
+  ground, no pictures. Hold 0.
 - **Light flood** (`light-flood`): one sentence plays out a day: light rises, floods the screen, night
   falls. Two short lines, no pictures.
 - **Shaped edge carries the new ground** (`shaped-edge-ground-change`): the sky's colour rises over its
@@ -286,6 +290,11 @@ drawings, or with type alone.
   ink stub that already holds its copy.
 
 **Grid reassembly**
+- **Parts lock into the whole** (`parts-lock-into-the-whole`): one huge word or number steps back while
+  the product's own interface flies in as its panels and locks into the screen; layers of detail (data,
+  comments, an agent's edit) ink in one by one under one rewriting caption; it ends as a column beside a
+  short spec list. The product built as an HTML fragment (`data-ui`), or a real plan cut along its
+  walls; never a drawing made for the page. Hold 1.6.
 - **Orbit to formation** (`orbit-to-formation`): square photographs ride one wheel from an arch to a
   ring to a half-wheel beside the figures. 12-16 distinct photographs in one grade, none repeated, and
   four real figures about the subject (never constants of its medium). Four screens, so it carries the
