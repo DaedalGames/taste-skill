@@ -321,7 +321,9 @@ function dealScenes(dir, input, exclude) {
     let cands = fresh(pool, recentIds).filter(allowed);
     if (!cands.length) cands = pool.filter(allowed);
     if (!cands.length) break;
-    const sc = pick(cands); const role = place(sc);
+    // a scene's weight (scenes.json, default 1) lowers the odds of the ones pages across models already
+    // repeat, so the deal spreads over the whole library instead of the same few set pieces
+    const sc = wpick(cands.map((c) => [c, c.weight ?? 1])); const role = place(sc);
     // a scene earns about one screen per beat: two screens of hold on most pages, three on a loud or creative one
     const cap = creative ? 3 : 2;
     taken.add(roles.indexOf(role)); families.add(sc.family); out.push({ ...sc, carries: role, hold: Math.min(holdOf(sc), cap), defaultHold: holdOf(sc) });
