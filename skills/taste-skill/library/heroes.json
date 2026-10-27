@@ -136,6 +136,7 @@
   "id": "headline-across-two-fields",
   "name": "Headline across two fields",
   "archetype": "colour-field",
+  "picture": false,
   "directions": [
    "colour-chapters",
    "sentence-as-layout",
@@ -282,6 +283,7 @@
   "id": "giant-cropped-shape",
   "name": "Giant cropped shape",
   "archetype": "colour-field",
+  "picture": false,
   "directions": [
    "one-motif",
    "colour-chapters"
@@ -476,6 +478,7 @@
   "id": "specimen-wall-docked-panel",
   "name": "Specimen wall, docked panel",
   "archetype": "tiles",
+  "noHeadline": true,
   "directions": [
    "specimen-catalogue",
    "dense-tiles",
@@ -555,6 +558,7 @@
   "id": "text-band-then-sheet",
   "name": "Text band, then sheet",
   "archetype": "index",
+  "noHeadline": true,
   "directions": [
    "contact-sheet",
    "dark-room"

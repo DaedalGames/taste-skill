@@ -13,8 +13,8 @@
 //                 [--options 3]                show three dealt directions to choose from, write nothing
 //                 [--direction <id>]           deal the full sheet for the chosen direction
 //   node draw.mjs --show                       reprint the saved direction sheet
-//   node draw.mjs --redraw hero|type|palette|photos|scenes|section:<role>|direction   re-deal one slot
-//   node draw.mjs --list sectors|directions|roles|tones|scenes
+//   node draw.mjs --redraw hero|type|palette|photos|scenes|entrance|section:<role>|direction   re-deal one slot
+//   node draw.mjs --list sectors|directions|roles|tones|scenes|entrances
 //   node draw.mjs --site <id>                  print one studied reference site in full
 //   node draw.mjs --app --kind <kind> ...      deal a style for an app screen instead (see lib/app-draw.mjs)
 //
@@ -79,6 +79,7 @@ if (opt('list')) {
   else if (what === 'tones') console.log(TONES.join('\n'));
   else if (what === 'roles') console.log([...new Set(Object.values(ROLE_ALIAS))].join('\n'));
   else if (what === 'scenes') { const all = existsSync(join(LIB, 'scenes.json')) ? load('scenes') : []; for (const sc of all) console.log(`${sc.id.padEnd(34)} ${sc.name} — ${sc.family}; ${sc.summary.split(/(?<=\.)\s/)[0]}`); if (!all.length) console.log('No scene library yet.'); }
+  else if (what === 'entrances') { const all = existsSync(join(LIB, 'entrances.json')) ? load('entrances') : []; for (const e of all) console.log(`${e.id.padEnd(16)} ${e.name} — ${e.family}, ${e.energy}, weight ${e.weight}; ${e.summary || e.sees.split(/(?<=\.)\s/)[0]}`); if (!all.length) console.log('No entrance library yet.'); }
   else for (const d of load('directions')) console.log(`${d.id.padEnd(30)} ${d.name} — ${d.sectors.join(', ')}`);
   process.exit(0);
 }
@@ -115,6 +116,7 @@ const fresh = (pool, recent) => { const f = pool.filter((x) => !recent.includes(
 const userHist = process.env.TASTE_SKILL_HISTORY || join(homedir(), '.taste-skill', 'history.json');
 const readHist = () => { for (const p of [userHist]) { try { return JSON.parse(readFileSync(p, 'utf8')); } catch {} } return []; };
 const writeHist = (entry) => { try { mkdirSync(dirname(userHist), { recursive: true }); const h = readHist(); h.unshift(entry); writeFileSync(userHist, JSON.stringify(h.slice(0, 24), null, 1)); } catch {} };
+const patchHist = (at, fields) => { try { const h = readHist(); const e = h.find((x) => x.at === at); if (!e || Object.entries(fields).every(([k, v]) => e[k] === v)) return; Object.assign(e, fields); writeFileSync(userHist, JSON.stringify(h, null, 1)); } catch {} };
 
 // ---------- show / redraw ----------
 const saved = existsSync(sheetPath) ? JSON.parse(readFileSync(sheetPath, 'utf8')) : null;
@@ -123,7 +125,7 @@ if (opt('show')) {
   console.log(render(saved)); process.exit(0);
 }
 
-const L = { directions: load('directions'), heroes: load('heroes'), sections: load('sections'), type: load('type'), palettes: load('palettes'), photos: load('photos'), sites: load('sites'), motions: load('motions'), fonts: load('fonts').fonts, scenes: existsSync(join(LIB, 'scenes.json')) ? load('scenes') : [] };
+const L = { directions: load('directions'), heroes: load('heroes'), sections: load('sections'), type: load('type'), palettes: load('palettes'), photos: load('photos'), sites: load('sites'), motions: load('motions'), fonts: load('fonts').fonts, scenes: existsSync(join(LIB, 'scenes.json')) ? load('scenes') : [], entrances: existsSync(join(LIB, 'entrances.json')) ? load('entrances') : [] };
 const hist = readHist();
 const recent = (key, n) => hist.slice(0, n).map((h) => h[key]).filter(Boolean);
 
@@ -160,6 +162,7 @@ if (opt('redraw')) {
   else if (what === 'palette') sheet.palette = dealPalette(dir, sheet.input, [sheet.palette?.id]);
   else if (what === 'photos') sheet.photos = dealPhotos(dir, sheet.input);
   else if (what === 'scenes') sheet.scenes = dealScenes(dir, sheet.input, (sheet.scenes || []).map((x) => x.id));
+  else if (what === 'entrance') sheet.entrance = dealEntrance(sheet, [sheet.entrance?.id].filter(Boolean));
   else if (what.startsWith('section:')) {
     // section:<role> re-deals at random; section:<role>=<id> takes a named alternative (see --alternatives)
     const [roleRaw, wanted] = what.slice(8).split('=');
@@ -173,7 +176,13 @@ if (opt('redraw')) {
       if (!chosen) { console.error(`No blueprint with id ${wanted}. List them with --alternatives <role>.`); process.exit(2); }
       sheet.sections[i] = chosen.role === role ? chosen : { ...chosen, role, name: `${chosen.name} (borrowed from ${chosen.role})` };
     } else sheet.sections[i] = dealSection(dir, role, used, sheet.sections[i - 1]?.shape, sheet.sections[i + 1]?.shape, sheet.input) || sheet.sections[i];
-  } else { console.error('Unknown slot. Use hero, type, palette, photos, scenes, section:<role>, section:<role>=<id> or direction.'); process.exit(2); }
+  } else { console.error('Unknown slot. Use hero, type, palette, photos, scenes, entrance, section:<role>, section:<role>=<id> or direction.'); process.exit(2); }
+  // a new hero or new scenes can change what the first screen shows: keep the entrance only while it still fits
+  if (sheet.entrance && what !== 'direction') {
+    const mode = heroMode(sheet);
+    sheet.entrance = entranceFits(sheet, sheet.entrance, mode) ? { ...sheet.entrance, mode } : dealEntrance(sheet, []);
+    settleMotion(sheet);
+  }
 } else {
   const sector = String(opt('sector', ''));
   if (!SECTORS.includes(sector)) {
@@ -209,7 +218,9 @@ if (opt('redraw')) {
 
 mkdirSync(outDir, { recursive: true });
 writeFileSync(sheetPath, JSON.stringify(sheet, null, 1));
-if (!opt('redraw') || String(opt('redraw')) === 'direction') writeHist({ at: sheet.at, direction: sheet.direction.id, type: sheet.type?.id, families: sheet.type ? [...new Set([sheet.type.display.family, sheet.type.text.family])] : [], palette: sheet.palette?.id, ground: sheet.palette?.ground || null, hue: sheet.palette?.hue || null, frame: sheet.frame ? Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) : null, hero: sheet.hero?.id, sector: sheet.input.sector, scenes: (sheet.scenes || []).map((x) => x.id) });
+// a slot redraw keeps the history entry of its sheet, but the entrance it builds is the one the next deal must avoid
+if (opt('redraw') && String(opt('redraw')) !== 'direction') patchHist(sheet.at, { entrance: sheet.entrance?.id || null });
+if (!opt('redraw') || String(opt('redraw')) === 'direction') writeHist({ at: sheet.at, direction: sheet.direction.id, type: sheet.type?.id, families: sheet.type ? [...new Set([sheet.type.display.family, sheet.type.text.family])] : [], palette: sheet.palette?.id, ground: sheet.palette?.ground || null, hue: sheet.palette?.hue || null, frame: sheet.frame ? Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) : null, hero: sheet.hero?.id, sector: sheet.input.sector, scenes: (sheet.scenes || []).map((x) => x.id), entrance: sheet.entrance?.id || null });
 console.log(render(sheet));
 
 // ---------- dealing ----------
@@ -275,7 +286,72 @@ function deal(input, redraws) {
   s.scenes = dealScenes(dir, input, []);
   const last = hist[0]?.frame || {};
   s.frame = dealFrame({ rnd, input, imagery: s.imagery, recent: last });
+  // last, because whether an entrance fits depends on the hero, the move and the scenes
+  s.entrance = dealEntrance(s, []);
+  settleMotion(s);
   return s;
+}
+// The first screen's entrance (library/entrances.json; the CSS is in assets/base.css). Every model built the same
+// one (lines rising out of masks, a clip-path shutter on the picture), so it had become the plainest sign of this
+// skill: it is now one of seven, dealt by weight from those that fit the tone and what the first screen shows.
+// What the first screen shows: 'type-only' when the direction or the hero puts no picture there, 'interface' when the
+// pictures are the product's own interface, otherwise 'photo'.
+function heroMode(s) {
+  const noPicture = s.direction.photos === false || s.hero?.picture === false || /first screen has no picture/i.test(s.direction.imagery || '') || /\bno (?:image|picture)\b/i.test(s.hero?.blueprint || '');
+  return noPicture ? 'type-only' : s.imagery === 'interface' ? 'interface' : 'photo';
+}
+function entranceFits(s, e, mode = heroMode(s)) {
+  // no tone in the brief: the direction's own tones decide, so a quiet direction never gets the bold entrances
+  const tones = s.input.tone ? [s.input.tone] : (s.direction.tones || []);
+  const blueprint = s.hero?.blueprint || ''; const scenes = s.scenes || [];
+  const SMALL_PICTURE = new Set(['type-poster', 'giant-wordmark', 'colour-field', 'inline-media-sentence', 'index', 'mosaic', 'tiles', 'quiet-column', 'artefact']);
+  const WINDOW_SCENES = new Set(['thumbnail-becomes-the-stage', 'fly-into-the-shape', 'shaped-window-over-fixed-world']);
+  // the picture and its size in one sentence: "a flat field of one soft colour fills the viewport" is not a picture
+  const bigPicture = blueprint.split(/(?<=\.)\s/).some((x) => /photo|picture|image|film|footage|video/i.test(x) && /full-bleed|100vw|100svh|fills/i.test(x));
+  const dealtPhotos = (s.photos?.photos || []).slice(0, 4);
+  const meets = {
+    // a page whose first screen does not move needs life somewhere else, or the inspector fails it as still
+    'page-has-scene-or-moving-picture': () => scenes.length > 0 || (s.frame && s.frame.clip.id !== 'none') || s.motion?.id === 'slow-crossfade',
+    'photo-in-first-screen': () => mode === 'photo',
+    'ui-fragment-in-first-screen': () => mode === 'interface',
+    'hero-picture-at-least-half-the-screen': () => mode !== 'type-only' && (!SMALL_PICTURE.has(s.hero?.archetype) || bigPicture),
+    // the same trick twice on one page: a window opening on load and again on scroll
+    'no-opening-window-move-on-sheet': () => s.motion?.id !== 'opening-window' && !scenes.some((x) => WINDOW_SCENES.has(x.id)) && !/small window|becomes the whole screen/i.test(blueprint),
+    'no-scene-on-first-screen': () => !scenes.some((x) => x.carries === 'hero'),
+    // heroes set wholly at text size (a specimen wall, a text band) have no display lines to mask or cover
+    'display-headline': () => !s.hero?.noHeadline,
+    // a black-and-white picture has no colour to bring up, and an img filter would snap at the end
+    'no-filter-treatment': () => s.frame?.treatment?.id !== 'mono' && !/grayscale/i.test(s.direction.photoTreatment || ''),
+    // on a pale photograph the over-exposed first frame is nearly the photograph and reads as a glitch
+    'mid-or-dark-photos-or-dark-page': () => isDark(s.palette) || !dealtPhotos.length || dealtPhotos.filter((ph) => ph.tone !== 'light').length * 2 >= dealtPhotos.length,
+  }; // the hero's height and the headline's lines are measured by the inspector on the built page
+  return e.fits.imagery.includes(mode) && (!tones.length || e.fits.tones.some((t) => tones.includes(t))) && e.fits.requires.every((r) => (meets[r] || (() => true))());
+}
+function dealEntrance(s, exclude) {
+  if (!L.entrances.length) return null;
+  const mode = heroMode(s);
+  const TONE_OF = { quiet: 'calm', luxury: 'calm', warm: 'calm', editorial: 'serious', technical: 'serious', bold: 'bold', playful: 'playful' };
+  // Stillness promises a page with no load animation: only the entrance where nothing arrives keeps that promise
+  if (s.motion?.id === 'stillness' && !exclude.includes('already-there')) { const still = L.entrances.find((e) => e.id === 'already-there'); if (still && entranceFits(s, still, mode)) return { ...still, mode }; }
+  let pool = L.entrances.filter((e) => !exclude.includes(e.id) && entranceFits(s, e, mode));
+  if (!pool.length) pool = L.entrances.filter((e) => entranceFits(s, e, mode));
+  if (!pool.length) pool = L.entrances.filter((e) => e.id === 'already-there'); // nothing moves, so it fits every page
+  // One of the same family as either of the last two builds (two mask reveals, two lens changes) is about a third as
+  // likely, like the frame's history; and with no tone in the brief, the bold ones are half as likely.
+  const familyOf = (id) => L.entrances.find((x) => x.id === id)?.family || id;
+  const used = recent('entrance', 2).map(familyOf);
+  const e = wpick(pool.map((x) => [x, x.weight * (x.toneWeight?.[TONE_OF[s.input.tone]] ?? 1) * (used.includes(x.family || x.id) ? 0.35 : 1) * (x.energy === 'bold' && !s.input.tone ? 0.5 : 1)]));
+  return { ...e, mode };
+}
+// The masked headline and the shutter are the set-type entrance now: never dealt as the signature move, with set-type
+// or without it (set-type already holds both). Aperture never shares a page with the opening window, and Stillness
+// (no load animation) only comes with the entrance where nothing arrives.
+function settleMotion(s) {
+  if (!s.motion || !s.entrance) return;
+  const clash = (m) => ['masked-headline', 'shutter-image'].includes(m.id) || (m.id === 'opening-window' && s.entrance.id === 'aperture') || (m.id === 'stillness' && s.entrance.id !== 'already-there');
+  if (!clash(s.motion)) return;
+  const NOT_DEALT = ['drag-row', 'scaling-wordmark', 'colour-on-scroll', 'curtain-footer', 'carried-picture', 'index-preview'];
+  s.motion = wpick(L.motions.filter((m) => !NOT_DEALT.includes(m.id) && !clash(m)).map((m) => [m, m.id === 'stillness' ? 0.5 : 1]));
 }
 // The page's big scroll moments (references/scenes.md): two tested scenes from different families, each
 // placed on a section of the argument it can carry; three only on a long, loud page (eight sections or
@@ -506,6 +582,30 @@ function siteCard(s, full) {
   }
   return lines.join('\n');
 }
+// The dealt entrance, printed under the signature move: what it is, the markup, where its CSS lives, the rule below the fold.
+function entranceBlock(e, s, p) {
+  const mode = e.mode || 'photo';
+  p();
+  p(`### Entrance — ${e.name} (\`${e.id}\`), dealt`);
+  p(e.id === 'set-type'
+    ? 'This is the masked line rise with the clip-path shutter: once every page\'s default, now one entrance of seven and rarely dealt. Build it as base.css has it.'
+    : 'It replaces the old default (headline lines rising out of masks, a clip-path shutter on the picture): build this one and neither of those.');
+  p(`- **What the visitor sees:** ${e.sees}${e.byImagery?.[mode] ? ' ' + e.byImagery[mode] : ''} Settled by ${e.settled}.`);
+  const parts = mode === 'type-only'
+    ? '`data-e="headline"`, `data-e="lead"` and `data-e="action"` (no picture on this first screen)'
+    : '`data-e="headline"`, `data-e="lead"`, `data-e="action"` and `data-e="picture"` (on the element that already crops the picture, with `--picture-ground` sampled from the picture; the img, video, picture or `[data-ui]` is its first child)';
+  // what the script already knows is decided here, not left to the builder
+  const serious = s.input.tone ? ['editorial', 'technical'].includes(s.input.tone) : !(s.direction.tones || []).some((t) => ['bold', 'playful'].includes(t));
+  const decided = [
+    e.id === 'line-blocks' && (serious ? 'The blocks are the ink: put `--block: var(--ink)` on the body.' : 'The blocks are the accent (the default `--block`).'),
+    e.id === 'exposure' && isDark(s.palette) && 'This page is dark, so the photograph comes up from dim: put `--exposure-from: brightness(0.35) saturate(0.5)` on the body.',
+  ].filter(Boolean).join(' ');
+  p(`- **Markup:** \`<body data-entrance="${e.id}">\`; the first screen is \`[data-hero]\`, its parts ${parts}.${e.markup ? ' ' + e.markup : ''}${decided ? ' ' + decided : ''}`);
+  if (mode === 'photo') p('- **The hero picture:** paste the snippet from motion.md, "The hero picture", in a `<script>` right after the hero, so a photograph that has not arrived waits on its ground instead of the entrance playing over an empty frame.');
+  if ((s.scenes || []).some((x) => x.carries === 'hero')) p('- **A scene carries the first screen:** mark its headline, sentence and action only; its picture moves with the scene.');
+  p(`- **CSS:** already in \`<skill>/assets/base.css\` (the \`${e.id}\` block under "the entrance"); write none of your own. It needs \`<script>document.documentElement.classList.add('js')</script>\` in the head and base.js at the end of the body. To watch it run: \`<skill>/assets/entrances/demo.html?e=${e.id}\`.`);
+  p(`- **Below the fold: ${e.below.label}.** ${e.below.rule}${/data-reveal/.test(e.below.rule) && /nothing else|nothing enters|stray/i.test(e.below.rule) ? '' : ' No other block gets `data-reveal`: no fade-up on every block.'}`);
+}
 function render(s) {
   const d = s.direction; const o = [];
   const p = (x = '') => o.push(x);
@@ -520,6 +620,7 @@ function render(s) {
   p(`| Colour | ${s.palette ? s.palette.name : 'kept from the brand'} |`);
   p(`| Sections | ${s.sections.map((x) => x.role + (x.name && x.name !== x.role ? ' (' + x.name + ')' : '')).join(' → ')} |`);
   p(`| Motion | ${s.motion ? s.motion.name : '—'} |`);
+  if (s.entrance) p(`| Entrance | ${s.entrance.name} |`);
   p(`| Photographs | ${s.photos ? 'the "' + (s.photos.title || s.photos.set) + '" set, as atmosphere' : 'none'} |`);
   if (s.frame) {
     const f = s.frame;
@@ -620,7 +721,12 @@ function render(s) {
     p(`### ${i + 1}. ${sec.role} — ${sec.name} (${sec.shape})`); p(sec.blueprint); if (sec.mobile) p(`On a phone: ${sec.mobile}`); adjust(sec);
   });
   p();
-  if (s.motion) { p(`## 8. Motion — ${s.motion.name}`); p(s.motion.description); p('This is the signature move, the one loud moment. Around it the page still needs the rest of the motion layer (SKILL.md step 9): an entrance for the parts of every section and feedback on every control; video only as section 0 deals it. The inspector fails a page that barely moves. Recipes: references/motion.md.'); p(); }
+  if (s.motion || s.entrance) {
+    p(`## 8. Motion${s.motion ? ` — ${s.motion.name}` : ''}`);
+    if (s.motion) { p(s.motion.description); p(`This is the signature move, the one loud moment. Around it the page still needs the rest of the motion layer (SKILL.md step 9): ${s.entrance ? 'the entrance below' : 'a quiet entrance on the first screen (never a fade on every section)'} and feedback on every control; video only as section 0 deals it. The inspector fails a page that barely moves. Recipes: references/motion.md.`); }
+    if (s.entrance) entranceBlock(s.entrance, s, p);
+    p();
+  }
   if (s.scenes?.length) {
     p('## 9. Scroll scenes');
     p(`The page's big moments: ${s.scenes.length} scroll scenes, tested and ready to fill. They are part of the composition, so build them in step 6 with the section they carry, not as a motion afterthought. Each runs on the shared stage (assets/scenes/stage.js and stage.css, with GSAP and Lenis from the pinned CDN lines in stage.js) and ships its own finished composition for reduced motion and for phones that rest. How to put one on a page, fill it and check it: references/scenes.md. Check them with \`node <skill>/scripts/scenes.mjs <page>\` and look at every sheet.`);

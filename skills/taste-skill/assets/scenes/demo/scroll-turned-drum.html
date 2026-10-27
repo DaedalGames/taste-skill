@@ -130,8 +130,8 @@
   <main id="top">
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-text">
-        <h1 id="hero-title" data-rise>A small ferry for the outer islands</h1>
-        <div data-rise>
+        <h1 id="hero-title">A small ferry for the outer islands</h1>
+        <div>
           <p>Westerly sails one slow loop a week from Oban, calling at fifteen islands between Lismore and Lewis, April to October.</p>
           <a class="button" href="#book">Book a berth</a>
         </div>
@@ -190,9 +190,9 @@
     <section class="after" id="book" aria-labelledby="book-title">
       <figure class="after-pic"><img data-drift src="https://picsum.photos/id/483/960/1200" width="960" height="1200" alt="Dark sea cliffs with white surf breaking around the rocks below"></figure>
       <div>
-        <h2 id="book-title" data-rise>Berths for April open on 1 February</h2>
-        <p data-rise>There are twelve cabins and one loop a week. Write with your islands and your dates, and we hold a berth for ten days while you decide.</p>
-        <a class="button" data-rise href="mailto:berths@westerly.example?subject=A%20berth%20for%20April&amp;body=Islands%3A%0ADates%3A%0ACabins%3A">Write to the booking office</a>
+        <h2 id="book-title">Berths for April open on 1 February</h2>
+        <p>There are twelve cabins and one loop a week. Write with your islands and your dates, and we hold a berth for ten days while you decide.</p>
+        <a class="button" href="mailto:berths@westerly.example?subject=A%20berth%20for%20April&amp;body=Islands%3A%0ADates%3A%0ACabins%3A">Write to the booking office</a>
       </div>
     </section>
   </main>
@@ -209,11 +209,9 @@
   <script src="../scroll-turned-drum.js"></script>
   <script>
     Stage.smooth(); Stage.init();
-    // the page around the scene: its words rise in, its photographs drift slowly with the scroll
+    // the page around the scene: its words are simply there (a built page takes the entrance its sheet deals), and
+    // its photographs drift slowly with the scroll
     if (window.gsap && window.ScrollTrigger) gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
-      for (const el of document.querySelectorAll('[data-rise]')) {
-        gsap.from(el, { yPercent: 18, autoAlpha: 0, duration: 0.9, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
-      }
       // the photograph is 12% taller than its frame and slides inside it, so it never leaves the frame
       for (const img of document.querySelectorAll('[data-drift]')) {
         gsap.fromTo(img, { yPercent: 0 }, { yPercent: -10, ease: 'none', scrollTrigger: { trigger: img.parentElement, start: 'top bottom', end: 'bottom top', scrub: true } });

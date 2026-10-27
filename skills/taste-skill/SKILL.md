@@ -148,7 +148,7 @@ The command prints a **direction sheet**. It is the art direction for this build
 
 - **Adopt it.** Do not blend it with the layout you would have made anyway. If it feels unfamiliar,
   good: the familiar layout is the one this skill exists to prevent.
-- Redraw one slot (`--redraw hero | type | palette | photos | scenes | section:<role> | direction`) only for a
+- Redraw one slot (`--redraw hero | type | palette | photos | scenes | entrance | section:<role> | direction`) only for a
   reason you can state: it contradicts a stated brand constraint, needs an asset that does not exist,
   or is a section that cannot hold the real content (next point). Never redraw to get something more
   comfortable. Record every redraw in your report.
@@ -395,9 +395,9 @@ elements that really move while the page loads and is scrolled, and fails a page
 under sixteen). Any scroll scenes are already built (step 6); around them the layer has four parts:
 
 1. **The signature move** named on the sheet: one, done well (a dealt scene can be it).
-2. **An entrance for the parts of every section:** the heading, then the text, then the picture,
-   staggered by 60–90ms, rising 16–32px with opacity, triggered once as the section enters. Not one
-   fade for the whole block, and never content that stays hidden if the script fails.
+2. **The entrance the sheet deals** (section 8): `data-entrance` on the body, its markers on the first
+   screen, its CSS already in base.css, and only its own rule below the fold. Nothing else enters: no
+   fade-up on every block, and no masked line rise or shutter unless the dealt entrance is `set-type`.
 3. **Feedback on every control:** press, hover and focus on buttons, links, cards and any tool.
 4. **Video or a moving picture only as section 0 deals it.** Most pages get none; motion comes from
    the page itself.

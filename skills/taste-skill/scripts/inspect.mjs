@@ -36,6 +36,7 @@ const asJson = has('json');
 let appMode = has('app');
 let film = has('film');
 let dealtFonts = []; // the faces the saved sheet dealt, to catch a build that quietly fell back to a default
+let dealtEntrance = null; // the entrance the saved sheet dealt, to catch a build that quietly went back to the old rise
 const target = args[0];
 if (!target || target === '-h' || target.startsWith('--')) {
   console.error('usage: node inspect.mjs <url | file.html> [--out DIR] [--widths 1440,768,390] [--allow rule,rule] [--app] [--film] [--json]');
@@ -43,7 +44,7 @@ if (!target || target === '-h' || target.startsWith('--')) {
 }
 // Allowances granted by the drawn direction (written by draw.mjs) apply automatically.
 for (const p of ['.taste-skill/direction.json', join(outDir, '..', 'direction.json')]) {
-  if (existsSync(p)) { try { const d = JSON.parse(readFileSync(p, 'utf8')); allow = [...new Set([...allow, ...(d.allow || [])])]; if (d.kind === 'app') appMode = true; if (Array.isArray(d.scenes) && d.scenes.length) film = true; dealtFonts = (d.input?.keep || []).includes('type') ? [] : d.kind === 'app' ? [d.style?.tokens?.font?.family].filter(Boolean) : [d.type?.display?.family, d.type?.text?.family].filter(Boolean); } catch {} break; }
+  if (existsSync(p)) { try { const d = JSON.parse(readFileSync(p, 'utf8')); allow = [...new Set([...allow, ...(d.allow || [])])]; if (d.kind === 'app') appMode = true; if (Array.isArray(d.scenes) && d.scenes.length) film = true; dealtFonts = (d.input?.keep || []).includes('type') ? [] : d.kind === 'app' ? [d.style?.tokens?.font?.family].filter(Boolean) : [d.type?.display?.family, d.type?.text?.family].filter(Boolean); dealtEntrance = d.kind === 'app' ? null : d.entrance?.id || null; } catch {} break; }
 }
 // A local file is served over http from a throwaway server on 127.0.0.1, so the browser never has to
 // open a file path (some sandboxes show Node and the browser different views of the disk) and relative
@@ -110,6 +111,17 @@ const TITLE_SEEN = `(() => {
   const hit = document.elementFromPoint(x, y);
   if (hit && !h.contains(hit) && !hit.contains(h)) { const cs = getComputedStyle(hit); if (cs.backgroundColor !== 'rgba(0, 0, 0, 0)' || /^(IMG|VIDEO|CANVAS)$/.test(hit.tagName)) return { found: true, visible: false, why: 'something lies over it' }; }
   return { found: true, visible: true };
+})()`;
+
+// The entrance the page carries, and any headline line of a masked or covered entrance that wraps at this width
+// (a wrapped line gets one block across the whole column, or two lines rise as one).
+const ENTRANCE_SEEN = `(() => {
+  const id = document.body ? document.body.dataset.entrance || null : null;
+  const wrapped = [...document.querySelectorAll('[data-e="headline"] [data-line]')].filter((el) => {
+    const cs = getComputedStyle(el); const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;
+    return el.getClientRects().length > 1 || el.getBoundingClientRect().height > lh * 1.6;
+  }).map((el) => el.textContent.trim().replace(/\\s+/g, ' ').slice(0, 48));
+  return { id, wrapped };
 })()`;
 
 async function sheet(frames, cols, cellW, cellH, path) {
@@ -248,7 +260,11 @@ try {
       if (missing.length === dealtFonts.length) findings.push({ level: appMode ? 'FAIL' : 'WARN', id: 'font-not-dealt', width: w, message: `The sheet dealt ${dealtFonts.join(' and ')}, but the page renders ${m.type.families.slice(0, 2).map((f) => f.family).join(', ')}.`, fix: 'Load the dealt face (the link on the sheet) and put it first in font-family. A build that falls back to a default face lands on the default look.' });
     }
     // a third of the studied award pages were still unreadable 4.5s after load; the house sequence is over by 1.2s
-    if (!appMode && early && early.found && !early.visible && !allow.includes('late-title')) findings.push({ level: 'FAIL', id: 'late-title', width: w, message: `The title is not readable 1.2s after the page loaded (${early.why}).`, fix: 'Put the headline in the HTML, painted on the first frame; the load sequence only adds arrival and is settled by 1.2s (references/motion.md, "Load sequence in 1.2 seconds"). No preloader, no gate, no waiting for the load event.' });
+    if (!appMode && early && early.found && !early.visible && !allow.includes('late-title')) findings.push({ level: 'FAIL', id: 'late-title', width: w, message: `The title is not readable 1.2s after the page loaded (${early.why}).`, fix: 'Put the headline in the HTML, painted on the first frame; the dealt entrance only adds arrival and is still by 1.24s (references/motion.md, "The entrance is dealt"). No preloader, no gate, no waiting for the load event.' });
+    // the dealt entrance (draw.mjs section 8): built as dealt, and its headline lines each fit one line
+    const ent = appMode ? null : await page.eval(ENTRANCE_SEEN).catch(() => null);
+    if (ent && dealtEntrance && w >= 1100 && ent.id !== dealtEntrance && !allow.includes('entrance-not-dealt')) findings.push({ level: 'FAIL', id: 'entrance-not-dealt', width: w, message: `The sheet dealt the "${dealtEntrance}" entrance, but the page ${ent.id ? `carries data-entrance="${ent.id}"` : 'has no data-entrance on its body'}.`, fix: `Build the dealt entrance (sheet section 8): <body data-entrance="${dealtEntrance}">, its markers on the first screen, its CSS from base.css, and only its own rule below the fold. Never swap it for another or for the old line rise; redraw it only for a reason you can state (draw.mjs --redraw entrance).` });
+    if (ent && ['line-blocks', 'set-type'].includes(ent.id) && ent.wrapped.length && !allow.includes('entrance-line-wraps')) findings.push({ level: ent.id === 'line-blocks' ? 'FAIL' : 'WARN', id: 'entrance-line-wraps', width: w, message: `${ent.wrapped.length} headline line(s) wrap at this width, so ${ent.id === 'line-blocks' ? 'one block covers the whole column and leaves a bar beside the shorter line' : 'two lines rise as one'}: ` + ent.wrapped.slice(0, 3).map((t) => `"${t}"`).join(', '), fix: 'Each [data-line] must fit on one line at every width: break the headline into shorter lines (three at most), or set a smaller display step on phones.' });
     if (lay) findings.push(...judgeLayout(lay, { width: w, allow }));
     if (ex) findings.push(...judgeExtra(ex, { width: w, allow, screens: total, app: !!appMode }));
     if (appMode) {
@@ -302,8 +318,8 @@ try {
     // a page that barely moves: counted from what really animated while it loaded and was scrolled
     if (w >= 1100 && motion && !allow.includes('still-page')) {
       const moving = motion.elements + motion.playingVideos * 4;
-      if (moving < MOTION_MIN) findings.push({ level: 'FAIL', id: 'still-page', width: w, message: `Only ${motion.elements} element(s) moved while the page loaded and scrolled${motion.playingVideos ? ` (plus ${motion.playingVideos} playing video)` : ''}.`, fix: 'Build the motion layer (SKILL.md step 9, references/motion.md): the signature move, an entrance for the parts of every section, feedback on every control, and one moving picture. Transform and opacity only, with a reduced-motion fallback.' });
-      else if (moving < MOTION_GOOD) findings.push({ level: 'WARN', id: 'still-page', width: w, message: `Little motion: ${motion.elements} element(s) moved while the page loaded and scrolled.`, fix: 'Give every section an entrance for its parts (not one fade of the whole block) and add one moving picture: a looping clip or a slow move on a photograph.' });
+      if (moving < MOTION_MIN) findings.push({ level: 'FAIL', id: 'still-page', width: w, message: `Only ${motion.elements} element(s) moved while the page loaded and scrolled${motion.playingVideos ? ` (plus ${motion.playingVideos} playing video)` : ''}.`, fix: 'Build the motion layer (SKILL.md step 9): the scenes and the signature move, the dealt entrance and only its own rule below the fold, feedback on every control, and the moving picture section 0 deals. Do not add reveals the entrance does not name.' });
+      else if (moving < MOTION_GOOD) findings.push({ level: 'WARN', id: 'still-page', width: w, message: `Little motion: ${motion.elements} element(s) moved while the page loaded and scrolled.`, fix: 'Check that the scenes and the signature move run at this width; add motion there, never a fade on every section.' });
     }
     // screens with almost no words or pictures on them, counting the scroll film: a glow, a burst of lines or a
     // coloured stage with one heading reads as dead scroll (judges named it the costliest fault of round 1)

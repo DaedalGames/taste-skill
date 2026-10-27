@@ -27,15 +27,14 @@ scrolls, and fails it under eight elements. The motion layer has five parts:
   `library/scenes.json` when the library has scenes for the brief; `references/scenes.md` says how to
   fill and fit them. They are where the page is bold; everything else stays quiet so they land.
 
-- **One signature moment:** the thing a visitor would describe an hour later: the headline that rises
-  out of a mask, the image that opens like a shutter, the wordmark that scales with the scroll. The
-  direction sheet from `draw.mjs` names one. Build that one well; it is the only move allowed to be
-  loud.
-- **Section entrances, choreographed per section:** the parts of each section arrive in reading order
-  (heading, text, picture, details), staggered 60–90ms, rising 16–32px with opacity, once. Vary the
-  manner with the content instead of stamping one preset everywhere: a list arrives row by row, a
-  picture opens from a mask or settles from a slight scale, a figure counts up once, a statement rises
-  line by line.
+- **One signature moment:** the thing a visitor would describe an hour later: the picture that grows
+  from a window to the whole screen, the statement that fills with ink, the wordmark that scales with
+  the scroll. The direction sheet from `draw.mjs` names one. Build that one well; it is the only move
+  allowed to be loud.
+- **The dealt entrance and its rule below the fold:** the sheet deals the first screen's entrance (section
+  6, "The entrance is dealt") and that entrance says what, if anything, arrives further down: headings
+  that sharpen, pictures that take their colour, rows that step in, or nothing. Nothing else enters, and
+  never every block.
 - **Feedback under the hand:** buttons that give on press, links that answer the pointer, cards and
   pictures that respond on hover, a menu that opens from where it was clicked.
 - **A moving picture only when the sheet deals one** (section 0: a clip, or one photograph that
@@ -77,7 +76,8 @@ the gallery does something the house rules ban, the house version follows.
   Half the usable pages were still unreadable 2.5 s after the browser said the page had loaded, a
   third at 4.5 s. The preloaders were not covering slow pages (their documents loaded faster than the
   rest) and the readers' design marks were the same whatever the wait; only usability fell. House
-  version: no preloader, the message readable on the first frame, the load sequence over by 1.2 s.
+  version: no preloader, the message in the HTML from the first frame and readable by 1.2 s, the
+  entrance over by 1.24 s.
 - **Pins cost length.** Two in three scrolling pages hold something sticky or pinned. Those pages
   are twice as long (a median 16.6 screens against 7.5) for fewer words per screen (27 against 46).
   House version: at most two held stages, about one screen per step, three screens per stage.
@@ -151,9 +151,9 @@ How the study bears on each:
 | Scroll-scrubbed scene (camera, object, image sequence) | 26 | Explains a product by moving it | Yes, from the scene library, built on the shared stage with a finished composition for reduced motion |
 | Parallax depth | 24 | Depth in collages; pictures drifting inside oversized frames | Travel under 8% of the element, pictures held at 106-110% in their frames |
 | Marquee | 21 | Life on a static band | Existing "Edge-to-edge marquee": one per page, pausable |
-| Masked line or word rise | 18 | Headings that arrive like set type | Yes: "Masked line reveal" on load, "Lines that rise on scroll" below the fold |
+| Masked line or word rise | 18 | Headings that arrive like set type | Only with the dealt `set-type` entrance: "Masked line reveal" on load, "Lines that rise on scroll" below the fold |
 | Wheel drives a scene, no page scroll | 16 | Browsing one object | Not used (see 2.6) |
-| Blur-in | 15 | Soft arrival | At most 8px of blur, 600ms, gone once settled; never on body text |
+| Blur-in | 15 | Soft arrival | Only as the dealt `focus` entrance: 8px at most on the picture, 4px on the headline from half strength, no travel, gone by 1 s; never on body text |
 | Picture from inset frame to full-bleed | 14 | The hand-over from a type screen to the big picture | Yes: "Opening window", about one screen of scroll |
 | Grey-to-ink text fill | 14 | Paces one statement | Yes, once per page, starting at 45% ink: "Ink fill" |
 | Sheet slides over a held layer | 11 | Page-turn rhythm between chapters | Yes: new move "Sheet over a held picture" |
@@ -187,48 +187,67 @@ All recipes keep content visible when JavaScript is off or slow: the hidden stat
 <script>document.documentElement.classList.add('js')</script>
 ```
 
-### Load sequence in 1.2 seconds
+### The entrance is dealt
 
-Everything is in the HTML and painted on the first frame; the sequence only adds arrival. Nothing
-waits for the load event, and nothing in the navigation animates.
+The first screen's entrance is not chosen. `draw.mjs` deals one of seven per page, by weight, from the
+ones that fit the tone and what the first screen shows (a photograph, the product's interface, or type
+alone), and prints it in section 8 of the sheet. The masked line rise with the shutter used to be every
+page's entrance and had become the plainest sign of this skill; it is one of the seven now, dealt
+rarely. They come in five families (still, lens, interface, mask, cover), and a family used by either of
+the last two builds is about a third as likely. All seven are written in `assets/base.css` under "the
+entrance", and `assets/entrances/demo.html?e=<id>` runs any of them.
+
+- `already-there` (still): nothing arrives; the first frame is the finished screen. Below the fold, nothing enters.
+- `focus` (lens): the picture starts soft and comes into focus, and the headline with it from half strength; nothing travels. Below, chapter headings sharpen.
+- `exposure` (lens, mid-tone or dark photographs, or a dark page): the type is there at once; the photograph's light and colour come up from pale. Below, large pictures take their colour.
+- `product-at-work` (interface only): the fragment is complete at once, then its figure ticks up, its chart's latest stretch draws in, a row lands, a row is selected. Below, one data moment per further fragment.
+- `aperture` (mask): the picture opens from a small window out past its edges, pulling back from a detail. Below, up to three large pictures open from a window.
+- `set-type` (mask, dealt at 0.3): the headline's lines rise out of their masks and the picture opens like a blind (the two recipes below). Below, chapter headings rise by line.
+- `line-blocks` (cover, bold tones): each headline line starts as a solid block of the accent or the ink that slides off its words. Below, list and table rows step from 40% to full.
+
+The contract: `<body data-entrance="<id>">`; the first screen is `[data-hero]`, its parts
+`data-e="headline"`, `"lead"`, `"action"` and `"picture"` (on the element that already crops the
+picture). Every hidden state is the first keyframe of an animation, inside `html.js` and
+`no-preference`, so when anything fails the visitor sees the finished screen. Nothing waits for the load
+event, everything is still by 1.24 s, and the header never moves. Preload the display font
+(`<link rel="preload" as="font" type="font/woff2" crossorigin>`), and give the hero image its width and
+height, `fetchpriority="high"` and a `--picture-ground` sampled from it. A headline line marked
+`data-line` fits on one line at every width (the inspector checks). Below the fold, `data-reveal` does
+only what the dealt entrance says. Study: 22 of 91 award pages were readable at the first intro frame
+and 11 more by 1.2 s; of 112 professional sites, 37 animate nothing on load and none uses a masked line
+rise or a clip-path shutter.
+
+**The hero picture.** An entrance that animates the picture must not play it over an empty frame. Paste
+this right after the hero (it is also the first entrance block of `base.js`, which covers a page that
+forgot it): a photograph with nothing to paint at the first frame waits on its ground; if it lands within
+0.7 s the entrance plays from its start, later it simply fades in.
 
 ```html
-<header class="hero">
-  <h1 class="display lines">
-    <span class="line"><span data-line style="--i:0">Stools for</span></span>
-    <span class="line"><span data-line style="--i:1">small kitchens</span></span>
-  </h1>
-  <p class="lead" data-load style="--d:420ms">…</p>
-  <a class="button" data-load style="--d:480ms" href="#stools">See the stools</a>
-  <figure class="hero__picture" data-open><img src="stool.jpg" alt="…" fetchpriority="high"></figure>
-</header>
+<script>
+(() => {
+  if (!document.body || !document.body.dataset.entrance || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (const f of document.querySelectorAll('[data-hero] [data-e="picture"]:not([data-e-wait])')) {
+    const m = f.querySelector(':scope > img, :scope > video, :scope > picture > img');
+    if (!m || (m.tagName === 'VIDEO' ? m.readyState >= 2 : m.complete && m.naturalWidth)) continue;
+    f.setAttribute('data-e-wait', '');
+    let done = false;
+    const land = () => {
+      if (done) return; done = true;
+      if (performance.now() < 700 && document.body.dataset.entrance !== 'already-there') f.removeAttribute('data-e-wait');
+      else f.setAttribute('data-e-wait', 'late');
+    };
+    m.addEventListener(m.tagName === 'VIDEO' ? 'loadeddata' : 'load', land, { once: true });
+    m.addEventListener('error', land, { once: true });
+    setTimeout(land, 3000);
+  }
+})();
+</script>
 ```
 
-```css
-.hero__picture { overflow: clip; margin: 0; }
-@media (prefers-reduced-motion: no-preference) {
-  .js .hero [data-line] { transform: translateY(105%); animation: load-line 800ms var(--ease-expo) forwards; animation-delay: calc(100ms + var(--i) * var(--stagger-line)); }
-  .js .hero [data-load] { opacity: 0; transform: translateY(12px); animation: load-rise 500ms var(--ease-out) forwards; animation-delay: var(--d); }
-  .js .hero [data-open] { clip-path: inset(0 0 100% 0); animation: load-open 1000ms var(--ease-in-out) 150ms forwards; }
-  .js .hero [data-open] img { transform: scale(1.08); animation: load-settle 1100ms var(--ease-expo) 100ms forwards; }
-}
-@keyframes load-line { to { transform: none; } }
-@keyframes load-rise { to { opacity: 1; transform: none; } }
-@keyframes load-open { to { clip-path: inset(0); } }
-@keyframes load-settle { to { transform: none; } }
-```
+### Masked line reveal (the headline half of Set type)
 
-The timeline: the headline's lines rise from 100 to 990 ms, the picture opens from 150 to 1,150 ms,
-the sentence and the button arrive from 420 to 980 ms. All settled by 1.2 s, four things at most.
-Preload the display font (`<link rel="preload" as="font" type="font/woff2" crossorigin>`) so the lines
-rise in the real face, and give the picture `fetchpriority="high"` and a ground colour sampled from it,
-so a slow image opens onto its own colour rather than a blank box. Study: 22 of 91 pages were readable
-at the first intro frame and 11 more by 1.2 s; the intros the readers called respectful finished in
-about 1-1.2 s; a third of the pages were still unreadable at 4.5 s.
-
-### Masked line reveal (the classic gallery headline)
-
-Each line slides up from behind its own baseline. Because headlines are capped at two lines, you set
+Only when the sheet deals the `set-type` entrance (base.css has its dealt version). Each line slides up
+from behind its own baseline. Because headlines are capped at two lines, you set
 the line breaks yourself and wrap each line.
 
 ```html
@@ -239,11 +258,14 @@ the line breaks yourself and wrap each line.
 ```
 
 ```css
-.lines .line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.lines .line { display: block; }
 .lines [data-line] { display: block; }
 @media (prefers-reduced-motion: no-preference) {
+  .js .lines .line { overflow: clip; padding: 0.2em 0 0.3em; margin: -0.2em 0 0; }
+  .js .lines .line + .line { margin-top: -0.5em; }
+  .js .lines .line:last-child { margin-bottom: -0.3em; }
   .js .lines [data-line] {
-    transform: translateY(105%);
+    transform: translateY(calc(100% + 0.6em));
     animation: line-up 900ms var(--ease-out) forwards;
     animation-delay: calc(var(--i) * 110ms + 150ms);
   }
@@ -251,13 +273,15 @@ the line breaks yourself and wrap each line.
 @keyframes line-up { to { transform: none; } }
 ```
 
-The `padding-bottom` / negative margin pair stops descenders (g, y, p) being clipped by the mask.
-On a narrow phone the two authored lines may each wrap; check the mobile screenshot, and if they do,
-author a shorter mobile break with a `<br class="only-wide">` pattern or reduce the size.
+The mask's padding leaves room for accents above and descenders (g, y, p) below, and the margins give
+it back, so the lines sit where they sit without the mask; with no motion there is no mask at all.
+On a narrow phone an authored line may wrap; check the mobile screenshot, and if it does, author
+shorter lines or set a smaller display step on phones.
 
 ### Reveal on scroll (once)
 
-For the two or three sections that deserve it, not for every block.
+For the two or three sections that deserve it, not for every block, and only on a page without a dealt
+entrance: with one, `data-reveal` does what that entrance says (base.css) and nothing else.
 
 ```css
 @media (prefers-reduced-motion: no-preference) {
@@ -277,10 +301,10 @@ Never attach reveals with a scroll listener, never replay them when the element 
 leave anything at `opacity: 0` if the observer fails to fire (the `html.js` gate handles no-JS; the
 `unobserve` handles replays).
 
-### Image shutter
+### Image shutter (the picture half of Set type)
 
-An image opens from one edge while scaling down slightly inside its frame. Gallery staple; use it for
-the one hero or showcase image.
+An image opens from one edge while scaling down slightly inside its frame. Gallery staple; only when the
+sheet deals the `set-type` entrance, for the one hero or showcase image.
 
 ```css
 .shutter { overflow: hidden; }
@@ -406,19 +430,21 @@ image trails and cursor-borne previews seen elsewhere in the study are the gimmi
 
 ### Lines that rise on scroll
 
-For a section heading or a statement whose line breaks you do not control. Splits after the fonts
-load, reveals once, then gives the plain text back so it rewraps normally. Plain text only (no links or
-emphasis inside).
+Only with the dealt `set-type` entrance; base.css carries its CSS, scoped to it. For a section heading
+or a statement whose line breaks you do not control. Splits after the fonts load, reveals once, then
+gives the plain text back so it rewraps normally. Plain text only (no links or emphasis inside).
 
 ```html
 <h2 class="head" data-lines>Turned by hand in one small workshop</h2>
 ```
 
 ```css
-[data-lines] .line { display: block; overflow: clip; padding-bottom: 0.12em; margin-bottom: -0.12em; }
-[data-lines] .line > span { display: block; }
+[data-lines] .line, [data-lines] .line > span { display: block; }
 @media (prefers-reduced-motion: no-preference) {
-  .is-split .line > span { transform: translateY(110%); }
+  .is-split .line { overflow: clip; padding: 0.2em 0 0.3em; margin: -0.2em 0 0; }
+  .is-split .line + .line { margin-top: -0.5em; }
+  .is-split .line:last-child { margin-bottom: -0.3em; }
+  .is-split .line > span { transform: translateY(calc(100% + 0.6em)); }
   .is-split.is-in .line > span { transform: none; transition: transform 900ms var(--ease-expo) calc(var(--i) * var(--stagger-line)); }
 }
 ```
@@ -843,8 +869,8 @@ The direction sheet names one. Each of these was seen repeatedly on the studied 
 
 | Move | What happens | Build with |
 | --- | --- | --- |
-| Masked headline | Lines rise from behind their baselines on load | Masked line reveal recipe |
-| Shutter image | Hero or showcase image opens from an edge, settling from 1.12 scale | Image shutter recipe |
+| Masked headline | Lines rise from behind their baselines on load | Not dealt: part of the `set-type` entrance |
+| Shutter image | Hero or showcase image opens from an edge, settling from 1.12 scale | Not dealt: part of the `set-type` entrance |
 | Scaling wordmark | A giant wordmark shrinks or grows a few percent as the hero scrolls out | Scroll-linked recipe on `scale` |
 | Pinned story | A heading holds while its items scroll past | Sticky recipe |
 | Index with preview | Text rows; the hovered row shows its image | Index with preview, anchored to the row |
@@ -861,9 +887,8 @@ The direction sheet names one. Each of these was seen repeatedly on the studied 
 | Rolling figures | The few figures that make the case roll up to their values once | Rolling figures recipe |
 | Carried picture | The picture clicked in a list travels into place as the next page's hero | Page to page recipe |
 
-Pick by subject. A portfolio wants the index with preview; a restaurant wants the slow crossfade; a
-product wants the shutter on its hero object. If the move says nothing about the subject, it is
-decoration and the page is better without it.
+Pick by subject. A portfolio wants the index with preview; a restaurant wants the slow crossfade. If the
+move says nothing about the subject, it is decoration and the page is better without it.
 
 Pick by subject, as before: the opening window for a product or a place with one great photograph; the
 sheet for chapters that each own a picture; the sideways gallery for a short set of rooms, kitchens or
@@ -890,6 +915,7 @@ both built.
 ## 9. What gives generated motion away
 
 - The same fade-up on every block.
+- The same entrance on every page: lines rising out of masks and a picture opening like a shutter.
 - A dozen staggered entrances in the hero.
 - Hover lift or zoom on every card and image.
 - Bounce or elastic easing on interface elements.
@@ -941,9 +967,9 @@ hard cuts; monospace HUD labels become small text in the text face.
 
 ## 10. Rules for motion
 
-1. **First frame.** The headline, the sentence and the picture are in the HTML and painted on the first
-   frame. The load sequence starts without waiting for the load event and is settled by 1.2 s, with
-   four elements at most.
+1. **First frame.** The headline, the sentence and the picture are in the HTML from the first frame and
+   readable by 1.2 s. The dealt entrance starts without waiting for the load event and is still by
+   1.24 s, with four groups moving at most.
 2. **No preloader, no counter, no gate, no custom cursor, no wheel capture.** Smoothing only through
    `Stage.smooth()` (Lenis at lerp 0.1-0.14, off for touch and reduced motion): weight, never a page
    that keeps sliding after the hand stops.
@@ -954,9 +980,9 @@ hard cuts; monospace HUD labels become small text in the text face.
    700-900ms; picture openings 1,100-1,300ms; exits 60-70% of the matching entrance.
 5. **Staggers.** Lines 80-110ms; list items 50-90ms; characters 20-40ms and only in a heading of one to
    three words; four steps at most in any one sequence.
-6. **Reveals.** Fire once, when the element's top is 85-90% of the way down the viewport; rise 12-32px
-   or from a line mask; nothing in view stays hidden for more than 900ms; nothing above the fold waits
-   for scroll.
+6. **Reveals.** Only what the dealt entrance's rule below the fold says; fire once, when the element's
+   top is 85-90% of the way down the viewport; nothing in view stays hidden for more than 900ms; nothing
+   above the fold waits for scroll.
 7. **Scroll scenes are where the page is bold.** The big moves come from the scene library
    (`references/scenes.md`): the direction sheet deals two per page, each built on
    `assets/scenes/stage.js`, each held for one to four screens, each with a phone version and a
