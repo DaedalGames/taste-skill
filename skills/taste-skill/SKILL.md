@@ -300,6 +300,14 @@ not finished. Order of work:
    work (its title card, an end frame, a poster), with real detail; a stock or location photograph
    never stands in for a piece of work (a motion designer's work slots showing skylines lost a test).
 
+   **Logos of known products are the real ones, never drawn.** When the page names products it works
+   with or the brief names (Gmail, Google Calendar, Figma, Slack, Teams, Chrome, ChatGPT, Claude),
+   `node <skill>/scripts/assets.mjs --logo gmail,figma` saves their marks from Simple Icons at a pinned
+   version; a mark it lacks comes from the brand's own press kit, used unchanged. Never a hand-drawn
+   logo, never an initial in a circle in its place; with no official file, the name is set in type. A
+   row of logos takes the page's ink at one size. The project's own logo is designed for it: a wordmark
+   in the dealt type, or the client's real one.
+
    `references/imagery.md` covers searching, licences, video, drawing, crops and treatments.
 5. **The navigation and the footer** as section 0 deals them: a real header with the page's sections
    as links and the one action, on every page; a footer that works (links, contact, legal), never a

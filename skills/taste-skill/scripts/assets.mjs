@@ -20,6 +20,7 @@
 //   node assets.mjs --get <ref>[,<ref>...] [--to assets] [--name <file name>] [--width 1920] [--res 720] [--max-mb 25]
 //                                                  download into the project and record the credit
 //   node assets.mjs --credits [--to assets]        print the credits dialog and the report list
+//   node assets.mjs --logo gmail,figma [--to assets]  download the real logos of known products
 //
 // Image sources: Openverse (api.openverse.org: Flickr, Wikimedia Commons, museums and libraries in one
 // index), Wikimedia Commons, the Art Institute of Chicago (public-domain works over IIIF) and The
@@ -69,6 +70,7 @@ const USAGE = `Find real, openly licensed pictures of the subject's world, downl
       --min-width <px>       default 640 for video
   ${CMD} --get <ref>[,<ref>...] [--to assets] [--name <file name>] [--width 1920] [--res 720] [--max-mb 25]
   ${CMD} --credits [--to assets]
+  ${CMD} --logo <brand>[,<brand>...] [--to assets]   the real logos of known products (Simple Icons), saved to <to>/logos
 
 Queries work best in the subject's own words and a medium: "ghent postcard", "ghent old map", "azulejo tiles",
 "botanical engraving fig", "rotterdam harbour 1920", "basalt texture". The museum sources match one or two
@@ -76,7 +78,7 @@ words best ("fig", "harbour"). For footage, name the action or the process: "cof
 construction", "river", "city street night".`;
 
 // ---------- arguments ----------
-const VALUED = new Set(['source', 'sources', 'license', 'licence', 'orientation', 'min-width', 'width', 'limit', 'get', 'to', 'name', 'type', 'res', 'max-mb']);
+const VALUED = new Set(['source', 'sources', 'license', 'licence', 'orientation', 'min-width', 'width', 'limit', 'get', 'to', 'name', 'type', 'res', 'max-mb', 'logo', 'logos']);
 const FLAGS = new Set(['no-check', 'json', 'credits', 'help', 'video']);
 const args = {}; const words = [];
 const argv = process.argv.slice(2);
@@ -862,8 +864,52 @@ function printCredits(opts) {
   return 0;
 }
 
+// ---------- logos ----------
+// Known products are shown with their real marks, never drawn. Simple Icons (CC0) at a pinned version;
+// brands that asked to be removed from it (Slack, Microsoft, OpenAI, xAI...) come from their press kits.
+const SIMPLE_ICONS = '16.35.0';
+const LOGO_ALIAS = {
+  chrome: 'googlechrome', 'google chrome': 'googlechrome', calendar: 'googlecalendar', gcal: 'googlecalendar',
+  drive: 'googledrive', docs: 'googledocs', sheets: 'googlesheets', meet: 'googlemeet', teams: 'microsoftteams',
+  chatgpt: 'openai', twitter: 'x', 'x.com': 'x', grok: 'xai', gemini: 'googlegemini', vscode: 'visualstudiocode',
+};
+function logoSlug(name) {
+  const n = name.toLowerCase().trim();
+  if (LOGO_ALIAS[n]) return LOGO_ALIAS[n];
+  return n.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\+/g, 'plus').replace(/^\./, 'dot').replace(/\./g, 'dot')
+    .replace(/&/g, 'and').replace(/[^a-z0-9]/g, '');
+}
+async function getLogos(names, opts) {
+  const dir = join(opts.to, 'logos');
+  mkdirSync(dir, { recursive: true });
+  const missing = [];
+  for (const name of names) {
+    const slug = logoSlug(name);
+    const url = `https://cdn.jsdelivr.net/npm/simple-icons@${SIMPLE_ICONS}/icons/${slug}.svg`;
+    let svg = null;
+    try { const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(20000) }); if (r.ok) svg = await r.text(); } catch {}
+    if (!svg || !svg.includes('<svg')) { missing.push(name); continue; }
+    const title = (svg.match(/<title>([^<]+)<\/title>/) || [])[1] || name;
+    const file = join(dir, `${slug}.svg`);
+    writeFileSync(file, svg.replace('<svg ', '<svg fill="currentColor" '));
+    console.log(`${title}: ${rel(file)}  (Simple Icons ${SIMPLE_ICONS}, ${url})`);
+  }
+  if (missing.length) {
+    console.log(`\nNot in Simple Icons ${SIMPLE_ICONS}: ${missing.join(', ')}. Some brands had their marks removed from it (Slack, Microsoft and Teams, OpenAI, xAI).`);
+    console.log('Take the official SVG from the brand\'s own press kit or brand page (search "<brand> brand assets"), save it into');
+    console.log(`${rel(dir)} and use it unchanged. Never draw it, never put its initial in a circle; with no official file, write the name in the page's type.`);
+  }
+  if (names.length > missing.length) {
+    console.log('\nInline the SVG (it uses currentColor) so a row of logos takes the page\'s ink, one size and one optical weight; a lone mark may');
+    console.log('keep its brand colour. Logos are their owners\' trademarks: only for products this one really works with or the brief names,');
+    console.log('never as invented customers or press. No credit line is needed.');
+  }
+  return missing.length === names.length ? 1 : 0;
+}
+
 // ---------- run ----------
 if (args.help) { console.log(USAGE); process.exit(0); }
+if (args.logo || args.logos) process.exit(await getLogos(String(args.logo || args.logos).split(',').map((s) => s.trim()).filter(Boolean), o));
 if (args.credits) process.exit(printCredits(o));
 if (args.get) process.exit(await getAll(String(args.get).split(',').map((s) => s.trim()).filter(Boolean), o));
 const query = words.join(' ').trim();

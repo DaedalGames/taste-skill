@@ -263,7 +263,13 @@ of the subject's world; it never gets a drawing in place of a photograph.
 
 SVG is right for these, and only these:
 
-- **The logo and the wordmark.**
+- **The logo and the wordmark.** The project's own is designed for it (a wordmark in the dealt type,
+  or the client's real file). Known products the page names (Gmail, Figma, Slack, Chrome, ChatGPT,
+  Claude) appear with their real marks, never redrawn: `assets.mjs --logo <brand>,<brand>` saves them
+  from Simple Icons at a pinned version (CC0, currentColor, so a row takes the page's ink); a brand
+  missing there (Slack, Microsoft, OpenAI, xAI) comes from its own press kit, unchanged. No initial in a
+  circle in place of a logo; with no official file, set the name in type. Only products this one really
+  works with: never invented customers or press.
 - **Information drawn exactly:** a chart of real numbers, a route or a site map with its real geometry,
   a floor plan or a technical drawing that a buyer needs (dimensions, rooms, parts), labelled, shown
   whole, in thin lines of one weight, as a draughtsman would draw it. If it carries no labels and no
