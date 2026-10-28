@@ -55,7 +55,9 @@ In order of preference:
    stand in for a specific product, dish, room, person or screen.
 4. **Sharp modern photographs from the open collections** (section 3), 1800px or wider, of the
    subject's world as it looks now: its city, its materials, its kind of work. Honest means nobody
-   could take one for the client's own product, room, dish, person or team. Archive
+   could take one for the client's own product, room, dish, person or team. The one exception is a
+   product with no photographs of its own: real photographs of its kind in use show what it is, large,
+   never named or priced as this model (the direction sheet's imagery section says how). Archive
    photographs, old maps and engravings only when they are the idea itself (the history this subject
    continues: a century-old firm's first workshop, the slip boxes behind a notes app), sharp, large and
    of one family: in the October 2026 review, random archive scans on about half the pages were the most
@@ -142,7 +144,9 @@ further down. Treatments stay within section 6 and the treatment the sheet deals
 - **A found picture is never the client's own.** It may show the client's city, its materials, its
   history, the kind of thing it makes; it may never stand in for the client's product, room, dish,
   person, team or customers. If a visitor could take it for the client's own (a bakery counter, a
-  plate of pasta, a smiling barista, a guest room), do not use it.
+  plate of pasta, a smiling barista, a guest room), do not use it. The one exception is a product with
+  no photographs of its own: real photographs of its kind in use, never named or priced as this model,
+  listed in the report as not the client's (§2, item 4).
 - **Caption from the source** when a caption helps: what it is and when, as the archive describes it
   ("Gand, unloading a steamer, 1905"). Never write a caption that ties it to the client.
 - **A caption names only what the picture shows.** Read every caption, label and number beside a

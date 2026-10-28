@@ -91,7 +91,9 @@ table; for food, the plates and the room; for a product, the product; for a prac
 the project has none of them, say in the report that they are missing (or ask, when the user is there
 to answer) and choose a direction that does not promise them. Their slots are then set in type with
 the facts a visitor needs (the room's size, its view, its price), never filled with a drawing or with
-the place's birds and weather (`references/imagery.md` §8).
+the place's birds and weather (`references/imagery.md` §8). A product is the exception: with no
+photographs of its own, it is shown by real photographs of its kind in use, large (the sheet says how),
+never claimed as this model and never replaced by a picture of what its name means.
 
 If the request is vague, decide and state your reading in one line instead of asking. Ask only when a
 missing fact blocks the work (for example, no product name).
@@ -107,6 +109,15 @@ the idea comes from in step 4. In blind tests, the page that won each brief was 
 such a list (the client's name and what it means, the street it stands in, the one constraint that
 makes it what it is), and the pages that lost had a good composition with a category idea. The list
 is also your picture search: each place, material and printed thing on it is a query for step 6.
+
+**A colour in the name sets the ground.** When the client's name names a colour, a material or a
+light (white, black, ember, slate, linen, fog, in any language: Hvit is Norwegian for white), the
+page's ground and palette follow it, unless the brand already fixes its colours (`--keep palette`): a
+house called Hvit stands on white. The sheet names such a word in its colour section; when the dealt
+palette contradicts it (a dark ground for a white name, a pale one for Ember), redraw the palette
+(`--redraw palette`) and say so in the report. Elsewhere in the brief such a word lends its colours
+only when it describes the client, never something it replaces (paper, for an invoicing app). In a
+blind test a guesthouse named Hvit lost on a navy-black ground.
 
 ### 2. Write the argument
 
@@ -138,8 +149,8 @@ and say why in the report.
   that can make them), `product-ui` (real screenshots), `illustration`, `video`. Leave it out if you
   have none: the draw then avoids compositions that depend on them and the sheet says how to fill
   picture slots honestly (software shows its own interface built in HTML; a product with no photographs
-  is carried by its facts in type among real pictures of its world, never a drawing and never a fake
-  product shot). Pictures you will
+  of its own is shown by real photographs of its kind in use, never claimed as this model, never a
+  drawing and never a fake product shot). Pictures you will
   find in the open collections are not the project's own; leave them out of `--have`.
 - `--keep palette,type`: when the brand already fixes colours or typefaces. The draw then deals only
   the composition, and you map the brand's values onto the roles.
@@ -164,7 +175,7 @@ The command prints a **direction sheet**. It is the art direction for this build
   (candy pastels for a peat whisky, neon for a mountain hut), redraw the palette once; if the subject
   has unmistakable colours of its own (its material, the paint of its street, the landscape outside
   its windows), keep the dealt proportions and take the colours from the subject instead, and say so
-  in the report.
+  in the report. A colour, material or light in the client's name decides the ground (step 1).
 - Reprint it any time with `node <skill>/scripts/draw.mjs --show`. In a long session, re-read it before each
   section you build.
 
@@ -183,7 +194,8 @@ Places to look for the first blank:
 - **Its object or shape.** What does it physically look like, in cross-section, in silhouette?
   Enlarge it, crop it, make it the frame or the one motif.
 - **Its name.** What does it mean, and what does that meaning look like? (Never a picture inside the
-  letters or between the words: that is a generated-page tell now.)
+  letters or between the words: that is a generated-page tell now.) On a product page the meaning
+  lives in the words, never in place of the product's pictures (step 1).
 - **Its place.** Is there one view that makes someone want to be there?
 - **Its ritual.** Is there a sequence the page can perform as it scrolls?
 - **Its artefact.** What printed thing already exists in its world: ticket, menu, label, receipt,
@@ -254,6 +266,9 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
 - Sample details are expected where the brief leaves gaps (dish names, room names and rates, project
   titles) so the design is seen at full density; list them in the report for the client to confirm.
   Proof is never invented: no customers, quotes, reviews, press, logos or business statistics.
+- **No facts about real places or organisations that you cannot check.** Distances, travel times,
+  history, populations and awards come from the brief or stay off the page: a guesthouse in the
+  Westfjords set "forty minutes from Reykjavik" (it is hours away) is the error a local sees first.
 
 ### 6. Build it, still
 
@@ -290,7 +305,8 @@ not finished. Order of work:
    shown (twice for the hero); one treatment for all (section 0); three to eight good pictures beat
    twelve weak ones. The first picture a visitor sees shows the product or the place itself (the cup
    and the bar, the room, the product working), never a street, a facade or a blurred mood shot; if no
-   such picture exists, the hero is set in type. Each photograph appears once on the page. Pictures of
+   such picture exists, the hero is set in type (a product with no photographs of its own shows its
+   kind in use instead: step 1). Each photograph appears once on the page. Pictures of
    one series count as one: at most two from one shoot or archive. A drawing rendered to PNG is still a
    drawing. Archive photographs, old maps and engravings only when they are the idea itself
    (the history this subject continues, like the slip boxes behind a notes app), sharp, large and of

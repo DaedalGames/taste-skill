@@ -10,7 +10,9 @@
    Layout. Desktop (1024px and wider, landscape): the copy at the foot of the left column, the mark filling
    the right column under the header bar. Narrow or portrait screens (tablets, phones): one column, the
    mark filling the space above the copy. The mark's box is .df-mark: the script fits the glyph inside it
-   (contain, 94%), so moving or resizing that box moves the drawn mark too.
+   (contain, 94%, and never wider than 66-75% of the stage's narrower axis, more for a longer mark, so a word
+   is whole with ground on both sides on a tablet or a phone), so moving or resizing that box moves the
+   drawn mark too.
    Tokens: --ground, --ink, --accent, --on-accent (the action's label, --ink by default), --font-display,
    --font-text, --display-weight (the headline and the mark; 600 when the page sets none), --mark-weight
    (the mark alone), --df-top (room for a header bar over the stage: 88px, 72px on a phone), --df-gutter

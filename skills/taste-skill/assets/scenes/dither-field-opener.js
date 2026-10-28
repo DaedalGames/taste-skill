@@ -30,8 +30,11 @@
 //     <div class="scene-stage">
 //       <div class="df-mark" aria-hidden="true">9</div>            the mark: 1-4 characters (a numeral,
 //                                                                   a year, an initial). Its box is where
-//                                                                   the mark is drawn (fitted inside it);
-//                                                                   without the script it is set as type
+//                                                                   the mark is drawn (fitted inside it, and
+//                                                                   never wider than 66-75% of the stage's
+//                                                                   narrower axis, by its length, so it is
+//                                                                   whole at every width); without the
+//                                                                   script it is set as type
 //       <div class="df-copy">
 //         <h1 class="df-title">Nine stories from the sea fog</h1>   two lines at most (h2 mid-page)
 //         <p class="df-text">One sentence of 14-30 words.</p>
@@ -437,7 +440,15 @@ void main() {
       accent: rgbOf(cs.getPropertyValue('--df-accent'), '#ff4a1f'),
     };
     const s = r.canvas.getBoundingClientRect(), b = r.markEl.getBoundingClientRect();
-    const k = Math.min(b.width / r.glyph.iw, b.height / r.glyph.ih) * 0.94;
+    // The mark is sized from the stage's narrower axis and the length of the mark, then fitted to its box:
+    // on a narrow or portrait screen the box runs the full width, and a word fitted to it ended a gutter
+    // from the screen's edge, where its last letter (a little larger when turned toward the eye, the field
+    // running on past it) read as sliced (r5-p27, 'stet' at 768 and 390). One character spans at most 66%
+    // of the narrower axis, a word of four 75%, so the mark is whole on clear ground at 1440, 768 and 390.
+    const chars = Math.min(4, Math.max(1, [...r.text].length));
+    const side = Math.min(r.grid.w || s.width, r.grid.h || s.height);
+    const wide = Math.min(b.width * 0.94, side * (0.63 + 0.03 * chars));
+    const k = Math.min(wide / r.glyph.iw, (b.height * 0.94) / r.glyph.ih);
     r.mark = { cx: b.left - s.left + b.width / 2, cy: b.top - s.top + b.height / 2, hw: (r.glyph.w * k) / 2, hh: (r.glyph.h * k) / 2 };
     r.mark.D = 2.6 * Math.max(r.mark.hw, r.mark.hh) * 2;
     r.scale = Math.min(r.grid.w, r.grid.h) * 0.42 * o.grain;

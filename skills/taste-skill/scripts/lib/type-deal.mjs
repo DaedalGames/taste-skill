@@ -50,7 +50,7 @@ const RATIOS = [[1.2, 1], [1.25, 2], [1.333, 3], [1.414, 2], [1.5, 1.5], [1.618,
 const BODY = [[16, 5], [17, 2.5], [18, 1]];
 
 // text faces too fine for running text on a dark ground (judges read them as grey and thin)
-const THIN_TEXT = new Set(['Cardo', 'EB Garamond', 'Cormorant', 'Radley', 'Gentium Book Plus', 'Lusitana', 'Crimson Pro', 'Spectral', 'Libre Caslon Text', 'Castoro', 'Prata', 'Rufina']);
+export const THIN_TEXT = new Set(['Cardo', 'EB Garamond', 'Cormorant', 'Radley', 'Gentium Book Plus', 'Lusitana', 'Crimson Pro', 'Spectral', 'Libre Caslon Text', 'Castoro', 'Prata', 'Rufina']);
 
 export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamilies = [], exclude = [], dark = false }) {
   const wpick = (pairs) => { const t = pairs.reduce((s, [, w]) => s + w, 0); let r = rnd() * t; for (const [v, w] of pairs) { r -= w; if (r <= 0) return v; } return pairs.at(-1)[0]; };

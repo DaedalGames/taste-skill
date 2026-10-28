@@ -174,7 +174,7 @@ export function extra() {
       const el = n.parentElement; if (!el || !visible(el)) continue;
       if (el.closest('[data-ui]') && parseFloat(getComputedStyle(el).fontSize) < 11.5) out.tinyUi++;
       if (noteRe.test(t) && out.builderNotes.length < 4) out.builderNotes.push(t.slice(0, 70));
-      if (/[\w.-]+@[\w-]+\.example\b|\bexample\.(com|org)\b|\b555-0\d{3}\b/i.test(t) && out.placeholders.length < 4) out.placeholders.push(t.slice(0, 50));
+      if (/[\w.-]+@[\w-]+\.example\b|\bexample\.(com|org)\b/i.test(t) && out.placeholders.length < 4) out.placeholders.push(t.slice(0, 50));
     }
     for (const a of document.querySelectorAll('a[href]')) { const h = a.getAttribute('href') || ''; if (/\.example\b|example\.(com|org)/i.test(h) && out.placeholders.length < 4) out.placeholders.push(h.slice(0, 50)); }
   }

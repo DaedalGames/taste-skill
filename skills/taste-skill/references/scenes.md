@@ -260,12 +260,12 @@ with `scenes.mjs` like any other.
 
 ## 9. The catalogue
 
-Thirty scenes in eleven families. The draw deals from `library/scenes.json`, which holds each scene's
-full entry (where it goes, its content, its options, its phone plan); `node <skill>/scripts/draw.mjs
---list scenes` prints the list, and each scene file's header is the full contract. A scene marked
-*product-photo* is dealt only with `--have product-photo`: photographs or renders of the client's own
-product, building or work. Every other scene works with real pictures of the subject's world, with
-drawings, or with type alone.
+Thirty-three scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
+scene's full entry (where it goes, its content, its options, its phone plan);
+`node <skill>/scripts/draw.mjs --list scenes` prints the list, and each scene file's header is the full
+contract. A scene marked *product-photo* is dealt only with `--have product-photo`: photographs or
+renders of the client's own product, building or work. Every other scene works with real pictures of
+the subject's world, with drawings, or with type alone.
 
 **Camera through space**
 - **Descend through the weather** (`descend-through-weather`): the first screen sinks through cloud
@@ -304,7 +304,7 @@ drawings, or with type alone.
 - **Stepped columns raise a stage** (`stepped-columns-raise-a-stage`): ink fills 3-5 columns like a
   falling bar chart and levels into one block. Short copy, no pictures, no drawing. No ink edge crosses
   copy being read: keep the default `ghost: false`, where each column opens as an ink stub that
-  already holds its copy.
+  already holds its copy. Not dealt: built as hollow ink boxes twice.
 
 **Grid reassembly**
 - **Parts lock into the whole** (`parts-lock-into-the-whole`): one huge word or number steps back while
@@ -317,7 +317,8 @@ drawings, or with type alone.
   four real figures about the subject (never constants of its medium). Four screens, so it carries the
   about or the gallery, not the work: its cards are small, and the work is shown at size elsewhere.
 - **Scatter and lock** (`scatter-and-lock`): one photograph scattered as shards in 3D is assembled by
-  the scroll, then grows to full bleed. One strong photograph with texture everywhere.
+  the scroll, then grows to full bleed. One strong photograph with texture everywhere. Not dealt: judged
+  a stock trope twice.
 
 **Horizontal travel**
 - **Arrive and settle on a sideways track** (`arrive-and-settle-track`): the letters of a closing line
@@ -380,6 +381,12 @@ drawings, or with type alone.
   tear.
 - **Raster cut between chapters** (`raster-cut`): the next chapter prints over the current one through
   slats while the title changes ink line by line. Two grounds and a title of 2-4 words.
+- **Page lifts off a closing picture** (`page-lifts-off-closing-picture`): the last content section
+  lifts away like a sheet, a little smaller and dimmer as it goes, and uncovers a picture held under it
+  all along, which settles from a close 1.35x zoom to its framing as the scroll runs out; a band in the
+  picture's own top-edge colour carries the closing line and the contact. One photograph with an even
+  top edge (fog, sky, a plain wall), or a full-bleed crop of the product's interface (`data-ui`). The
+  end of the page, once; hold 1.
 
 **Type choreography**
 - **Letter physics** (`letter-physics`): a claim bursts apart in 3D and an answer lands in a disc of

@@ -152,6 +152,17 @@ its price; each speaker with a talk title. A design can only be judged at its re
 that shows one rate where six rooms exist looks unfinished. List every sample detail in the report so
 the client confirms or replaces it.
 
+**Facts about the real world are not sample details.** Distances, travel times, history, populations
+and awards of a real place or organisation come from the brief or are left out; a guess ("forty
+minutes from Reykjavik" for a house in the Westfjords, hours away) is wrong to every reader who knows.
+
+**Sample contacts are unmistakably fictional.** A phone number the brief does not give comes from the
+country's range reserved for fiction where one exists (North America 555-0100 to 555-0199; the UK
+07700 900000 to 900999, 01632 960000 to 960999 or 020 7946 0000 to 0999); otherwise it is a plainly
+patterned number in the country's format, zeros after the area code. Never a real area code with
+random digits, and never 555 outside North America: both can ring a real line. The email is at the
+brand's own domain, never `.example`. List both with the sample details in the report.
+
 ## 6. Things that read as generated
 
 `lint.mjs` flags most of these.
