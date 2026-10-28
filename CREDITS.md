@@ -28,3 +28,10 @@
 
 - `d/`, `p/` (turntable frames of the 'Halden 35' camera): 3D renders made for this demo; the camera and its maker are invented.
 
+## page-lifts-off-closing-picture
+
+- `korpilahti-harbour-fog.jpg`, `korpilahti-harbour-fog-3264.jpg`: "Päijänne Korpilahden satama" by Mika
+  Särkijarvi, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), via
+  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:P%C3%A4ij%C3%A4nne_Korpilahden_satama.JPG),
+  modified (camera noise reduced, the fog in the top 42% softened and its lens fall-off evened out, metadata
+  removed; the 1920px copy resized from it), shared under the same licence.
