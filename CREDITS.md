@@ -67,3 +67,15 @@ metadata kept. Photographed at the British Library and dedicated to the public d
 - `four-lais-900.jpg`: ["Guingamor, Lanval, Tyolet, Bisclaveret. - BL2346a3 upper and spine Hadaway
   design"](https://commons.wikimedia.org/wiki/File:Guingamor,_Lanval,_Tyolet,_Bisclaveret._-_BL2346a3_upper_and_spine_Hadaway_design.jpg),
   cover by William Snelling Hadaway, 1900.
+
+## product-assembles-into-its-action
+
+Two photographs for the demo's made-up invoicing app, served through Picsum at the size the page shows
+them, with their metadata removed:
+
+- `studio-room.jpg`: a studio room with a table and white chairs, photograph by Breather on
+  [Unsplash](https://unsplash.com/photos/DEdM9Vs6s8w) ([Unsplash licence](https://unsplash.com/license)),
+  cropped to 1100x1375.
+- `mixing-desk.jpg`: a hand on the fader of a mixing desk, photograph by Drew Patrick Miller on
+  [Unsplash](https://unsplash.com/photos/_o6AAx9dl_Y) ([Unsplash licence](https://unsplash.com/license)),
+  cropped to 1200x800.
