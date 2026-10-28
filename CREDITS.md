@@ -51,3 +51,19 @@ removed:
   [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), via
   [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:14_2024_Sogn_og_Fjordane_01.jpg), modified
   (cropped to 1920x2000 around the boat from the 1920px copy), shared under the same licence.
+
+## closing-object-turns
+
+Three publishers' cloth covers for the demo's made-up library show, each cropped to its boards, with no
+metadata kept. Photographed at the British Library and dedicated to the public domain by Southwold1966,
+[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/), via Wikimedia Commons:
+
+- `natures-own-gardens-1160.jpg`, `natures-own-gardens-720.jpg`: ["Nature's Own Gardens - BL 7031w10 upper
+  cover and spine Knowles"](https://commons.wikimedia.org/wiki/File:Nature%27s_Own_Gardens_-_BL_7031w10_upper_cover_and_spine_Knowles.jpg),
+  cover by Reginald Knowles, 1907.
+- `shadows-and-fireflies-900.jpg`: ["Shadows and firefliesa book of verse - BL 11607aaa25 1 upper cover and
+  spine by Guthrie"](https://commons.wikimedia.org/wiki/File:Shadows_and_firefliesa_book_of_verse_-_BL_11607aaa25_1_upper_cover_and_spine_by_Guthrie.jpg),
+  cover by James Guthrie, 1898.
+- `four-lais-900.jpg`: ["Guingamor, Lanval, Tyolet, Bisclaveret. - BL2346a3 upper and spine Hadaway
+  design"](https://commons.wikimedia.org/wiki/File:Guingamor,_Lanval,_Tyolet,_Bisclaveret._-_BL2346a3_upper_and_spine_Hadaway_design.jpg),
+  cover by William Snelling Hadaway, 1900.
