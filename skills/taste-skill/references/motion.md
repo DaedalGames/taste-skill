@@ -842,6 +842,60 @@ Study: 6 pages roll digit columns (stats, a year, coordinates), about 0.9-1.1 s 
 expo-out, staggered by column. Use it for three or four figures at display size, never in running text
 and never for a value that changes after load. Reduced motion: the figure is set at its value.
 
+### Product replay
+
+On a software page the sheet deals one (section 8): the product's own window plays one short task when
+it scrolls into view. Linear, Stripe, Vercel and Attio make this their big moment, not a pinned scene.
+The HTML is the final state, every pane filled; `assets/replay.js` takes it back to its first state as
+it comes within half a screen of the view and plays the beats forward. A working example of all six:
+`assets/replay-demo.html`.
+
+```html
+<figure class="replay" data-replay="900,1300,1100,1600" aria-hidden="true">   <!-- ms each beat lasts, 3-5 -->
+  <div data-ui> … the product panel, in its final state …
+    <input value="Invoice Acme for March" data-type-at="1">     typed at beat 1
+    <li data-at="2">Acme · 4,200 €</li>                         appears at beat 2 (its slot is kept)
+    <button data-press-at="3">Send</button>                     the cursor goes here, presses at beat 3
+    <span data-at="4" data-from="Pending">Paid</span>           text swaps at beat 4
+    <b data-roll-at="4" data-from="38">41</b>                   the figure rolls at beat 4
+    <tr data-select-at="4" class="is-selected">…</tr>           selected at beat 4
+    <li data-flip-at="4" data-flip-from="#todo">…</li>          moved here from #todo at beat 4 (FLIP)
+  </div>
+  <span class="replay__cursor" data-replay-cursor><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
+</figure>
+<p class="replay__said">One plain sentence of what happens, for everyone (screen readers included).</p>
+<button type="button" class="button" data-replay-again>Replay</button>
+```
+
+Also `data-style-at` with `data-style-from` (a mark that travels to its place), `data-says="2:Reading 412
+entries|3:…"` (an agent's status line), `data-frame-at` (the accent frame steps here), named cursors
+(`data-name` on the cursor, `data-cursor` on its targets) and feature lines beside the window
+(`data-line-at`, buttons that send it back to their beat). The six patterns:
+
+- **The window does one task:** a field fills → the list answers → the cursor presses the action → the
+  result lands as a change in the layout (the row moves, the count ticks).
+- **The agent works beside its result:** the request types in → "Reading 412 entries" → "Checking
+  against the bank feed" as a frame lands on one cell → "Fixed: a duplicate refund" as the cell rolls.
+- **The board moves its own card:** a new item drops in → the cursor lifts one item → carries it to
+  the next column → both counts tick.
+- **Teammates take turns:** named cursors each make one change in turn, then the object rests.
+- **Edit the source, the output rebuilds:** one value retyped → the same marks travel to new places →
+  the read-out re-counts.
+- **A frame tours the live screen:** an accent frame steps to three regions, a value changes at each,
+  the matching feature line beside the window turns full ink.
+
+Rules: three to five beats, each one visible change with real labels and figures that add up (a count
+is right at every beat, not only at the end); one action at a time, by one cursor, the agent, or each
+named cursor in turn (teammates taking turns), aimed at the element it changes (measured, never fixed offsets);
+the first change within 0.5 s of a third of the window entering, 4-8 s in all, once; it pauses off
+screen and resumes, and a returning visitor presses Replay, never sits through a loop. Reduced motion,
+no script and the inspector see the final state. Never a video, a GIF or screenshots in sequence;
+never a device frame or browser dots. Never in the hero: the hero's fragment is the entrance's, and
+the replay's fragment carries no `data-e`, `data-reveal` or `data-moment`. Phones: one panel of it,
+the same beats. The inspector fails a dealt replay that is missing (`replay-missing`), doubled with
+the entrance (`replay-clash`), without a Replay button (`replay-control`) or a recording
+(`replay-video`).
+
 ### Accordion
 
 ```css
@@ -865,7 +919,8 @@ Things open from where they were triggered (`transform-origin` at the trigger). 
 
 ## 7. Signature moves
 
-The direction sheet names one. Each of these was seen repeatedly on the studied gallery sites.
+The direction sheet names one. Each of these was seen repeatedly on the studied gallery sites. On a
+software page the signature move is the product replay the sheet deals (§6, "Product replay").
 
 | Move | What happens | Build with |
 | --- | --- | --- |
@@ -876,7 +931,7 @@ The direction sheet names one. Each of these was seen repeatedly on the studied 
 | Index with preview | Text rows; the hovered row shows its image | Index with preview, anchored to the row |
 | Curtain footer | The last section is revealed from under the page as you reach the end | `position: sticky; bottom: 0` footer under a main with a background and `z-index` |
 | Slow crossfade | Hero image crossfades through 3–4 photographs, 5–6s each | Stacked images, opacity keyframes, pause when the tab is hidden |
-| Edge-to-edge marquee | One line of very large type travels sideways, slowly | Duplicate the content, `translateX(-50%)` linear loop, pause on hover and under reduced motion |
+| Edge-to-edge marquee | One line of very large type travels sideways, slowly. Its words are new information (the services, the formats, the clients the page can name), never the hero's line again | Duplicate the content, `translateX(-50%)` linear loop, pause on hover and under reduced motion |
 | Drag row | A horizontally scrollable row of large images with scroll snapping | `overflow-x: auto; scroll-snap-type: x mandatory`, no library |
 | Colour by chapter | Each chapter is its own full-bleed colour field, so the ground changes at section edges; a fixed header takes the ink of the chapter beneath | Section backgrounds in CSS; `base.js` sets `--header-ink` from `data-ink`. Never recolour the whole page from an observer |
 | Opening window | A type screen hands over to the big picture: a window in the middle of a held stage opens to full-bleed over about one screen | Opening window recipe |

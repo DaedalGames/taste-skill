@@ -37,7 +37,7 @@
  {
   "id": "edge-marquee",
   "name": "Edge-to-edge marquee",
-  "description": "One line of very large type travels sideways across the full width at a slow constant speed, as a band between two sections or as the closing statement. Linear timing, duplicated content for a seamless loop, paused on hover and under reduced motion. One marquee per page, carrying real words (the name, the claim), never a list of buzzwords."
+  "description": "One line of very large type travels sideways across the full width at a slow constant speed, as a band between two sections or as the closing statement. Linear timing, duplicated content for a seamless loop, paused on hover and under reduced motion. One marquee per page, carrying real words, never a list of buzzwords. Its words are new information (the services, the formats, the clients the page can name), never the hero's line again."
  },
  {
   "id": "drag-row",

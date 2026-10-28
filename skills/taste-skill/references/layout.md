@@ -220,8 +220,10 @@ points this way, including several above 7.5.
 
 - **The idea survives to the last pixel.** Ask of each section, pricing and FAQ included: what does
   the page's idea do here? If the page is a menu, the prices are menu lines. If the name is a
-  monument, the footer is the name again. If the object's shape is the motif, the button and the image
-  masks carry it.
+  monument, the hero carries it, never the footer. If the object's shape is the motif, the button and
+  the image masks carry it.
+- **No card grid for features:** an editorial list or one large product view with short annotations;
+  at most one framed surface per section, never empty space inside a frame.
 - **No two neighbours share a layout.** Use the shape of each dealt blueprint (list, split, statement,
   full-bleed, mosaic, table, strip, pinned …). Count them in the screenshot; a shape used three times
   is the template showing. Three or more full-bleed picture screens in a row, each a picture with a
@@ -287,12 +289,12 @@ points this way, including several above 7.5.
 
 ## 8. Endings
 
-- The page should end on a designed scene. In the study: the name at full width (about 18 of 114), the
-  hero repeated in inverted colours (about 12), a closing scene of its own such as the one contact
-  fact set as a headline (about 14), or simply one quiet line (about 22). Link-column footers appear
-  in the panel's notes only as criticism.
-- The full-width name is strong but already a studio habit; use it when the direction is name-led,
-  otherwise prefer the blueprint dealt for the footer.
+- The page ends on a closing line at display size (the action as a statement) and the facts a visitor
+  needs at text size: the email at the h3 step at most, with a Copy button and a mailto link, the
+  address, the hours. Never the email or the name set across the width: none of the 65 professional
+  sites does it, and it lost a round-4 page points. On a one-page site the footer is one line; link
+  columns only for real pages beyond this one. Style every list: no browser bullets in a footer or a
+  nav.
 - The last section carries a closing line at display size (the action as a statement, or the name),
   never a label-sized heading: its title is at least the size of the other section headings. A card
   set over a closing photograph sits on the page margin like everything else.

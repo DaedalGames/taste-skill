@@ -107,11 +107,14 @@ export function extra() {
     const r = el.getBoundingClientRect(); if (r.width < W * 0.5 || r.height < 120) continue;
     out.rails.push({ what: 'a sideways scroller', size: `${r2(r.width)}x${r2(r.height)}`, text: textOf(el).slice(0, 40) });
   }
-  for (const el of document.querySelectorAll('input[type=range], progress, [role=progressbar], [class*=progress i], [class*=scrollbar i], [class*=drag i]')) {
-    if (inUI(el) || !visible(el)) continue; const r = el.getBoundingClientRect(); if (r.width < 120) continue;
-    out.rails.push({ what: el.matches('input[type=range]') ? 'a slider' : 'a progress or drag bar', size: `${r2(r.width)}x${r2(r.height)}`, text: (el.className && String(el.className).slice(0, 40)) || '' });
+  // (a range input is reported once, by range-slider below; scenes report their own tracks, scene-track)
+  for (const el of document.querySelectorAll('progress, [role=progressbar], [class*=progress i], [class*=scrollbar i], [class*=drag i]')) {
+    if (inUI(el) || !visible(el) || el.closest('.scene, [data-scene]')) continue; const r = el.getBoundingClientRect(); if (r.width < 120) continue;
+    out.rails.push({ what: 'a progress or drag bar', size: `${r2(r.width)}x${r2(r.height)}`, text: (el.className && String(el.className).slice(0, 40)) || '' });
     if (out.rails.length > 8) break;
   }
+  // a range slider used as a page control, forms included (only a product fragment may show one)
+  out.ranges = [...document.querySelectorAll('input[type=range]')].filter((i) => visible(i) && !i.closest('[data-ui]')).map((i) => ({ label: ((i.labels && i.labels[0] && textOf(i.labels[0])) || i.getAttribute('aria-label') || i.name || i.id || 'unnamed').slice(0, 40) }));
 
   // --- boxes: share of running text that sits inside a filled or outlined box
   let inBox = 0, allText = 0;
@@ -178,9 +181,27 @@ export function extra() {
 
   // --- the same large picture twice, the same heading twice, boxes with nothing in them, switches as a feature list
   {
-    const seenPics = new Map();
-    for (const img of document.querySelectorAll('img')) { if (!visible(img)) continue; const r = img.getBoundingClientRect(); if (r.width * r.height < W * H * 0.08) continue; const k = (img.currentSrc || img.src).split('?')[0].split('/').pop(); if (k) seenPics.set(k, (seenPics.get(k) || 0) + 1); }
-    out.repeatedPictures = [...seenPics.entries()].filter(([, n]) => n > 1).map(([k, n]) => ({ src: k.slice(0, 40), n }));
+    // the same file twice (keyed by its whole path: /id/12/1600/1000 and /id/40/1600/1000 are two photographs),
+    // and one series used again and again: its files' names without numbers, sizes and crop suffixes
+    // (zettelarchiv3, zettelarchiv5, zettelarchiv-tll are one archive)
+    const seenPics = new Map(), series = new Map();
+    const CROP = new Set(['crop', 'wide', 'tall', 'square', 'portrait', 'landscape', 'small', 'large', 'thumb', 'detail', 'close', 'hero', 'full', 'half']);
+    const stemOf = (file) => {
+      const name = file.replace(/\.[a-z0-9]{2,5}$/i, '').toLowerCase();
+      const kept = name.split(/[-_.\s]+/).filter((t, i) => t && !/^\d+$/.test(t) && !/^\d+x\d+$/.test(t) && !/^@?\d+[wx]$/.test(t) && !CROP.has(t) && (i === 0 || t.length >= 4));
+      const stem = kept.join('-').replace(/\d+$/, '').replace(/-+$/, '');
+      return /^[a-z]/.test(stem) && stem.length >= 4 && !/^(photo|image|img|picture|pic|shot|still|frame|cover|card|work|project|asset|slide|gallery|scene|bg|background)$/.test(stem) ? stem : null;
+    };
+    for (const img of document.querySelectorAll('img')) {
+      if (!visible(img)) continue; const r = img.getBoundingClientRect(); if (r.width * r.height < W * H * 0.02) continue;
+      let path = ''; try { path = new URL(img.currentSrc || img.src, location.href).pathname; } catch { path = (img.currentSrc || img.src).split('?')[0]; }
+      const file = decodeURIComponent(path.split('/').pop() || '');
+      if (path && r.width * r.height >= W * H * 0.08) seenPics.set(path, (seenPics.get(path) || 0) + 1);
+      const stem = file && stemOf(file);
+      if (stem) { const s = series.get(stem) || { n: 0, files: new Set() }; s.n++; s.files.add(path); series.set(stem, s); }
+    }
+    out.repeatedPictures = [...seenPics.entries()].filter(([, n]) => n > 1).map(([k, n]) => ({ src: k.split('/').slice(-2).join('/').slice(-40), n }));
+    out.pictureSeries = [...series.entries()].filter(([, s]) => s.n >= 3 && s.files.size >= 2).map(([stem, s]) => ({ stem, n: s.n }));
     const heads = new Map();
     for (const h of document.querySelectorAll('h1, h2, h3')) { if (!visible(h) || inUI(h)) continue; const k = textOf(h).toLowerCase(); if (k.length > 3) heads.set(k, (heads.get(k) || 0) + 1); }
     out.repeatedHeadings = [...heads.entries()].filter(([, n]) => n > 1).map(([k]) => k.slice(0, 40));
@@ -203,12 +224,22 @@ export function extra() {
   }
 
   // --- drawn illustrations (inline SVG pictures of things), and words in the first screen and per section
-  out.drawings = [];
+  out.drawings = []; out.sceneDrawings = [];
+  const sceneOf = (el) => el.closest('.scene, [data-scene]');
+  const sceneId = (s) => (s && (s.dataset.scene || s.id)) || 'scene';
   for (const svg of document.querySelectorAll('svg')) {
-    if (svg.parentElement?.closest('svg') || !visible(svg) || svg.closest('[data-ui], header, nav, footer, .scene, [data-scene], button, a')) continue;
-    const r = svg.getBoundingClientRect(); const share = (r.width * r.height) / (W * H); if (share < 0.012) continue;
+    if (svg.parentElement?.closest('svg') || !visible(svg) || svg.closest('[data-ui], header, nav, footer, button, a')) continue;
+    const r = svg.getBoundingClientRect(); const share = (r.width * r.height) / (W * H);
     const shapes = svg.querySelectorAll('path, circle, ellipse, rect, polygon, polyline, line').length;
     const labels = [...svg.querySelectorAll('text')].filter((t) => t.textContent.trim()).length;
+    const scene = sceneOf(svg);
+    if (scene) {
+      // inside a scene any drawing counts (wheels, waves, axles, morphing shapes); a labelled map or plan and the
+      // brand's own mark do not
+      if (share >= 0.02 && shapes >= 1 && labels < 3 && !svg.closest('.route-art, [data-map], .portal-src, .portal-mark, [data-plan], [data-mark]') && out.sceneDrawings.length < 6) out.sceneDrawings.push({ id: sceneId(scene), shapes, share: +share.toFixed(3) });
+      continue;
+    }
+    if (share < 0.012) continue;
     if (shapes >= 6 && labels <= 2) out.drawings.push({ share: +share.toFixed(3), shapes, near: textOf(svg.closest('section, article, div') || svg).slice(0, 40) });
     if (out.drawings.length >= 12) break;
   }
@@ -264,5 +295,257 @@ export function extra() {
     const menu = top.some((b) => /menu|navigation/i.test((b.getAttribute('aria-label') || '') + ' ' + textOf(b)) || b.getAttribute('aria-expanded') != null);
     out.nav = { links: top.length, menu };
   }
+
+  // ---------- round 4: what judges found on pages every check above passed ----------
+  const opaqueBg = (el) => { const m = getComputedStyle(el).backgroundColor.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return p.length > 3 && p[3] < 0.9 ? null : p.slice(0, 3); };
+  const differs = (a, b, d = 6) => !!a && !!b && a.some((v, i) => Math.abs(v - b[i]) >= d);
+  const sides = (el) => { const cs = getComputedStyle(el); return ['Top', 'Right', 'Bottom', 'Left'].filter((s) => parseFloat(cs[`border${s}Width`]) >= 1 && cs[`border${s}Style`] !== 'none' && !/rgba\([^)]*,\s*0\)/.test(cs[`border${s}Color`])).length; };
+  const filledOn = (el) => { const c = opaqueBg(el); return c && differs(c, groundOf(el.parentElement || B)) ? c : null; };
+  const textRects = (root) => { const out = []; const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const rg = document.createRange(); let n; while ((n = tw.nextNode())) { if (!n.nodeValue.trim() || !n.parentElement || !visible(n.parentElement)) continue; rg.selectNodeContents(n); for (const r of rg.getClientRects()) if (r.width > 1 && r.height > 1) out.push(r); } return out; };
+  // The share of a box with nothing in it: an 8 x 8 grid of points inside it, a point filled when it falls on a line
+  // of text, a picture, or a painted leaf element (a bar, a dot, a field), each grown by 8px.
+  const emptyInside = (box) => {
+    const b = box.getBoundingClientRect(); if (b.width < 8 || b.height < 8) return 0;
+    const fill = textRects(box);
+    for (const e of box.querySelectorAll('img, video, svg, canvas, picture, iframe, input, select, textarea')) { if (e.parentElement?.closest('svg') || !visible(e)) continue; fill.push(e.getBoundingClientRect()); }
+    for (const e of box.querySelectorAll('*')) { if (e.childElementCount || !visible(e) || e.closest('svg')) continue; const cs = getComputedStyle(e); if (rgb(cs.backgroundColor) || cs.backgroundImage !== 'none' || sides(e)) fill.push(e.getBoundingClientRect()); }
+    let empty = 0;
+    for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) {
+      const x = b.left + ((i + 0.5) * b.width) / 8, y = b.top + ((j + 0.5) * b.height) / 8;
+      if (!fill.some((r) => x >= r.left - 8 && x <= r.right + 8 && y >= r.top - 8 && y <= r.bottom + 8)) empty++;
+    }
+    return empty / 64;
+  };
+  const emailRe = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/;
+
+  // --- giant-contact: an email, a phone or the site's name set at display size anywhere on the page
+  out.giantContact = [];
+  {
+    const sizeIn = (el) => { let s = 0; const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n; while ((n = tw.nextNode())) { if (!n.nodeValue.trim() || !n.parentElement || !visible(n.parentElement)) continue; s = Math.max(s, parseFloat(getComputedStyle(n.parentElement).fontSize)); } return s; };
+    // a mailto or tel link counts by what it shows: an address or a number, not a closing line set as the link
+    const phoneRe = /^\+?[\d\s().\-/]{7,}$/;
+    const cands = new Set([...document.querySelectorAll('a[href^="mailto:"], a[href^="tel:"]')].filter((a) => { const t = textOf(a); return emailRe.test(t) || (phoneRe.test(t) && t.replace(/\D/g, '').length >= 6); }));
+    // an address split across spans: the smallest element whose whole text holds it
+    const tw = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); let n, k = 0;
+    while ((n = tw.nextNode()) && k < 8000) { k++; if (!n.nodeValue.includes('@') || !n.parentElement) continue; let e = n.parentElement; for (let d = 0; e && d < 4 && !emailRe.test(e.textContent); d++) e = e.parentElement; if (e && emailRe.test(e.textContent) && e.textContent.length < 120) cands.add(e); }
+    const limit = W < 600 ? 28 : Math.max(32, W * 0.024);
+    const seen = new Set();
+    for (const c of cands) {
+      if (!visible(c) || c.closest('[data-ui], dialog, [role=dialog]')) continue;
+      const s = sizeIn(c); const t = textOf(c).slice(0, 40);
+      if (s > limit && !seen.has(t)) { seen.add(t); out.giantContact.push({ text: t, size: r2(s), vw: +((s / W) * 100).toFixed(1), what: 'contact' }); }
+    }
+    // the name: the wordmark ([data-wordmark], or the header link that leads to the page itself), at 6vw or more
+    // anywhere below the first screen. A header with neither has no name to check.
+    const home = (a) => {
+      const h = (a.getAttribute('href') || '').trim();
+      if (['#', '#top', '/', './', 'index.html', './index.html'].includes(h)) return true;
+      if (!h || /^(mailto|tel|javascript):/i.test(h)) return false;
+      try { const u = new URL(h, location.href), strip = (p) => p.replace(/index\.html?$/, ''); return u.origin === location.origin && strip(u.pathname) === strip(location.pathname) && (!u.hash || u.hash === '#top'); } catch { return false; }
+    };
+    const mark = document.querySelector('[data-wordmark]') || [...document.querySelectorAll('header a, nav a, [role=banner] a')].find(home);
+    const name = mark ? textOf(mark) : '';
+    if (name && name.split(' ').length <= 4 && name.length >= 3) {
+      let m = 0;
+      for (const el of B.querySelectorAll('h1, h2, h3, p, div, span, a, strong, b, li')) {
+        if (++m > 6000) break;
+        if (el.closest('header, nav, [role=banner], [data-ui]') || (el.textContent || '').length > 80 || textOf(el).toLowerCase() !== name.toLowerCase() || !visible(el)) continue;
+        const r = el.getBoundingClientRect(); if (r.top + sy <= H) continue;
+        const s = sizeIn(el);
+        if (s >= Math.max(W * 0.06, 40) && !seen.has(name)) { seen.add(name); out.giantContact.push({ text: name.slice(0, 40), size: r2(s), vw: +((s / W) * 100).toFixed(1), what: 'name' }); }
+      }
+    }
+  }
+
+  // --- hero-in-card: the first screen's headline set inside a card or panel
+  out.heroCard = null;
+  {
+    const firsts = [...document.querySelectorAll('h1')].filter((h) => visible(h) && h.getBoundingClientRect().top + sy < H);
+    let h = firsts[0];
+    if (!h) { let best = 0; for (const el of B.querySelectorAll('h2, p, div, span')) { if (el.childElementCount || !visible(el) || !textOf(el)) continue; const r = el.getBoundingClientRect(); if (r.top + sy >= H) continue; const s = parseFloat(getComputedStyle(el).fontSize); if (s > best) { best = s; h = el; } } }
+    if (h && !h.closest('[data-ui]')) {
+      const hr = h.getBoundingClientRect();
+      const wide = (() => { for (let e = h.parentElement; e && e !== B; e = e.parentElement) if (e.getBoundingClientRect().width >= W * 0.9) return e; return B; })();
+      // a canvas is not a picture here: a scene's field (the dither opener) under a headline block filled in the ground colour is no card
+      const pictures = [...wide.querySelectorAll('img, video, picture, [style*="background-image"]')].filter(visible);
+      for (let a = h.parentElement; a && a !== wide && a !== B; a = a.parentElement) {
+        const r = a.getBoundingClientRect(), cs = getComputedStyle(a);
+        if (r.width >= W * 0.85 || r.height >= H * 0.95 || r.height < hr.height * 1.5 || /url\(/.test(cs.backgroundImage)) continue;
+        const own = opaqueBg(a);
+        // filled unlike its ground, or a filled panel lying on a picture
+        const onPicture = !!own && pictures.some((p) => !a.contains(p) && !p.contains(a) && (() => { const pr = p.getBoundingClientRect(); const ix = Math.min(pr.right, r.right) - Math.max(pr.left, r.left), iy = Math.min(pr.bottom, r.bottom) - Math.max(pr.top, r.top); return ix > 0 && iy > 0 && ix * iy >= r.width * r.height * 0.8; })());
+        const card = (own && (differs(own, groundOf(a.parentElement || B)) || onPicture)) || sides(a) >= 3;
+        if (!card) continue;
+        // a half of a split screen touches its band on three sides; a card floats inside it
+        const wr = wide.getBoundingClientRect();
+        const inset = [r.top - wr.top, wr.right - r.right, wr.bottom - r.bottom, r.left - wr.left].filter((d) => d >= 12).length;
+        if (inset < 3) continue;
+        out.heroCard = { text: textOf(h).slice(0, 50), w: r2(r.width), h: r2(r.height), bg: own ? `rgb(${own.join(', ')})` : 'outlined' };
+        break;
+      }
+    }
+  }
+
+  // --- bento: a section built as a grid of boxed cards; its cells' empty share
+  out.bento = [];
+  {
+    const secs = [...document.querySelectorAll('section, main > div, article')].filter((s) => !s.parentElement?.closest('section') && visible(s) && !s.closest('[data-ui], header, footer, nav, .scene, [data-scene]'));
+    for (const s of secs.slice(0, 40)) {
+      const sr = s.getBoundingClientRect(); if (sr.width < W * 0.6 || sr.height < 200) continue;
+      const boxes = [];
+      for (const e of s.querySelectorAll('div, li, article, figure, a, aside')) {
+        if (boxes.some((b) => b.contains(e)) || e.parentElement?.closest('[data-ui]')) continue;
+        const r = e.getBoundingClientRect(); if (r.width < 160 || r.height < 140 || r.width >= sr.width * 0.7 || !visible(e)) continue;
+        // a picture tile (a photograph filling its frame) is a picture, not a card
+        if ([...e.querySelectorAll('img, video, picture')].some((p) => { const q = p.getBoundingClientRect(); return q.width * q.height >= r.width * r.height * 0.6; })) continue;
+        if (filledOn(e) || sides(e) >= 3) boxes.push(e);
+        if (boxes.length > 24) break;
+      }
+      if (boxes.length < 4) continue;
+      const rs = boxes.map((b) => b.getBoundingClientRect());
+      const distinct = (vals) => vals.sort((a, b) => a - b).filter((v, i, a) => !i || v - a[i - 1] > 8).length;
+      const area = rs.reduce((t, r) => t + r.width * r.height, 0);
+      if (distinct(rs.map((r) => r.top)) < 2 || distinct(rs.map((r) => r.left)) < 2 || area < sr.width * sr.height * 0.35) continue;
+      const voids = boxes.map((b, i) => ({ text: textOf(b).slice(0, 30), empty: emptyInside(b), h: r2(rs[i].height) })).filter((b) => b.empty >= 0.5);
+      out.bento.push({ head: textOf(s.querySelector('h1, h2, h3') || s).slice(0, 50), n: boxes.length, voids });
+      if (out.bento.length >= 4) break;
+    }
+  }
+
+  // --- small-body: running text under 16px (15px on a phone), and small text under a display heading
+  out.smallBody = []; out.smallUnderHead = [];
+  {
+    // 16px on desktop, 15px on a phone; a tablet sits between its fluid steps, so it takes the phone floor
+    const floor = W < 1100 ? 15 : 16;
+    const done = new Set();
+    // paragraphs, and any span or div that carries a sentence of its own (a description set as a span)
+    const ownWords = (el) => { let t = ''; for (const c of el.childNodes) if (c.nodeType === 3) t += c.nodeValue + ' '; return words(t); };
+    const blocks = [...document.querySelectorAll('p, li, dd, blockquote'), ...[...B.querySelectorAll('span, div, small, a, em')].filter((e) => ownWords(e) >= 8 && !e.closest('p, li, dd, blockquote'))];
+    for (const p of blocks) {
+      if (done.size > 400) break;
+      if (!visible(p) || [...done].some((d) => d.contains(p)) || p.closest('[data-ui], nav, header, footer, figcaption, label, button, table, dialog, [role=dialog], [aria-hidden=true]')) continue;
+      const t = textOf(p); if (words(t) < 8) continue;
+      // the size most of its words are set in (a name at 17px over a 13px description reads as 13px text)
+      const by = new Map(); { const tw = document.createTreeWalker(p, NodeFilter.SHOW_TEXT); let n; while ((n = tw.nextNode())) { if (!n.parentElement || !n.nodeValue.trim()) continue; const z = parseFloat(getComputedStyle(n.parentElement).fontSize); by.set(z, (by.get(z) || 0) + n.nodeValue.trim().length); } }
+      const s = [...by.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? parseFloat(getComputedStyle(p).fontSize);
+      if (s < floor - 0.25) { done.add(p); out.smallBody.push({ text: t.slice(0, 40), size: +s.toFixed(1) }); continue; }
+      if (W >= 1100 && s < 17.75) {
+        const prev = p.previousElementSibling || (p.parentElement && !p.previousElementSibling ? p.parentElement.previousElementSibling : null);
+        const hs = prev && prev.matches('h1, h2, h3, h4') ? parseFloat(getComputedStyle(prev).fontSize) : 0;
+        if (hs >= 48) out.smallUnderHead.push({ text: t.slice(0, 40), size: +s.toFixed(1), head: r2(hs) });
+      }
+    }
+    out.smallBody = out.smallBody.slice(0, 12); out.smallUnderHead = out.smallUnderHead.slice(0, 6);
+  }
+
+  // --- broken-address: an email, a URL or a phone number broken over two lines
+  out.brokenAddress = [];
+  {
+    const res = [/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, /\b(?:https?:\/\/|www\.)[^\s<>"]+/g, /(?:\+|\(0|\b0)\d[\d ().-]{6,}\d/g];
+    const tw = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); const rg = document.createRange(); let n, k = 0;
+    while ((n = tw.nextNode()) && k < 8000 && out.brokenAddress.length < 6) {
+      k++; const v = n.nodeValue; if (!v || v.length < 6 || !n.parentElement || n.parentElement.closest('[data-ui], svg, script, style') || !visible(n.parentElement)) continue;
+      for (const re of res) for (const m of v.matchAll(re)) {
+        if (re === res[2] && (m[0].match(/\d/g) || []).length < 8) continue;
+        rg.setStart(n, m.index); rg.setEnd(n, m.index + m[0].length);
+        const tops = [...rg.getClientRects()].filter((r) => r.width > 1).map((r) => r.top);
+        if (tops.length > 1 && Math.max(...tops) - Math.min(...tops) > 2) out.brokenAddress.push({ text: m[0].slice(0, 40) });
+      }
+    }
+  }
+
+  // --- result-first: a tool whose result stands above the controls that set it
+  out.resultFirst = [];
+  for (const tool of document.querySelectorAll('form, [data-tool]')) {
+    if (!visible(tool) || tool.closest('[data-ui], dialog, [role=dialog]')) continue;
+    // a control is drawn by its label when the input itself is hidden (a radio styled as a button)
+    const controls = [...tool.querySelectorAll('input:not([type=hidden]), select, textarea, [role=radio], [role=slider]')].filter((c) => !c.closest('[aria-live], output')).map((e) => e.closest('label') || e).filter((e) => { const r = e.getBoundingClientRect(); return r.width > 2 && r.height > 2; });
+    const results = [...tool.querySelectorAll('output, [aria-live]')].filter(visible);
+    if (!controls.length || !results.length) continue;
+    const c = controls.map((e) => e.getBoundingClientRect()).sort((a, b) => a.top - b.top)[0];
+    for (const res of results) {
+      const r = res.getBoundingClientRect();
+      const ox = Math.min(r.right, c.right) - Math.max(r.left, c.left);
+      if (r.bottom <= c.top + 8 && ox > Math.min(r.width, c.width) * 0.5) { out.resultFirst.push({ text: textOf(res).slice(0, 30), tool: (tool.getAttribute('aria-label') || textOf(tool.querySelector('legend, h2, h3, label') || tool)).slice(0, 30) }); break; }
+    }
+  }
+
+  // --- surface-count: the grounds a visitor sees (body, bands, panels of 8% of a screen or more)
+  {
+    const grounds = []; const add = (c, why) => { if (!c) return; const g = grounds.find((x) => !differs(x.c, c, 7)); if (g) g.n++; else grounds.push({ c, why, n: 1 }); };
+    add(opaqueBg(B) || opaqueBg(D) || [255, 255, 255], 'page');
+    let m = 0;
+    for (const el of B.querySelectorAll('*')) {
+      if (++m > 6000) break;
+      if (/^(IMG|VIDEO|CANVAS|PICTURE|svg|IFRAME|INPUT|BUTTON|SELECT|TEXTAREA)$/.test(el.tagName) || el.closest('[data-ui], svg, dialog, [role=dialog]')) continue;
+      const c = opaqueBg(el); if (!c) continue;
+      const r = el.getBoundingClientRect(); if (r.width * r.height < W * H * 0.08 || !visible(el)) continue;
+      // a frame behind a picture is the picture
+      if ([...el.querySelectorAll('img, video, canvas')].some((p) => { const pr = p.getBoundingClientRect(); return pr.width * pr.height >= r.width * r.height * 0.85; })) continue;
+      add(c, el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/)[0] : ''));
+    }
+    out.surfaces = grounds.map((g) => ({ colour: '#' + g.c.map((v) => v.toString(16).padStart(2, '0')).join(''), where: g.why }));
+  }
+
+  // --- empty-box: a filled or outlined box with nothing at all in it (a leftover, or a picture that failed)
+  out.emptyBoxes = [];
+  {
+    let m = 0;
+    for (const el of B.querySelectorAll('div, li, article, aside, figure, span, a, section > div')) {
+      if (++m > 6000 || out.emptyBoxes.length >= 6) break;
+      if (el.closest('[data-ui], .scene, [data-scene], svg, dialog, [role=dialog], [aria-hidden=true]')) continue;
+      const r = el.getBoundingClientRect(); if (r.width < 120 || r.height < 60 || r.width >= W * 0.9 || !visible(el)) continue;
+      const cs = getComputedStyle(el); if (/url\(/.test(cs.backgroundImage) || (!filledOn(el) && sides(el) < 3)) continue;
+      if (textOf(el) || [...el.querySelectorAll('*')].some((k) => visible(k) && (k.childElementCount === 0 || /^(IMG|VIDEO|CANVAS|svg|PICTURE|IFRAME)$/.test(k.tagName)))) continue;
+      if (el.querySelector('img:not([src]), img[loading="lazy"]')) continue;
+      out.emptyBoxes.push({ size: `${r2(r.width)}x${r2(r.height)}`, at: r2(r.top + sy), near: textOf(el.parentElement || B).slice(0, 30) });
+    }
+  }
+
+  // --- hollow-fragment: the first screen's product fragment with panes that hold nothing
+  out.hollowFragment = [];
+  {
+    const ui = [...document.querySelectorAll('[data-ui]')].find((u) => !u.parentElement?.closest('[data-ui]') && visible(u) && u.getBoundingClientRect().top + sy < H);
+    if (ui) {
+      const panes = [ui, ...ui.querySelectorAll('div, section, aside, main, article, ul, ol, form')].filter((p) => { const r = p.getBoundingClientRect(); return r.width >= 160 && r.height >= 120 && visible(p) && (p === ui || filledOn(p) || sides(p) >= 2); });
+      for (const p of panes) { const e = emptyInside(p); if (e >= 0.55) out.hollowFragment.push({ text: textOf(p).slice(0, 30), empty: +e.toFixed(2), size: `${r2(p.getBoundingClientRect().width)}x${r2(p.getBoundingClientRect().height)}` }); if (out.hollowFragment.length >= 4) break; }
+    }
+  }
+
+  // --- scene-track: a rail, scrubber, playhead or progress bar inside a scroll scene
+  out.sceneTracks = [];
+  {
+    const dotLike = (e) => { const w = e.offsetWidth, h = e.offsetHeight; if (w < 4 || h < 4 || w > 20 || h > 20) return false; const cs = getComputedStyle(e); const rad = cs.borderTopLeftRadius; return !!rgb(cs.backgroundColor) && (/%/.test(rad) ? parseFloat(rad) >= 50 : parseFloat(rad) >= Math.min(w, h) / 2 - 0.5); };
+    for (const scene of document.querySelectorAll('.scene, [data-scene]')) {
+      if (scene.parentElement?.closest('.scene, [data-scene]')) continue;
+      const id = sceneId(scene);
+      if ([...scene.querySelectorAll('progress, [role=progressbar], [class*=progress i]')].some((e) => e.offsetWidth >= 40 && visible(e))) { out.sceneTracks.push({ id, w: 0, what: 'a progress bar' }); continue; }
+      const dots = [...scene.querySelectorAll('span, i, b, div, em')].filter(dotLike);
+      for (const l of scene.querySelectorAll('div, span, i, b, li, hr')) {
+        if (l.closest('[data-ui]')) continue;
+        const w = l.offsetWidth, h = l.offsetHeight; if (h < 1 || h > 6 || w < W * 0.15) continue;
+        const cs = getComputedStyle(l); if (!rgb(cs.backgroundColor) && !sides(l) && !(parseFloat(cs.borderTopWidth) >= 1)) continue;
+        const r = l.getBoundingClientRect();
+        const dot = dots.find((d) => { if (l.contains(d)) return true; const q = d.getBoundingClientRect(); return q.right >= r.left - 4 && q.left <= r.right + 4 && q.bottom >= r.top - 4 && q.top <= r.bottom + 4; });
+        const fill = [...l.children].find((c) => rgb(getComputedStyle(c).backgroundColor) && (c.offsetWidth < w - 1 || /matrix\(/.test(getComputedStyle(c).transform)));
+        if (dot || fill) { out.sceneTracks.push({ id, w: r2(w), what: dot ? 'a track with a marker' : 'a bar that fills' }); break; }
+      }
+      if (out.sceneTracks.length >= 4) break;
+    }
+  }
+
+  // --- the product replay: its beats, its control, never a recording, never doubled with the entrance
+  out.replays = [...document.querySelectorAll('[data-replay]')].map((r) => {
+    const beats = String(r.dataset.replay || '').split(',').map(Number).filter((n) => n > 0).length;
+    const marks = new Set();
+    for (const e of r.querySelectorAll('[data-at], [data-type-at], [data-roll-at], [data-select-at], [data-flip-at], [data-press-at], [data-point-at], [data-style-at], [data-frame-at]')) for (const k of ['at', 'typeAt', 'rollAt', 'selectAt', 'flipAt', 'pressAt', 'pointAt', 'styleAt', 'frameAt']) if (e.dataset[k]) marks.add(+e.dataset[k]);
+    for (const e of r.querySelectorAll('[data-says]')) for (const m of e.dataset.says.matchAll(/(\d+):/g)) marks.add(+m[1]);
+    const scope = r.closest('section, article, [data-replay-scope]') || r.parentElement || r;
+    const control = [...scope.querySelectorAll('button, [role=button], a')].some((b) => visible(b) && /replay|again|play/i.test(textOf(b) + ' ' + (b.getAttribute('aria-label') || '')));
+    const rr = r.getBoundingClientRect();
+    const recording = [...r.querySelectorAll('video, img')].some((m) => { const q = m.getBoundingClientRect(); return q.width * q.height >= rr.width * rr.height * 0.4; });
+    const clash = r.matches('[data-e], [data-moment], [data-reveal]') || !!r.querySelector('[data-e], [data-moment], [data-reveal]') || (!!r.closest('[data-hero]') && document.body?.dataset.entrance === 'product-at-work');
+    return { beats, marks: marks.size, control, recording, clash, hero: !!r.closest('[data-hero]') };
+  });
   return out;
 }

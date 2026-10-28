@@ -70,8 +70,9 @@
 //   focus       "rack"    "rack": key 4px -> sharp, lead sharp -> 6px and away, each a cross-fade along
 //                         a ladder of copies blurred once (phone: 3px and 4px) | "flat": no blur, only
 //                         opacity (always flat on devices with 4 cores or fewer)
-//   hold        3         2-4 screens the stage is held (2 brisk, 4 ceremonial); the section is hold + 1
-//   phoneHold   2.5       2-4
+//   hold        1.2       1-1.5 screens the stage is held: one short sentence is read in about one screen,
+//                         and a longer hold is dead scroll; the section is hold + 1
+//   phoneHold   1.2       1-1.5
 //   flood       3         2.4-3.6 end scale of the dome (2.4 leaves halo in the corners, 3.6 pure fill)
 //   phoneFlood  3.6       2.4-4.2
 //   scrub       0.6       seconds of catch-up; true (locked) is used when Lenis is smoothing the page
@@ -445,8 +446,8 @@
       ScrollTrigger.addEventListener('refresh', () => { placedAt = top(); refreshedW = innerWidth; });
     }
 
-    const hold = num(opts.hold, 3, 2, 4);
-    const phoneHold = num(opts.phoneHold, 2.5, 2, 4);
+    const hold = num(opts.hold, 1.2, 1, 1.5);
+    const phoneHold = num(opts.phoneHold, 1.2, 1, 1.5);
     const scrub = opts.scrub === true || opts.scrub === 'true' ? true
       : opts.scrub !== undefined ? num(opts.scrub, 0.6, 0, 2)
       : (Stage.lenis ? true : 0.6);

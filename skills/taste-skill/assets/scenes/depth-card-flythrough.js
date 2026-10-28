@@ -70,7 +70,19 @@
 // and give it a poster for the finished composition.
 // Bake one grade into every card photo (same white balance, muted colour); no CSS filters.
 //
+// Stop mode ({"stop": 0.5}, for the work): each card comes out of the vanishing point (0.2 screen), rests
+// at the centre of the stage flat-on (turned 0°), 62% of the stage wide (never under 60%, at most 70% of
+// its height), for `stop` screens, then grows past and leaves through its own side (0.2 screen, over the
+// next card's approach), so two cards are in the air at most. Its title rides under the card's
+// bottom-left corner at --step-lead from 0.1 screen before its stop to 0.1 after it: the title and the
+// piece are always on screen together. The statement list shows only the scene's heading, before the
+// first stop; the count is off. The hold is N × (stop + 0.2) + 0.3 (3.1 for four at 0.5, 4.5 for six),
+// and no more than about a quarter of a screen of backdrop follows the last piece. The backdrop is shaded
+// toward --fly-stage (--fly-stop-shade, 0.55), so the pieces carry the colour. Phones get the finished
+// composition: the pieces stacked full width, each title under its picture. Use landscape pieces (3:2).
+//
 // Options (data-options), defaults first:
+//   stop        screens each card rests flat at the centre; 0 = the flight. 0                (0.3-0.8)
 //   inAir       cards in the air at once. 3                                                  (2-4)
 //   phoneInAir  cards in the air at once on a phone: two, so the passing card and the next   (2-3)
 //               one sit on opposite sides and never overlap. 2
@@ -134,6 +146,8 @@
   // does the new one come in, over IN_S, so two statements never share the screen. Each moves only SLIDE
   // (% of its own height) as it fades, so it never slides over the count under it.
   const OUT_S = 0.2, IN_S = 0.45, SLIDE = 8;
+  // stop mode, in screens: a card's approach and its exit; the backdrop before the first card
+  const STEP = 0.2, LEAD = 0.15;
   const r3 = (v) => Math.round(v * 1000) / 1000;
   if (window.ScrollTrigger) ScrollTrigger.config({ ignoreMobileResize: true });
 
@@ -151,7 +165,10 @@
     const countNow = root.querySelector('.fly__count-now');
     const countAll = root.querySelector('.fly__count-all');
     if (countAll) countAll.textContent = String(Math.max(N, lines.length));
-    if (opts.count === false) root.classList.add('fly--no-count');
+    // stop mode: each card rests flat and large with its title under it (see the header)
+    const stop = opts.stop ? num(opts.stop, 0.5, 0.3, 0.8) : 0;
+    if (stop) root.classList.add('fly--stop');
+    if (opts.count === false || (stop && opts.count !== true)) root.classList.add('fly--no-count');
     // While the flight runs only one statement is visible; a visually hidden copy of the list keeps all
     // of them, in order, for screen readers (the CSS shows it only under .is-live).
     const list = root.querySelector('.fly__lines');
@@ -190,6 +207,8 @@
     const clockOf = (phone) => {
       const c = phone ? num(opts.phoneInAir, 2, 2, 3) : num(opts.inAir, 3, 2, 4);
       const S = 1 / (N + 0.88 * c - 0.55);
+      // stop mode: an approach, a rest and an exit a card, the exit over the next card's approach
+      if (stop) return { c: 2, S, F: 2 * S, hold: num(opts.hold, clamp(N * (stop + STEP) + 0.3, 1.5, 6), 1.5, 6) };
       return { c, S, F: c * S, hold: num(opts.hold, clamp(0.36 / S, 1.5, 6), 1.5, 6) };
     };
     const desk = clockOf(false), mob = clockOf(true);
@@ -598,12 +617,123 @@
       });
     };
 
+    // Stop mode: one clock in screens. Card k comes out of the vanishing point from LEAD + k × (stop + STEP)
+    // over STEP, rests centred and flat for `stop`, then grows past and leaves through its own side over STEP,
+    // while card k + 1 comes in. Its title rides under its bottom-left corner while it rests.
+    const buildStop = (tl, ctx) => {
+      const stage = ctx.stage;
+      const hold = (ctx.phone ? mob : desk).hold;
+      const P = num(opts.perspective, 300, 240, 600);
+      const zStart = -2 * P;
+      const haze = num(opts.haze, 0, 0, 0.3);
+      const D = video ? num(opts.dolly, 1.08, 1, 1.3) : num(opts.dolly, 1.8, 1.6, 2);
+      const dolly = ctx.phone ? 1 + (D - 1) * 0.7 : D;
+      const run = runOpt * (ctx.phone ? 0.85 : 1);
+      const arrive = opts.arrive !== false;
+      const ARR = Math.min(0.1, 0.3 / hold);   // the arrival beat: the last 0.3 screen at most
+      const settle = gsap.parseEase('power2.inOut');
+      const FOG0 = 0.82;
+      clean();
+      if (field) field.style.perspective = P + 'px';
+      if (list) list.setAttribute('aria-hidden', 'true');
+      lines.forEach((l, i) => { if (i) { l.style.visibility = 'hidden'; l.style.opacity = '0'; } });
+      const geo = cards.map((card, i) => {
+        const ds = parseFloat(card.dataset.side);
+        const side = ds === 1 || ds === -1 ? ds : (i % 2 ? 1 : -1);
+        const raw = parseFloat(getComputedStyle(card).getPropertyValue('--dy'));
+        card.style.zIndex = String(N - i);       // the leaving card is the nearer one
+        const t0 = LEAD + i * (stop + STEP);
+        return { card, fog: card.querySelector('.fly__fog'), tag: tags[i] && tags[i].textContent ? tags[i] : null, side, dy: clamp(Number.isFinite(raw) ? raw : DY[i % DY.length], 0, 8), t0, t1: t0 + STEP, t2: t0 + STEP + stop, w: 0, h: 0, sR: 1, zR: 0, y0: 0, yR: 0, tagH: 0, vis: null, o: -1, f: -1, k: -1 };
+      });
+      let W = 0, H = 0, VP = 0, GH = 1, gk = -1;
+      const measure = () => {
+        W = stage.clientWidth || innerWidth; H = stage.clientHeight || innerHeight;
+        VP = field ? parseFloat(getComputedStyle(field).perspectiveOrigin.split(' ')[1]) : NaN;
+        if (!Number.isFinite(VP)) VP = H * 0.56;
+        for (const g of geo) {
+          g.w = g.card.offsetWidth || 1; g.h = g.card.offsetHeight || 1;
+          // at rest: 62% of the stage wide, never under 60%, its height at most 70% of the stage
+          g.sR = Math.min(0.62 * W / g.w, 0.7 * H / g.h);
+          if (g.sR * g.w < 0.6 * W && g.h * (0.6 * W / g.w) <= 0.78 * H) g.sR = 0.6 * W / g.w;
+          g.zR = P * (1 - 1 / g.sR);
+          // the card and its title as one block on the stage's middle
+          g.tagH = g.tag ? g.tag.offsetHeight + 12 : 0;
+          g.yR = (H / 2 - g.tagH / 2 - VP) / g.sR;
+          g.y0 = (g.dy * H) / 100;
+        }
+        if (ground) { const o = parseFloat(getComputedStyle(ground).transformOrigin.split(' ')[1]); GH = Math.max(1, (ground.offsetHeight || H) - (Number.isFinite(o) ? o : VP)); }
+        gk = -1;
+      };
+      const runAt = (p) => (!arrive ? run * p : p < 1 - ARR ? (run * p) / (1 - ARR) : run * (1 - 0.2 * settle((p - 1 + ARR) / ARR)));
+      const render = (p) => {
+        const sc = p * hold;
+        for (const g of geo) {
+          if (sc <= g.t0 || sc >= g.t2 + STEP) {
+            if (g.vis !== false) { g.card.style.visibility = 'hidden'; g.card.style.opacity = '0'; g.card.style.willChange = 'auto'; g.vis = false; g.o = -1; }
+            if (g.tag && g.k !== 0) { g.tag.style.opacity = '0'; g.k = 0; }
+            continue;
+          }
+          if (g.vis !== true) { g.card.style.visibility = 'visible'; g.card.style.willChange = 'transform, opacity'; g.vis = true; }
+          let s, z, x = 0, y, o = 1, f = haze;
+          if (sc < g.t1) {
+            // the approach: out of the vanishing point to the centre, easing into its rest
+            const a = (sc - g.t0) / STEP, k = 1 - (1 - a) * (1 - a);
+            z = zStart + (g.zR - zStart) * k; s = P / (P - z);
+            y = g.y0 + (g.yR - g.y0) * k; o = Math.min(1, a / 0.3); f = FOG0 + (haze - FOG0) * k;
+          } else if (sc <= g.t2) {
+            z = g.zR; s = g.sR; y = g.yR;
+          } else {
+            // the exit: it grows past and leaves through its own side, solid until its last sliver
+            const e = (sc - g.t2) / STEP, k = e * e;
+            s = g.sR * (1 + 0.8 * k); z = P * (1 - 1 / s); y = g.yR;
+            x = (g.side * k * (W / 2 + (g.w * s) / 2 + 8)) / s;
+            o = e > 0.85 ? (1 - e) / 0.15 : 1;
+          }
+          g.card.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${z.toFixed(2)}px)`;
+          const or = r3(o); if (or !== g.o) { g.card.style.opacity = String(or); g.o = or; }
+          const fr = r3(f); if (g.fog && fr !== g.f) { g.fog.style.opacity = String(fr); g.f = fr; }
+          if (g.tag) {
+            // the title: on from 0.1 screen before the stop to 0.1 after it, under the card's bottom-left corner
+            const k = r3(clamp((sc - (g.t1 - 0.1)) / 0.06, 0, 1) * clamp((g.t2 + 0.1 - sc) / 0.06, 0, 1));
+            if (k > 0) {
+              const left = W / 2 + (x - g.w / 2) * s, bottom = VP + (y + g.h / 2) * s;
+              g.tag.style.transform = `translate3d(${Math.round(Math.max(8, left))}px, ${Math.round(bottom + 12)}px, 0)`;
+            }
+            if (k !== g.k) { g.tag.style.opacity = String(k); g.k = k; }
+          }
+        }
+        // the heading: on the backdrop before the first card rests, gone by its stop
+        if (lines[0] && geo[0]) { const h = r3(clamp((geo[0].t1 - sc) / (geo[0].t1 - Math.max(0, geo[0].t0 - 0.05)), 0, 1)); lines[0].style.opacity = String(h); lines[0].style.visibility = h > 0 ? 'visible' : 'hidden'; }
+        if (ground) { const k = Math.round((runAt(p) / GH) * 1e8) / 1e8; if (k !== gk) { ground.style.transform = `matrix3d(1,0,0,0,0,1,0,${-k},0,0,1,0,0,0,0,1)`; gk = k; } }
+        if (video) seek(p);
+      };
+      if (backdrop) {
+        if (arrive) {
+          tl.fromTo(backdrop, { scale: 1, yPercent: 0 }, { scale: dolly, duration: 1 - ARR, ease: 'none' }, 0);
+          tl.fromTo(backdrop, { scale: dolly, yPercent: 0 }, { scale: dolly - (dolly - 1) * BACK, yPercent: -2, duration: ARR, ease: 'power2.inOut', immediateRender: false }, 1 - ARR);
+        } else tl.fromTo(backdrop, { scale: 1, yPercent: 0 }, { scale: dolly, duration: 1, ease: 'none' }, 0);
+      }
+      const clock = { p: 0 };
+      live = clock;
+      tl.fromTo(clock, { p: 0 }, { p: 1, duration: 1, ease: 'none', immediateRender: false, onUpdate: () => render(clock.p) }, 0);
+      // pictures decode before they move
+      ScrollTrigger.create({
+        trigger: root, start: 'top bottom+=200%', end: 'bottom top',
+        onToggle: (self) => { if (self.isActive) for (const img of root.querySelectorAll('img')) { img.loading = 'eager'; if (img.decode) img.decode().catch(() => {}); } },
+        onRefresh: () => { measure(); render(clock.p); },
+      });
+      measure();
+      render(0);
+    };
+
     const tooMany = N > num(opts.phoneMax, 9, 3, 12);
+    const builder = stop ? buildStop : build;
     return Stage.scene(root, {
       hold: desk.hold,
       scrub: Stage.lenis ? true : 0.5,
-      build: N ? build : null,
-      phone: opts.phone === 'rest' || tooMany ? 'rest' : { hold: mob.hold, build: N ? build : null },
+      build: N ? builder : null,
+      // stop mode rests on a phone (the pieces stacked full width) unless the page asks for 'same'
+      phone: opts.phone === 'rest' || tooMany || (stop && opts.phone !== 'same') ? 'rest' : { hold: mob.hold, build: N ? builder : null },
       rest: clean,
     });
   };

@@ -4,8 +4,8 @@
 // picture settles from a slight scale as its seam lands; the outgoing one is pushed aside and darkens, so
 // the new sheet reads as lying on top. Exactly at the half-and-half frame of each wipe the title and text
 // swap through masks (timed, not scrubbed) and arrive the way the picture did: sliding in from the side the
-// seam came from, bottom line first with a rising sheet. The count rolls ("2 of 4") and a progress bar per
-// chapter fills with the scroll, so the reader always knows where they are and how much is left.
+// seam came from, bottom line first with a rising sheet. The count rolls ("2 of 4") and the chapter names
+// under it mark the current one in full ink. No bar fills with the scroll: the stage shows where the story is.
 //
 // Use it for feature chapters, before/after stories, project indexes or product variants where every
 // chapter has a different picture and different words. Not for a run of similar photos. The half-and-half
@@ -18,7 +18,7 @@
 // clear sky to darker sea hides in a line the picture already has. The finished composition does the same
 // when a script runs; with no script the scrim covers each whole picture.
 //
-// DOM (the scene builds the count and the progress bars itself; it builds the index when it is missing;
+// DOM (the scene builds the count itself; it builds the index when it is missing;
 // it wraps each picture in a <div class="chs-move">, the one box the wipes scale and drift, which also
 // carries the band, so a picture and its band are one layer)
 // <section class="scene" data-scene="pinned-chapter-switcher" aria-labelledby="route-title" data-options='{}'>
@@ -90,7 +90,8 @@
 //                         allow (the words need the lower half)
 //   shade        0.25     how dark the outgoing picture gets as it is covered, 0-0.6
 //   push         1        strength of the scale and drift on both pictures, 0-1.5
-//   index        'tabs'   'tabs' (names over progress bars) | 'bars' (bars only) | 'none'; above 7 chapters 'bars'
+//   index        'names'  'names' (the chapter names, the current one in --chs-ink, the others in --chs-muted;
+//                         desktop and tablet) | 'none'; above 7 chapters 'none'. No progress bars
 //   counter      true     the rolling "2 of 4" beside the heading
 //   preroll      true     the first picture settles into its frame while the section scrolls into view
 //   scrub        true when smooth scrolling is on, else 0.6 (0.4 on a phone)
@@ -219,8 +220,8 @@
     }
     const reel = count && count.querySelector('.chs-reel');
 
-    // index: names over progress bars, built from data-name or the title when the page has none
-    const indexMode = opts.index === 'none' || opts.index === false ? 'none' : opts.index === 'bars' || N > 7 ? 'bars' : 'tabs';
+    // index: the chapter names, built from data-name or the title when the page has none
+    const indexMode = opts.index === 'none' || opts.index === false || N > 7 ? 'none' : 'names';
     root.dataset.index = indexMode;
     let nav = stage.querySelector(':scope > .chs-index');
     if (!nav) {
@@ -240,15 +241,13 @@
     }
     const tabs = [...nav.querySelectorAll('.chs-tab')];
     const links = tabs.map((t) => t.querySelector('a'));
-    const fills = tabs.map((t) => {
+    tabs.forEach((t) => {
       const a = t.querySelector('a') || t;
       if (!a.querySelector('.chs-name')) { const n = document.createElement('span'); n.className = 'chs-name'; n.append(...a.childNodes); a.append(n); }
-      // the name stays the link's accessible name where only the bars show (phone, many chapters)
-      if (a.tagName === 'A' && !a.hasAttribute('aria-label')) a.setAttribute('aria-label', a.querySelector('.chs-name').textContent.trim());
-      let tr = a.querySelector('.chs-track');
-      if (!tr) { tr = document.createElement('span'); tr.className = 'chs-track'; tr.setAttribute('aria-hidden', 'true'); tr.innerHTML = '<span class="chs-fill"></span>'; a.prepend(tr); }
-      return tr.querySelector('.chs-fill');
+      // a page built for an older version may still carry the bars: they go
+      a.querySelectorAll('.chs-track').forEach((tr) => tr.remove());
     });
+    const fills = [];
 
     // the wipe each chapter arrives with
     const set = String(opts.wipes || 'mixed').split(/[\s,]+/).filter((n) => WIPES[n]);
@@ -602,7 +601,6 @@
       // the small frame crosses the big one: drawn in from the right, a beat behind
       if (pair && !cfg.phone) track(insets, insetMovers, insetImgs, insetShades, () => 'right', 0.2, 1.2);
 
-      fills.forEach((f, k) => { if (f) tl.fromTo(f, { scaleX: 0 }, { scaleX: 1, duration: 1 / N, ease: 'none' }, k / N); });
 
       // pre-roll: the first picture settles into its frame while the section arrives (in px, so it never
       // fights the percentages the wipes move it by)

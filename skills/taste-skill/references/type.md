@@ -163,5 +163,7 @@ coherent. When the dealt system has two faces:
   that splits a phrase ("Stools for small / kitchens"). Author the break.
 - Display type so tight that letters touch, or so loose it falls apart.
 - A confident hero followed by section headings almost as large. Keep one size dominant per screen.
+- Section headings hold at their size: a sans display face sets them at 500 or more (the sheet says
+  which). Headings sit on one left edge; no stepped or staggered heading lines.
 - Body text set in the display face when that face was drawn for large sizes only.
 - Everything bold. If every line is emphasised, none is.

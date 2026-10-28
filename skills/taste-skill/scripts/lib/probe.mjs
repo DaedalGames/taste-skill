@@ -731,7 +731,68 @@ export function frame(opts = {}) {
     for (let gx = 0; gx < 24; gx++) for (let gy = 0; gy < 15; gy++) { const x = (gx + 0.5) * (W / 24), y = (gy + 0.5) * (H / 15); all++; if (boxes.some((b) => x >= b.l && x <= b.r && y >= b.t && y <= b.b)) hits++; }
     return Math.round((hits / all) * 100) / 100;
   }
-  if (opts.film) { hitStyle.remove(); return { overText, seen, playing, straddle, content: contentShare(), y: Math.round(scrollY) }; }
+  if (opts.film) {
+    hitStyle.remove();
+    // short lines at display size on screen (line-holds): 32px or more, 8 words or fewer, mostly in view and opaque;
+    // with each one's top, so a line that slides through the screen is told from one that is held
+    const shortLines = [], shortTops = {};
+    for (const el of document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote')) {
+      if (el.parentElement?.closest('h1, h2, h3, h4, h5, h6, p, blockquote') || el.closest('nav, [role=banner], [data-ui], [aria-hidden=true]') || pinnedTop(el)) continue;
+      const txt = (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim(); if (txt.length < 4 || txt.split(' ').length > 8) continue;
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      if (size < 32) { const s = el.querySelector('span, em, strong, b, i'); if (s) size = Math.max(size, parseFloat(getComputedStyle(s).fontSize)); }
+      if (size < 32 || opacityOf(el) < 0.5) continue;
+      const rg = document.createRange(); rg.selectNodeContents(el); let all = 0, on = 0;
+      for (const r of rg.getClientRects()) { const a = r.width * r.height; if (a < 4) continue; all += a; on += Math.max(0, Math.min(r.right, W) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, H) - Math.max(r.top, 0)); }
+      if (all && on / all >= 0.6) { shortLines.push(txt.slice(0, 60)); shortTops[txt.slice(0, 60)] = Math.round(el.getBoundingClientRect().top); }
+    }
+    // what is new on this screen: the blocks of text, the large pictures and fragments in view. A picture is keyed by
+    // its source and its shown width (one that zooms is new at each step), a canvas by the frame it shows (the
+    // data-frame its scene sets, or an 8 x 8 sample of it), so a scrubbed sequence or a dive is the stage at work.
+    // The canvases of the atmosphere scenes (light, lines, letters) are not pictures.
+    const texts = [...units.values()].filter((u) => u.op >= 0.5 && !pinnedTop(u.el)).map(unitText).filter((x) => x.split(' ').length >= 2).map((x) => (x.length > 60 ? x.slice(0, 60) + ' …' + x.split(' ').length : x));
+    // an 8 x 8 sample of a canvas: its signature (2 bits a channel) and the share of it that is painted (alpha)
+    const sample = document.createElement('canvas'); sample.width = sample.height = 8;
+    const sampled = new Map();
+    const sampleOf = (cv) => {
+      if (sampled.has(cv)) return sampled.get(cv);
+      let out = { sig: cv.width + 'x' + cv.height, painted: 1 };
+      try {
+        const x = sample.getContext('2d', { willReadFrequently: true }); x.clearRect(0, 0, 8, 8); x.drawImage(cv, 0, 0, 8, 8);
+        const d = x.getImageData(0, 0, 8, 8).data; let s = '', on = 0;
+        for (let i = 0; i < d.length; i += 4) { s += ((d[i] >> 6) * 16 + (d[i + 1] >> 6) * 4 + (d[i + 2] >> 6)).toString(36); if (d[i + 3] > 32) on++; }
+        out = { sig: s, painted: on / 64 };
+      } catch {}
+      sampled.set(cv, out); return out;
+    };
+    const frameOf = (cv) => (cv.dataset.frame != null && cv.dataset.frame !== '' ? cv.dataset.frame : sampleOf(cv).sig);
+    const ids = [...document.querySelectorAll('canvas, [data-ui]')]; // a stable number for each, whatever else is in view
+    // the share of the screen the pictures and fragments in view cover, a canvas by the part of it that is painted
+    // (held-dead-screen: a ring of photographs around a heading is something to see, though most of the screen
+    // between them is flat ground)
+    let pictureArea = 0;
+    for (const m of document.querySelectorAll('img, video, canvas, [data-ui]')) {
+      if (m.parentElement?.closest('[data-ui]') || (m.tagName === 'CANVAS' && ATMOSPHERE.has(m.closest('[data-scene]')?.dataset.scene))) continue;
+      const r = m.getBoundingClientRect(); const a = Math.max(0, Math.min(r.right, W) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, H) - Math.max(r.top, 0));
+      if (a >= W * H * 0.002 && opacityOf(m) >= 0.5) pictureArea += a * (m.tagName === 'CANVAS' ? sampleOf(m).painted : 1);
+    }
+    const media = [...document.querySelectorAll('img, video, canvas, [data-ui]')].filter((m) => { if (m.tagName === 'CANVAS' && (ATMOSPHERE.has(m.closest('[data-scene]')?.dataset.scene) || m.closest('[data-ui]'))) return false; const r = m.getBoundingClientRect(); return (Math.min(r.right, W) - Math.max(r.left, 0)) * (Math.min(r.bottom, H) - Math.max(r.top, 0)) >= W * H * 0.04 && opacityOf(m) >= 0.5; }).map((m) => (m.hasAttribute('data-ui') ? 'ui:' + ids.indexOf(m) : m.tagName === 'CANVAS' ? 'canvas:' + ids.indexOf(m) + ':' + frameOf(m) : (m.currentSrc || m.getAttribute('src') || m.getAttribute('poster') || '').split('?')[0].slice(-60) + '@' + Math.round(m.getBoundingClientRect().width / 40)));
+    // the stage that holds the screen: a running scene pinned on it, or a sticky or fixed layer (the bar aside)
+    // that covers 80% of it
+    let held = null;
+    for (const s of document.querySelectorAll('.scene.is-live')) { const r = s.getBoundingClientRect(); if (r.top <= 2 && r.bottom >= H - 2 && r.height > H * 1.15) { held = s.dataset.scene || s.id || 'scene'; break; } }
+    if (!held) {
+      for (const [px, py] of [[0.5, 0.5], [0.25, 0.5], [0.75, 0.5]]) {
+        for (let e = document.elementFromPoint(W * px, H * py); e && e !== document.body && !held; e = e.parentElement) {
+          const cs = getComputedStyle(e); if (cs.position !== 'sticky' && cs.position !== 'fixed') continue;
+          if (e.closest('header, nav, [role=banner], dialog')) break;
+          const r = e.getBoundingClientRect(); if ((Math.min(r.right, W) - Math.max(r.left, 0)) * (Math.min(r.bottom, H) - Math.max(r.top, 0)) >= W * H * 0.8) held = e.id || e.className && String(e.className).split(/\s+/)[0] || e.tagName.toLowerCase();
+        }
+        if (held) break;
+      }
+    }
+    return { overText, seen, playing, straddle, content: contentShare(), held, shortLines, shortTops, texts, media, pictures: Math.round(Math.min(1, pictureArea / (W * H)) * 100) / 100, y: Math.round(scrollY) };
+  }
   const pictures =[...document.querySelectorAll('img, picture, svg, canvas, video')].filter((m) => !m.parentElement?.closest('svg')).map((m) => ({ m, r: m.getBoundingClientRect() })).filter(({ r }) => r.width >= 80 && r.height >= 80 && r.bottom > 0 && r.top < H);
   for (const el of document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote, li, a, button, span, div')) {
     let direct = ''; for (const n of el.childNodes) if (n.nodeType === 3) direct += n.nodeValue;
@@ -1199,6 +1260,32 @@ export async function colourShare(dataUrl) {
     if (s >= 0.4 && l >= 0.18 && l <= 0.82) n++;
   }
   return Math.round((n / (w * h)) * 1000) / 1000;
+}
+
+// Share of a screenshot that is flat empty ground: the commonest colour (4 bits a channel) and the pixels within 12
+// of its mean whose 3 x 3 neighbourhood varies by 16 or less, on a 96px-wide thumbnail (a texture or a photograph
+// is not flat ground). Runs inside any page; takes a data: URL.
+export async function groundShare(dataUrl) {
+  const img = new Image(); img.src = dataUrl; await img.decode();
+  const w = 96, h = Math.max(3, Math.round((96 * img.height) / img.width));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h).data; const bins = new Map();
+  for (let i = 0; i < d.length; i += 4) { const k = (d[i] >> 4) << 8 | (d[i + 1] >> 4) << 4 | (d[i + 2] >> 4); const b = bins.get(k) || [0, 0, 0, 0]; b[0] += d[i]; b[1] += d[i + 1]; b[2] += d[i + 2]; b[3]++; bins.set(k, b); }
+  const top = [...bins.values()].sort((a, b) => b[3] - a[3])[0]; const mean = [top[0] / top[3], top[1] / top[3], top[2] / top[3]];
+  let n = 0;
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) {
+    const i = (y * w + xx) * 4;
+    if (Math.max(Math.abs(d[i] - mean[0]), Math.abs(d[i + 1] - mean[1]), Math.abs(d[i + 2] - mean[2])) > 12) continue;
+    let flat = true;
+    for (let ch = 0; ch < 3 && flat; ch++) {
+      let lo = 255, hi = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const yy = Math.min(h - 1, Math.max(0, y + dy)), x2 = Math.min(w - 1, Math.max(0, xx + dx)); const v = d[(yy * w + x2) * 4 + ch]; if (v < lo) lo = v; if (v > hi) hi = v; }
+      if (hi - lo > 16) flat = false;
+    }
+    if (flat) n++;
+  }
+  return Math.round((n / (w * h)) * 100) / 100;
 }
 
 // Dominant colours of a screenshot. Runs inside any page; takes a data: URL.

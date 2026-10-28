@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product replays</title>
+<!-- tasteskill / the six product replays draw.mjs deals (library/replays.json), one window each. The motion
+     comes from replay.js and the replay block of base.css; this file only lays the windows out. The content is
+     a placeholder for a made-up product: every label and figure on a real page comes from the real one. -->
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="base.css">
+<style>
+  :root { --bg: #f3f2ee; --surface: #e4e2dc; --ink: #151515; --muted: #54524c; --accent: #1d5c46; --accent-ink: #ffffff; --ui: #ffffff; --ui-line: #d8d6d0; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-text); }
+  main { display: grid; gap: var(--section); padding: 4rem var(--margin) 6rem; }
+  section { display: grid; gap: 1.5rem; max-width: 72rem; }
+  h1 { font-size: var(--step-head); line-height: 1; letter-spacing: -0.02em; max-width: 16ch; }
+  h2 { font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.75rem); line-height: 1.05; letter-spacing: -0.015em; }
+  p { max-width: 60ch; font-size: var(--step-body); }
+  .replay { max-width: 64rem; }
+  .replay__said { color: var(--muted); }
+  [data-replay-again] { justify-self: start; }
+
+  /* the windows: the product's own panels, no device frame */
+  .w { display: grid; gap: 0.75rem; padding: 1.25rem; background: var(--ui); font-size: 0.9375rem; line-height: 1.35; border-radius: 6px; }
+  .w table { width: 100%; border-collapse: collapse; }
+  .w td, .w th { padding: 0.55rem 0.6rem; text-align: left; border-bottom: 1px solid var(--ui-line); font-weight: 400; }
+  .w th { color: var(--muted); font-size: 0.8125rem; }
+  .w .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .w input { width: 100%; padding: 0.6rem 0.75rem; font: inherit; background: var(--bg); border: 1px solid var(--ui-line); border-radius: 4px; }
+  .w .btn { justify-self: start; padding: 0.55rem 1rem; font: inherit; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 4px; }
+  .w .is-selected { background: #e7efe9; }
+  .w ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+  .w li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.55rem 0.7rem; background: var(--bg); border-radius: 4px; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+  .cols h3 { display: flex; justify-content: space-between; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 0.75rem; }
+  .src { margin: 0; padding: 0.9rem; background: #171a19; color: #e8ece9; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.875rem; white-space: pre-wrap; }
+  .src code { font: inherit; }
+  .bars { position: relative; height: 11rem; background: var(--bg); border-radius: 4px; }
+  .bars i { position: absolute; bottom: 0; width: 7%; background: var(--accent); }
+  .status { color: var(--muted); }
+  .tour { display: grid; grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); gap: 2rem; align-items: start; }
+  .tour__lines { display: grid; gap: 0.75rem; }
+  .tour__lines button { text-align: left; font: inherit; font-size: var(--step-lead); line-height: 1.2; color: var(--muted); background: none; border: 0; padding: 0; }
+  .tour__lines button.is-current { color: var(--ink); }
+  @media (max-width: 47.99em) {
+    .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cols > :last-child { display: none; }
+    .pair, .tour { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Six ways the product plays one task</h1>
+
+  <!-- 1. one-task -->
+  <section>
+    <h2>The window does one task</h2>
+    <figure class="replay" data-replay="1500,900,1100,1500" aria-hidden="true">
+      <div class="w" data-ui>
+        <input value="Invoice Acme for March" data-type-at="1" aria-label="New invoice">
+        <table>
+          <tr><th>Client</th><th>Status</th><th class="num">Amount</th></tr>
+          <tr data-at="2" data-select-at="4" class="is-selected"><td>Acme</td><td data-at="4" data-from="Draft">Sent</td><td class="num">4,200 €</td></tr>
+          <tr><td>Brightline</td><td>Paid</td><td class="num">1,850 €</td></tr>
+          <tr><td>Norra Hus</td><td>Paid</td><td class="num">960 €</td></tr>
+        </table>
+        <button class="btn" type="button" tabindex="-1" data-press-at="3">Send invoice</button>
+        <p>This month: <b data-roll-at="4" data-from="2">3</b> invoices, <b data-roll-at="4" data-from="2,810">7,010</b> €</p>
+      </div>
+      <span class="replay__cursor" data-replay-cursor><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
+    </figure>
+    <p class="replay__said">A March invoice for Acme is written, sent, and the month's total updates.</p>
+    <button type="button" class="button" data-replay-again>Replay</button>
+  </section>
+
+  <!-- 2. agent-run -->
+  <section>
+    <h2>The agent works beside its result</h2>
+    <figure class="replay" data-replay="1400,1300,1300,1500" aria-hidden="true">
+      <div class="w" data-ui>
+        <input value="Check March refunds against the bank feed" data-type-at="1" aria-label="Request">
+        <p class="status" data-says="2:Reading 412 entries|3:Checking against the bank feed|4:Fixed: a duplicate refund">Fixed: a duplicate refund</p>
+        <table>
+          <tr><th>Date</th><th>Payee</th><th class="num">Refund</th></tr>
+          <tr><td>4 Mar</td><td>Ostra AB</td><td class="num">120.00</td></tr>
+          <tr data-frame-at="3"><td>11 Mar</td><td>Ostra AB</td><td class="num" data-roll-at="4" data-from="120.00">0.00</td></tr>
+          <tr><td>19 Mar</td><td>Helm &amp; Co</td><td class="num">48.50</td></tr>
+          <tr><th colspan="2">Total</th><th class="num" data-roll-at="4" data-from="288.50">168.50</th></tr>
+        </table>
+      </div>
+    </figure>
+    <p class="replay__said">The agent reads the refunds, checks them against the bank and removes a duplicate.</p>
+    <button type="button" class="button" data-replay-again>Replay</button>
+  </section>
+
+  <!-- 3. board-move -->
+  <section>
+    <h2>The board moves its own card</h2>
+    <figure class="replay" data-replay="1100,1000,1200,1400" aria-hidden="true">
+      <div class="w" data-ui>
+        <div class="cols">
+          <div><h3>New <span data-says="0:3|1:4|3:3">3</span></h3><ul id="b-new"><li data-at="1">Order 1043 <span>Lund</span></li><li>Order 1041 <span>Oslo</span></li><li>Order 1040 <span>Aarhus</span></li></ul></div>
+          <div><h3>Packing <span data-roll-at="3" data-from="1">2</span></h3><ul><li data-flip-at="3" data-flip-from="#b-new" data-point-at="2">Order 1039 <span data-at="4" data-from="New">Packing</span></li><li>Order 1036 <span>Packing</span></li></ul></div>
+          <div><h3>Shipped 2</h3><ul><li>Order 1035 <span>Bergen</span></li><li>Order 1034 <span>Turku</span></li></ul></div>
+        </div>
+      </div>
+      <span class="replay__cursor" data-replay-cursor><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
+    </figure>
+    <p class="replay__said">A new order arrives and order 1039 moves from New to Packing.</p>
+    <button type="button" class="button" data-replay-again>Replay</button>
+  </section>
+
+  <!-- 4. turns -->
+  <section>
+    <h2>Teammates take turns</h2>
+    <figure class="replay" data-replay="1300,1300,1300,1200" aria-hidden="true">
+      <div class="w" data-ui>
+        <ul id="t-plan">
+          <li data-point-at="1" data-cursor="Ines">Kick-off with the client <span>Mon</span></li>
+          <li>Site visit <span>Tue</span></li>
+          <li data-at="1">Budget review <span data-at="2" data-from="—">12,400 €</span></li>
+          <li data-point-at="2" data-cursor="Agent">Draft the brief <span>Thu</span></li>
+          <li data-point-at="3" data-cursor="Tom">Send the brief <span data-at="3" data-from="Fri">Fri · Tom: send by noon</span></li>
+        </ul>
+      </div>
+      <span class="replay__cursor" data-replay-cursor data-name="Ines"><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
+      <span class="replay__cursor" data-replay-cursor data-name="Agent"><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
+      <span class="replay__cursor" data-replay-cursor data-name="Tom"><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
+    </figure>
+    <p class="replay__said">Ines adds the budget review, the agent fills in its figure and Tom leaves a note.</p>
+    <button type="button" class="button" data-replay-again>Replay</button>
+  </section>
+
+  <!-- 5. source-output -->
+  <section>
+    <h2>Edit the source, the output rebuilds</h2>
+    <figure class="replay" data-replay="1600,1200,1400" aria-hidden="true">
+      <div class="w" data-ui>
+        <div class="pair">
+          <pre class="src"><code>orders where placed in <span data-at="1" data-from="last 30 days">last 90 days</span> group by week</code></pre>
+          <div class="bars">
+            <i style="left: 4%; height: 40%" data-style-at="2" data-style-from="height: 22%"></i>
+            <i style="left: 16%; height: 52%" data-style-at="2" data-style-from="height: 30%"></i>
+            <i style="left: 28%; height: 47%" data-style-at="2" data-style-from="height: 61%"></i>
+            <i style="left: 40%; height: 70%" data-style-at="2" data-style-from="height: 44%"></i>
+            <i style="left: 52%; height: 64%" data-style-at="2" data-style-from="height: 38%"></i>
+            <i style="left: 64%; height: 82%" data-style-at="2" data-style-from="height: 70%"></i>
+            <i style="left: 76%; height: 90%" data-style-at="2" data-style-from="height: 55%"></i>
+            <i style="left: 88%; height: 76%" data-style-at="2" data-style-from="height: 48%"></i>
+          </div>
+        </div>
+        <p><b data-roll-at="3" data-from="1,240">3,912</b> rows · 0.4 s</p>
+      </div>
+    </figure>
+    <p class="replay__said">The query widens from 30 to 90 days and the chart and row count follow.</p>
+    <button type="button" class="button" data-replay-again>Replay</button>
+  </section>
+
+  <!-- 6. lens-tour -->
+  <section>
+    <h2>A frame tours the live screen</h2>
+    <div class="tour">
+      <div class="tour__lines">
+        <button type="button" data-line-at="1">Stock counts itself</button>
+        <button type="button" data-line-at="2">Low items reorder</button>
+        <button type="button" data-line-at="3">The total follows</button>
+      </div>
+      <figure class="replay" data-replay="1500,1500,1600" aria-hidden="true">
+        <div class="w" data-ui>
+          <table>
+            <tr><th>Item</th><th>Status</th><th class="num">In stock</th></tr>
+            <tr><td>Oat milk, 1 l</td><td>Fine</td><td class="num" data-frame-at="1" data-roll-at="1" data-from="38">41</td></tr>
+            <tr><td>Paper cups</td><td data-frame-at="2" data-at="2" data-from="Low">Ordered</td><td class="num">120</td></tr>
+            <tr><td>Beans, Huila</td><td>Fine</td><td class="num">14</td></tr>
+            <tr><th colspan="2">Stock value</th><th class="num" data-frame-at="3" data-roll-at="3" data-from="2,310">2,346</th></tr>
+          </table>
+        </div>
+      </figure>
+    </div>
+    <p class="replay__said">Stock is counted, a low item is reordered and the stock value follows.</p>
+    <button type="button" class="button" data-replay-again>Replay</button>
+  </section>
+</main>
+<script src="base.js"></script>
+<script src="replay.js"></script>
+</body>
+</html>

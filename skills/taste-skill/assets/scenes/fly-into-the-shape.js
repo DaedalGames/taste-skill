@@ -1,18 +1,19 @@
 // tasteskill / scenes / fly-into-the-shape.js — the brand's own mark turns to face you, then you fly into it.
 //
 // The mark rides up with the content and arrives at the centre of the screen exactly as the stage is
-// held: a big, solid mark with a real extruded side, the title set in light type on its face. It turns to
+// held: the mark is a clean clip-path mask of its true shape (no extruded side or bevel) with the next
+// chapter's photograph already inside it, the title set in light type on its face. It turns to
 // face you, then you fly at it: the camera moves at a steady speed, so the mark grows slowly while it
 // turns and the next chapter (a photograph of its world) shows through its face, then rushes past every
 // edge of the screen, the way a near object does when you fly through it. It grows about the centre of
 // its largest inscribed circle, and the world inside keeps coming towards you for the rest of the hold.
 // The title rides on the face and is never faded or split: at rest every line of it sits inside the face
 // at every angle of the turn (set smaller when the mark is smaller than the title), and it grows with the
-// mark to its full size, never faster, so no edge of the mark ever crosses a word. The face starts as the
-// solid accent and clears to the picture while the mark is still a shape on the paper; the chapter's
-// first sentence settles last.
-// data-dir="out" plays it backwards at a chapter's end: the world shrinks back into the mark, the face
-// fills with the accent, and the mark turns upright as it lands behind the closing title, so a pair of
+// mark to its full size, never faster, so no edge of the mark ever crosses a word. The picture is inside
+// the mark from the first frame ({"face":"accent"} starts the face as the solid accent and clears it to
+// the picture while the mark is still a shape on the paper); the chapter's first sentence settles last.
+// data-dir="out" plays it backwards at a chapter's end: the world shrinks back into the mark (with
+// {"face":"accent"} the face fills with the accent), and the mark turns upright as it lands behind the closing title, so a pair of
 // scenes lets the reader leave the way they came in.
 //
 // Needs gsap + ScrollTrigger, stage.js and fly-into-the-shape.css. Use it as the doorway into a dark
@@ -35,7 +36,7 @@
 //         <picture><source media="(max-width: 767px)" srcset="9:16 crop">
 //           <img class="portal-media" src alt width height></picture>   or <video class="portal-media" muted loop playsinline poster>
 //         <div class="portal-scrim" aria-hidden="true"></div>   flat scrim so light type reads on the picture
-//         <div class="portal-tint" aria-hidden="true"></div>    the mark's face: the solid accent, cleared by scroll
+//         <div class="portal-tint" aria-hidden="true"></div>    optional: the solid accent face of {"face":"accent"}
 //         <svg class="portal-mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#mark"/></svg>  finished state only
 //         <p class="portal-sub">10-18 words that open the chapter</p>
 //       </div>
@@ -44,8 +45,7 @@
 //       </svg>
 //     </div>
 //   </section>
-// While it runs, the script adds the extruded side (<div class="portal-depth">, under the world), and the
-// h2 itself is the title on the face: light, above the world, scaled about the stage's centre. An older
+// While it runs, the h2 itself is the title on the face: light, above the world, scaled about the stage's centre. An older
 // .portal-title--in inside the world or a .portal-lit copy is not needed and stays hidden.
 // The picture may be sized and placed by the page (for example taller than the stage, hanging below
 // it, so a bright foreground stays out of sight): the script grows it about the stage's centre,
@@ -83,9 +83,10 @@
 //   turn       45       0-180     degrees of the turn: "in" runs -turn -> 0 while the mark is still
 //                                 small, "out" lands from +turn -> 0 as the mark shrinks home
 //   phoneTurn  12       0-180     a smaller turn on a phone keeps the big mark on the screen
-//   depth      0.06     0-0.15    thickness of the extruded side at rest, as a share of the mark's box
-//                                 (above 1 = px); it thickens as the mark comes closer. 0 = a flat mark
-//   phoneDepth 0.05     0-0.15
+//   face       "picture" "picture" (the world's photograph is inside the mark from the first frame) |
+//                                 "accent" (a solid accent face that clears to the picture as the mark nears)
+//   depth      0        0-0.15    an extruded side (a share of the mark's box, above 1 = px). Leave it at 0:
+//   phoneDepth 0        0-0.15    an extruded or bevelled mark read as clip art (round 4)
 //   ease       "fly"    the approach: "fly" (default: the camera moves at a steady speed, so the mark
 //                                 grows slowly, then rushes past the edges of the screen), "sine.inOut"
 //                                 (log space: a legible lock, then a gentle arrival) or "none" (log space:
@@ -429,8 +430,9 @@
       phoneSize: sizeOpt(opts.phoneSize, 'fit', 0.3, 0.75, 64, 420),
       turn: num(opts.turn, 45, 0, 180),
       phoneTurn: num(opts.phoneTurn, 12, 0, 180),
-      depth: share(opts.depth, 0.06, 0, 0.15, 0, 48),
-      phoneDepth: share(opts.phoneDepth, 0.05, 0, 0.15, 0, 24),
+      depth: share(opts.depth, 0, 0, 0.15, 0, 48),
+      phoneDepth: share(opts.phoneDepth, 0, 0, 0.15, 0, 24),
+      face: opts.face === 'accent' ? 'accent' : 'picture',
       ease: opts.ease === 'none' || opts.ease === 'sine.inOut' ? opts.ease : 'fly',
       zoom: num(opts.zoom, 1.4, 1, 1.8),
       blur: num(opts.blur, 0, 0, 6),
@@ -481,7 +483,9 @@
         }
 
         // st.ts: how far the title has grown from its rest scale (g.ts0) towards its full size (0-1)
-        const st = { zl: 0, rot: 0, tint: 1, ts: 0, note: 1, sub: 0, bl: 0, mz: 1 };
+        // the face: the picture from the first frame, or (face "accent") the solid accent that clears
+        const ACCENT = o.face === 'accent';
+        const st = { zl: 0, rot: 0, tint: ACCENT ? 1 : 0, ts: 0, note: 1, sub: 0, bl: 0, mz: 1 };
         const g = { W: 0, H: 0, s0: 1, k0: 0, zCover: 1, key: '', box: 0, ts0: TS0 };
         const last = {};
         // writes a style only when it changed (this build's own memory, so a rebuild starts clean)
@@ -687,9 +691,6 @@
         if (IN) {
           tl.fromTo(st, { zl: 0 }, { zl: 1, duration: 0.7, ease: E }, 0.06)
             .fromTo(st, { rot: -turn }, { rot: 0, duration: 0.3, ease: 'power2.out' }, 0.06)
-            // the face clears while the mark is still a shape on the paper, so the next chapter is
-            // already alive inside it well before it covers the screen
-            .fromTo(st, { tint: 1 }, { tint: 0, duration: 0.44, ease: 'sine.inOut' }, 0.14)
             .fromTo(st, { ts: 0 }, { ts: 1, duration: 0.7, ease: 'sine.inOut' }, 0.06)
             .fromTo(st, { note: 1 }, { note: 0, duration: 0.08 }, 0.06)
             .fromTo(st, { sub: 0 }, { sub: 1, duration: 0.1, ease: 'power2.out' }, 0.8)
@@ -699,9 +700,11 @@
             // filter is not free)
             .fromTo(st, { bl: 0 }, { bl: 1, duration: 0.12, ease: 'sine.inOut' }, FLY ? 0.58 : 0.4)
             .to(st, { bl: 0, duration: 0.12, ease: 'sine.inOut' }, FLY ? 0.7 : 0.55);
+          // face "accent": the face clears while the mark is still a shape on the paper, so the next chapter
+          // is already alive inside it well before it covers the screen
+          if (ACCENT) tl.fromTo(st, { tint: 1 }, { tint: 0, duration: 0.44, ease: 'sine.inOut' }, 0.14);
         } else {
           tl.fromTo(st, { zl: 1 }, { zl: 0, duration: 0.7, ease: E }, 0.1)
-            .fromTo(st, { tint: 0 }, { tint: 1, duration: 0.44, ease: 'sine.inOut' }, 0.26)
             // still turned as its edge comes into view, the mark rights itself as it lands
             .fromTo(st, { rot: turn }, { rot: 0, duration: 0.33, ease: 'power2.out' }, 0.45)
             .fromTo(st, { ts: 1 }, { ts: 0, duration: 0.7, ease: 'sine.inOut' }, 0.1)
@@ -710,6 +713,7 @@
             .fromTo(st, { mz: o.zoom }, { mz: 1, duration: 0.8 }, 0)
             .fromTo(st, { bl: 0 }, { bl: 1, duration: 0.1, ease: 'sine.inOut' }, FLY ? 0.08 : 0.24)
             .to(st, { bl: 0, duration: 0.14, ease: 'sine.inOut' }, FLY ? 0.18 : 0.39);
+          if (ACCENT) tl.fromTo(st, { tint: 0 }, { tint: 1, duration: 0.44, ease: 'sine.inOut' }, 0.26);
         }
         tl.set({}, {}, 1);
         tl.eventCallback('onUpdate', render);

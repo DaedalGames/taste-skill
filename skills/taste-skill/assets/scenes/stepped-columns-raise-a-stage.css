@@ -2,13 +2,11 @@
    Markup and options: see stepped-columns-raise-a-stage.js.
 
    The rules without .is-live ARE the finished composition: what reduced motion, no script, a failed CDN
-   and a window too small for the copy show. Every column is a full ink card with page-coloured copy, the
-   rail's dot waits at the far end, and the road with one wheel per column (square to circle) is printed
-   across the cards (by the script; without it, a flat road and a circle in the last card in CSS).
+   and a window too small for the copy show. Every column is a full ink card with page-coloured copy.
+   Nothing is drawn on the ink and no rail or dot stands for the scroll.
    The live layouts sit under .is-live[data-sr-mode="cols"] and [data-sr-mode="rows"], set by the script.
 
-   Two colours only. The stage, the gaps and the page around the ink must be the one flat --sr-page: the
-   drawing is printed in it, so anything else behind the stage (a tint, a texture, a backdrop) shows it.
+   Two colours only. The stage, the gaps and the page around the ink are the one flat --sr-page.
 
    Weights come from the page: --display-weight (the title and the step titles), --strong-weight (the
    notes) and --text-weight (the body). Set them to weights the page loads, or the browser draws the
@@ -21,8 +19,6 @@
   --sr-g: clamp(16px, 1.67vw, 24px);
   --sr-gap: 12px;
   --sr-t: clamp(140px, 20svh, 200px);
-  --sr-band: clamp(48px, 9svh, 80px);
-  --sr-line: 2.5px;
   background: var(--sr-page);
   color: var(--sr-ink);
 }
@@ -62,42 +58,6 @@
   color: var(--sr-ink);
   text-wrap: balance;
 }
-
-/* the rail: start state, a track, end state; its dot follows the wheel */
-[data-scene="stepped-columns-raise-a-stage"] .sr-rail {
-  flex: 0 0 auto;
-  width: max(220px, calc((100% - (var(--n, 4) - 1) * var(--sr-gap)) / var(--n, 4)));
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: "a line b";
-  align-items: center;
-  column-gap: 14px;
-  font-family: var(--font-text, inherit);
-  font-size: 15px;
-  font-weight: var(--text-weight, 400);
-  line-height: 1.2;
-  color: var(--sr-ink);
-}
-[data-scene="stepped-columns-raise-a-stage"] .sr-rail-end:first-child { grid-area: a; }
-[data-scene="stepped-columns-raise-a-stage"] .sr-rail-end:last-child { grid-area: b; }
-[data-scene="stepped-columns-raise-a-stage"] .sr-rail-line {
-  grid-area: line;
-  position: relative;
-  height: 2px;
-  background: currentColor;
-}
-[data-scene="stepped-columns-raise-a-stage"] .sr-rail-dot {
-  position: absolute;
-  top: 50%;
-  left: calc(100% - 10px);
-  width: 10px;
-  height: 10px;
-  margin-top: -5px;
-  border-radius: 50%;
-  background: currentColor;
-}
-/* a rail with nothing drawn on it and nothing moving along it says nothing: drop it */
-[data-scene="stepped-columns-raise-a-stage"][data-sr-draw="none"]:is([data-sr-mode="rest"], [data-sr-mode="still"]) .sr-rail { display: none; }
 
 /* the steps: one row of equal ink cards (wrapping when there are many) */
 [data-scene="stepped-columns-raise-a-stage"] .sr-cols {
@@ -164,7 +124,7 @@
   margin: 0;
   max-width: 36ch;
   font-family: var(--font-text, inherit);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: var(--text-weight, 400);
   line-height: 1.42;
   text-wrap: pretty;
@@ -174,48 +134,6 @@
 [data-scene="stepped-columns-raise-a-stage"][data-sr-even] .sr-col-title { min-height: var(--sr-title-h, 0px); }
 [data-scene="stepped-columns-raise-a-stage"][data-sr-even] .sr-col-text { min-height: var(--sr-text-h, 0px); }
 
-/* the drawing: page colour on the ink, so it only shows where ink has arrived */
-[data-scene="stepped-columns-raise-a-stage"] .sr-draw {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  color: var(--sr-page);
-}
-[data-scene="stepped-columns-raise-a-stage"] .sr-wheel {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 4;
-  display: none;
-  overflow: visible;
-  pointer-events: none;
-  color: var(--sr-page);
-  will-change: transform;
-}
-[data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-wheel="on"] .sr-wheel { display: block; }
-[data-scene="stepped-columns-raise-a-stage"] .sr-draw path,
-[data-scene="stepped-columns-raise-a-stage"] .sr-wheel path {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: var(--sr-line);
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-[data-scene="stepped-columns-raise-a-stage"] .sr-axle {
-  stroke: currentColor;
-  stroke-width: 2px;
-  stroke-dasharray: 5 9;
-  opacity: 0.6;
-}
-[data-scene="stepped-columns-raise-a-stage"] .sr-hub { fill: currentColor; }
-/* on the rail the drawing is ink on the page colour, and it replaces the rail's track */
-[data-scene="stepped-columns-raise-a-stage"][data-sr-draw="rail"] .sr-draw,
-[data-scene="stepped-columns-raise-a-stage"][data-sr-draw="rail"] .sr-wheel { color: var(--sr-ink); }
-[data-scene="stepped-columns-raise-a-stage"][data-sr-draw="rail"] .sr-rail-line { visibility: hidden; }
 [data-scene="stepped-columns-raise-a-stage"] .sr-probe {
   position: absolute;
   top: 0;
@@ -226,49 +144,16 @@
   pointer-events: none;
 }
 
-/* without the script: a dashed axle, a flat road and the circle in the last card, drawn in CSS */
+/* more steps than fit one row: the cards wrap and need less height */
 @media (min-width: 860px) {
-  /* more steps than fit one row: the cards wrap and need less height */
   [data-scene="stepped-columns-raise-a-stage"][data-sr-wrap="yes"] .sr-col { min-height: clamp(260px, 36svh, 380px); }
-  [data-scene="stepped-columns-raise-a-stage"]:not(.sr-js) .sr-col::before,
-  [data-scene="stepped-columns-raise-a-stage"]:not(.sr-js) .sr-col::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    z-index: 3;
-    pointer-events: none;
-  }
-  [data-scene="stepped-columns-raise-a-stage"]:not(.sr-js) .sr-col::before { top: 42%; border-top: 2px dashed var(--sr-page); opacity: 0.6; }
-  [data-scene="stepped-columns-raise-a-stage"]:not(.sr-js) .sr-col::after { top: calc(42% + 34cqw); border-top: 2px solid var(--sr-page); }
-  [data-scene="stepped-columns-raise-a-stage"]:not(.sr-js) .sr-col:last-child .sr-panel::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 42%;
-    width: 68cqw;
-    aspect-ratio: 1;
-    box-sizing: border-box;
-    border: 2.5px solid var(--sr-page);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-  }
 }
 
-/* the finished composition on narrow screens: stacked cards, the rail full width under the title */
+/* the finished composition on narrow screens: stacked cards */
 @media (max-width: 859px) {
   [data-scene="stepped-columns-raise-a-stage"] > .scene-stage { padding: 72px 16px 16px; }
   [data-scene="stepped-columns-raise-a-stage"] .sr-head { display: block; padding-bottom: 20px; }
   [data-scene="stepped-columns-raise-a-stage"] .sr-title { font-size: clamp(28px, 7.6vw, 44px); line-height: 1.04; }
-  [data-scene="stepped-columns-raise-a-stage"] .sr-rail {
-    width: auto;
-    padding-top: 58px;
-    grid-template-columns: auto auto;
-    grid-template-areas: "line line" "a b";
-    justify-content: space-between;
-    row-gap: 10px;
-  }
-  [data-scene="stepped-columns-raise-a-stage"]:not(.sr-js) .sr-rail { padding-top: 20px; }
   [data-scene="stepped-columns-raise-a-stage"] .sr-cols { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   [data-scene="stepped-columns-raise-a-stage"] .sr-col { min-height: 0; }
   [data-scene="stepped-columns-raise-a-stage"] .sr-panel,
@@ -294,9 +179,6 @@ html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live:is([data-sr-mode="cols"], [data-sr-mode="rows"]) .sr-title {
   font-size: min(clamp(34px, 5vw, 80px), calc((var(--sr-t) - 40px) / 2));
 }
-html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"] .sr-rail {
-  width: calc((100% - (var(--n, 4) - 1) * var(--sr-gap)) / var(--n, 4));
-}
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"] .sr-cols {
   flex: 1 1 0;
   min-height: 0;
@@ -313,10 +195,6 @@ html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-head {
   flex: none;
   padding: 22px 0 14px;
-}
-/* the rail's top padding is the band the wheel rolls in */
-html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-rail {
-  padding-top: var(--sr-band);
 }
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-cols {
   flex: 1 1 0;
@@ -354,7 +232,7 @@ html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"
 }
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-col-text {
   grid-area: text;
-  font-size: clamp(14px, 2vw, 17px);
+  font-size: clamp(15px, 2vw, 17px);
   line-height: 1.35;
   max-width: 62ch;
 }
@@ -363,7 +241,7 @@ html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"
   html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-more { display: none; }
 }
 
-/* narrow screens: the title, then the rail full width with its labels under the road */
+/* narrow screens: the title over the rows */
 @media (max-width: 859px) {
   html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] > .scene-stage { padding: 0 16px 16px; }
   html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-head { display: block; }
@@ -371,18 +249,10 @@ html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"
     font-size: clamp(30px, 8.4vw, 44px);
     line-height: 1.02;
   }
-  html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-rail {
-    width: auto;
-    grid-template-columns: auto auto;
-    grid-template-areas: "line line" "a b";
-    justify-content: space-between;
-    row-gap: 10px;
-  }
 }
-/* wide screens (7-12 steps): the column header, its rail a third of the width */
+/* wide screens (7-12 steps): the column header */
 @media (min-width: 860px) {
   html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-head { padding: 24px 0 22px; }
-  html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-rail { width: clamp(300px, 34%, 560px); }
 }
 
 /* compact rows, for short phones, landscape and many steps: smaller type, the note beside the title */
@@ -411,7 +281,7 @@ html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"
 }
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"][data-sr-dense] .sr-col-text {
   grid-area: text;
-  font-size: clamp(14px, 13px + 0.15vw, 15px);
+  font-size: 15px;
   line-height: 1.3;
 }
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"][data-sr-dense] .sr-more { display: none; }
@@ -433,16 +303,6 @@ html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"
 @media (max-width: 859px) {
   html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"][data-sr-dense="all"] .sr-head { padding: 14px 0 10px; }
   html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"][data-sr-dense="all"] .sr-title { font-size: clamp(22px, 6.4vw, 30px); }
-  /* the labels move beside the road, the band above it shrinks */
-  html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"][data-sr-dense="all"] .sr-rail {
-    padding-top: 44px;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas: "a line b";
-    justify-content: stretch;
-    column-gap: 12px;
-    row-gap: 0;
-    font-size: 14px;
-  }
 }
 
 /* ---- live, both layouts -------------------------------------------------------------------------- */
@@ -453,8 +313,6 @@ html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"
 /* {"ghost": false}, the default: the panel starts as a stub that already holds the copy, so the ghost
    shows only the note, above the stub, until the ink jumps past it */
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"][data-sr-ghost="off"] .sr-ghost > :not(.sr-note) { visibility: hidden; }
-html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"] .sr-rail-dot,
-html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-rail-dot { left: 0; will-change: transform; }
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="cols"] .sr-panel { will-change: clip-path; }
 html.js [data-scene="stepped-columns-raise-a-stage"].is-live[data-sr-mode="rows"] .sr-panel { will-change: opacity; }
 

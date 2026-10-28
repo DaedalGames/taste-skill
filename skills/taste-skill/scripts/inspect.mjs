@@ -7,7 +7,8 @@
 // sampled evenly), and every screen is photographed into the page sheets and checked.
 //
 // --film also photographs the scroll as a visitor sees it (a frame every third of a screen, real wheel
-// input) into desktop-film-NN.jpg, so a scroll scene is judged by its in-between states. A direction
+// input) into desktop-film-NN.jpg, so a scroll scene is judged by its in-between states: a short line held
+// with nothing new (line-holds) and held frames that are mostly empty ground (held-dead-screen). A direction
 // that dealt scroll scenes switches it on by itself.
 //
 // --app judges an app screen (dashboard, admin, settings) by the rules in references/app-screens.md; a
@@ -20,7 +21,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, statSync, createRea
 import { resolve, join, relative, dirname, extname, sep } from 'node:path';
 import { createServer } from 'node:http';
 import { Browser, sleep } from './lib/cdp.mjs';
-import { probe, frame, reach, layout, app, colourShare } from './lib/probe.mjs';
+import { probe, frame, reach, layout, app, colourShare, groundShare } from './lib/probe.mjs';
 import { judge, judgeLayout, judgeApp, APP_SKIP } from './lib/rules.mjs';
 import { extra } from './lib/probe-extra.mjs';
 import { judgeExtra } from './lib/rules-extra.mjs';
@@ -37,6 +38,7 @@ let appMode = has('app');
 let film = has('film');
 let dealtFonts = []; // the faces the saved sheet dealt, to catch a build that quietly fell back to a default
 let dealtEntrance = null; // the entrance the saved sheet dealt, to catch a build that quietly went back to the old rise
+let dealtReplay = null; // the product replay the saved sheet dealt (software pages), to catch a build without it
 const target = args[0];
 if (!target || target === '-h' || target.startsWith('--')) {
   console.error('usage: node inspect.mjs <url | file.html> [--out DIR] [--widths 1440,768,390] [--allow rule,rule] [--app] [--film] [--json]');
@@ -44,7 +46,7 @@ if (!target || target === '-h' || target.startsWith('--')) {
 }
 // Allowances granted by the drawn direction (written by draw.mjs) apply automatically.
 for (const p of ['.taste-skill/direction.json', join(outDir, '..', 'direction.json')]) {
-  if (existsSync(p)) { try { const d = JSON.parse(readFileSync(p, 'utf8')); allow = [...new Set([...allow, ...(d.allow || [])])]; if (d.kind === 'app') appMode = true; if (Array.isArray(d.scenes) && d.scenes.length) film = true; dealtFonts = (d.input?.keep || []).includes('type') ? [] : d.kind === 'app' ? [d.style?.tokens?.font?.family].filter(Boolean) : [d.type?.display?.family, d.type?.text?.family].filter(Boolean); dealtEntrance = d.kind === 'app' ? null : d.entrance?.id || null; } catch {} break; }
+  if (existsSync(p)) { try { const d = JSON.parse(readFileSync(p, 'utf8')); allow = [...new Set([...allow, ...(d.allow || [])])]; if (d.kind === 'app') appMode = true; if (Array.isArray(d.scenes) && d.scenes.length) film = true; dealtFonts = (d.input?.keep || []).includes('type') ? [] : d.kind === 'app' ? [d.style?.tokens?.font?.family].filter(Boolean) : [d.type?.display?.family, d.type?.text?.family].filter(Boolean); dealtEntrance = d.kind === 'app' ? null : d.entrance?.id || null; dealtReplay = d.kind === 'app' ? null : d.replay || null; } catch {} break; }
 }
 // A local file is served over http from a throwaway server on 127.0.0.1, so the browser never has to
 // open a file path (some sandboxes show Node and the browser different views of the disk) and relative
@@ -220,7 +222,7 @@ try {
     // scroll scene shows its in-between states, not only where each screen lands.
     // Each step is also checked twice while it moves (about 120 and 280ms after the wheel) for texts drawn over
     // each other and for which blocks of text can be read at all.
-    const filmSheets = [], filmChecks = [];
+    const filmSheets = [], filmChecks = [], filmGround = [];
     if (film && w >= 1100) {
       await page.eval(`window.scrollTo({ top: 0, behavior: 'instant' })`).catch(() => {});
       await sleep(700);
@@ -228,12 +230,14 @@ try {
       for (let i = 0; i < Math.min(150, Math.ceil(total / stride) * 3 + 6); i++) {
         shots.push(await page.screenshot({ quality: 70 }));
         await page.wheel(Math.round(h / 3) * stride, { step: 100, pauseMs: 16 });
-        for (const ms of [120, 160]) { await sleep(ms); filmChecks.push(await check({ film: true })); }
+        for (const ms of [120, 160]) { await sleep(ms); const c = await check({ film: true }); if (c) c.step = i; filmChecks.push(c); }
         await sleep(140);
         const y = await page.eval('Math.round(scrollY || document.scrollingElement.scrollTop || 0)').catch(() => -1);
         if (y === lastY) { if (++still >= 2) break; } else still = 0;
         lastY = y;
       }
+      // how much of each frame is flat empty ground (held-dead-screen)
+      for (const s of shots) filmGround.push(await helper.eval(groundShare, 'data:image/jpeg;base64,' + s).catch(() => null));
       for (let i = 0; i < shots.length; i += 24) {
         const p = join(outDir, `${imageLabel}-film-${String(i / 24 + 1).padStart(2, '0')}.jpg`);
         await sheet(shots.slice(i, i + 24), 6, 320, 200, p);
@@ -329,6 +333,68 @@ try {
       const ys = [...new Set(dead.map((f) => Math.round(f.y / h)))];
       if (ys.length >= 2) findings.push({ level: ys.length >= 4 || dead.length / Math.max(1, seen) > 0.25 ? 'FAIL' : 'WARN', id: 'dead-scroll', width: w, message: `${ys.length} screen(s) show almost no words or pictures while scrolling (under 10% of the screen): around screens ${ys.slice(0, 8).map((y) => y + 1).join(', ')}.`, fix: 'Every screen of scroll carries something to read or see. Shorten the scene or pin (one screen per beat), bring the next content in sooner, or cut the atmosphere: a glow, a burst or a lone line over an empty stage is not a section.' });
     }
+    // the steps of the film in order: what each shows (two checks a step, merged)
+    const filmSteps = new Map();
+    for (const c of filmChecks) {
+      if (!c || c.step == null) continue;
+      const s = filmSteps.get(c.step) || { lines: new Set(), tops: new Map(), texts: new Set(), media: new Set(), pictures: 0, held: null, y: c.y };
+      s.pictures = Math.max(s.pictures, c.pictures || 0);
+      for (const l of c.shortLines || []) s.lines.add(l); for (const x of c.texts || []) s.texts.add(x); for (const x of c.media || []) s.media.add(x);
+      for (const [l, t] of Object.entries(c.shortTops || {})) s.tops.set(l, t); // the later check of the step wins
+      if (c.held) s.held = c.held;
+      s.y = c.y; filmSteps.set(c.step, s);
+    }
+    const stepOrder = [...filmSteps.keys()].sort((a, b) => a - b);
+    // line-holds: a short line at display size that is nearly all the screen has to read (two other blocks of
+    // 20 words or fewer beside it: a support line, a button) while nothing new arrives (no new words, picture or fragment)
+    // and the line stands still (it moved 4% of the screen or less since the last step: the frames where it slides in
+    // and out are ordinary scroll). An ordinary section brings something new within a third of a screen; a held line
+    // over an empty stage does not.
+    if (w >= 1100 && !appMode && stepOrder.length && !allow.includes('line-holds')) {
+      const runs = new Map(), best = new Map(); let prev = null;
+      for (const k of stepOrder) {
+        const s = filmSteps.get(k);
+        const newTexts = prev ? [...s.texts].filter((x) => !prev.texts.has(x)) : [...s.texts];
+        const newMedia = prev ? [...s.media].filter((x) => !prev.media.has(x)) : [...s.media];
+        for (const l of [...runs.keys()]) if (!s.lines.has(l)) runs.delete(l);
+        const wordsOf = (x) => { const m = x.match(/ …(\d+)$/); return m ? +m[1] : x.split(' ').length; };
+        for (const l of s.lines) {
+          const same = (x) => x === l || l.startsWith(x.slice(0, 24)) || x.startsWith(l.slice(0, 24));
+          const others = newTexts.filter((x) => !same(x));
+          // a line among a list or a set of columns is not a line held alone
+          const besides = [...s.texts].filter((x) => !same(x));
+          if (besides.length > 2 || besides.reduce((a, x) => a + wordsOf(x), 0) > 20) { runs.delete(l); continue; }
+          const r = runs.get(l);
+          const still = !!prev && prev.tops.has(l) && s.tops.has(l) && Math.abs(s.tops.get(l) - prev.tops.get(l)) <= h * 0.04;
+          const n = r && r.last === k - 1 && still && !others.length && !newMedia.length ? r.n + 1 : 1;
+          runs.set(l, { n, last: k, from: n === 1 ? k : r.from });
+          if (n > (best.get(l)?.n || 0)) best.set(l, { n, from: n === 1 ? k : r.from });
+        }
+        prev = s;
+      }
+      const held = [...best.entries()].map(([l, b]) => ({ l, n: b.n, held: Math.round(((b.n - 1) * stride / 3) * 10) / 10, at: Math.round((filmSteps.get(b.from)?.y || 0) / h) + 1 })).filter((x) => x.held > 0.9).sort((a, b) => b.held - a.held);
+      if (held.length) findings.push({ level: held[0].held > 1.2 ? 'FAIL' : 'WARN', id: 'line-holds', width: w, message: held.slice(0, 3).map((x) => `"${x.l}" holds the screen for ${x.held} screens of scroll with nothing new (${x.n} film frames from screen ${x.at})`).join('; ') + '.', fix: 'One line of copy is worth about one screen of scroll. Cut the hold (data-options hold; a closing scene holds about one screen), give the stage a second beat with new content, or let the line scroll as an ordinary section.' });
+    }
+    // held-dead-screen: frames of a held stage (a pinned scene, a sticky layer over most of the screen) that are
+    // mostly flat empty ground with little to see and nothing new: a full-screen photograph is not empty ground,
+    // pictures over 15% of the screen are something to see, and a canvas or picture that changed since the last
+    // step is the stage at work
+    if (w >= 1100 && !appMode && stepOrder.length && !allow.includes('held-dead-screen')) {
+      let worst = null, run = null, prev = null;
+      for (const k of stepOrder) {
+        const s = filmSteps.get(k);
+        const ground = filmGround[k + 1] ?? filmGround[k];
+        const changed = !!prev && [...s.media].some((x) => !prev.media.has(x));
+        prev = s;
+        const dead = !!s.held && ground != null && ground >= 0.6 && s.pictures < 0.15 && !changed;
+        if (dead && run && run.id === s.held && run.last === k - 1) { run.n++; run.last = k; run.at.push(Math.round(s.y / h) + 1); }
+        else run = dead ? { id: s.held, n: 1, last: k, at: [Math.round(s.y / h) + 1] } : null;
+        if (run && (!worst || run.n > worst.n)) worst = { ...run, at: [...run.at] };
+      }
+      if (worst && worst.n >= 3) findings.push({ level: worst.n >= 4 ? 'FAIL' : 'WARN', id: 'held-dead-screen', width: w, message: `${worst.id}: ${Math.round((worst.n * stride / 3) * 10) / 10} screens of its hold are mostly empty ground (around screens ${[...new Set(worst.at)].join(', ')}).`, fix: 'Every frame of a held stage shows something to read or see. Shorten the hold to its beats, make the held picture large (at least half the screen), bring the next content in sooner, or cut the scene. A line of type on an empty stage is done in about one screen.' });
+    }
+    // the product replay the sheet dealt (draw.mjs section 8)
+    if (dealtReplay && w >= 1100 && ex && !(ex.replays || []).length && !allow.includes('replay-missing')) findings.push({ level: 'FAIL', id: 'replay-missing', width: w, message: `The sheet dealt the product replay "${dealtReplay.name || dealtReplay.id}" in the ${dealtReplay.carries || ''} section, but the page has no [data-replay].`, fix: 'Build the product replay the sheet deals (section 8): the product\'s window in its final state with data-replay and its marked beats, assets/replay.js, and a Replay button under it.' });
     if (w >= 1100 && empty.length >= 2 && !allow.includes('empty-screens')) findings.push({ level: 'FAIL', id: 'empty-screens', width: w, message: `${empty.length} of ${frameChecks.length} desktop screens are almost empty ground (under 20% of the screen holds text, a picture or a colour field): screens ${empty.map(({ f, i }) => screenOf(f, i)).join(', ')}.`, fix: 'An empty screen is a rest only once per page. Elsewhere it means the section is underbuilt: set its content larger, give it the full information, put it on a colour field, or cut it.' });
     report.viewports.push({ width: w, height: h, load: how, screens: frames.length, pageScreens, stride, extra: ex, reached: reached.map((r) => (r ? r.found : null)), upReach: upReach ? upReach.found : null, unread, overText, frameErrors, filled: frameChecks.map((f) => f?.filled ?? null), content: frameChecks.map((f) => f?.content ?? null), filmContent: filmChecks.map((f) => (f ? [Math.round(f.y / h * 10) / 10, f.content] : null)), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5) });
     report.findings.push(...(appMode ? findings.filter((f) => !APP_SKIP.has(f.id)) : findings));
@@ -352,6 +418,16 @@ try {
         return out;
       })()`).catch(() => []);
       if (hidden.length >= 2) report.findings.push({ level: 'FAIL', id: 'reduced-hidden', width: 1440, message: `With reduced motion requested, ${hidden.length} text block(s) on the first screen stay invisible: ` + hidden.slice(0, 4).map((t) => `"${t}"`).join(', '), fix: 'Put every hidden starting state inside @media (prefers-reduced-motion: no-preference); the reduced page is the finished page (references/motion.md §8).' });
+      // the product replay is its final state under reduced motion: nothing in it waits for a beat
+      const replayHidden = await rp.eval(`(async () => {
+        const out = [];
+        for (const r of document.querySelectorAll('[data-replay]')) {
+          r.scrollIntoView({ block: 'center' }); await new Promise((ok) => setTimeout(ok, 400));
+          for (const e of r.querySelectorAll('[data-at]')) { let o = 1; for (let p = e; p && p !== r.parentElement; p = p.parentElement) o *= +getComputedStyle(p).opacity; if (o < 0.1) out.push((e.textContent || e.tagName).trim().slice(0, 30)); }
+        }
+        return out;
+      })()`).catch(() => []);
+      if (replayHidden.length) report.findings.push({ level: 'FAIL', id: 'reduced-hidden', width: 1440, message: `With reduced motion requested, ${replayHidden.length} part(s) of the product replay stay hidden: ` + replayHidden.slice(0, 4).map((t) => `"${t}"`).join(', '), fix: 'The replay\'s HTML is its final state: hide a beat\'s part only under .is-armed inside @media (prefers-reduced-motion: no-preference), as base.css does, and let replay.js do nothing under reduced motion.' });
     } finally { await rp.close(); }
   }
 } finally {

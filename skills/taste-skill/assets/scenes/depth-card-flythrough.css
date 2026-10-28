@@ -241,9 +241,39 @@
 }
 .scene[data-scene="depth-card-flythrough"].is-live .fly__count { margin-top: .85rem; }
 
+/* ---------- stop mode ({"stop": 0.5}, the work): each piece rests flat and large ---------- */
+
+/* the backdrop shaded toward the stage colour, so the pieces carry the colour and it reads as the ground */
+.scene[data-scene="depth-card-flythrough"].fly--stop.is-live .fly__shade,
+.scene[data-scene="depth-card-flythrough"].fly--stop.is-live:not(.fly--shaded) .fly__scrim {
+  display: block; background: var(--fly-stage); opacity: var(--fly-stop-shade, .55);
+}
+/* the title rides under its piece at the lead step, in the statement ink, never on a chip */
+.scene[data-scene="depth-card-flythrough"].fly--stop.is-live .fly__tag {
+  padding: 0; background: none; color: var(--fly-ink);
+  font: var(--display-weight, 500) var(--step-lead, clamp(18px, 1.4vw, 24px))/1.15 var(--fly-font);
+}
+
 /* ---------- phone ---------- */
 
 @media (max-width: 767px) {
+  /* stop mode rests on a phone: the pieces stacked full width, each title under its picture, no backdrop */
+  .scene[data-scene="depth-card-flythrough"].fly--stop:not(.is-live) > .fly__stage { display: block; padding: 72px 16px 56px; }
+  .scene[data-scene="depth-card-flythrough"].fly--stop:not(.is-live) :is(.fly__backdrop, .fly__scrim) { display: none; }
+  .scene[data-scene="depth-card-flythrough"].fly--stop:not(.is-live) .fly__line { display: none; }
+  .scene[data-scene="depth-card-flythrough"].fly--stop:not(.is-live) .fly__line:first-child {
+    display: block; position: static; width: auto; margin: 0 0 32px; text-align: left; font-size: var(--fly-size);
+  }
+  .scene[data-scene="depth-card-flythrough"].fly--stop:not(.is-live) :is(.fly__card, .fly__card:first-child, .fly__card.is-portrait, .fly__card.is-portrait:first-child, .fly__card:nth-child(even)) {
+    position: relative; left: auto; top: auto; width: 100%; margin: 0 0 48px; aspect-ratio: auto;
+  }
+  .scene[data-scene="depth-card-flythrough"].fly--stop:not(.is-live) .fly__img { height: auto; aspect-ratio: 3 / 2; }
+  .scene[data-scene="depth-card-flythrough"].fly--stop:not(.is-live) .fly__card.is-portrait .fly__img { aspect-ratio: 4 / 5; }
+  .scene[data-scene="depth-card-flythrough"].fly--stop:not(.is-live) .fly__fog { opacity: 0; }
+  .scene[data-scene="depth-card-flythrough"].fly--stop:not(.is-live) .fly__cap {
+    position: static; display: block; padding: 12px 0 0; background: none; color: var(--fly-ink); white-space: normal;
+    font: var(--text-weight, 400) var(--step-body, 17px)/1.4 var(--font-text, var(--fly-font));
+  }
   .scene[data-scene="depth-card-flythrough"]:not(.is-live) > .fly__stage {
     grid-template-columns: minmax(0, 1fr); column-gap: 0; row-gap: 0; align-items: start;
     padding: calc(80svh + 8vh) 16px 10vh;

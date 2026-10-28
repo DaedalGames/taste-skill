@@ -13,7 +13,7 @@ const KINDS = {
   'display-over-sans': { w: 22, display: ['display-sans', 'condensed', 'wide'], text: ['neo', 'humanist'], tones: { bold: 2, playful: 1.6, quiet: 0.4, luxury: 0.4 } },
   'serif-over-sans':   { w: 18, display: ['serif-display'], text: ['neo', 'humanist', 'geometric'], tones: { luxury: 1.8, editorial: 1.6, warm: 1.4, technical: 0.4 } },
   'serif-solo':        { w: 8,  display: ['serif-text'], text: 'same', tones: { editorial: 2.4, quiet: 1.4, luxury: 1.4, technical: 0.2, bold: 0.3 } },
-  'sans-over-serif':   { w: 8,  display: ['neo', 'display-sans', 'geometric'], text: ['serif-text'], tones: { editorial: 1.8, warm: 1.4, technical: 0.4 } },
+  'sans-over-serif':   { w: 8,  display: ['neo', 'display-sans'], text: ['serif-text'], tones: { editorial: 1.8, warm: 1.4, technical: 0.4 } },
   'serif-pair':        { w: 4,  display: ['serif-display'], text: ['serif-text'], tones: { editorial: 2, luxury: 1.6, technical: 0.1, bold: 0.3 } },
   'slab':              { w: 5,  display: ['slab'], text: ['neo', 'humanist', 'same'], tones: { warm: 1.6, technical: 1.2, luxury: 0.2 } },
   'rounded':           { w: 4,  display: ['rounded'], text: ['same', 'neo', 'humanist'], tones: { playful: 3, warm: 1.4, luxury: 0.1, editorial: 0.2, technical: 0.3 } },
@@ -78,8 +78,9 @@ export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamili
   if (tc === 'same') { text = display; tClass = dClass; }
   else {
     tClass = tc;
-    // a text face needs a regular and a bold, and must differ from the display face
-    const pool = inClass(tc).filter((f) => f.family !== display.family && f.weights.includes(400) && f.weights.some((w) => w >= 600) && !(dark && THIN_TEXT.has(f.family)));
+    // a text face needs a regular and a bold, and must differ from the display face, in class too: two plain
+    // grotesks (Chivo over Instrument Sans) read as one default face, and the pairing is lost
+    const pool = inClass(tc).filter((f) => f.family !== display.family && !f.classes.includes(dClass) && f.weights.includes(400) && f.weights.some((w) => w >= 600) && !(dark && THIN_TEXT.has(f.family)));
     text = pick(freshOf(pool.length ? pool : inClass('neo')));
   }
   // a display face with one weight can still set a whole page only if it is a real text face; otherwise pair it
@@ -103,6 +104,9 @@ export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamili
   const displayVw = wpick([[4.4, 2], [5, 3], [5.8, 3], [6.6, 2.5], [7.6, 1.5], [9, 0.8], [11, 0.3]]) * (dClass === 'condensed' ? 1.25 : dClass === 'wide' ? 0.8 : 1);
   // a light weight reads as thin below a large size: at a modest display size it steps up to regular
   if (dWeight < 400 && displayVw < 5.5 && display.weights.includes(400)) dWeight = 400;
+  // section headings (the head step, 40-60px) hold at 500 or more in a sans: a face at 300-400 that holds at the
+  // hero size reads soft and thin there. A serif keeps its display weight.
+  const headWeight = /serif/.test(dClass) ? dWeight : Math.max(dWeight, [500, 600].find((w) => display.weights.includes(w)) ?? dWeight);
   const px = (n) => Math.round(n * 10) / 10;
   const small = Math.max(13, px(body / ratio));
   const lead2 = px(body * Math.min(ratio, 1.333));
@@ -128,7 +132,7 @@ export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamili
     return `<link href="https://fonts.googleapis.com/css2?family=${fam}:${italic && f.italic ? 'ital,wght@' + [...ws.map((w) => '0,' + w), ...ws.map((w) => '1,' + w)].join(';') : 'wght@' + ws.join(';')}&display=swap" rel="stylesheet">`;
   };
   const same = display === text;
-  const css = same ? [link(display, [dWeight, tWeight, strong], false)] : [link(display, [dWeight], false), link(text, [tWeight, strong], false)];
+  const css = same ? [link(display, [dWeight, headWeight, tWeight, strong], false)] : [link(display, [dWeight, headWeight], false), link(text, [tWeight, strong], false)];
   const fallback = (cls) => (/serif/.test(cls) ? 'Georgia, serif' : cls === 'slab' ? 'Rockwell, Georgia, serif' : 'system-ui, sans-serif');
   const id = `${kind}:${display.family}${same ? '' : '+' + text.family}:${dWeight}`.toLowerCase().replace(/\s+/g, '-');
   const kindName = { 'sans-solo': 'one sans family', 'display-over-sans': 'a display face over a plain sans', 'serif-over-sans': 'a serif display over a sans', 'serif-solo': 'one serif family', 'sans-over-serif': 'a sans display over a serif text', 'serif-pair': 'a display serif over a text serif', slab: 'a slab', rounded: 'a rounded sans', 'wide-solo': 'a wide display over a plain sans' }[kind];
@@ -136,7 +140,7 @@ export function dealTypeSystem({ rnd, fonts, tone, dirClasses = [], recentFamili
     id, kind, generated: true,
     name: same ? `${display.family}, ${kindName}` : `${display.family} over ${text.family}`,
     class: dClass,
-    display: { family: display.family, cls: dClass, weight: dWeight, weights: display.weights, css: css[0], stack: `"${display.family}", ${fallback(dClass)}`, settings: `weight ${dWeight}${caps ? ', set in capitals' : ', sentence case'}, tracking ${track}em, leading ${lead}` },
+    display: { family: display.family, cls: dClass, weight: dWeight, headWeight, weights: display.weights, css: css[0], stack: `"${display.family}", ${fallback(dClass)}`, settings: `weight ${dWeight}${caps ? ', set in capitals' : ', sentence case'}, tracking ${track}em, leading ${lead}${headWeight !== dWeight ? `; section headings (the head step) at weight ${headWeight}` : ''}` },
     text: { family: text.family, cls: tClass, weight: tWeight, strong, weights: text.weights, css: css[1] || css[0], stack: `"${text.family}", ${fallback(tClass)}`, settings: `weight ${tWeight} for running text${strong ? `, ${strong} for emphasis and buttons` : ' (no bold cut: emphasis by size or colour, never faked bold)'}, leading 1.5, 60-72 characters a line` },
     caps, track, lead, ratio, body, displayVw: +displayVw.toFixed(1),
     scale,

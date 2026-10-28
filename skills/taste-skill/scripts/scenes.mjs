@@ -22,6 +22,12 @@
 //   dead-hold            nothing visible changes for 30% or more of the hold. A warning.
 //   end-frame            a line of display text (30px or more) is cut by the edge of the screen at 100%.
 //                        A warning.
+//   empty-steps          steps of the hold where 60% or more of the screen is flat empty ground. A warning.
+//   piece-unseen         a piece of work in a scene (.fly__card, [data-piece]) is never shown whole, flat-on
+//                        (turned 10° or less) and at 60% of the width or more at any settled step, on
+//                        desktop. A problem.
+// --steps defaults to one step every quarter screen of hold (10 at least), so a half-screen stop always
+// falls on a step.
 // A scene file may document a deliberate pass over words in its header, with the moving parts in
 // backticks:   // crosses words: `.ws-echo` for one beat, as the letter drops
 // A documented pass is not a problem while it lasts two steps or less and is over by 100%, or while it
@@ -34,11 +40,12 @@ import { existsSync, mkdirSync, statSync, createReadStream, writeFileSync, readF
 import { resolve, join, dirname, extname, sep, relative } from 'node:path';
 import { createServer } from 'node:http';
 import { Browser, sleep } from './lib/cdp.mjs';
+import { groundShare } from './lib/probe.mjs';
 
 const args = process.argv.slice(2);
 const flag = (k, d) => { const i = args.indexOf('--' + k); if (i === -1) return d; const v = args[i + 1]; args.splice(i, 2); return v; };
 const outDir = resolve(flag('out', '.taste-skill/scenes'));
-const STEPS = Math.max(2, +flag('steps', 10)), WAIT = +flag('wait', 900);
+const STEPS_OPT = flag('steps', null), WAIT = +flag('wait', 900);
 const STILL = 0.015;   // under 1.5% of the pixels changed between two steps: nothing visible happened
 const only = flag('scene', '');
 const target = args[0];
@@ -399,6 +406,24 @@ function verdict(a) {
   };
 }
 
+// In the page, at one settled step: each piece of work in the scene (a fly-through card, [data-piece]), whether it
+// is whole on screen, how much of the width it takes, and how far it is turned (its yaw, from its matrix).
+function PIECES(a) {
+  const root = document.querySelectorAll(a.sel)[a.index]; if (!root) return [];
+  const W = innerWidth, H = innerHeight;
+  // pieces of work: [data-piece], or fly-through cards when the scene carries the work (stop mode, cards that
+  // link to their pieces, or a scene in the work section)
+  const work = root.classList.contains('fly--stop') || !!root.querySelector('.fly__card a[href], a[href] .fly__card') || [root, ...(function* () { for (let e = root.parentElement; e && e !== document.body; e = e.parentElement) yield e; })()].some((e) => /\b(work|projects?|case|portfolio)\b/i.test((e.id || '') + ' ' + (typeof e.className === 'string' ? e.className : '') + ' ' + (e.getAttribute('aria-label') || '')));
+  return [...root.querySelectorAll(work ? '.fly__card, [data-piece]' : '[data-piece]')].map((el, i) => {
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    let o = 1; for (let e = el; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (s.visibility === 'hidden' || s.display === 'none') { o = 0; break; } o *= +s.opacity; }
+    let deg = 0; try { const m = new DOMMatrix(cs.transform === 'none' ? undefined : cs.transform); deg = Math.abs(Math.atan2(m.m13, m.m11) * 180 / Math.PI); if (deg > 90) deg = 180 - deg; } catch {}
+    const whole = r.width > 0 && r.left >= -2 && r.right <= W + 2 && r.top >= -2 && r.bottom <= H + 2 && o >= 0.9;
+    const caption = ((el.querySelector('figcaption, .fly__cap') || {}).textContent || el.dataset.piece || (el.querySelector('img') || {}).alt || 'piece ' + (i + 1)).replace(/\s+/g, ' ').trim().slice(0, 40);
+    return { i, caption, whole, w: r.width / W, deg, ok: whole && r.width >= 0.6 * W && deg <= 10 };
+  });
+}
+
 // The moving parts a scene file says may pass over words: "// crosses words: `.sel` why" in its header.
 const PASSES = (kind) => `(async () => { const s = [...document.scripts].find((s) => s.src && new URL(s.src).pathname.endsWith('/' + ${JSON.stringify(kind)} + '.js')); if (!s) return []; try { const t = await (await fetch(s.src)).text(); return [...t.matchAll(/^\\s*\\/\\/\\s*crosses words:(.*)$/gim)].flatMap((m) => [...m[1].matchAll(/\`([^\`]+)\`/g)].map((x) => x[1])); } catch { return []; } })()`;
 
@@ -420,9 +445,12 @@ async function run(label, vp) {
     if (label === 'desktop' && sc.rest) problems.push(`${label} ${sc.id}: shows its finished composition instead of running (GSAP not loaded, or the scene threw)`);
     const frames = [], labels = [];
     const span = Math.max(0, sc.height - H);
+    // a step every quarter screen of hold, 10 at least, unless --steps says otherwise
+    const STEPS = STEPS_OPT != null ? Math.max(2, +STEPS_OPT) : Math.max(10, Math.ceil(span / H / 0.25));
     const pct = (k) => `${Math.round((k / STEPS) * 100)}%`;
     const points = [{ y: Math.max(0, sc.top - H * 0.5), l: 'before' }, ...Array.from({ length: STEPS + 1 }, (_, k) => ({ y: sc.top + (span * k) / STEPS, l: pct(k), k })), { y: sc.top + span + H * 0.6, l: 'after' }];
     const held = span >= H * 0.5 && !sc.rest;
+    const pieces = new Map();
     const passes = held ? await page.eval(PASSES(sc.kind)).catch(() => []) : [];
     const evidence = new Map();
     let n = 0;
@@ -443,6 +471,10 @@ async function run(label, vp) {
       }
       await sleep(Math.max(0, t0 + WAIT - Date.now()));
       if (held && p.k !== undefined) { await page.eval(look, { sel: SEL, index: sc.index, k: n, step: p.l, reset: n === 0, final: true, end: p.k === STEPS }).catch(() => null); n++; }
+      if (held && p.k !== undefined && label === 'desktop') {
+        const seen = await page.eval(PIECES, { sel: SEL, index: sc.index }).catch(() => []);
+        for (const q of seen) { const b = pieces.get(q.i) || { caption: q.caption, ok: false, w: 0, deg: 90 }; if (q.ok) b.ok = true; if (q.whole) { b.w = Math.max(b.w, q.w); b.deg = Math.min(b.deg, q.deg); } pieces.set(q.i, b); }
+      }
       frames.push(await page.screenshot({ quality: 72 }));
       labels.push(`${sc.id} ${p.l}`);
     }
@@ -479,6 +511,13 @@ async function run(label, vp) {
     }
     // end-frame: a display line the edge of the screen cuts at 100%
     for (const c of v.cut.slice(0, 3)) warnings.push(`${where}: end-frame at 100%: "${c.text}" (${c.size}px) runs past the ${c.side} edge${c.shows ? `, the screen shows "${c.shows}"` : ''}`);
+    // piece-unseen: a piece of work never stopped whole, flat and large
+    for (const [, b] of pieces) if (!b.ok) problems.push(`${where}: piece-unseen: "${b.caption}" is never shown flat and large (largest ${Math.round(b.w * 100)}% of the width whole on screen, turned ${b.deg === 90 ? 'more than 10' : Math.round(b.deg)}°)`);
+    // empty-steps: steps where most of the screen is flat empty ground
+    const grounds = [];
+    for (const fr of frames.slice(1, STEPS + 2)) grounds.push(await helper.eval(groundShare, 'data:image/jpeg;base64,' + fr).catch(() => null));
+    const empties = grounds.map((g, k) => (g != null && g >= 0.6 ? pct(k) : null)).filter(Boolean);
+    if (empties.length) warnings.push(`${where}: empty-steps: ${empties.slice(0, 8).join(', ')}${empties.length > 8 ? ' …' : ''} are 60% or more empty ground`);
     // dead-hold: the longest run of steps in which nothing visible changes
     const diff = await changes(frames.slice(1, STEPS + 2)).catch(() => []);
     let best = [0, 0];
@@ -526,6 +565,8 @@ if (problems.length || warnings.length) {
   if (ids('scene-crosses-words')) console.log('  → scene-crosses-words: nothing passes over words while they are read (references/scenes.md rule 4). Let the words leave before the moving part reaches them, keep its path and its resting place clear of them, or end its edge outside the copy.');
   if (ids('dead-hold')) console.log('  → dead-hold: a hold with nothing new to show is cut, not padded (rule 2). Shorten the hold so the last beat lands near 90%, or give the still stretch a beat.');
   if (ids('end-frame')) console.log('  → end-frame: the rest frame shows the line whole (rule 4). Fit it to the screen, set it on two lines, or end the move where the whole line reads.');
+  if (ids('empty-steps')) console.log('  → empty-steps: every frame of a hold shows something to read or see (rule 9). Shorten the hold to its beats, make the held picture large, or bring the next content in sooner.');
+  if (ids('piece-unseen')) console.log('  → piece-unseen: each piece of work stops on screen flat-on, at 60% of the width or more, with its title on it, for half a screen (references/scenes.md §3; the fly-through takes {"stop": 0.5}).');
 }
 console.log(problems.length ? `\nRESULT: ${problems.length} problem(s)${warnings.length ? `, ${warnings.length} warning(s)` : ''}. Fix them, then look at every sheet.` : warnings.length ? `\nRESULT: every scene ran, ${warnings.length} warning(s): fix them or be able to defend them. Then look at every sheet.` : '\nRESULT: every scene ran. Now look at every sheet: does each frame read, and is the scene as bold as it should be?');
 process.exit(problems.length ? 1 : 0);

@@ -238,7 +238,9 @@
   "motion": "pinned-story",
   "seenIn": [
    "opl-the-deep-end"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "The headline sits in a card on a darkened photo and the card shrinks to a sticky stub; judges read it as a page built from boxes (round 4, r4-p22)."
  },
  {
   "id": "tabbed-folder-stack",
@@ -277,7 +279,9 @@
   "seenIn": [
    "opl-le-petit-bleu",
    "opl-zara-webb"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "The headline sits on a printed card panel with a striped band; the same headline-in-a-card fault."
  },
  {
   "id": "giant-cropped-shape",

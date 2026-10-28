@@ -68,9 +68,11 @@
 //                      longer. Values from 0.3 to 3 are accepted; outside 0.7-1.3 the move reads as
 //                      sluggish or rushed. The hold is measured: travel ÷ (screen × speed), plus the
 //                      pull-back to the whole line (0.6 screen ÷ speed; 0.35 when the line does not
-//                      shrink), plus rest, kept to 1-4 screens. The 4-screen cap wins over `speed` on long
-//                      lines, so there the track runs faster than `speed` asks.
-//   rest    0.2-0.6    screens of still end frame after the travel stops (0.3; 0-2 accepted)
+//                      shrink), plus rest, kept to 1-4 screens and to maxHold. The cap wins over `speed` on
+//                      long lines, so there the track runs faster than `speed` asks.
+//   maxHold 0.8-4      the most screens the stage holds (1 / 3 / 2.5): a closing line holds one screen. When
+//                      the measured hold is longer, the letters swoop faster instead of the hold growing
+//   rest    0.2-0.6    screens of still end frame after the travel stops (0.2; 0-2 accepted)
 //   amp     0.6-1.5    letter offset as a multiple of the letter height (1.5); always clamped so every
 //                      letter stays 64px inside the stage (plus `inset`)
 //   tilt    0-20       largest letter tilt in degrees (18). A letter's tilt follows its height: it
@@ -233,9 +235,9 @@
   };
 
   const PRESETS = {
-    type: { speed: 1, amp: 1.5, tilt: 18, lift: 0, curve: 'swoop', settle: 0.45, enter: 1.04 },
-    stair: { speed: 1, amp: 1, tilt: 0, lift: 36, curve: 'linear', settle: 0.3, enter: 1.2 },
-    rise: { speed: 1.2, amp: 1, tilt: 0, lift: 60, curve: 'calm', settle: 0.5, enter: 1.2 },
+    type: { speed: 1, amp: 1.5, tilt: 18, lift: 0, curve: 'swoop', settle: 0.45, enter: 1.04, maxHold: 1 },
+    stair: { speed: 1, amp: 1, tilt: 0, lift: 36, curve: 'linear', settle: 0.3, enter: 1.2, maxHold: 3 },
+    rise: { speed: 1.2, amp: 1, tilt: 0, lift: 60, curve: 'calm', settle: 0.5, enter: 1.2, maxHold: 2.5 },
   };
 
   window.Scenes = window.Scenes || {};
@@ -246,7 +248,8 @@
     const P = PRESETS[preset];
     const o = {
       speed: clamp(num(opts.speed, P.speed), 0.3, 3),
-      rest: clamp(num(opts.rest, 0.3), 0, 2),
+      rest: clamp(num(opts.rest, 0.2), 0, 2),
+      maxHold: clamp(num(opts.maxHold, P.maxHold), 0.8, 4),
       amp: clamp(num(opts.amp, P.amp), 0, 2),
       tilt: clamp(num(opts.tilt, P.tilt), 0, 30),
       lift: clamp(num(opts.lift, P.lift), 0, 90),
@@ -414,15 +417,18 @@
             cluster.style.left = Math.round(end.cx + travel) + 'px';
             cluster.style.top = Math.round(end.cy - track.offsetTop) + 'px';
           }
-          back = ((end.k < 0.98 ? 0.6 : cluster ? 0.35 : 0) * H) / o.speed;
+          back = (end.k < 0.98 ? 0.6 : cluster ? 0.35 : 0) * H;
         } else {
           travel = snapCards(Math.max(0, track.offsetWidth - W), W);
         }
         // a short line travels little; its letters get a run-in of their own so they still swoop in
         run = rec ? Math.max(0, 0.45 * W - travel) : 0;
-        const ride = (travel + run) / o.speed;
+        // the speed asked for, raised when the hold would pass maxHold: the letters swoop faster, the hold stays
+        const speed = Math.max(o.speed, (travel + run + back) / (Math.max(0.2, o.maxHold - o.rest) * H));
+        back /= speed;
+        const ride = (travel + run) / speed;
         const ts = (ride + back) / H;
-        hold = clamp(ts + o.rest, 1, 4);
+        hold = clamp(ts + o.rest, Math.min(1, o.maxHold), Math.min(4, o.maxHold));
         T = ride + back > 0 ? clamp(Math.min(ts, hold - o.rest) / hold, 0.05, 1) : 0;
         qa = ride + back > 0 ? ride / (ride + back) : 1;              // the travel's share of the motion
         root.style.setProperty('--hold', hold.toFixed(4));

@@ -123,7 +123,9 @@
    "opl-builders-table",
    "aww-cominvi",
    "opl-uglycash"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A bento of six to eight filled tiles."
  },
  {
   "id": "features-statement-cell-dark-rows",
@@ -169,7 +171,9 @@
   "seenIn": [
    "opl-dabbit",
    "opl-woblo"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A bento of six filled cells with fragments; voids inside the cells (round 4, r4-p23)."
  },
  {
   "id": "features-small-proof-beside-text",
@@ -544,8 +548,8 @@
    "place-carries-it"
   ],
   "needs": [],
-  "blueprint": "A wrapper 300vh tall holds a sticky stage of 100svh. On the stage one frame is centred: 30vw wide at 4:5, square corners, overflow hidden. Inside it the same photograph is shown at three distances as the reader scrolls: the whole subject, then scaled to 180% toward one detail, then to 320% on a second detail (transform: scale with a transform-origin per stage, 700ms ease, switched by IntersectionObserver on three invisible markers). The sentence is delivered in halves: its first two or three words sit above the frame at clamp(56px, 8vw, 130px), centred; the last words arrive below the frame at the second stage, overlapping the frame's bottom edge by 0.3em. At the third stage one caption of 28ch at 17px appears to the right of the frame, top-aligned. The two halves together are the heading and stay within two lines.",
-  "mobile": "The frame grows to 70vw at 4:5 and stays sticky at centre. The first half of the sentence sits above it at 13vw, the second half below it at the same size. The third-stage caption appears under the sentence at 16px, centred.",
+  "blueprint": "A wrapper 200vh tall holds a sticky stage of 100svh. On the stage one frame is centred: 56vw wide at 3:2 (at least half the screen), square corners, overflow hidden. The frame holds the screen: no part of the held stage is more than about a third empty ground. Inside it the same photograph is shown at three distances as the reader scrolls: the whole subject, then scaled to 180% toward one detail, then to 320% on a second detail (transform: scale with a transform-origin per stage, 700ms ease, switched by IntersectionObserver on three invisible markers). The sentence is delivered in halves: its first two or three words sit above the frame at clamp(56px, 8vw, 130px), centred; the last words arrive below the frame at the second stage, overlapping the frame's bottom edge by 0.3em. At the third stage one caption of 28ch at 17px appears to the right of the frame, top-aligned. The two halves together are the heading and stay within two lines.",
+  "mobile": "The frame fills the width less the margins at 3:2 and stays sticky at centre. The first half of the sentence sits above it at 13vw, the second half below it at the same size. The third-stage caption appears under the sentence at 16px, centred.",
   "seenIn": [
    "aww-vero-new-york",
    "aww-illoca",
@@ -1048,7 +1052,9 @@
   "mobile": "Heading and note come first. The total follows at 40vw, flush left, with its caption. The slip comes last at full width minus 16px margins with its zigzag edge, rows at 15px, and the inverted total row closing it.",
   "seenIn": [
    "opl-the-content-architecture"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "The same paper slip with a zig-zag edge on a contrasting ground."
  },
  {
   "id": "stats-figure-on-the-photographs-edge",
@@ -1386,7 +1392,7 @@
    "quiet-instrument"
   ],
   "needs": [],
-  "blueprint": "Awards, press mentions or credits set as a four-column table with no lines. The heading is two or three words at about 5vw, stepped over two lines with the second line indented by two columns, and occupies columns 1–7. The table begins 72px below and spans columns 1–12 on a fixed grid: year in columns 1–2, project or title in 3–6, awarding body or publication in 7–10, the award itself in 11–12, right-aligned. Rows are set at 16–17px with 14px of padding above and below; every second row carries a background tone one step from the ground, running the full table width, which replaces rules. Year groups are separated by one blank row, and the year is printed only on the first row of its group. Use a real `<table>` with `border-collapse: collapse` and no borders.",
+  "blueprint": "Awards, press mentions or credits set as a four-column table with no lines. The heading is two or three words at about 5vw, on one or two lines on one left edge, in columns 1–7. The table begins 72px below and spans columns 1–12 on a fixed grid: year in columns 1–2, project or title in 3–6, awarding body or publication in 7–10, the award itself in 11–12, right-aligned. Rows are set at 16–17px with 14px of padding above and below; every second row carries a background tone one step from the ground, running the full table width, which replaces rules. Year groups are separated by one blank row, and the year is printed only on the first row of its group. Use a real `<table>` with `border-collapse: collapse` and no borders.",
   "mobile": "The heading drops to 11vw. Each table row becomes a two-line block: title on the first line in the full ink, then body and award on the second in the softer ink. The year stands once as a 22px figure above its group. Alternate blocks keep the background tone.",
   "seenIn": [
    "aww-bleibtgleich26"
@@ -1414,7 +1420,9 @@
   "mobile": "Two tiles per row with 6px gaps, logos at 44px tall. The heading tile runs full width first, about 120px tall. Show eight tiles at most so the board stays under one and a half screens. Names set in type drop to 20px.",
   "seenIn": [
    "aww-monolog"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A board of filled tiles: a bento (round 4)."
  },
  {
   "id": "proof-printed-guest-list",
@@ -2054,7 +2062,9 @@
   "mobile": "The accent tile runs full width, about 300px tall, heading at 28px, field and button stacked at full width. The two flanking tiles follow beneath as a pair, each half width and 120px tall, with the same gap and the same radius.",
   "seenIn": [
    "opl-shelf"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A row cropped from a board of filled tiles: a bento (round 4)."
  },
  {
   "id": "footer-columns-then-wordmark",
@@ -2109,7 +2119,9 @@
    "aww-hilden-kaira",
    "aww-px-push",
    "aww-pensatori-irrazionali"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "The name across the full width at the top of the footer."
  },
  {
   "id": "footer-invitation-over-cropped-wordmark",
@@ -2136,7 +2148,9 @@
    "opl-goodgoodgreat",
    "opl-marina-rachello",
    "aww-butter"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A giant cropped wordmark in the footer."
  },
  {
   "id": "footer-wordmark-on-last-photograph",
@@ -2161,7 +2175,9 @@
    "aww-seasats",
    "aww-alethia",
    "opl-vestris"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A giant wordmark over the last photograph."
  },
  {
   "id": "footer-mark-built-from-shapes",
@@ -2245,7 +2261,9 @@
    "opl-ohhmydesign",
    "opl-mammut-studios",
    "opl-belgrade-architecture"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Contact details set large in a 90svh footer field."
  },
  {
   "id": "footer-back-of-the-card",
@@ -2295,7 +2313,9 @@
   "seenIn": [
    "aww-aspen-search",
    "aww-oimachi"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A board of filled tiles with the wordmark at 9vw: a bento and a giant name (round 4)."
  },
  {
   "id": "footer-photograph-and-large-menu",
@@ -2519,7 +2539,9 @@
   "mobile": "A two-column board with 6px gaps. The slogan tile spans both columns at 46svh with type at 17vw on two lines; the word tile and the photograph tile sit side by side as squares; the long text tile spans both columns with 20px padding at 18px.",
   "seenIn": [
    "aww-aspen-search"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A board of filled tiles: a bento (round 4)."
  },
  {
   "id": "intro-lead-over-four-columns",
@@ -3453,7 +3475,9 @@
    "opl-le-petit-bleu",
    "opl-madie",
    "opl-sarah-matt-wedding"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A paper panel with scalloped edges on a contrasting ground: a fourth surface (round 4, r4-p25)."
  },
  {
   "id": "list-statement-table-pushed-right",
@@ -3523,7 +3547,9 @@
   "mobile": "The address breaks after the @ onto two lines at 11.5vw, left-aligned, sitting at 55% of an 86svh screen. The sentence sits at the top-left at 18px. Phone, city and social links stack at the bottom-left at 15px with 12px between them.",
   "seenIn": [
    "aww-bleibtgleich26"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "The email set at 7-9vw across the width (round 4, r4-p22)."
  },
  {
   "id": "contact-photo-strip-three-cell-bar",
@@ -3939,7 +3965,9 @@
    "opl-woblo",
    "opl-uglycash",
    "opl-uncle-rudy"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A board of filled tiles of interface close-ups (a bento)."
  },
  {
   "id": "how-it-works-one-card-four-fields",

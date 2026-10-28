@@ -7,11 +7,11 @@
    scroll. The pictures stay clear above their horizon; below it a flat band of scrim (the ::after of the
    .chs-move box the script wraps round each picture, from data-horizon down) carries every word: the
    title and text share one slot at the bottom left, and under
-   them one dock row holds the heading, the index and the count (on a phone, the heading and count over a
-   row of bars). With data-set="pair" the pictures sit in a big and a small frame on the ground and the
+   them one dock row holds the heading, the chapter names and the count (on a phone, the heading and
+   count). With data-set="pair" the pictures sit in a big and a small frame on the ground and the
    words beside them.
    Layers on the live stage: plates and frames 1 (DOM order stacks them), text, head and index 30.
-   Tokens: --font-display, --chs-ground (stage ground), --chs-fill (progress bars), and per article
+   Tokens: --font-display, --chs-ground (stage ground), --chs-ink and --chs-muted (the current chapter's name and the others'), and per article
    --plate-bg, --scrim (the band's flat black, .45; .3-.4 suits a calm mid-toned sea, a bright or busy one
    needs .45-.55: check every body line at 4.5:1), --scrim-sky (above the horizon, 0), --obj-pos,
    --obj-pos-phone, --inset-pos, --inset-zoom.
@@ -219,8 +219,8 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
   background: rgb(0 0 0 / var(--scrim, 0.45));
   pointer-events: none;
 }
-/* the progress bars and the rolling count move on every seam: keep them on their own small layers */
-[data-scene="pinned-chapter-switcher"].is-live :is(.chs-fill, .chs-reel) { will-change: transform; }
+/* the rolling count moves on every seam: keep it on its own small layer */
+[data-scene="pinned-chapter-switcher"].is-live .chs-reel { will-change: transform; }
 /* the stage writes --p on the section on every scroll step, and an inherited custom property sends a style
    pass through every element under it (75 here, with the split lines). Nothing inside the chapters, the
    heading or the index reads it, so it stops at the stage's children: the pass touches a handful */
@@ -286,25 +286,11 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
   grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
   gap: 24px;
 }
-[data-scene="pinned-chapter-switcher"].is-live .chs-index a { opacity: 0.88; transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+/* the chapter names: the current one in full ink, the others muted (no bar fills with the scroll) */
+[data-scene="pinned-chapter-switcher"].is-live .chs-index a { color: var(--chs-muted, rgb(255 255 255 / 0.72)); transition: color 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
 [data-scene="pinned-chapter-switcher"].is-live .chs-index a:hover,
 [data-scene="pinned-chapter-switcher"].is-live .chs-index a:focus-visible,
-[data-scene="pinned-chapter-switcher"].is-live .chs-tab.is-active a { opacity: 1; }
-[data-scene="pinned-chapter-switcher"].is-live .chs-track {
-  display: block;
-  position: relative;
-  height: 3px;
-  margin-bottom: 14px;
-  overflow: hidden;
-  background: rgb(255 255 255 / 0.3);
-}
-[data-scene="pinned-chapter-switcher"].is-live .chs-fill {
-  position: absolute;
-  inset: 0;
-  background: var(--chs-fill, #fff);
-  transform: scaleX(0);
-  transform-origin: 0 50%;
-}
+[data-scene="pinned-chapter-switcher"].is-live .chs-tab.is-active a { color: var(--chs-ink, #fff); }
 [data-scene="pinned-chapter-switcher"].is-live .chs-name {
   display: block;
   overflow: hidden;
@@ -313,13 +299,6 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-/* bars only: each link keeps its name as aria-label (set by the script); the bars sit level with the
-   middle of the heading's letters */
-[data-scene="pinned-chapter-switcher"][data-index="bars"].is-live .chs-name { display: none; }
-[data-scene="pinned-chapter-switcher"][data-index="bars"].is-live .chs-track { margin-bottom: 0; }
-[data-scene="pinned-chapter-switcher"][data-index="bars"].is-live .chs-index { bottom: calc(var(--chs-foot) + 9px); }
-[data-scene="pinned-chapter-switcher"][data-index="bars"].is-live .chs-index ol { gap: 8px; }
-[data-scene="pinned-chapter-switcher"][data-index="bars"].is-live .chs-index a { padding: 12px 0; margin: -12px 0; }
 [data-scene="pinned-chapter-switcher"][data-index="none"].is-live .chs-index { display: none; }
 
 /* a tablet or a narrow window: the dock in two rows, the heading and count over the index, and the text in
@@ -334,8 +313,6 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
     column-gap: 32px;
   }
   [data-scene="pinned-chapter-switcher"].is-live .chs-body { font-size: 17px; }
-  [data-scene="pinned-chapter-switcher"][data-index="bars"].is-live .chs-index { bottom: var(--chs-foot); }
-  [data-scene="pinned-chapter-switcher"][data-index="bars"].is-live .chs-head { bottom: calc(var(--chs-foot) + 3px + 18px); }
 }
 
 /* ---------- live 'pair': a big and a small frame on the ground, the words beside them ---------- */
@@ -385,25 +362,24 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
 [data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-body { font-size: 17px; max-width: 36ch; }
 
 @media (max-width: 767px) {
-  /* the phone: bars along the foot, the heading and count over them, the words above, all on the band */
+  /* the phone: the heading and count along the foot, the words above, all on the band; the names stay in
+     the links for screen readers, the index is not drawn */
   [data-scene="pinned-chapter-switcher"].is-live { --chs-foot: calc(24px + env(safe-area-inset-bottom, 0px)); }
   [data-scene="pinned-chapter-switcher"].is-live .chs-index { left: var(--chs-gutter); right: var(--chs-gutter); bottom: var(--chs-foot); }
   [data-scene="pinned-chapter-switcher"].is-live .chs-index ol { gap: 4px; }
   [data-scene="pinned-chapter-switcher"].is-live .chs-index a { padding: 12px 0; margin: -12px 0; }
-  [data-scene="pinned-chapter-switcher"].is-live .chs-track { margin-bottom: 0; }
-  [data-scene="pinned-chapter-switcher"].is-live .chs-name { display: none; }
+  [data-scene="pinned-chapter-switcher"].is-live .chs-index { display: none; }
   [data-scene="pinned-chapter-switcher"].is-live .chs-head { bottom: calc(var(--chs-foot) + 3px + 12px); }
   [data-scene="pinned-chapter-switcher"].is-live .chs-heading { max-width: none; }
   [data-scene="pinned-chapter-switcher"].is-live .chs-heading,
   [data-scene="pinned-chapter-switcher"].is-live .chs-count { font-size: 17px; }
-  [data-scene="pinned-chapter-switcher"][data-index="bars"].is-live .chs-index { bottom: var(--chs-foot); }
   [data-scene="pinned-chapter-switcher"].is-live .chs-text { bottom: calc(var(--chs-foot) + 3px + 12px + 22px + 28px); }
   [data-scene="pinned-chapter-switcher"].is-live .chs-title { max-width: none; font-size: 40px; line-height: 0.98; }
   /* a phone shows more text over less picture: a slightly deeper band */
   [data-scene="pinned-chapter-switcher"].is-live .chs-plate > .chs-move::after { background: rgb(0 0 0 / calc(var(--scrim, 0.45) + 0.05)); }
 
-  /* 'pair' on a phone: the big frame alone, framed, with the words under it on the ground, and the bars
-     and heading back at the top */
+  /* 'pair' on a phone: the big frame alone, framed, with the words under it on the ground, and the
+     heading back at the top */
   [data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-index { top: calc(72px + env(safe-area-inset-top, 0px)); bottom: auto; }
   [data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-plate {
     left: 16px;

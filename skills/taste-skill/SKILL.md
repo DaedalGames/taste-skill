@@ -204,7 +204,9 @@ the loan and read the real monthly figure; pick the dates and see the free rooms
 it against the room. Rules: it works on a phone with a thumb, it has a plain fallback without script,
 it never blocks reading, and it is one thing, not a playground. Its result stays in view while the
 visitor works the controls, at every width, and every heading beside it is true for every state it can
-reach. Build it in step 6, then drive every control to its extremes and look at the widest result at
+reach. It comes after the content it works on (the menu before the brew calculator, the price list
+before the estimate), its controls before its result at every width, the result on the section's
+ground. Lengths, sizes and counts are stepped buttons of real values, never a range slider. Build it in step 6, then drive every control to its extremes and look at the widest result at
 1440, 768 and 390, since the inspector only sees the default state.
 
 **The scenes carry the idea too.** The scroll scenes on the sheet are devices waiting for a subject.
@@ -288,7 +290,9 @@ not finished. Order of work:
    shown (twice for the hero); one treatment for all (section 0); three to eight good pictures beat
    twelve weak ones. The first picture a visitor sees shows the product or the place itself (the cup
    and the bar, the room, the product working), never a street, a facade or a blurred mood shot; if no
-   such picture exists, the hero is set in type. Each photograph appears once on the page. Archive photographs, old maps and engravings only when they are the idea itself
+   such picture exists, the hero is set in type. Each photograph appears once on the page. Pictures of
+   one series count as one: at most two from one shoot or archive. A drawing rendered to PNG is still a
+   drawing. Archive photographs, old maps and engravings only when they are the idea itself
    (the history this subject continues, like the slip boxes behind a notes app), sharp, large and of
    one family; never as filler or a random old picture of the place. Never a picture inside a headline
    or a thumbnail inside a sentence. Software shows itself large on the first screen, at a size a
@@ -311,8 +315,10 @@ not finished. Order of work:
    `references/imagery.md` covers searching, licences, video, drawing, crops and treatments.
 5. **The navigation and the footer** as section 0 deals them: a real header with the page's sections
    as links and the one action, on every page; a footer that works (links, contact, legal), never a
-   giant name or email. **The interactive piece,** only if dealt, in the section where it proves the
-   claim, with real content, a thumb-sized phone version and a plain fallback.
+   giant name or email. On a one-page site the footer is one line (name or ©, city, legal, Image
+   credits); it never repeats the navigation or a list the page already shows. **The interactive
+   piece,** only if dealt, in the section where it proves the claim, with real content, a thumb-sized
+   phone version and a plain fallback.
 6. **The scroll scenes,** when the sheet deals them (section 9), each with the section it carries: the page's big
    moments, the camera that flies through the work, the picture that opens to the whole screen, the
    word that buckles under the scroll. Copy the shared stage and the scene's files from
@@ -326,10 +332,12 @@ not finished. Order of work:
    replaces the content of the section it carries, never adds screens of nothing in front of it, and a
    page with scenes still has a length budget: about 12-16 screens at 1440 in all, of which the scenes
    hold about six. `references/scenes.md` says how to put one on a page, fill it, fit it and check it.
+   A software page gets one scroll scene at most.
 7. **Fullness.** Look at each desktop screen as a poster: one dominant thing and the content it
    carries. A screen that is mostly empty ground is an underbuilt section, not a rest; one deliberate
    rest per page is the limit, and the inspector fails a page with two or more near-empty screens.
-   Running text is in the full ink at 16px or more; grey is for secondary notes.
+   Running text is in the full ink at 16px or more (15px on a phone), on dark grounds too; under a
+   display heading 18px or more on desktop. Grey is for secondary notes.
 8. **The frame.** The page has one pair of equal outer margins at every width, and every section uses
    the width the page has set up: when its text sits in the left half, the right half holds its
    picture, its second column, its list or its figure, never nothing. Asymmetry lives inside the grid,
@@ -394,7 +402,9 @@ Now build the motion layer. It is required, and it is more than one fade: the in
 elements that really move while the page loads and is scrolled, and fails a page under eight (it warns
 under sixteen). Any scroll scenes are already built (step 6); around them the layer has four parts:
 
-1. **The signature move** named on the sheet: one, done well (a dealt scene can be it).
+1. **The signature move** named on the sheet: one, done well (a dealt scene can be it). On a software
+   page it is the product replay: the product's own window plays one task when it scrolls into view
+   (sheet section 8, `<skill>/assets/replay.js`).
 2. **The entrance the sheet deals** (section 8): `data-entrance` on the body, its markers on the first
    screen, its CSS already in base.css, and only its own rule below the fold. Nothing else enters: no
    fade-up on every block, and no masked line rise or shutter unless the dealt entrance is `set-type`.
@@ -454,10 +464,11 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **No styled accent word** in a headline (italic, serif, coloured, underlined). | One face, one colour. The words carry the emphasis. |
 | **The dealt type system:** its faces, its weights, its six steps. Two families at most. | Map every other size onto the nearest step. |
 | **No pictures in headlines or sentences.** No photograph between the words of a headline, no picture inside the letters, no thumbnails inside running text. | The picture gets its own place, beside, above or behind the words, at a size that shows what it is. |
+| **No headline in a card.** The hero headline stands on the page ground or on its picture, never in a panel, card or box. | The first screen as one composition: headline, one sentence, the action, the picture. |
 | **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges. | Neutral ground (white, off-white, near-black); colour from the pictures; the accent on the action. |
-| **No giant name or email in the footer, no credit walls.** | The dealt footer: links, contact, legal at text sizes; picture credits behind one small "Image credits" link. |
-| **No drag rails or progress bars** outside a working tool; no sideways scrollers on desktop. | A list or grid that fits the width. |
-| **No page built from boxes,** no staggered folder tabs, no empty half-rows (nothing on the left, text on the right). | Text straight on the page, separated by space and size; tabs, if needed, as one working row that opens on click. |
+| **No giant name or email anywhere, no credit walls.** | The email at the h3 step or smaller, with a Copy button and a mailto link; the dealt footer: links, contact, legal at text sizes; picture credits behind one small "Image credits" link. |
+| **No drag rails or progress bars** outside a working tool, and no range sliders: a length or a count is a row of stepped buttons; no sideways scrollers on desktop. | A list or grid that fits the width; stepped buttons of real values. |
+| **No page built from boxes,** no bento grids of cards, no staggered folder tabs, no empty half-rows (nothing on the left, text on the right). | Text straight on the page, separated by space and size; tabs, if needed, as one working row that opens on click. |
 | **No labels that carry nothing**, no walls of text. | Facts, few words; see step 5. |
 
 Three places keep their own conventions and are left alone by the inspector: real code in
@@ -590,6 +601,7 @@ report that the open collections could not be searched.
 | `scripts/lint.mjs` · `scripts/inspect.mjs` | The gate. |
 | `scripts/scenes.mjs` | The gate for scroll scenes: each scene at 0-100% of its hold, desktop, phone, reduced motion. |
 | `assets/base.css` · `assets/base.js` | An optional neutral foundation to build on. |
+| `assets/replay.js` · `assets/replay-demo.html` | Step 9 on a software page: the product replay the sheet deals, and a working example of its six patterns. |
 | `assets/scenes/` | The scroll scenes: the shared stage (`stage.js`, `stage.css`) and, for each scene in the library, its `.js`, `.css` and a working demo page in `demo/`. |
 | `assets/app.css` · `assets/charts.js` | For app screens: a neutral shell, panels, tables and controls, and small SVG charts drawn to the app rules. |
-| `library/` | The data the draw reads: directions, heroes, sections, type systems, palettes, photographs, studied sites, motions, scroll scenes (`scenes.json`), and the app styles, shells and screen patterns (`app.json`). Do not read it whole; use the script. |
+| `library/` | The data the draw reads: directions, heroes, sections, type systems, palettes, photographs, studied sites, motions, scroll scenes (`scenes.json`), product replays (`replays.json`), and the app styles, shells and screen patterns (`app.json`). Do not read it whole; use the script. |

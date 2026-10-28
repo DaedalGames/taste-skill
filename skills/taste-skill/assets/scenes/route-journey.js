@@ -358,6 +358,7 @@
     const world = el('div', 'route-world', cam);
     world.style.width = W + 'px'; world.style.height = H + 'px';
     const flat = el('div', 'route-flat', world);
+    flat.dataset.map = ''; // the map the route crosses: a place, not a drawing (the inspector's scene-drawing skips [data-map])
     const art = root.querySelector('.route-art');
     // the painted map (see PERFORMANCE): cells of bitmaps under the vector map, which is removed once
     // every cell is painted

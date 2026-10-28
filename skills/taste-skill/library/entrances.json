@@ -146,7 +146,7 @@
   },
   "below": {
    "label": "Interface only",
-   "rule": "Each further [data-ui] fragment (data-reveal=\"ui\") plays one data moment once as it enters: its chart draws (data-moment=\"chart\"), its newest row lands (data-moment=\"row\"), or its figure rolls (data-roll, the Rolling figures recipe). One per fragment. Headings, text and photographs never move."
+   "rule": "Each further [data-ui] fragment (data-reveal=\"ui\") except the product replay (data-replay, which plays its own beats) plays one data moment once as it enters: its chart draws (data-moment=\"chart\"), its newest row lands (data-moment=\"row\"), or its figure rolls (data-roll, the Rolling figures recipe). One per fragment. Headings, text and photographs never move."
   }
  },
  {

@@ -252,6 +252,9 @@ or a fade from 55% black to transparent over the lower third. Never a coloured o
   Write the fragment's CSS under a `[data-ui]` selector (`[data-ui] .row { … }`) so the linter can
   tell it apart from page styles.
 - If the user supplies real screenshots, show them large and uncropped at least once.
+- One fragment on a software page replays the product doing its job (sheet section 8, motion.md
+  "Product replay"); every pane of every fragment is filled: no empty editor, no half-empty sidebar
+  above the fold (the inspector warns, `hollow-fragment`).
 
 ## 8. Drawings: only when they are information
 
@@ -280,6 +283,10 @@ Never: hand-built illustrations of the product or the place, drawn people, scene
 and abstract shapes, isometric art, rows of small drawn motifs, a drawn version of the brand idea
 (stones, leaves, waves) repeated as decoration. The inspector fails a large drawn illustration
 (`drawn-illustration`) and warns on scattered small ones (`svg-doodles`).
+
+A drawing rendered to PNG or drawn on a canvas is still a drawing: motion is shown with the work's own
+stills or with type that moves, never with drawn shapes (round 4: a bouncing-ball onion skin around the
+hero). An atmospheric backdrop is shaded toward the page's ground so the work carries the colour.
 
 ## 9. Type and colour alone
 

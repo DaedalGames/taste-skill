@@ -76,6 +76,9 @@ With rules and shadows banned, a surface is told apart from the ground by tone a
 
 - One step is enough. If a panel does not read, increase padding or separate with space before
   reaching for a second tone.
+- Three grounds at most: the page ground, the surface one step from it, and the dealt field. A sheet
+  or card in any other colour (a white receipt on grey, a paper slip on black) is a fourth surface
+  (the inspector warns, `surface-count`).
 - Do not nest a panel inside a panel.
 - Images do not need a frame. If a light photograph melts into a light ground, change the crop or set
   it on `--surface`, do not outline it.

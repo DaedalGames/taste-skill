@@ -326,5 +326,5 @@ html.js [data-scene="thumbnail-becomes-the-stage"].is-live > .scene-stage {
   [data-scene="thumbnail-becomes-the-stage"].is-live .kh-features li:nth-child(n+3) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   [data-scene="thumbnail-becomes-the-stage"] .kh-features::before { top: -22px; }
   [data-scene="thumbnail-becomes-the-stage"] .kh-features h3 { font-size: 15px; margin-bottom: 4px; }
-  [data-scene="thumbnail-becomes-the-stage"] .kh-features p { font-size: 14px; line-height: 1.4; }
+  [data-scene="thumbnail-becomes-the-stage"] .kh-features p { font-size: 15px; line-height: 1.4; }
 }

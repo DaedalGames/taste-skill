@@ -1,6 +1,7 @@
 // tasteskill / scenes / wordmark-under-strain.js — one giant word put under load by the scroll.
 //
-// The closing word of a page (the brand name, 4-8 letters) is held on screen and strained by the scroll:
+// The closing word of a page (4-8 letters, never the brand's name: a giant name fails the inspector's
+// giant-contact) is held on screen and strained by the scroll:
 // it is crushed onto its baseline and springs back, recedes into a stepped echo of stacked copies, and
 // its one straight letter loosens, falls out and lands flat as the call to action. Type, one flat
 // ground colour and one label; use it once per page, as the closing section.
@@ -13,11 +14,11 @@
 //     <div class="scene-stage">
 //       <div class="ws-top"><p>One sentence, 45+ characters, about the offer.</p><p>Porto, since 2009</p></div>
 //       <h2 class="ws-word" id="ws-title">
-//         <span class="ws-sr">FLINT</span>
+//         <span class="ws-sr">STAIRS</span>
 //         <span class="ws-stack" aria-hidden="true">
-//           <span class="ws-copy" style="--i:0" data-text="FLINT"></span>      drawn copies: the letters are
+//           <span class="ws-copy" style="--i:0" data-text="STAIRS"></span>     drawn copies: the letters are
 //           …  --i:1 to --i:4, the same                                        generated content (data-text)
-//           <span class="ws-copy ws-copy--front" style="--i:5">FL<span class="ws-l ws-slot">I</span>NT</span>
+//           <span class="ws-copy ws-copy--front" style="--i:5">STA<span class="ws-l ws-slot">I</span>RS</span>
 //         </span>
 //       </h2>
 //       <a class="ws-drop" href="#contact"><span class="ws-drop__label">Start a project</span></a>
@@ -51,8 +52,8 @@
 //   --ground, --ink, --font-display, --font-text  the page's tokens, picked up as they are
 //
 // Options (data-options JSON). Default, then range:
-//   hold       2.5      screens the stage is held on desktop (1.5-4)
-//   phoneHold  2        screens held under 768px (1.5-3)
+//   hold       1.2      screens the stage is held on desktop (1-4): one word holds about one screen
+//   phoneHold  1.2      screens held under 768px (1-2): the same one screen as on desktop
 //   phone      'same'   'same' runs the scene with phone numbers; 'rest' shows the finished composition
 //   scrub      auto     true when Lenis smooths the page, else 0.8 (seconds of catch-up); set to override
 //   copies     6        copies in the echo, back to front (4-8); fewer, bigger steps if bands would be thin
@@ -132,8 +133,8 @@
   const settings = (opts) => {
     const o = opts || {};
     return {
-      hold: num(o.hold, 2.5, 1.5, 4),
-      phoneHold: num(o.phoneHold, 2, 1.5, 3),
+      hold: num(o.hold, 1.2, 1, 4),
+      phoneHold: num(o.phoneHold, 1.2, 1, 2),
       phone: o.phone === 'rest' ? 'rest' : 'same',
       scrub: typeof o.scrub === 'boolean' || typeof o.scrub === 'number' ? o.scrub : null,
       copies: Math.round(num(o.copies, 6, 4, 8)),

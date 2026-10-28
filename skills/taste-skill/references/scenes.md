@@ -36,7 +36,8 @@ What a scene is not: a fade-up, a small parallax, a sticky footer, a marquee. Th
 
 The direction sheet deals two (section 9 of the sheet), from different families, each placed on the
 section of the argument it can carry; a long, loud page (eight sections or more, bold or playful) may
-get three. Build them in step 6, with that section: a scene is composition, not decoration added at the
+get three. A software page gets one at most, never a closing one: its big moment is the product replay (sheet section 8,
+`references/motion.md`, "Product replay"). Build them in step 6, with that section: a scene is composition, not decoration added at the
 end.
 
 A scene replaces the content of the section it carries. It is that section, told as a scene, not extra
@@ -95,8 +96,11 @@ say how many pictures and words it takes; these hold for all of them:
 - **On the work, the scene is the work.** A scene that carries the work shows the pieces themselves:
   each card, chapter or picture is one piece (its title card, its building, its product), shown once,
   linking to the piece. Pictures of the world around the work (the city, the archive, the materials)
-  go on the intro or the about. However the work is told, the first piece at full size is on screen by
-  about the fourth screen.
+  go on the intro or the about. However the work is told, each piece stops on screen flat-on (turned
+  10° or less), at 60% of the width or more, with its title on the same element, for half a screen of
+  scroll, and the stage lets go within half a screen of the last piece; the first piece is on screen by
+  about the third screen. The fly-through does this with `{"stop": 0.5}` (scenes.mjs fails a piece
+  that never stops flat and large, `piece-unseen`).
 - **Each picture once.** A scene's card count is the number of distinct pictures it has. Never repeat a
   picture to fill a ring or a deck, take at most two from one source (one film, one shoot, one
   building) and never put those two side by side; with too few, take fewer cards or redraw.
@@ -202,7 +206,9 @@ empty, and that the navigation or the one action is in reach after the hero.
    one that carries only a title about one (the raster cut's 1.2). A scene on the work holds three screens at most, so the work itself is not kept waiting. The
    walk through rooms holds ten screens and is a whole page on its own: the draw does not deal it (see
    its entry). When a dealt scene's sheet entry gives a shorter hold than its file's default, set the
-   sheet's in `data-options`.
+   sheet's in `data-options`. **A closing scene holds about one screen.** A scene whose only content is a line or two
+   of type is done in about one screen: the line has been read (the inspector fails a short line held
+   over 1.2 screens with nothing new, `line-holds`).
 3. **Native scroll only.** No wheel capture, no locking the page, no scenes that only run on a click.
    Smoothing only through `Stage.smooth()`.
 4. **Readable at its rest points.** The statement on screen reads whole; nothing passes over text while
@@ -217,10 +223,20 @@ empty, and that the navigation or the one action is in reach after the hero.
    they move.
 7. **The house rules hold inside scenes:** no monospace captions, no 01/07 counters (a plain "3 of 7" if
    a count is needed), no gradients (flat scrims), no shadows or glows, no hairline decoration, no
-   decorative particles, no violet.
+   decorative particles, no violet, **no drawn shapes, doodles, tracks or markers**: no wheels, waves,
+   morphing polygons, dashed axles or blobs, no rail or bar with a moving dot, no progress bars or
+   playheads that stand for the scroll. A scene shows real pictures, the product's own interface
+   (`data-ui`), a real map or plan with labels, the brand's own mark, or type: mark them `data-map`,
+   `data-plan` or `data-mark` (a dial or a gauge is a drawing). Every scene is set in the
+   page's visual language (its grounds, type and pictures). The inspector fails a drawing or a track
+   inside a scene (`scene-drawing`, `scene-track`).
 8. **The finished composition is designed,** not an afterthought: it is what reduced motion, a failed
    script and some phones see. It keeps the section's heading in full ink at the section-heading size
    (never a blurred ghost of it behind the landed pieces), and a name or a closing line reads whole.
+9. **No dead frames.** At every frame of a hold the screen shows something to read or see: no stretch
+   of more than about one screen where 60% or more of the screen is empty ground, pictures cover less
+   than about 15% of it and nothing on it changes. The inspector films the scroll and fails it (`held-dead-screen`);
+   scenes.mjs names the steps (`empty-steps`).
 
 ## 8. When no scene in the library fits
 
@@ -258,7 +274,9 @@ drawings, or with type alone.
 - **Fly-through of photo cards** (`depth-card-flythrough`): the camera runs into one vanishing-point
   picture while captioned photo cards pass on both sides. A backdrop whose lines meet at one point and
   5-12 photographs in one grade, set apart from the backdrop (the backdrop dimmed or softened, or the
-  cards matted in the ground colour) so they never melt into it. On the work, the cards are the work.
+  cards matted in the ground colour) so they never melt into it. On the work, the cards are the work,
+  in stop mode (`{"stop": 0.5}`): each piece rests centred and flat at about 62% of the width with its
+  title under it for half a screen; phones get the pieces stacked full width.
 - **Powers-of-ten pull-back** (`powers-of-ten-pullback`): a film becomes a screen on a wall, then the
   place becomes a framed print. A film or a still, and a place photographed straight on with an
   opening that can be measured.
@@ -279,15 +297,14 @@ drawings, or with type alone.
   of accent dots across it that settle back to ink. One mark of 1-4 characters, a headline on clear
   ground, no pictures. Hold 0.
 - **Light flood** (`light-flood`): one sentence plays out a day: light rises, floods the screen, night
-  falls. Two short lines, no pictures.
+  falls. Two short lines, no pictures; it holds about one screen (1.2).
 - **Shaped edge carries the new ground** (`shaped-edge-ground-change`): the sky's colour rises over its
   photograph as an arch and becomes the next chapter's ground. One photograph with open, even sky over
   a wide subject.
 - **Stepped columns raise a stage** (`stepped-columns-raise-a-stage`): ink fills 3-5 columns like a
-  falling bar chart while a square wheel rolls round. Short copy, no pictures. The wheel only for steps
-  whose own words go from rough to smooth; a timeline, a pre-order or price tiers take `wheel: 'none'`.
-  No ink edge crosses copy being read: keep the default `ghost: false`, where each column opens as an
-  ink stub that already holds its copy.
+  falling bar chart and levels into one block. Short copy, no pictures, no drawing. No ink edge crosses
+  copy being read: keep the default `ghost: false`, where each column opens as an ink stub that
+  already holds its copy.
 
 **Grid reassembly**
 - **Parts lock into the whole** (`parts-lock-into-the-whole`): one huge word or number steps back while
@@ -320,8 +337,9 @@ drawings, or with type alone.
   rounded pricing cards with a photograph on top, and the section's heading stays readable.
 
 **Mask and reveal**
-- **Fly into the shape** (`fly-into-the-shape`): the camera flies into the brand's mark, the title riding
-  on its face, and the next chapter opens inside it. An ownable solid mark and one dark photograph of the
+- **Fly into the shape** (`fly-into-the-shape`): the brand's mark, a clean mask of its true shape with
+  the next chapter's photograph already inside it, rises with the title on its face, and the camera
+  flies into it. Never extruded or bevelled. An ownable solid mark and one dark photograph of the
   chapter's world.
 - **Shape-shifting window over a fixed world** (`shaped-window-over-fixed-world`): two windows in a
   shutter slide level, merge and push through into a photograph of a place. One wide photograph of
@@ -332,17 +350,20 @@ drawings, or with type alone.
 
 **Media sequence**
 - **Instrument dial stage** (`instrument-dial-stage`): a dial reads off 3-6 items, each name huge on
-  the horizon with its picture standing under it. One 4:5 picture and one number an item.
+  the horizon with its picture standing under it. One 4:5 picture and one number an item. Not dealt:
+  the dial is a drawing (rule 7).
 - **Lens over a thumbnail stream** (`lens-over-thumbnail-stream`): a strip of thumbnails slides under
   a playhead and each project blooms into a collage. Five or six of the client's own projects, five to
   ten pictures each (*product-photo*); five hold about three screens.
 - **Pinned chapter switcher** (`pinned-chapter-switcher`): 3-6 full-bleed picture chapters change by
-  hard wipes, the words swapping at the seam. One picture a chapter, shot or chosen as one series.
+  hard wipes, the words swapping at the seam, the chapter names under them (no progress bars). One
+  picture a chapter, shot or chosen as one series.
 
 **Object scrub**
 - **Fixed hero object** (`fixed-hero-object`): one product turns on its own layer while the chapters
   rise beneath it. A turntable render of 36-120 frames (*product-photo*). First screen, carrying the
-  hero and the two sections after it in about five and a half screens.
+  hero and the two sections after it in about five and a half screens. Not dealt while its dock draws a
+  gauge (rule 7).
 - **Scrubbed transformation sequence** (`scrubbed-transformation-sequence`): an object changes state
   as a scrubbed frame sequence while the ground opens to a new colour. 80-250 frames with alpha of the
   change (*product-photo*).
@@ -371,7 +392,8 @@ drawings, or with type alone.
   optional drum of pictures beside it. 8-20 real names.
 - **Type re-layout** (`type-flip-relayout`): a list in giant capitals spreads, folds into an index and
   hands its size to the heading. A one-word heading and 3-6 short items, no pictures.
-- **Wordmark under strain** (`wordmark-under-strain`): the brand's name is crushed, echoed, and drops
-  a letter that becomes the button. A name of 4-8 letters with a straight letter, no pictures. For a
-  loud name (a band, a launch, a sports brand, a studio that shouts); on a calm house, a craft or a care
-  practice the strain reads as a broken name, so redraw. At rest the name reads whole.
+- **Wordmark under strain** (`wordmark-under-strain`): a closing word is crushed, echoed, and drops
+  a letter that becomes the button. A word of 4-8 letters with a straight letter, never the brand's name
+  (no giant name anywhere), no pictures. For a loud brand (a band, a launch, a sports brand, a studio that
+  shouts); on a calm house, a craft or a care practice the strain reads as a broken word, so redraw. At
+  rest the word reads whole.

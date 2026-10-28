@@ -32,8 +32,8 @@
   "family": "camera-through-space",
   "summary": "The camera runs forward into one picture with a strong vanishing point (a jetty, a road, a long hall) while captioned photo cards grow out of the distance on alternating sides and pass the screen edges, one short statement changing at the top with each card. It turns five to twelve proof points, lines of a manifesto or views of a place into one journey through the subject's world.",
   "place": "In the middle of the page, after the hero: the intro, the work or the proof, where the visitor should feel the size of the subject's world. On the work it flies through the pieces themselves; before the work it holds three screens at most, so the work is not kept waiting. A quiet text section follows it.",
-  "content": "One backdrop picture, landscape, 2400px wide or more, with a strong one-point perspective (a jetty, a road, a runway, a rail line, a long hall) whose lines meet on the vertical centre line, and a calm band above that point for the statement; or a 6-10 s muted forward move as a video encoded with a keyframe on every frame. Five to twelve card photographs (six hold three screens, and each more adds about 0.36), landscape 3:2 at 1200x800, at most two 4:5 portraits and never two in a row, all of the subject's world and all in one grade baked into the files; on the work, the cards are the work itself, each piece once. The cards stand apart from the backdrop: dim, soften or flatten the backdrop, or mat each card in the ground colour, so a card never melts into a busy picture of the same grade, and keep endScale near 4 so each card passes at more than half the screen's width. One statement per card, 4-7 words (about 34 characters); one caption per card, 1-4 words. Set --fly-vp, --fly-ground and --fly-focus-w to the backdrop's own lines. Without a picture whose lines meet at one point, or with photographs that cannot be made to look like one place, redraw.",
-  "options": "inAir 3 (2-4) cards in the air at once; phoneInAir 2 (2-3); hold 0.36 a card slot, 3.3 for seven cards (1.5-6); sideX 0.32 (0.28-0.38) how far out the cards fly; endScale 4 (2.5-5): 4 a bold pass at the edge, 2.5 a calm drift; yaw 8 (0-10) degrees the cards turn inward, 0 flat; perspective 300 (240-600); title 1.3 (1-1.6) how much larger the first statement opens; dolly 1.8 for a still (1.6-2), 1.08 for a video (1-1.3); run 0.45 (0-0.7) how far the camera runs over the ground of a still, 0 for a backdrop with no ground; arrive true, a short settling beat at the end; haze 0 (0-0.3) fog left on the nearest card; count true, a plain \"3 of 7\" under the statement; phone 'same' | 'rest'; phoneMax 9 (3-12), more cards and the phone rests; phoneSideX 0.33 (0.1-0.45); phoneDy (0-40, measured when left out); phoneYaw 3 (0-10).",
+  "content": "One backdrop picture, landscape, 2400px wide or more, with a strong one-point perspective (a jetty, a road, a runway, a rail line, a long hall) whose lines meet on the vertical centre line, and a calm band above that point for the statement; or a 6-10 s muted forward move as a video encoded with a keyframe on every frame. Five to twelve card photographs (six hold three screens, and each more adds about 0.36), landscape 3:2 at 1200x800, at most two 4:5 portraits and never two in a row, all of the subject's world and all in one grade baked into the files; on the work, the cards are the work itself, each piece once. The cards stand apart from the backdrop: dim, soften or flatten the backdrop, or mat each card in the ground colour, so a card never melts into a busy picture of the same grade, and keep endScale near 4 so each card passes at more than half the screen's width. On the work, 4-6 pieces in stop mode (byRole below), each stopped flat and large with its own title. One statement per card, 4-7 words (about 34 characters); one caption per card, 1-4 words. Set --fly-vp, --fly-ground and --fly-focus-w to the backdrop's own lines. Without a picture whose lines meet at one point, or with photographs that cannot be made to look like one place, redraw.",
+  "options": "stop 0 (0.3-0.8) screens each card rests flat at the centre, 0 = the flight; inAir 3 (2-4) cards in the air at once; phoneInAir 2 (2-3); hold 0.36 a card slot, 3.3 for seven cards (1.5-6); sideX 0.32 (0.28-0.38) how far out the cards fly; endScale 4 (2.5-5): 4 a bold pass at the edge, 2.5 a calm drift; yaw 8 (0-10) degrees the cards turn inward, 0 flat; perspective 300 (240-600); title 1.3 (1-1.6) how much larger the first statement opens; dolly 1.8 for a still (1.6-2), 1.08 for a video (1-1.3); run 0.45 (0-0.7) how far the camera runs over the ground of a still, 0 for a backdrop with no ground; arrive true, a short settling beat at the end; haze 0 (0-0.3) fog left on the nearest card; count true, a plain \"3 of 7\" under the statement; phone 'same' | 'rest'; phoneMax 9 (3-12), more cards and the phone rests; phoneSideX 0.33 (0.1-0.45); phoneDy (0-40, measured when left out); phoneYaw 3 (0-10).",
   "phone": "The same fly-through with phone numbers: two cards in the air, each coming out at the foot of the focal object, growing to about 72% of the width and leaving through the bottom edge. More than nine cards and the phone gets the finished composition.",
   "roles": [
    "intro",
@@ -65,7 +65,10 @@
    "other"
   ],
   "needs": [],
-  "hold": 3
+  "hold": 3,
+  "byRole": {
+   "work": "Set data-options {\"stop\": 0.5}: 4-6 pieces, each stopped centred and flat at about 62% of the width with its title under it for half a screen; hold 0.7 a piece plus 0.3 (3.1 for four, 4.5 for six); the backdrop shaded toward the ground; phones get the pieces stacked full width. More pieces go to a plain index under the scene."
+  }
  },
  {
   "id": "powers-of-ten-pullback",
@@ -157,11 +160,11 @@
   "id": "light-flood",
   "name": "Light flood",
   "family": "colour-and-ground",
-  "summary": "One sentence on a held stage plays out a day: a soft dome of colour rises behind it like a sun, swells until the whole screen is lit, then night falls from the top and the last light sinks and goes out on the next section's dark ground, while the setup words go out of focus and the key phrase, lit by the dome, stays sharp. It gives one statement three screens of weight: a brand chapter, a turn from day to night for a hotel or a spa, a promise on a finance page.",
+  "summary": "One sentence on a held stage plays out a day: a soft dome of colour rises behind it like a sun, swells until the whole screen is lit, then night falls from the top and the last light sinks and goes out on the next section's dark ground, while the setup words go out of focus and the key phrase, lit by the dome, stays sharp. It gives one statement its weight in about one screen: a brand chapter, a turn from day to night for a hotel or a spa, a promise on a finance page.",
   "place": "In the middle, between the hero and the detail, as the intro or the about; or as the last word before the booking or the action. The section after it starts on the night colour. Once per page.",
   "content": "No pictures. One sentence in two lines of 18 characters or fewer each, spaces and punctuation counted: a lead of 2-4 setup words, which must read alone as the title for the first quarter, and a key phrase of 2-3 words. Nothing else on the stage: no body copy, buttons, labels or logos. Six colours (day, halo, core, night, ink, key) or a checked preset; the core needs a relative luminance of 0.15-0.25.",
-  "options": "palette '' | 'dusk' | 'sky' | 'sage' (sets all six colours); direction 'dusk' (day, light, night) | 'dawn' (night, light, day; add class lf--dawn); ending 'night' | 'flood' (holds on the full flood; add class lf--flood); focus 'rack' (the lead goes soft, the key comes sharp) | 'flat' (opacity only); hold 3 (2-4); phoneHold 2.5 (2-4); flood 3 (2.4-3.6) end scale of the dome; phoneFlood 3.6 (2.4-4.2); scrub 0.6; header '', the selector of a fixed header, and headerClass 'is-dark', the class it gets while the night is under it; phone 'same' | 'rest'.",
-  "phone": "The same day with phone numbers: a broad, low dome, smaller blur steps; hold 2.5.",
+  "options": "palette '' | 'dusk' | 'sky' | 'sage' (sets all six colours); direction 'dusk' (day, light, night) | 'dawn' (night, light, day; add class lf--dawn); ending 'night' | 'flood' (holds on the full flood; add class lf--flood); focus 'rack' (the lead goes soft, the key comes sharp) | 'flat' (opacity only); hold 1.2 (1-1.5); phoneHold 1.2 (1-1.5); flood 3 (2.4-3.6) end scale of the dome; phoneFlood 3.6 (2.4-4.2); scrub 0.6; header '', the selector of a fixed header, and headerClass 'is-dark', the class it gets while the night is under it; phone 'same' | 'rest'.",
+  "phone": "The same day with phone numbers: a broad, low dome, smaller blur steps; hold 1.2.",
   "roles": [
    "intro",
    "about",
@@ -173,7 +176,8 @@
    "*"
   ],
   "needs": [],
-  "hold": 3
+  "hold": 1.2,
+  "lines": 2
  },
  {
   "id": "shaped-edge-ground-change",
@@ -210,11 +214,11 @@
   "id": "stepped-columns-raise-a-stage",
   "name": "Stepped columns raise a stage",
   "family": "colour-and-ground",
-  "summary": "A row of three to five columns of short copy on one flat page colour fills with solid ink from the foot, each column at its own pace, so the row reads first as a falling bar chart and then levels into one block, the copy turning from ink on the page to page on the ink; where ink has arrived a square wheel rolls over a road of arches, gaining a side at every arch until it rests as a circle. It is for a process or a set of tiers that really runs from rough to smooth, on a page that can commit to one bold colour.",
-  "place": "In the middle, on how it works, the steps or the tiers of the pricing. Keep the wheel only when the steps' own words go from rough to smooth (a board planed true, a road resurfaced); a timeline, a pre-order or price tiers take {\"wheel\":\"none\"} for a plain stepped chart. Keep the default {\"ghost\":false}: each column opens as an ink stub that already holds its copy, so no ink edge crosses words being read.",
-  "content": "No pictures, no footage, no icons. A heading of 8 words or fewer on two lines at most; an optional rail with two one-word ends (Rough, Smooth); per step an optional note in plain words (never an index number), a title of two short lines (18 characters a line) and 16-28 words, whose optional .sr-more part the phone drops (keep the rest to 70 characters). Three to five steps is the design; up to twelve run as rows. Exactly two colours: one flat page colour and one ink at 4.5:1 or more.",
-  "options": "hold 0.6 a step, 1.8-3 (2.4 for four; 1.8 with wheel 'none'); phoneHold 0.5 a step, 1.8-2.6; scrub 0.5, 0.3 with Lenis (0.2-0.8); order 'descending' (the first column fills first) | 'ascending' (a rising chart, for tiers) | 'centre' (odd counts); ends [0.30, 0.86], when the first and the last column are full (first 0.20-0.40, last 0.75-0.88); wheel 'road' | 'none'; ghost false (each column opens as an ink stub that already holds its copy) | true (the copy waits in ink on the page and the rising edge jumps past it).",
-  "phone": "The scene turns 90 degrees: stacked rows turn to ink one after another, each in one short fade (a sideways wipe would cut its words), and the wheel rolls along the header's rail in ink on the page colour; hold about 2 for four steps.",
+  "summary": "A row of three to five columns of short copy on one flat page colour fills with solid ink from the foot, each column at its own pace, so the row reads first as a falling bar chart and then levels into one block, the copy turning from ink on the page to page on the ink. It is for a process or a set of tiers, on a page that can commit to one bold colour. Short copy, no pictures, no drawing.",
+  "place": "In the middle, on how it works, the steps or the tiers of the pricing. Keep the default {\"ghost\":false}: each column opens as an ink stub that already holds its copy, so no ink edge crosses words being read.",
+  "content": "No pictures, no footage, no icons, no drawing. A heading of 8 words or fewer on two lines at most; per step an optional note in plain words (never an index number), a title of two short lines (18 characters a line) and 16-28 words, whose optional .sr-more part the phone drops (keep the rest to 70 characters). Three to five steps is the design; up to twelve run as rows. Exactly two colours: one flat page colour and one ink at 4.5:1 or more.",
+  "options": "hold 0.45 a step, 1.4-2.2 (1.8 for four); phoneHold 0.4 a step, 1.4-2; scrub 0.5, 0.3 with Lenis (0.2-0.8); order 'descending' (the first column fills first) | 'ascending' (a rising chart, for tiers) | 'centre' (odd counts); ends [0.30, 0.92], when the first and the last column are full (first 0.20-0.40, last 0.75-0.95); ghost false (each column opens as an ink stub that already holds its copy) | true (the copy waits in ink on the page and the rising edge jumps past it).",
+  "phone": "The scene turns 90 degrees: stacked rows turn to ink one after another, each in one short fade (a sideways wipe would cut its words); hold about 1.6 for four steps.",
   "roles": [
    "how-it-works",
    "features",
@@ -225,7 +229,7 @@
    "*"
   ],
   "needs": [],
-  "hold": 2.4,
+  "hold": 1.8,
   "weight": 0.6
  },
  {
@@ -313,7 +317,7 @@
   "summary": "A held row slides sideways with the scroll and each item's height and tilt come from where it is on screen, so the letters of one giant closing line enter scattered at the right edge, swoop through their line and settle by the middle; then the camera pulls back until the whole line fits, ending on a calm frame with the line whole and a button. Its default is the page's last word and its action; the stair preset makes it a staircase of testimonials and the rise preset a short track of projects.",
   "place": "At the end of the page, as the call to action before the footer. With a preset it can carry the testimonials (stair, real quotes only) or the work (rise) instead. A quiet section comes before it.",
   "content": "Type preset: one line of 3-5 words, 14-28 characters, a question or an invitation, its first word of four letters or more and no word over 16 characters; a support line of 6-12 words and a button of 2-3 words. No pictures: the type is the picture, on one flat ground. The end frame shows the whole line, verb included: read the 100% frame at 1440, 768 and 390, and if it rests on the last words alone, shorten the line or set it smaller. The line is set at --display-weight (600 when the page sets none): set that token to a weight the page loads, or load 600 of the display face. Stair preset: a heading of six words or fewer and 5-7 real quotes of 25-45 words, each with name, role and a square portrait. Rise preset: a heading of up to five words and one sentence, 3-5 projects each with a 1.46:1 picture, a 1-3 word title, 12-20 words and a link, and one closing sentence with an action.",
-  "options": "preset 'type' | 'stair' | 'rise' (the data-settle attribute); speed 0.7-1.3, px of sideways travel per px of scroll (1 type, 1 stair, 1.2 rise; the hold is measured from it, 1-4 screens); rest 0.2-0.6 screens of still end frame (0.3); amp 0.6-1.5 letter offset in letter heights (1.5); tilt 0-20 degrees (18; cards 0); lift 20-60 vh card offset (36 stair, 60 rise); curve 'swoop' | 'calm' | 'linear' (swoop type, linear stair, calm rise); settle 0.30-0.60 share of the width by which an item has settled (0.45, 0.30, 0.50); enter 1.00-1.25 where the move begins (1.04, 1.20, 1.20); inset px of a fixed header to keep the letters clear of (0); scrub true with Lenis, else 0.5.",
+  "options": "preset 'type' | 'stair' | 'rise' (the data-settle attribute); speed 0.7-1.3, px of sideways travel per px of scroll (1 type, 1 stair, 1.2 rise; the hold is measured from it, 1-4 screens); rest 0.2-0.6 screens of still end frame (0.2); maxHold 1 type, 3 stair, 2.5 rise: a longer line swoops faster instead of holding longer; amp 0.6-1.5 letter offset in letter heights (1.5); tilt 0-20 degrees (18; cards 0); lift 20-60 vh card offset (36 stair, 60 rise); curve 'swoop' | 'calm' | 'linear' (swoop type, linear stair, calm rise); settle 0.30-0.60 share of the width by which an item has settled (0.45, 0.30, 0.50); enter 1.00-1.25 where the move begins (1.04, 1.20, 1.20); inset px of a fixed header to keep the letters clear of (0); scrub true with Lenis, else 0.5.",
   "phone": "No pin and no sideways travel: the line stands stacked as in the finished composition, its letters swooping onto their lines as each line rises up the screen, and the support line and button rise in after them; cards rise 16vh each.",
   "roles": [
    "cta",
@@ -324,8 +328,9 @@
    "*"
   ],
   "needs": [],
-  "hold": 2.5,
-  "weight": 0.35
+  "hold": 1,
+  "weight": 0.35,
+  "lines": 1
  },
  {
   "id": "room-walk-track",
@@ -391,10 +396,10 @@
   "id": "fly-into-the-shape",
   "name": "Fly into the shape",
   "family": "mask-and-reveal",
-  "summary": "The brand's own solid mark rises with the content to the centre of the screen with the title set in light type on its face, turns to face the visitor, and then the camera flies at it, so the next chapter's picture shows through its face and rushes past every edge of the screen while the title grows with it to full size, never crossed by an edge. It is the doorway into a dark or immersive chapter, and with data-dir \"out\" the way back out at its end.",
+  "summary": "The brand's own mark, a clean mask of its true shape with the next chapter's photograph already inside it, rises with the content to the centre of the screen with the title set in light type on its face, turns to face the visitor, and then the camera flies at it, so the picture rushes past every edge of the screen while the title grows with it to full size, never crossed by an edge. It is the doorway into a dark or immersive chapter, and with data-dir \"out\" the way back out at its end.",
   "place": "Between two sections: the end of a light part of the page and the door into a dark one (the work, the showcase, the about), whose ground is exactly the world's night colour. At most twice a page, in and out.",
-  "content": "One closed SVG path of the brand's own mark (a monogram, an emblem, a building's silhouette, a keyhole) with a solid core: an inscribed circle of at least 15% of its box. A thin-stroked logo or a plain circle does not work. One landscape photograph of the chapter's world, 16:10 or 16:9, 2000px or more, dark (mean luminance about 20% or less) with a calm centre and a dark bottom edge, and a 9:16 crop for phones; or a 6-10 s muted loop of 4MB or less. A title of 2-6 words on two lines (12 characters a line at most), a sub-line of 10-18 words, an optional aside of 3-6 words. Without an ownable mark, redraw.",
-  "options": "dir 'in' | 'out' (prefer the data-dir attribute); hold 2 (1.4-2.6); phoneHold 1.6 (1.2-2.4); size 0.4 (0.2-0.6) the mark's box as a share of the height, px above 1, or 'fit' (the title is set on its face, smaller when the mark cannot hold it at full size, and the mark at rest stays 16px inside the stage); phoneSize 'fit' | 0.3-0.75 | px 64-420; turn 45 (0-180) degrees; phoneTurn 12; depth 0.06 (0-0.15) thickness of the extruded side; phoneDepth 0.05; ease 'fly' (a steady camera) | 'sine.inOut' | 'none'; zoom 1.4 (1-1.8) how far the world's picture grows over the hold; blur 0 (0-6) px on the world through the fastest part, desktop only; scrub 0.8, true with Lenis; phone 'same' | 'rest'.",
+  "content": "One closed SVG path of the brand's own mark (a monogram, an emblem, a building's silhouette, a keyhole) with a solid core: an inscribed circle of at least 15% of its box. A thin-stroked logo or a plain circle does not work. Never extruded or bevelled: the mark is a flat mask. One landscape photograph of the chapter's world, 16:10 or 16:9, 2000px or more, dark (mean luminance about 20% or less) with a calm centre and a dark bottom edge, and a 9:16 crop for phones; or a 6-10 s muted loop of 4MB or less. A title of 2-6 words on two lines (12 characters a line at most), a sub-line of 10-18 words, an optional aside of 3-6 words. Without an ownable mark, redraw.",
+  "options": "dir 'in' | 'out' (prefer the data-dir attribute); hold 2 (1.4-2.6); phoneHold 1.6 (1.2-2.4); size 0.4 (0.2-0.6) the mark's box as a share of the height, px above 1, or 'fit' (the title is set on its face, smaller when the mark cannot hold it at full size, and the mark at rest stays 16px inside the stage); phoneSize 'fit' | 0.3-0.75 | px 64-420; turn 45 (0-180) degrees; phoneTurn 12; face 'picture' (the photograph inside the mark from the first frame) | 'accent' (a solid accent face that clears); ease 'fly' (a steady camera) | 'sine.inOut' | 'none'; zoom 1.4 (1-1.8) how far the world's picture grows over the hold; blur 0 (0-6) px on the world through the fastest part, desktop only; scrub 0.8, true with Lenis; phone 'same' | 'rest'.",
   "phone": "The same dive with the mark sized to hold the whole title on its face (16px inside the screen; the title set smaller when the screen is too narrow for both), a smaller turn and a shorter hold (1.6).",
   "roles": [
    "work",
@@ -514,7 +519,8 @@
    "other"
   ],
   "needs": [],
-  "hold": 4
+  "hold": 4,
+  "weight": 0
  },
  {
   "id": "lens-over-thumbnail-stream",
@@ -550,10 +556,10 @@
   "id": "pinned-chapter-switcher",
   "name": "Pinned chapter switcher",
   "family": "media-sequence",
-  "summary": "One held full-bleed stage plays three to six picture chapters, the scroll driving a hard-edged wipe between each pair (from the right, out of the corner, then rising from the bottom), with the title and text swapping at the half-and-half frame and a progress bar for each chapter filling as it goes. It is for feature chapters, before and after, the parts of a day or the variants of a product, where every chapter has its own picture and its own words.",
+  "summary": "One held full-bleed stage plays three to six picture chapters, the scroll driving a hard-edged wipe between each pair (from the right, out of the corner, then rising from the bottom), with the title and text swapping at the half-and-half frame and the chapter names under it, the current one in full ink. It is for feature chapters, before and after, the parts of a day or the variants of a product, where every chapter has its own picture and its own words.",
   "place": "In the middle, on the features, the work, the stages of a day or the variants: wherever the page has three to six parallel things to say.",
   "content": "Three to six chapters (four by default), each with one full-bleed picture, shot or chosen as one series: the same horizon height, the same subject in different states or in different light, a hard change of colour between neighbours, the subject above the horizon or in the right two thirds and calm ground low on the left for the words. Give each a square main crop, a 3:5 crop for upright tablets and a 2:5 crop for phones, and its data-horizon. Per chapter a tab name of 14 characters or fewer, a title of 2-5 words and a body of 25-40 words (30 or fewer for phones); a section heading of 2-5 words. Muted loops can replace the pictures. Not for a run of similar photographs.",
-  "options": "wipes 'mixed' (right, corner, rise) | one wipe name for every chapter ('right' makes a before-and-after stepper) | a list such as 'right,drop,corner' | 'pair' (two framed pictures a chapter on the ground, the words beside them); length 1 (0.8-1.4) screens a chapter; wipe 0.5 (0.35-0.7) share of a chapter spent wiping; horizon auto (0.2-0.8); shade 0.25 (0-0.6); push 1 (0-1.5); index 'tabs' | 'bars' | 'none'; counter true, a rolling \"2 of 4\"; preroll true; scrub 0.6 (0.4 on a phone), true with Lenis; maxHold 6 (3-8); phone 'same' | 'rest'; phoneLength 0.85; phoneWipe 0.55; phoneMax 6. Per chapter: data-wipe, data-horizon, data-horizon-at, --plate-bg, --scrim (0.45), --obj-pos, --obj-pos-phone.",
+  "options": "wipes 'mixed' (right, corner, rise) | one wipe name for every chapter ('right' makes a before-and-after stepper) | a list such as 'right,drop,corner' | 'pair' (two framed pictures a chapter on the ground, the words beside them); length 1 (0.8-1.4) screens a chapter; wipe 0.5 (0.35-0.7) share of a chapter spent wiping; horizon auto (0.2-0.8); shade 0.25 (0-0.6); push 1 (0-1.5); index 'names' | 'none'; counter true, a rolling \"2 of 4\"; preroll true; scrub 0.6 (0.4 on a phone), true with Lenis; maxHold 6 (3-8); phone 'same' | 'rest'; phoneLength 0.85; phoneWipe 0.55; phoneMax 6. Per chapter: data-wipe, data-horizon, data-horizon-at, --plate-bg, --scrim (0.45), --obj-pos, --obj-pos-phone.",
   "phone": "The same wipes with phone numbers (0.85 screen a chapter) on the 2:5 crops. More than six chapters, or a screen under 560px tall, gets the finished composition.",
   "roles": [
    "features",
@@ -613,7 +619,8 @@
   "needs": [
    "product-photo"
   ],
-  "hold": 5.5
+  "hold": 5.5,
+  "weight": 0
  },
  {
   "id": "scrubbed-transformation-sequence",
@@ -880,14 +887,13 @@
   "id": "wordmark-under-strain",
   "name": "Wordmark under strain",
   "family": "type-choreography",
-  "summary": "The brand's name in giant type is held and put under load by the scroll: it is crushed onto its baseline and springs back, recedes into a stepped echo of stacked copies, and its one straight letter loosens, falls out and lands flat as the call-to-action button. It is the closing moment of a page for a brand with a short, strong name.",
-  "place": "At the end of the page, as the call to action and the footer in one; anything after it keeps the same ground. Once per page. For a loud name (a band, a launch, a sports brand, a studio that shouts): on a calm house, a guesthouse, a craft or a care practice the strain and the dropped letter read as a broken name, so redraw the scenes. At rest the name reads whole.",
-  "content": "One word of 4-8 letters (4-6 best), the brand's name or a closing word, in capitals, with one straight letter (I, l or 1) that is neither the first nor the last (without one, a square full stop is added and falls instead). A button label of 2-3 words, 18 characters at most; a sentence of 45 characters or more about the offer and a place line for the top row; a meta row of three short items (an email, a city, a link). Type only: one heavy display face, one flat ground shared with what follows, one ink at 7:1, an optional accent for the landed button.",
-  "options": "hold 2.5 (1.5-4); phoneHold 2 (1.5-3); phone 'same' | 'rest'; scrub 0.8, true with Lenis; copies 6 (4-8) in the echo; step 1/13 (1/16-1/9) scale each copy loses; shift 2 (1-4) % of the word's height each copy sinks; squash 0.10 (0-0.15); spring 3 (1.5-3); drop true (false keeps the word whole and the button under it from the start); letter auto, the letter that falls; size [300, 64] the landed button in px, phoneSize [240, 52]; radius 0 (0-8); accent '', the button's colour as it lands; reveal 'wipe' | 'fade'; fill 0.92 (0.8-0.96); maxHeight 0.42 (0.3-0.45); stretch 'normal'; phoneStretch 'condensed'.",
-  "phone": "The same strain with phone numbers: the word fitted to the width (narrower if the face has a width axis), the meta row in two lines; hold 2.",
+  "summary": "A closing word in giant type is held and put under load by the scroll: it is crushed onto its baseline and springs back, recedes into a stepped echo of stacked copies, and its one straight letter loosens, falls out and lands flat as the call-to-action button. It is the closing moment of a page for a loud brand: the word is the page's last call, never the brand's name.",
+  "place": "At the end of the page, as the call to action; the footer after it keeps the same ground. Once per page. For a loud brand (a band, a launch, a sports brand, a studio that shouts): on a calm house, a guesthouse, a craft or a care practice the strain and the dropped letter read as a broken word, so redraw the scenes. At rest the word reads whole.",
+  "content": "One word of 4-8 letters (4-6 best), a closing word and never the brand's name (a giant name fails giant-contact), in capitals, with one straight letter (I, l or 1) that is neither the first nor the last (without one, a square full stop is added and falls instead). A button label of 2-3 words, 18 characters at most; a sentence of 45 characters or more about the offer and a place line for the top row; a meta row of three short items (an email, a city, a link). Type only: one heavy display face, one flat ground shared with what follows, one ink at 7:1, an optional accent for the landed button.",
+  "options": "hold 1.2 (1-4); phoneHold 1.2 (1-2); phone 'same' | 'rest'; scrub 0.8, true with Lenis; copies 6 (4-8) in the echo; step 1/13 (1/16-1/9) scale each copy loses; shift 2 (1-4) % of the word's height each copy sinks; squash 0.10 (0-0.15); spring 3 (1.5-3); drop true (false keeps the word whole and the button under it from the start); letter auto, the letter that falls; size [300, 64] the landed button in px, phoneSize [240, 52]; radius 0 (0-8); accent '', the button's colour as it lands; reveal 'wipe' | 'fade'; fill 0.92 (0.8-0.96); maxHeight 0.42 (0.3-0.45); stretch 'normal'; phoneStretch 'condensed'.",
+  "phone": "The same strain with phone numbers: the word fitted to the width (narrower if the face has a width axis), the meta row in two lines; hold 1.2.",
   "roles": [
    "cta",
-   "footer",
    "contact"
   ],
   "position": "closing",
@@ -895,7 +901,8 @@
    "*"
   ],
   "needs": [],
-  "hold": 2.5
+  "hold": 1.2,
+  "lines": 1
  },
  {
   "id": "parts-lock-into-the-whole",

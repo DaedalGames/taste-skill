@@ -309,6 +309,7 @@
       g.clearRect(0, 0, canvas.width, canvas.height);
       g.drawImage(seq.ready(j), 0, 0, canvas.width, canvas.height);
       shown = j;
+      canvas.dataset.frame = String(j); // the pose on show, for the inspector's film (a turning object is the stage at work)
       if (canvas.style.visibility !== 'visible') { canvas.style.visibility = 'visible'; poster.style.visibility = 'hidden'; }
       if (onDraw) onDraw(seq.boxes[j] || null);
     };

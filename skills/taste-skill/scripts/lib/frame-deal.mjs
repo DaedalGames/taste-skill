@@ -11,9 +11,9 @@ const NAV = [
   ['split', 0.8, 'The name on the left, the main links in the middle of the width, the action and a secondary link (sign in, cart) on the right.'],
 ];
 const FOOTER = [
-  ['columns', 5, 'Link columns, as large companies close their pages: three to five short columns of real links (product, company, resources, legal), the name small, the legal line under them. Text sizes only.'],
+  ['columns', 5, 'Link columns, only when the site has pages beyond this one: three to five short columns of real links to other pages (product, company, resources, legal), the name small, the legal line under them. Never the navigation again, never a list the page already shows. Text sizes only.'],
   ['contact-band', 2.5, 'A contact band: address, hours, telephone and email in two or three columns at the body size, a short link row, and the legal line. The details a visitor came to the foot for.'],
-  ['one-line', 1.5, 'One quiet line: the name, four to six links inline and the legal line, on one or two rows. For short pages.'],
+  ['one-line', 3, 'One quiet line: the name or ©, the city, the legal links and the Image credits link, on one row (two on a phone). For one-page sites.'],
   ['sign-up', 1.5, 'A short sign-up (one sentence and an email field with its button) above a row of links and the legal line.'],
   ['action-then-links', 2, 'The page\'s last section is the closing action (a heading and the one button); the footer under it is a small link row and the legal line.'],
 ];
@@ -52,7 +52,10 @@ export function dealFrame({ rnd, input, imagery, recent = {} }) {
   const tone = input.tone;
   const software = imagery === 'interface';
   const nav = wpick(not(NAV, recent.nav));
-  const footer = wpick(not(FOOTER, recent.footer));
+  // link columns belong to sites with pages beyond this one (software, shops); a one-page site (a portfolio, a
+  // studio, a restaurant, a house, an event) that got them repeated its own navigation in the footer
+  const multiPage = software || ['ecommerce', 'physical-product'].includes(input.sector);
+  const footer = wpick(not(FOOTER.filter((x) => multiPage || x[0] !== 'columns'), recent.footer));
   const corners = wpick(not(CORNERS.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'large' ? 0.2 : tone === 'playful' && x[0].id === 'square' ? 0.5 : 1), x[2]]), recent.corners));
   const spacing = wpick(not(SPACING.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'airy' ? 2 : input.sector === 'ecommerce' && x[0].id === 'compact' ? 2 : 1), x[2]]), recent.spacing));
   const treatment = wpick(not(TREATMENT.map((x) => [x[0], x[1] * (software && x[0] === 'cut-out' ? 0.3 : 1), x[2]]), recent.treatment));

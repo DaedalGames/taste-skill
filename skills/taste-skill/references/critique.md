@@ -58,6 +58,8 @@ sheets. Make each pass on its own; do not blend them.
     for three screens? An austere page is not a restrained one: if the page could be mistaken for an
     unfinished wireframe (grey shapes, grey text, one small column), it is underbuilt. A single motif or
     drawing blown up to fill a whole screen with nothing to read is a hole too, however bold it looks.
+    In the scroll film: is any line held for more than a screen with nothing new? Is any held frame
+    mostly empty ground? Does each piece of work stop large and flat with its own title?
 12. **Substance.** Does every section the brief asked for deliver its information completely and at a
     readable size (the full menu, each room, every speaker, the price and what it includes)? Would the
     visitor leave knowing what they came to find out? Is the primary action a real button on the first

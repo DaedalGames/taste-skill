@@ -108,6 +108,9 @@ Shapes to avoid, because they are the average of every landing page:
 - A headline that needs its colon: "Ledgerly: invoicing for freelancers". Drop the name, it is in the
   navigation.
 - One word of the headline styled differently (italic, serif, coloured, underlined, in a pill).
+- Not the name plus its category ("Kaffee Klee, roastery and bar"): the line says what only this place
+  could say, from the inventory ("Roasted in the courtyard on Tuesdays and Fridays"), and the name
+  stays in the bar and the title.
 
 Sentence case. No full stop unless the direction's voice uses them everywhere.
 
@@ -115,7 +118,7 @@ Sentence case. No full stop unless the direction's voice uses them everywhere.
 
 **Supporting line.** One sentence, at most about 22 words, that says concretely what the thing is and
 who it is for. It is where the detail cut from the headline goes. It never repeats the headline in
-other words.
+other words. The offer is one sentence, never a stacked list of labels (city / service / service).
 
 **Body.** Short paragraphs of plain statements. Prefer the specific noun and the real number: "ships
 in a week" over "fast delivery"; "38 seats" over "intimate". Read every sentence and ask whether a
@@ -172,6 +175,8 @@ the client confirms or replaces it.
 - Non-breaking space between a number and its unit, and before the last short word of a headline
   when it would otherwise orphan (`&nbsp;`).
 - `font-variant-numeric: tabular-nums` where numbers line up in columns (prices, tables).
+- Every price carries its unit, the same way on every line ("60 €", not "60"); emails, URLs and phone
+  numbers never break (`white-space: nowrap` on their link).
 - `text-wrap: balance` on headings, `text-wrap: pretty` on paragraphs.
 - No all-caps for anything longer than three words; if you set caps, add 0.02–0.06em tracking.
 - No text under 13px. No centred paragraphs longer than three lines. No justified text.

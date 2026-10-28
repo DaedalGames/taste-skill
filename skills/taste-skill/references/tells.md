@@ -93,6 +93,13 @@ against 57% of weak ones.
 | Nine nearly equal font sizes | warned over 9 | Five sizes, far apart |
 | Invented social proof: logos, quotes, star rows, "10,000+ teams" | copy.md §5 | Real proof, or none |
 | Text or a CSS box where a picture belongs | critique.md cap | A real picture, or a design that needs none |
+| Headline in a card on a darkened photo (October 2026) | failed (`hero-in-card`) | The headline on the ground or on its picture |
+| The email or the name set at display size, anywhere (October 2026) | failed (`giant-contact`) | The email at the h3 step, a Copy button and a mailto link |
+| Bento grid of feature cards with empty cells (October 2026) | failed (`bento`) | An editorial list, or one large product view with annotations |
+| A range slider as an estimator (October 2026) | failed (`range-slider`) | Stepped buttons of real values |
+| A scene drawing wheels, waves or a scrubber rail (October 2026) | failed (`scene-drawing`, `scene-track`) | Real pictures, the product's interface, or type |
+| A link-column footer on a one-page site (October 2026) | not dealt | One quiet line: name, city, legal, Image credits |
+| A short line held for two screens or more (October 2026) | failed over 1.2 screens (`line-holds`) | One screen a line, or a second beat with new content |
 
 ## 6. Copy tells
 
