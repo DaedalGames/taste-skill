@@ -79,3 +79,15 @@ them, with their metadata removed:
 - `mixing-desk.jpg`: a hand on the fader of a mixing desk, photograph by Drew Patrick Miller on
   [Unsplash](https://unsplash.com/photos/_o6AAx9dl_Y) ([Unsplash licence](https://unsplash.com/license)),
   cropped to 1200x800.
+
+## line-carries-colour-swap
+
+Three photographs for the demo's made-up letterpress shop, resized to the sizes the page asks for, with
+their metadata removed:
+
+- `type-case-1920.jpg`, `type-case-2880.jpg`: ["Lead type case (25598835882)"](https://commons.wikimedia.org/wiki/File:Lead_type_case_(25598835882).jpg)
+  by Thomas Quine, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), via Wikimedia Commons.
+- `hand-press-1920.jpg`, `hand-press-2880.jpg`: ["Early letterpress (25630899992)"](https://commons.wikimedia.org/wiki/File:Early_letterpress_(25630899992).jpg)
+  by Thomas Quine, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), via Wikimedia Commons.
+- `composing-stick-960.jpg`, `composing-stick-1600.jpg`: ["Metal movable type"](https://commons.wikimedia.org/wiki/File:Metal_movable_type.jpg)
+  by Willi Heidelbach, [CC BY 2.5](https://creativecommons.org/licenses/by/2.5/), via Wikimedia Commons.
