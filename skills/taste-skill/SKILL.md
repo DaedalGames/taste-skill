@@ -155,7 +155,8 @@ and say why in the report.
   pieces or rooms passes `photography,product-photo`), `product-ui` (real screenshots), `illustration`,
   `video`, `mark` (the brand's own solid mark), `route` (a real route with stops the subject travels),
   `plan` (a real floor plan or exploded drawing), `names` (eight or more real names of its rooms,
-  dishes, places, clients or products). Leave it out if you have none: the draw then avoids compositions that depend on them and
+  dishes, places, clients or products), `document` (a document the product really makes, such as an
+  invoice or a contract, when the brief does not name it). Leave it out if you have none: the draw then avoids compositions that depend on them and
   the sheet says how to fill picture slots honestly (software shows its own interface built in HTML; a
   product with no photographs of its own is shown by real photographs of its kind in use, never
   claimed as this model, never a drawing and never a fake product shot). Pictures you will find in the
@@ -369,7 +370,12 @@ not finished. Order of work:
    page with scenes still has a length budget: about 12-16 screens at 1440 in all, of which the scenes
    hold about six. `references/scenes.md` says how to put one on a page, fill it, fit it and check it.
    A software page gets one scroll scene at most. A page built without one (`--redraw scenes=none`) is
-   about 8-12 screens, with nothing pinned in a scene's place.
+   about 8-12 screens, with nothing pinned in a scene's place. About one page in two, one of its scenes
+   is a researched technique instead (`library/techniques.json`): a principle, a direction to take and
+   what breaks it, with no files and no demo. Build it on the shared stage as `references/scenes.md` §8
+   shows, in this page's own type, colour, pictures and words, never as a copy of any site, and check it
+   with `scenes.mjs` like any scene; if it cannot be built honestly within three look-and-fix rounds,
+   `--redraw scenes`, which counts toward the same limit of two.
 7. **Fullness.** Look at each desktop screen as a poster: one dominant thing and the content it
    carries. A screen that is mostly empty ground is an underbuilt section, not a rest; one deliberate
    rest per page is the limit, and the inspector fails a page with two or more near-empty screens.
@@ -647,4 +653,4 @@ report that the open collections could not be searched.
 | `assets/replay.js` · `assets/replay-demo.html` | Step 9 on a software page: the product replay the sheet deals, and a working example of its six patterns. |
 | `assets/scenes/` | The scroll scenes: the shared stage (`stage.js`, `stage.css`) and, for each scene in the library, its `.js`, `.css` and a working demo page in `demo/`. |
 | `assets/app.css` · `assets/charts.js` | For app screens: a neutral shell, panels, tables and controls, and small SVG charts drawn to the app rules. |
-| `library/` | The data the draw reads: directions, heroes, sections, type systems, palettes, photographs, studied sites, motions, scroll scenes (`scenes.json`), product replays (`replays.json`), and the app styles, shells and screen patterns (`app.json`). Do not read it whole; use the script. |
+| `library/` | The data the draw reads: directions, heroes, sections, type systems, palettes, photographs, studied sites, motions, scroll scenes (`scenes.json`), researched techniques dealt in place of a scene (`techniques.json`), product replays (`replays.json`), and the app styles, shells and screen patterns (`app.json`). Do not read it whole; use the script. |

@@ -169,6 +169,12 @@ belongs to a stranger. Such a form posts to an endpoint the client gives, or sta
 handler named in the report; the visible contact line and a mailto link on it stay as the house rules
 ask.
 
+**A brand the brief does not name gets a coined name.** A plausible word (Engram, Inkwell, Kasten) is
+often already a real product's name, sometimes in the same trade, and the page then reads as theirs.
+Coin one that reads as invented: two short roots joined, or a word bent out of shape, never a dictionary
+word alone or a known product's name. Say in the report that it is a placeholder, not checked against
+trademarks, and is to be replaced by the client's own.
+
 ## 6. Things that read as generated
 
 `lint.mjs` flags most of these.

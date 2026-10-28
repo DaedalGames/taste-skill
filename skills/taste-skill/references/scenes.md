@@ -38,7 +38,8 @@ The direction sheet deals two (section 9 of the sheet), from different families,
 section of the argument it can carry; a long, loud page (eight sections or more, bold or playful) may
 get three. A software page gets one at most, never a closing one: its big moment is the product replay (sheet section 8,
 `references/motion.md`, "Product replay"). Build them in step 6, with that section: a scene is composition, not decoration added at the
-end.
+end. About one page in two, one of them is a researched technique from `library/techniques.json`: a
+principle, a direction to take and what breaks it, built fresh.
 
 A scene replaces the content of the section it carries. It is that section, told as a scene, not extra
 screens in front of it: the orbit is the about, the route is how it works, the settling line is the
@@ -47,8 +48,9 @@ contact. A page with scenes keeps its length budget (section 7, rule 2).
 ## 2. Putting a scene on a page
 
 Copy the shared stage and the dealt scene's files into the project (`assets/scenes/stage.css`,
-`stage.js`, `<id>.css`, `<id>.js`). Each scene file's header comment lists the markup it expects and
-its options; `assets/scenes/demo/<id>.html` is a complete working page to read beside it.
+`stage.js`, `<id>.css`, `<id>.js`). A dealt technique has no files of its own: build it as section 8
+shows. Each scene file's header comment lists the markup it expects and its options;
+`assets/scenes/demo/<id>.html` is a complete working page to read beside it.
 
 ```html
 <head>
@@ -263,11 +265,12 @@ Scenes['my-scene'] = (root, opts = {}) => Stage.scene(root, {
 ```
 
 and write its CSS finished composition first, then the live layout under `.scene.is-live`. Check it
-with `scenes.mjs` like any other.
+with `scenes.mjs` like any other. A dealt technique is built the same way, with the hold the sheet
+gives it, and checked with `scenes.mjs` like any scene.
 
 ## 9. The catalogue
 
-Thirty-four scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
+Thirty-seven scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
 scene's full entry (where it goes, its content, its options, its phone plan);
 `node <skill>/scripts/draw.mjs --list scenes` prints the list, and each scene file's header is the full
 contract. Each entry's `needs` says what the scene really takes, and the draw deals it only when the
@@ -388,6 +391,22 @@ page, a scene on the first screen, which shows the product large.
 - **Scrubbed transformation sequence** (`scrubbed-transformation-sequence`): an object changes state
   as a scrubbed frame sequence while the ground opens to a new colour. 80-250 frames with alpha of the
   change (*product-photo*).
+- **Re-forming window** (`one-figure-reforms`): one window in the accent re-forms through three to five
+  chapters (a bar rounds into a disc, rises into an arch, draws in to a pill), carrying each chapter's
+  own interface, whose late parts build in while it rests; the name, one or two lines and one key
+  figure swap beside it. The interface rides the window whole while it re-forms and hands over at the
+  half-way point, so the window is never empty. One interface fragment a chapter, each a different
+  screen (*product-ui*). Four hold two screens.
+- **Closing object turns over** (`closing-object-turns`): the one object the page is about rises in the
+  last screen, turns over in 3D while the closing ground comes up behind it, and lands on its plain
+  back, set in the page's type with the closing line and the one action. One cut-out photograph of its
+  front, flat and straight on, that differs clearly from the plain back (*product-photo*). The end of
+  the page, once; hold 1.
+- **Product assembles into its action** (`product-assembles-into-its-action`): the product's working
+  screen (`data-ui`) builds from empty in the order of its own story, a part a step, the newest row in
+  accent type for a beat (never a tinted ground), then every part folds into its one action, which
+  stands alone, live, at the end. Four to six steps a user would really take (*product-ui*). In the
+  middle, never beside the product replay; hold 2.4.
 
 **Picture transform**
 - **Picture develops from marks** (`picture-develops`): a pen drawing draws itself, heaviest strokes

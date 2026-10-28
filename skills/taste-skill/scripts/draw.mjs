@@ -7,18 +7,19 @@
 //
 //   node draw.mjs --sector <sector> --brief "one line" [--sections hero,showcase,pricing,footer]
 //                 [--tone quiet|bold|warm|technical|playful|luxury|editorial]
-//                 [--have photography,product-photo,product-ui,illustration,video]   assets you really have
+//                 [--have photography,product-photo,product-ui,illustration,video,document]   assets you really have
 //                        also mark (the brand's own solid mark), route (a real route with stops), plan (a real plan or exploded drawing),
 //                        names (eight or more real names of its rooms, dishes, places, clients or products)
 //                 [--keep palette,type]        the brand already fixes these; draw the rest
 //                 [--avoid id,id] [--seed N] [--out DIR]
 //                 [--options 3]                show three dealt directions to choose from, write nothing
 //                 [--direction <id>]           deal the full sheet for the chosen direction
+//                 [--technique <id> | --no-technique]   force one researched technique in place of a scene, or deal none
 //   node draw.mjs --show                       reprint the saved direction sheet
 //   node draw.mjs --redraw hero|type|palette|photos|scenes|entrance|replay|section:<role>|direction   re-deal one slot
 //   node draw.mjs --redraw scenes=<id>[,<id>] | scenes=none   take scenes by id, or build without one. Scenes are redrawn
 //                                              twice at most: a third --redraw scenes lists the ones that still fit instead
-//   node draw.mjs --list sectors|directions|roles|tones|scenes|entrances|replays
+//   node draw.mjs --list sectors|directions|roles|tones|scenes|techniques|entrances|replays
 //   node draw.mjs --site <id>                  print one studied reference site in full
 //   node draw.mjs --app --kind <kind> ...      deal a style for an app screen instead (see lib/app-draw.mjs)
 //
@@ -70,6 +71,8 @@ const SMALL_PICTURE_HEROES = new Set(['name-split-to-corners', 'pinned-title-ove
 //   product-ui     the product's own interface (a software page)
 //   plan           a real plan or exploded drawing (--have plan)
 //   video          footage or a frame sequence of this very product (--have video)
+//   own            (techniques) the client's own photographs: --have photography or product-photo
+//   document       (techniques) a document the product makes: one the brief names, or --have document
 //   a|b            either
 // A page with no photographs of its product, or a software page, can honestly show about three photographs of the
 // subject (its kind in use, its world) and no series; a page with no photographs of its own at all plans three to six
@@ -97,6 +100,54 @@ function needWords(need) {
 // The distinct photographs a scene takes (its pictures:N), for the page's cap.
 function scenePictures(sc) { return Math.max(0, ...(sc.needs || []).flatMap((n) => n.split('|')).filter((n) => n.startsWith('pictures:')).map((n) => +n.split(':')[1] || 0)); }
 function sceneNeedsWords(sc) { const w = (sc.needs || []).map(needWords); return w.length > 1 ? `${w.slice(0, -1).join(', ')}, and ${w.at(-1)}` : w[0] || 'its words only'; }
+// Researched techniques (library/techniques.json, exported from the lab's study of award sites): about one page in two
+// gets one in place of one of its dealt scenes, so the deal spreads over the whole research library and not only over
+// the scenes already built. The builder makes it fresh on the shared stage (sheet section 9).
+const TECHNIQUE_RATE = 0.5;
+const TECHNIQUE_RECENT = 6; // draws whose technique the next deal avoids while others fit
+const TECHNIQUE_TRIGGERS = ['scroll-scrub', 'scroll-enter']; // a scene runs on native scroll (references/scenes.md §7 rule 3)
+// the sections a technique can carry: its position, and in the middle of the page what it carries
+const TECHNIQUE_ROLES = {
+  opening: ['hero'],
+  closing: ['cta', 'contact'],
+  transition: ['intro', 'about', 'work', 'features', 'gallery', 'list', 'how-it-works', 'contact'],
+  work: ['work', 'gallery', 'showcase'],
+  content: ['features', 'showcase', 'how-it-works', 'list', 'gallery', 'stats', 'about'],
+  // the page's own statement: a customer's quote with its attribution cannot fill a manifesto set at display size
+  statement: ['intro', 'about'],
+  atmosphere: ['intro', 'about', 'gallery'],
+  // a middle one built from the product's interface goes where the product is explained; a statement made of a list
+  // (what the business does) is no quotation
+  ui: ['how-it-works', 'features', 'showcase', 'intro', 'about'],
+  'statement-list': ['intro', 'about', 'features'],
+};
+function techniqueRoles(t) {
+  const roles = t.position !== 'middle' ? TECHNIQUE_ROLES[t.position] || []
+    : t.needs?.ui ? TECHNIQUE_ROLES.ui
+    : TECHNIQUE_ROLES[t.carries === 'statement' && t.needs?.words === 'list' ? 'statement-list' : t.carries] || [];
+  // a gallery is pictures: one made of type, or of a single picture, never takes its place
+  return (TECHNIQUE_PICTURES[t.needs?.pictures] ?? 0) < 2 ? roles.filter((r) => r !== 'gallery') : roles;
+}
+// its picture label as the photographs it takes (the scene vocabulary above, counted against the page's cap): the
+// directions ask for the top of the range more often than the bottom (three of '2-3', six or more of '4-8')
+const TECHNIQUE_PICTURES = { 0: 0, 1: 1, '2-3': 3, '4-8': 6, many: 8 };
+NEED_WORDS.own = "the client's own photographs of this very subject (its work, this product, one place in two states)";
+NEED_WORDS.document = 'a document the product really makes (an invoice, a contract, a report, a ticket)';
+// what the brief must name for a technique that needs a document (`--have document` says it too)
+const DOCUMENT_WORDS = /\b(invoic\w*|contracts?|receipts?|statements?|reports?|reporting|quotes?|quoting|proposals?|tickets?|ticketing|invitations?|letters?|documents?)\b/i;
+// A technique in the shape of a scene, so the scene deal checks and places it by the same rules. The client's own
+// photographs are needed for a work-carrying one with pictures: a stand-in is never a studio's work.
+function techniqueScene(t) {
+  const n = t.needs || {}; const pictures = TECHNIQUE_PICTURES[n.pictures] ?? 0;
+  const needs = [`pictures:${pictures}`, (n.own || (t.carries === 'work' && pictures > 0)) && 'own', n.names && 'names:8', n.ui && 'product-ui', n.video && 'video', n.document && 'document'].filter(Boolean);
+  return {
+    id: t.id, technique: true, name: t.name, family: t.family, position: t.position, trigger: t.trigger, energy: t.energy, kind: t.carries,
+    roles: techniqueRoles(t), sectors: t.sectors || ['*'], needs,
+    // the stage holds a scene one screen at least; a closing one holds about one screen (scenes.md §7 rule 2)
+    hold: Math.max(1, t.hold || 0), researchHold: t.hold || 0, lines: t.position === 'closing' ? 1 : undefined,
+    phone: t.phone, score: t.score, principle: t.principle, freshTake: t.freshTake, breaksWhen: t.breaksWhen,
+  };
+}
 const DEFAULT_SECTIONS = {
   saas: ['hero', 'showcase', 'features', 'how-it-works', 'testimonial', 'pricing', 'faq', 'cta', 'footer'],
   'dev-tool': ['hero', 'showcase', 'features', 'how-it-works', 'pricing', 'faq', 'cta', 'footer'],
@@ -134,6 +185,7 @@ if (opt('list')) {
   else if (what === 'tones') console.log(TONES.join('\n'));
   else if (what === 'roles') console.log([...new Set(Object.values(ROLE_ALIAS))].join('\n'));
   else if (what === 'scenes') { const all = existsSync(join(LIB, 'scenes.json')) ? load('scenes') : []; for (const sc of all) console.log(`${sc.id.padEnd(34)} ${sc.name} — ${sc.family}; ${sc.summary.split(/(?<=\.)\s/)[0]} Needs: ${sceneNeedsWords(sc)}.${sc.weight === 0 || NEVER_SCENES.has(sc.id) ? ' (not dealt)' : ''}`); if (!all.length) console.log('No scene library yet.'); }
+  else if (what === 'techniques') { const all = existsSync(join(LIB, 'techniques.json')) ? load('techniques') : []; for (const t of all) { const sc = techniqueScene(t); console.log(`${t.id}  ${t.name} — ${t.family}; ${t.position}, ${t.energy}, hold ${t.hold}; ${t.sectors.join(', ')}. Needs: ${sceneNeedsWords(sc)}.`); } if (!all.length) console.log('No technique library yet.'); }
   else if (what === 'entrances') { const all = existsSync(join(LIB, 'entrances.json')) ? load('entrances') : []; for (const e of all) console.log(`${e.id.padEnd(16)} ${e.name} — ${e.family}, ${e.energy}, weight ${e.weight}; ${e.summary || e.sees.split(/(?<=\.)\s/)[0]}`); if (!all.length) console.log('No entrance library yet.'); }
   else if (what === 'replays') { const all = existsSync(join(LIB, 'replays.json')) ? load('replays') : []; for (const r of all) console.log(`${r.id.padEnd(14)} ${r.name} — ${r.sectors.join(', ')}${r.brief ? ` (or a brief matching /${r.brief}/)` : ''}; ${r.beats}`); if (!all.length) console.log('No replay library yet.'); }
   else for (const d of load('directions')) console.log(`${d.id.padEnd(30)} ${d.name} — ${d.sectors.join(', ')}`);
@@ -182,6 +234,12 @@ if (opt('show')) {
 }
 
 const L = { directions: load('directions'), heroes: load('heroes'), sections: load('sections'), type: load('type'), palettes: load('palettes'), photos: load('photos'), sites: load('sites'), motions: load('motions'), fonts: load('fonts').fonts, scenes: existsSync(join(LIB, 'scenes.json')) ? load('scenes') : [], entrances: existsSync(join(LIB, 'entrances.json')) ? load('entrances') : [], replays: existsSync(join(LIB, 'replays.json')) ? load('replays') : [] };
+L.techniques = (existsSync(join(LIB, 'techniques.json')) ? load('techniques') : []).map(techniqueScene);
+const sceneById = (id) => L.scenes.find((x) => x.id === id) || L.techniques.find((x) => x.id === id);
+// --technique <id> forces one in place of a scene (for tests); --no-technique deals none, and the sheet keeps it so
+const FORCED_TECHNIQUE = opt('technique') === undefined ? null : opt('technique');
+if (FORCED_TECHNIQUE === true) { console.error('--technique needs an id. `node draw.mjs --list techniques` lists them.'); process.exit(2); }
+if (FORCED_TECHNIQUE && opt('no-technique')) { console.error('Use --technique <id> or --no-technique, not both.'); process.exit(2); }
 const hist = readHist();
 const recent = (key, n) => hist.slice(0, n).map((h) => h[key]).filter(Boolean);
 
@@ -245,8 +303,11 @@ if (opt('redraw')) {
         console.log(sceneChoices(dir, sheet));
         process.exit(0);
       }
+      // a technique that could not be built honestly gives way to tested scenes; otherwise the redraw may deal one again
+      const hadTechnique = (sheet.scenes || []).some((x) => x.technique);
       sheet.scenesTried = [...new Set([...(sheet.scenesTried || []), ...(sheet.scenes || []).map((x) => x.id)])];
       sheet.scenes = dealScenes(dir, sheet.input, (sheet.scenes || []).map((x) => x.id), reserved); sheet.noScenes = false;
+      if (!hadTechnique) sheet.scenes = dealTechnique(dir, sheet.input, sheet.scenes, reserved, { exclude: sheet.scenesTried });
     }
   } else if (what === 'entrance') sheet.entrance = dealEntrance(sheet, [sheet.entrance?.id].filter(Boolean));
   else if (what === 'replay') {
@@ -288,6 +349,7 @@ if (opt('redraw')) {
     have: list(opt('have')), keep: list(opt('keep')), avoid: list(opt('avoid')),
     sections: (requested.length ? requested : DEFAULT_SECTIONS[sector]).map((r) => ROLE_ALIAS[r] || r).filter((r) => r !== 'hero'),
     direction: typeof opt('direction') === 'string' ? opt('direction') : null,
+    ...(opt('no-technique') ? { noTechnique: true } : {}),
   };
   if (input.direction && !L.directions.some((d) => d.id === input.direction)) { console.error(`No direction with id ${input.direction}. List them with --list directions.`); process.exit(2); }
   if (opt('options')) {
@@ -312,8 +374,10 @@ mkdirSync(outDir, { recursive: true });
 writeFileSync(sheetPath, JSON.stringify(sheet, null, 1));
 // a slot redraw keeps the history entry of its sheet, but the scenes and the entrance it builds are the ones the next
 // deal must avoid (scenes taken by id, or none, included)
-if (opt('redraw') && String(opt('redraw')) !== 'direction') patchHist(sheet.at, { scenes: (sheet.scenes || []).map((x) => x.id), entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null });
-if (!opt('redraw') || String(opt('redraw')) === 'direction') writeHist({ at: sheet.at, direction: sheet.direction.id, type: sheet.type?.id, families: sheet.type ? [...new Set([sheet.type.display.family, sheet.type.text.family])] : [], palette: sheet.palette?.id, ground: sheet.palette?.ground || null, hue: sheet.palette?.hue || null, frame: sheet.frame ? Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) : null, hero: sheet.hero?.id, sector: sheet.input.sector, scenes: (sheet.scenes || []).map((x) => x.id), entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null });
+const techniqueOf = (s) => (s.scenes || []).find((x) => x.technique)?.id || null;
+// a technique given up (--redraw scenes) stays in the entry, so the next draws still avoid it
+if (opt('redraw') && String(opt('redraw')) !== 'direction') patchHist(sheet.at, { scenes: (sheet.scenes || []).map((x) => x.id), technique: techniqueOf(sheet) || hist.find((h) => h.at === sheet.at)?.technique || null, entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null });
+if (!opt('redraw') || String(opt('redraw')) === 'direction') writeHist({ at: sheet.at, direction: sheet.direction.id, type: sheet.type?.id, families: sheet.type ? [...new Set([sheet.type.display.family, sheet.type.text.family])] : [], palette: sheet.palette?.id, ground: sheet.palette?.ground || null, hue: sheet.palette?.hue || null, frame: sheet.frame ? Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) : null, hero: sheet.hero?.id, sector: sheet.input.sector, scenes: (sheet.scenes || []).map((x) => x.id), technique: techniqueOf(sheet), entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null });
 console.log(render(sheet));
 
 // ---------- dealing ----------
@@ -391,6 +455,8 @@ function deal(input, redraws) {
   s.replay = dealReplay(s, []);
   if (s.replay) s.motion = null;
   s.scenes = dealScenes(dir, input, [], s.replay ? [s.replay.carries] : []);
+  // a forced technique is for the first deal only; a new direction deals at the usual rate
+  try { s.scenes = dealTechnique(dir, input, s.scenes, s.replay ? [s.replay.carries] : [], { forced: opt('redraw') ? null : FORCED_TECHNIQUE }); } catch (e) { console.error(e.message); process.exit(2); }
   const last = hist[0]?.frame || {};
   s.frame = dealFrame({ rnd, input, imagery: s.imagery, recent: last });
   // pictures that carry the colour are never black-and-white: dealt again until the treatment keeps colour
@@ -469,6 +535,7 @@ function settleMotion(s) {
 // scene on a page that is neither loud nor creative. With sector false the sector is not asked (the deal's fallback
 // when fewer than two fit it).
 function sceneWhyNot(sc, input, sector = true) {
+  if (sc.technique) return techniqueWhyNot(sc, input);
   if (NEVER_SCENES.has(sc.id) || (sc.weight ?? 1) <= 0) return 'it is not dealt (references/scenes.md §9 says why)';
   if (sector && !(sc.sectors || ['*']).some((x) => x === '*' || x === input.sector)) return `it is not written for a ${input.sector} page`;
   const unmet = unmetNeeds(sc, input);
@@ -480,6 +547,24 @@ function sceneWhyNot(sc, input, sector = true) {
   if (!creativePage(input) && ATMOSPHERE.has(sc.id)) return 'it carries one line and no information, which only a loud or creative page can spend';
   return null;
 }
+// Why a technique cannot go on this page, or null: by its labels, with the scene rules above and two of its own (a
+// software page's first screen shows its interface; the energy suits the tone). Its sector is always asked.
+function techniqueWhyNot(t, input) {
+  if (!TECHNIQUE_TRIGGERS.includes(t.trigger)) return 'it does not run on scroll';
+  if (!t.sectors.some((x) => x === '*' || x === input.sector)) return `it is not written for a ${input.sector} page`;
+  const unmet = unmetNeeds(t, input);
+  if (unmet.length) return `it needs ${unmet.map((n) => needWhy(n, input)).join(' and ')}`;
+  if (imageryMode(input) === 'no-product-photo' && t.position === 'opening') return "it takes the first screen, and this page's first screen shows the product large";
+  if (isSoftware(input) && t.position === 'closing') return 'a software page ends on its product, not on a closing scene';
+  if (isSoftware(input) && t.position === 'opening' && !t.needs.includes('product-ui')) return "it takes the first screen, which on a software page shows the product's own interface large";
+  if (t.kind === 'atmosphere' && !creativePage(input)) return 'it carries atmosphere and no information, which only a loud or creative page can spend';
+  // loud ones on a loud page (a bold or playful tone, or a creative sector with no tone given); calm ones never on a bold or playful one
+  const loud = ['bold', 'playful'].includes(input.tone);
+  if (t.energy === 'loud' && !loud && !(!input.tone && creativePage(input))) return input.tone ? `it is loud, and this page is ${input.tone}` : 'it is loud, and this page is not';
+  if (t.energy === 'calm' && loud) return `it is calm, and this page is ${input.tone}`;
+  return null;
+}
+function isAtmosphere(sc) { return ATMOSPHERE.has(sc.id) || (sc.technique && sc.kind === 'atmosphere'); }
 // The needs of a scene this brief does not meet (see the vocabulary at the top).
 function unmetNeeds(sc, input) {
   const mode = imageryMode(input); const have = input.have || [];
@@ -493,6 +578,10 @@ function unmetNeeds(sc, input) {
     // only a mark the client has: "no logo yet" or "designs logos" in a brief is none
     if (k === 'mark') return have.includes('mark') || have.includes('logo');
     if (k === 'route') return have.includes('route') || routeInBrief(input.brief);
+    // the client's own photographs (a technique's need): a stand-in from the open collections is not its own
+    if (k === 'own') return mode === 'own';
+    // a document the product makes, named in the brief (a technique's need): not every product makes one
+    if (k === 'document') return have.includes('document') || DOCUMENT_WORDS.test(input.brief || '');
     return k === 'photography' || have.includes(k);
   };
   return (sc.needs || []).filter((n) => !n.split('|').some(met));
@@ -502,6 +591,8 @@ function needWhy(need, input) {
   if (need.startsWith('pictures:')) return `${needWords(need)}, and this page can honestly show about ${cap}`;
   if (need.startsWith('series:')) return `${needWords(need)}, which this page cannot honestly have`;
   if (need.startsWith('names:')) return `${needWords(need)}, which ${imageryMode(input) === 'no-product-photo' || isSoftware(input) ? 'this kind of page does not list' : 'this page does not have (`--have names` when it does)'}`;
+  if (need === 'own') return `${needWords(need)}, which the brief does not give (\`--have photography\` or \`product-photo\` when it does)`;
+  if (need === 'document') return `${needWords(need)}, which the brief does not name (\`--have document\` when the product makes one)`;
   return `${needWords(need)}, which the brief does not give`;
 }
 function creativePage(input) { return ['bold', 'playful'].includes(input.tone) || ['agency', 'studio-portfolio', 'personal-portfolio', 'music', 'fashion', 'event', 'culture'].includes(input.sector); }
@@ -534,13 +625,13 @@ function dealScenes(dir, input, exclude, reserved = [], chosen = null) {
     if (new Set(chosen).size !== chosen.length) throw new Error('The same scene is named twice.');
     if (chosen.length > most) throw new Error(`This page takes ${['', 'one scene', 'two scenes', 'three scenes'][most]} at most${most === 1 ? ': on a software page the product replay is the big moment' : ''}.`);
     for (const id of chosen) {
-      const sc = L.scenes.find((x) => x.id === id);
+      const sc = sceneById(id);
       if (!sc) throw new Error(`No scene with id ${id}. \`node draw.mjs --list scenes\` lists them all; once scenes have been redrawn twice, \`--redraw scenes\` lists the ones that fit this page.`);
       const why = sceneWhyNot(sc, input, sectorAsked);
       if (why) throw new Error(`${id} does not fit this page: ${why}. Once scenes have been redrawn twice, \`--redraw scenes\` lists the ones that fit; \`--redraw scenes=none\` builds the page without one.`);
     }
   }
-  if (!pool.length) return [];
+  if (!pool.length && !chosen) return []; // chosen ones are checked above (a technique may go where no scene fits)
   const roles = ['hero', ...input.sections];
   const n = Math.min(pool.length, most);
   const recentIds = hist.slice(0, 4).flatMap((h) => h.scenes || []);
@@ -574,7 +665,8 @@ function dealScenes(dir, input, exclude, reserved = [], chosen = null) {
   const whyNotPlaced = (sc) => {
     if (out.some((o) => o.id === sc.id)) return 'it is already on the page';
     const kin = out.find((o) => o.family === sc.family); if (kin) return `it is of one family with ${kin.id} (${sc.family}); take two families`;
-    if (ATMOSPHERE.has(sc.id) && out.some((o) => ATMOSPHERE.has(o.id))) return 'a page takes one atmosphere scene at most';
+    if (isAtmosphere(sc) && out.some(isAtmosphere)) return 'a page takes one atmosphere scene at most';
+    if (sc.technique && out.some((o) => o.technique)) return 'a page takes one technique at most';
     const pictures = out.reduce((t, o) => t + scenePictures(o), 0) + scenePictures(sc);
     if (pictureCap !== undefined && out.length && pictures > pictureCap) return `together the scenes would need ${pictures} photographs, and this page can honestly show about ${pictureCap}`;
     const role = place(sc);
@@ -594,7 +686,7 @@ function dealScenes(dir, input, exclude, reserved = [], chosen = null) {
     let first = null;
     for (const order of orders(chosen)) {
       reset(); let why = null;
-      for (const id of order) { const sc = L.scenes.find((x) => x.id === id); const w = whyNotPlaced(sc); if (w) { why = `${id} cannot be placed on this page: ${w}`; break; } add(sc); }
+      for (const id of order) { const sc = sceneById(id); const w = whyNotPlaced(sc); if (w) { why = `${id} cannot be placed on this page: ${w}`; break; } add(sc); }
       if (!why) return out.sort((a, b) => roles.indexOf(a.carries) - roles.indexOf(b.carries));
       first ||= why;
     }
@@ -608,6 +700,45 @@ function dealScenes(dir, input, exclude, reserved = [], chosen = null) {
     add(wpick(cands.map((c) => [c, c.weight ?? 1])));
   }
   return out.sort((a, b) => roles.indexOf(a.carries) - roles.indexOf(b.carries));
+}
+// About one page in two (TECHNIQUE_RATE), one researched technique takes the place of one dealt scene (or the one slot
+// of a page dealt none). It is picked by its labels (techniqueWhyNot: sector, needs, position, energy), weighted by
+// score, avoiding the techniques of the last few draws, and placed by the scene rules (a free section for its position
+// clear of the replay and the other scenes, another family, the picture cap, the hold budget, one long scene).
+// forced: an id that must go on (--technique); it throws with the reason when it cannot. exclude: ids not to deal.
+function dealTechnique(dir, input, scenes, reserved, { forced = null, exclude = [] } = {}) {
+  if (!L.techniques.length || input.noTechnique) return scenes;
+  if (!forced && rnd() >= TECHNIQUE_RATE) return scenes;
+  const ids = scenes.map((x) => x.id);
+  let why = null;
+  const placed = (t) => {
+    // in place of each dealt scene in turn, in random order
+    for (const i of ids.length ? shuffle(ids.map((_, k) => k)) : [-1]) {
+      try { const out = dealScenes(dir, input, [], reserved, [...ids.filter((_, k) => k !== i), t.id]); if (out.some((x) => x.id === t.id)) return out; } catch (e) { why = e.message; }
+    }
+    return null;
+  };
+  if (forced) {
+    const t = L.techniques.find((x) => x.id === forced);
+    if (!t) throw new Error(`No technique with id ${forced}. \`node draw.mjs --list techniques\` lists them.`);
+    const unfit = techniqueWhyNot(t, input);
+    if (unfit) throw new Error(`${forced} does not fit this page: ${unfit}.`);
+    // in place of one dealt scene, else alone: the scene it would sit beside may clash with it
+    let out = placed(t);
+    if (!out) { try { out = dealScenes(dir, input, [], reserved, [t.id]); } catch (e) { why = e.message; } }
+    if (!out) throw new Error(why || `${forced} cannot go on this page.`);
+    return out;
+  }
+  const recentIds = hist.slice(0, TECHNIQUE_RECENT).map((h) => h.technique).filter(Boolean);
+  let pool = fresh(L.techniques.filter((t) => !exclude.includes(t.id) && !techniqueWhyNot(t, input)), recentIds);
+  while (pool.length) {
+    // score 7, 8, 9 weigh 1, 2, 3; one written for every sector at half, so the few that fit every page do not take most deals
+    const t = wpick(pool.map((x) => [x, Math.max(1, x.score - 6) * (x.sectors.includes('*') ? 0.5 : 1)]));
+    const out = placed(t);
+    if (out) return out;
+    pool = pool.filter((x) => x !== t);
+  }
+  return scenes;
 }
 // After two scene redraws, a choice instead of a third: every scene that fits this page and has a section to carry,
 // one line each with what it needs, and the two ways out (one by id, or none).
@@ -984,6 +1115,23 @@ function replayBlock(r, s, p) {
   p(`- **Build it** with \`<skill>/assets/replay.js\` (references/motion.md, "Product replay"); a working example of all six patterns: \`<skill>/assets/replay-demo.html\`. On a phone: ${r.phone || 'one panel of it, the same beats.'}`);
   p('Around it the page still needs the rest of the motion layer (SKILL.md step 9): the entrance below and feedback on every control. The inspector fails a page without the replay the sheet deals (`replay-missing`), a window too small (`replay-small`), a stage that is not held (`replay-not-held`) and a beat that never shows in the scroll film (`replay-unseen`).');
 }
+// A dealt technique in sheet section 9: printed like a scene, but marked as one to build fresh, with the direction to
+// take, what breaks it, its hold and phone, how to build it on the stage and the way out.
+function techniqueBlock(sc, s, p) {
+  const what = sc.carries === 'hero' ? 'the first screen' : `the ${sc.carries} section`;
+  p(`### ${sc.name} (\`${sc.id}\`) — a technique to build fresh, ${sc.position === 'transition' ? `the hand-over into ${what}` : `carries ${what}`}`);
+  p(`Not a tested scene: a technique from the research library (\`<skill>/library/techniques.json\`), dealt so pages stop reusing the same few big moments. It has no files and no demo: you build it, and it is checked like any scene. ${sc.principle}`);
+  p(`- **The direction to take:** ${sc.freshTake} That was written for another client: keep the principle and the manner, and take the subject, the pictures and the words from this page.`);
+  p(`- **What breaks it (avoid all of it):** ${sc.breaksWhen}`);
+  const why = sc.hold < sc.defaultHold ? ` (the research held it for ${sc.defaultHold}; ${sc.position === 'closing' ? 'a closing scene holds about one screen' : `on this page a scene holds ${sc.hold} at most`})` : !sc.researchHold ? ' (the research ran it without a pin; on the stage it holds one screen)' : '';
+  p(`- **Hold:** ${sc.hold} screen${sc.hold === 1 ? '' : 's'} of scroll${why}: \`hold: ${sc.hold}\` in \`Stage.scene\`, its section ${sc.hold + 1} screens tall. Every frame of the hold reads as a finished layout: no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway.`);
+  if (sc.trigger === 'scroll-enter') p('- **On the scroll, not on a clock:** in the research it plays once on entry; here spread its timings over the hold so it moves under the scroll, never on a clock inside a held screen.');
+  p(`- **Needs:** ${sceneNeedsWords(sc)}.`);
+  p(`- **On a phone:** ${sc.phone === 'same' ? "the same move at phone size (`phone: 'same'`)." : "its own version, as the direction above says (`phone: { hold, build }` in `Stage.scene`), or `phone: 'rest'` with a finished composition that reads whole; never the desktop move squeezed."} Check it at phone width like the desktop.`);
+  if (s.replay && sc.needs.includes('product-ui')) p("- **Beside the product replay:** the replay keeps the page's one framed window and its task. Build this one from the product's own interface on the page's own ground, cropped, with no window frame, and let it show something the replay does not.");
+  p(`- **Build it on the shared stage** as references/scenes.md §8 shows: a file of your own that registers \`Scenes['<a short id>'] = (root, opts = {}) => Stage.scene(root, { hold: opts.hold ?? ${sc.hold}, build(tl, { q, phone }) { … } })\`, the markup \`<section class="scene" data-scene="<that id>">\` holding one \`.scene-stage\`, and its CSS written as the finished composition first, the live layout under \`.scene.is-live\`. Build it with transforms, clip-path and CSS 3D on the stage's pinned GSAP; where the direction mentions WebGL or a 3D library, take its CSS 3D route. Never copy any site: no layout, picture, word or colour from wherever this was seen; set it in this page's own type, colour, pictures and words. Every rule of references/scenes.md §7 holds (native scroll, readable at rest, no drawn shapes, tracks or particles, no dead frames). Check it with \`node <skill>/scripts/scenes.mjs <page>\` like any scene and look at every sheet.`);
+  p(`- **If it cannot be built honestly** within the usual three look-and-fix rounds, take \`--redraw scenes\` and say why in your report; it counts toward the same limit of two scene redraws, and the redraw deals tested scenes.`);
+}
 function render(s) {
   const d = s.direction; const o = [];
   const p = (x = '') => o.push(x);
@@ -1125,15 +1273,18 @@ function render(s) {
   if (s.scenes?.length) {
     p('## 9. Scroll scenes');
     const one = s.scenes.length === 1;
-    p(`${s.replay ? 'One scroll scene, tested and ready to fill; the big moment is the product replay (section 8).' : one ? "The page's big moment: one scroll scene, tested and ready to fill." : `The page's big moments: ${s.scenes.length} scroll scenes, tested and ready to fill.`} ${one ? 'It is part of the composition, so build it in step 6 with the section it carries' : 'They are part of the composition, so build them in step 6 with the section they carry'}, not as a motion afterthought. ${one ? 'It runs' : 'Each runs'} on the shared stage (assets/scenes/stage.js and stage.css, with GSAP and Lenis from the pinned CDN lines in stage.js) and ships its own finished composition for reduced motion and for phones that rest. How to put one on a page, fill it and check it: references/scenes.md. Check them with \`node <skill>/scripts/scenes.mjs <page>\` and look at every sheet.`);
+    const toBuild = s.scenes.filter((x) => x.technique).length; const tested = s.scenes.length - toBuild;
+    const kinds = !toBuild ? 'tested and ready to fill' : one ? 'a researched technique to build fresh' : `${['', 'one', 'two'][tested] || tested} tested and ready to fill, and one researched technique to build fresh`;
+    p(`${s.replay ? `One scroll scene, ${kinds}; the big moment is the product replay (section 8).` : one ? `The page's big moment: one scroll scene, ${kinds}.` : `The page's big moments: ${s.scenes.length} scroll scenes, ${kinds}.`} ${one ? 'It is part of the composition, so build it in step 6 with the section it carries' : 'They are part of the composition, so build them in step 6 with the section they carry'}, not as a motion afterthought. ${one ? 'It runs' : 'Each runs'} on the shared stage (assets/scenes/stage.js and stage.css, with GSAP and Lenis from the pinned CDN lines in stage.js) and ships its own finished composition for reduced motion and for phones that rest. How to put one on a page, fill it and check it: references/scenes.md. Check them with \`node <skill>/scripts/scenes.mjs <page>\` and look at every sheet.`);
     const held = s.scenes.reduce((t, x) => t + (x.hold || 2), 0);
     p(`**The length budget.** ${s.scenes.length === 1 ? 'This scene holds' : 'Together these scenes hold'} about ${+held.toFixed(1)} screens of scroll (a scene's section is its hold plus one screen tall). A scene replaces the content of the section it carries: it is that section, not extra screens in front of it, and it never adds screens of nothing. The whole page still runs about 12-16 screens at 1440 (the inspector's header counts them), so build the other sections to their content and keep each hold to the beats it has.`);
-    p(`**The demo is not the content.** Each scene's demo page is a working example for a made-up client: its town, its photographs, its map, its object and its words are placeholders. Every picture, word and drawn thing in your scene comes from this subject (your inventory, SKILL.md step 1): a route map shows the real route with its real coast, water and relief; a fly-through passes through this client's own work; a quote is the client's own words. A scene that still shows the demo's content, or the stand-in a script draws when it is given nothing (the route's bare ground with only the road, the plain jet), is unfinished.`);
+    p(`**The ${tested ? 'demo' : 'example'} is not the content.** ${tested ? "Each scene's demo page is a working example for a made-up client: its town, its photographs, its map, its object and its words are placeholders." : "The direction a technique gives is written for another client: its business, its objects and its words are examples."} Every picture, word and drawn thing in your scene comes from this subject (your inventory, SKILL.md step 1): a route map shows the real route with its real coast, water and relief; a fly-through passes through this client's own work; a quote is the client's own words. A scene that still shows the ${tested ? "demo's" : "example's"} content${tested ? ', or the stand-in a script draws when it is given nothing (the route\'s bare ground with only the road, the plain jet),' : ''} is unfinished.`);
     for (const sc of s.scenes) {
       p();
+      if (sc.technique) { techniqueBlock(sc, s, p); continue; }
       const what = sc.carries === 'hero' ? 'the first screen' : `the ${sc.carries} section`;
       p(`### ${sc.name} (\`${sc.id}\`) — ${sc.position === 'transition' ? `the hand-over into ${what}` : `carries ${what}`}`);
-      p(`${sc.summary}${sc.hold ? ` Hold: ${sc.hold} screens${sc.defaultHold > sc.hold ? ` (set \`data-options\` hold to ${sc.hold}, or the lowest value the scene allows; its default is ${sc.defaultHold})` : ''}. Every frame of the hold must read as a finished layout: no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway.` : ''}`);
+      p(`${sc.summary}${sc.hold ? ` Hold: ${sc.hold} screen${sc.hold === 1 ? '' : 's'}${sc.defaultHold > sc.hold ? ` (set \`data-options\` hold to ${sc.hold}, or the lowest value the scene allows; its default is ${sc.defaultHold})` : ''}. Every frame of the hold must read as a finished layout: no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway.` : ''}`);
       if (sc.place) p(`Where: ${sc.place}`);
       if (sc.carries === 'work' && !sc.byRole?.work) p('On the work, the scene is the work: four to six pieces, each stopped flat and large with its own title under it for half a screen, each linking to its piece; the rest go to a plain index under the scene.');
       if (sc.byRole?.[sc.carries]) p(sc.byRole[sc.carries]);
