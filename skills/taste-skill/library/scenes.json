@@ -23,7 +23,9 @@
    "culture",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:2"
+  ],
   "hold": 3
  },
  {
@@ -64,7 +66,9 @@
    "music",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:6"
+  ],
   "hold": 3,
   "byRole": {
    "work": "Set data-options {\"stop\": 0.5}: 4-6 pieces, each stopped centred and flat at about 62% of the width with its title under it for half a screen; hold 0.7 a piece plus 0.3 (3.1 for four, 4.5 for six); the backdrop shaded toward the ground; phones get the pieces stacked full width. More pieces go to a plain index under the scene."
@@ -76,7 +80,7 @@
   "family": "camera-through-space",
   "summary": "A full-bleed film or still shrinks until it is a screen on the wall of a real place, then the place shrinks until it is the picture in a framed print or a device resting on the page's ground: about an elevenfold pull-back in two reveals. Use it when the point is context: a reel shown in a room, a product in its setting, a thing at its true scale.",
   "place": "In the middle, on the section that shows the work or the product in use (the showcase, the work, the about). Its last frame is a section of its own, a headline, a sentence and a link beside the print, so it closes the argument it opens.",
-  "content": "Three levels. The film: 16:9, 2560px wide, its subject in the centre third; a muted seamless loop of 8-20 s with a poster, a still, or a screen of the product. The place: a photograph seen straight on, 3:2 or 4:3, 3600px wide or more, with a calm wall for the screen (the scene draws its housing) or one rectangular opening (a window, a frame, a billboard) at 0.30-0.36 of its width and near its centre, and something around it that gives scale (a floor, a bench, a person); measure the opening into --wx --wy --ww --wh, and give a 4:5 crop for phones with its own -sm set. The object is built in CSS (a frame and mat, or a device bezel). Words, 60 at most: a title of 2-6 words and a sentence of 8-16 over the film, a wall label of 6-10 words, then a headline of 3-8 words, 18-32 words and a 2-3 word link. Without a place photograph whose opening can be measured, redraw.",
+  "content": "Three levels. The film: 16:9, 2560px wide, its subject in the centre third; a muted seamless loop of 8-20 s with a poster, a still, or a screen of the product. The place: a photograph seen straight on, 3:2 or 4:3, 3600px wide or more, with a calm wall for the screen (the scene draws its housing) or one rectangular opening (a window, a frame, a billboard) at 0.30-0.36 of its width and near its centre, and something around it that gives scale (a floor, a bench, a person); measure the opening into --wx --wy --ww --wh, and give a 4:5 crop for phones with its own -sm set. The object is built in CSS (a frame and mat, or a device bezel). Words, 60 at most: a title of 2-6 words and a sentence of 8-16 over the film, a wall label of 6-10 words, then a headline of 3-8 words, 18-32 words and a 2-3 word link. The film is the client's own: its product's film or still, or its interface; a stock picture of another maker's product in the frame is a stand-in, not the product. Without that, or without a place photograph whose opening can be measured, redraw.",
   "options": "jumps 2 (film, place, object) | 1 (film, place, ending full-bleed in the place); hold 3, 1.8 with one jump (1.5-4); holdPhone 2.6, 2.2 with one jump (1.6-3.2); depth 1.7 (1-2.2) the place's start scale, 1 a still wall, 2.2 strong parallax (needs a 4800px place); depthPhone 1.8; end 0.32 (0.24-0.44) the object's opening at the end, as a share of the width; endPhone 0.56 (0.4-0.7); side 'right' | 'left' where the object settles (for left also put class pb-side-left on the section); tilt 3 (0-6) degrees it turns as it settles; drop 0.02 (0-0.06); drift 0.08, 0 for a video (0-0.15), the slow zoom of a still; scrub 0.8, 0.4 with Lenis; phone 'same' | 'rest'.",
   "phone": "The same two reveals with a portrait print and the copy under it; hold 2.6.",
   "roles": [
@@ -90,7 +94,10 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:2",
+   "video|product-photo|product-ui"
+  ],
   "hold": 3
  },
  {
@@ -121,7 +128,9 @@
    "real-estate",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "route"
+  ],
   "hold": 4
  },
  {
@@ -153,7 +162,9 @@
    "studio-portfolio",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:0"
+  ],
   "hold": 3
  },
  {
@@ -175,7 +186,9 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:0"
+  ],
   "hold": 1.2,
   "lines": 2
  },
@@ -207,7 +220,9 @@
    "nonprofit",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:2"
+  ],
   "hold": 2.25
  },
  {
@@ -228,7 +243,9 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:0"
+  ],
   "hold": 1.8,
   "weight": 0.6
  },
@@ -268,7 +285,9 @@
    "music",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:12"
+  ],
   "hold": 4
  },
  {
@@ -307,7 +326,9 @@
    "music",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:1"
+  ],
   "hold": 2.5
  },
  {
@@ -327,7 +348,9 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:0"
+  ],
   "hold": 1,
   "weight": 0.35,
   "lines": 1
@@ -358,7 +381,8 @@
    "culture"
   ],
   "needs": [
-   "product-photo"
+   "product-photo",
+   "pictures:14"
   ],
   "hold": 10.5
  },
@@ -389,7 +413,9 @@
    "studio-portfolio",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:0"
+  ],
   "hold": 2.1
  },
  {
@@ -413,7 +439,10 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "mark",
+   "pictures:1"
+  ],
   "hold": 2,
   "weight": 0.45
  },
@@ -446,7 +475,9 @@
    "nonprofit",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:1"
+  ],
   "hold": 2.4
  },
  {
@@ -518,7 +549,9 @@
    "music",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "series:3"
+  ],
   "hold": 4,
   "weight": 0
  },
@@ -548,7 +581,8 @@
    "ecommerce"
   ],
   "needs": [
-   "product-photo"
+   "product-photo",
+   "pictures:25"
   ],
   "hold": 3
  },
@@ -589,7 +623,9 @@
    "music",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "series:3"
+  ],
   "hold": 4
  },
  {
@@ -617,7 +653,8 @@
    "other"
   ],
   "needs": [
-   "product-photo"
+   "product-photo",
+   "video"
   ],
   "hold": 5.5,
   "weight": 0
@@ -651,7 +688,8 @@
    "other"
   ],
   "needs": [
-   "product-photo"
+   "product-photo",
+   "video"
   ],
   "hold": 4
  },
@@ -686,7 +724,9 @@
    "nonprofit",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:1"
+  ],
   "hold": 2
  },
  {
@@ -709,7 +749,9 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:3"
+  ],
   "hold": 2,
   "weight": 0.5
  },
@@ -748,17 +790,19 @@
    "restaurant",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:0"
+  ],
   "hold": 3
  },
  {
   "id": "raster-cut",
   "name": "Raster cut between chapters",
   "family": "section-transition",
-  "summary": "On a held stage the next chapter's ground (a picture, a texture or a flat colour) prints over the current one through a raster of horizontal slats with whole-pixel edges, while the chapter title, drawn twice in exact register, changes from the old ink to the new one line by line without ever breaking. It is the one repeating joint of a site, between flat grounds or full-bleed pictures, always the same pattern and the same direction.",
+  "summary": "On a held stage the next chapter's full-bleed picture prints over the current ground through a raster of horizontal slats with whole-pixel edges, while the chapter title, drawn twice in exact register, changes from the old ink to the new one line by line without ever breaking. It is the one repeating joint of a site, always the same pattern and the same direction.",
   "place": "Between two sections, carrying the title of the one it opens (the intro, the work, the menu, the rooms, the contact). Up to three a page, three or more screens apart, never in neighbouring sections.",
-  "content": "Two grounds: A, the current chapter (a full-bleed picture with a calm middle band, or flat), and B, the next (a full-bleed picture, a calm texture or a flat colour); pictures 16:10 or wider, 2400px or more. Four colours, --a-ground, --a-ink, --b-ground and --b-ink, each ink 7:1 or better on its ground and the two grounds 50 or more apart in lightness; the next section's background is exactly --b-ground. A title of 2-4 words, 22 characters at most, written in both layers, and a deck of 12-22 words in B only. Nothing else on the stage.",
-  "options": "pattern 'slats' | 'blinds' | 'bands' | 'halftone' (flat B only); count 12 (slats 3-24, bands 3-8, blinds 2-5); phoneCount 12; order 'interlace' | 'bottom' | 'top' (a footer curtain) | 'centre' | 'shuffle' (blinds 'right' | 'left'); steps 4 (0-8) whole steps a slat grows in; amount 0.40 (0.2-0.5) stagger spread; ease 'power2.out' | 'none' | 'power3.out'; flip 0.5 (0.25-1); hold 1.2 (0.8-2; above 1.5 only with the bands line); phoneHold 1.2 (0.8-2); phone 'same' | 'rest'; fold 'auto' (a B picture lifts off the stage's foot so the next section joins on flat ground) | false; cell 10 (4-24) halftone pitch, phoneCell 8; seed 7; nav '', the selector of a fixed nav that takes each ground's ink; scrub 0.5, true with Lenis.",
+  "content": "Two grounds: A, the current chapter (a full-bleed picture with a calm middle band, or flat), and B, the next. B is a full-bleed picture, never flat: a title alone on two flat grounds reads as an empty screen. Pictures 16:10 or wider, 2400px or more. Four colours, --a-ground, --a-ink, --b-ground and --b-ink, each ink 7:1 or better on its ground and the two grounds 50 or more apart in lightness; the next section's background is exactly --b-ground. A title of 2-4 words, 22 characters at most, written in both layers, and a deck of 12-22 words in B only. Nothing else on the stage.",
+  "options": "pattern 'slats' | 'blinds' | 'bands'; count 12 (slats 3-24, bands 3-8, blinds 2-5); phoneCount 12; order 'interlace' | 'bottom' | 'top' (a footer curtain) | 'centre' | 'shuffle' (blinds 'right' | 'left'); steps 4 (0-8) whole steps a slat grows in; amount 0.40 (0.2-0.5) stagger spread; ease 'power2.out' | 'none' | 'power3.out'; flip 0.5 (0.25-1); hold 1.2 (0.8-2; above 1.5 only with the bands line); phoneHold 1.2 (0.8-2); phone 'same' | 'rest'; fold 'auto' (a B picture lifts off the stage's foot so the next section joins on flat ground) | false; seed 7; nav '', the selector of a fixed nav that takes each ground's ink; scrub 0.5, true with Lenis.",
   "phone": "The same cut with twelve slats and the title fitted to two lines; hold 1.2.",
   "roles": [
    "intro",
@@ -774,7 +818,9 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:1"
+  ],
   "hold": 1.2,
   "weight": 0.8
  },
@@ -800,7 +846,9 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:0"
+  ],
   "hold": 1.8
  },
  {
@@ -833,7 +881,9 @@
    "event",
    "other"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:1"
+  ],
   "hold": 3
  },
  {
@@ -842,9 +892,9 @@
   "family": "type-choreography",
   "summary": "A list of short names sits on the face of a horizontal drum that the scroll cranks like a slot reel, the name on the front line in full ink while the others roll back into ghosted depth; give every name a photograph and a second drum of pictures turns against it on the right, each picture holding while its name is up. It turns a list of places, products, dishes, rooms or real clients into one pinned set piece.",
   "place": "In the middle, on the list, the work or the proof: where eight to twenty names would otherwise sit in a column or a row of logos.",
-  "content": "Eight to twenty names (3-30 work), 1-3 words and 22 characters at most each, with optional detail of five words or fewer (a city, a year, a sector) and an optional landscape photograph (900, 1200 and 1600px wide). Real names only: clients only when they are real clients; otherwise the subject's own places, products, dishes or rooms. A statement of two lines, and an optional closing line of seven words or fewer with a button. One ground and one ink; the ghosts are the ink at a lower opacity, never a second hue.",
+  "content": "Eight to twenty names (3-30 work), 1-3 words and 22 characters at most each, with optional detail of five words or fewer (a city, a year, a sector) and an optional landscape photograph (900, 1200 and 1600px wide). Real names only: clients only when they are real clients; otherwise the subject's own places, products, dishes or rooms. Without a photograph for each name, every name carries its detail: bare names turning on an empty stage read as a dead screen. A statement of two lines, and an optional closing line of seven words or fewer with a button. One ground and one ink; the ghosts are the ink at a lower opacity, never a second hue.",
   "options": "hold 0.16 a name + 0.2, kept to 1.6-3.2 (1-4); tempo 0.16 (0.12-0.22) screens a name, when hold is not given; scrub true with Stage.smooth(), else 0.5; size 1 (0.7-1.4) the name size; spacing 1.03 (0.9-1.3); radius 0.5, phone 0.34 (0.3-0.6) the drum's radius as a share of the height; depth 3 (2.5-8); width 56, phone 82 (40-72) the widest name in vw; ghost 0.32 (0.18-0.45); ghostFar 0.1 (0.04-0.12); highlight 'ink' | 'accent'; count true, \"4 of 15\"; of 'of'; pictures true; gear 'counter' | 'same'; pictureTurn 'step' | 'smooth'; pictureStep 36 (24-50) degrees between pictures; ends true (the first and the last picture fill the right of the screen); detent false (true settles on a name when the scroll stops; use it for the picture drum under Lenis); phone 'same' | 'rest'.",
-  "phone": "The drum stays, since a portrait screen suits a reel, with phone numbers and the picture drum turning behind a full-width window above the names. Under 340px wide, or when the longest name cannot fit at 26px, the finished list.",
+  "phone": "The drum stays, since a portrait screen suits a reel, with a smaller radius (0.34 of the height) and wider names (82vw), and the picture drum turning behind a full-width window above the names. Under 340px wide, or when the longest name cannot fit at 26px, the finished list.",
   "roles": [
    "list",
    "work",
@@ -856,7 +906,9 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "names:8"
+  ],
   "hold": 2.6,
   "weight": 0.35
  },
@@ -880,7 +932,9 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:0"
+  ],
   "hold": 3
  },
  {
@@ -900,7 +954,9 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:0"
+  ],
   "hold": 1.2,
   "lines": 1
  },
@@ -927,7 +983,9 @@
    "real-estate",
    "physical-product"
   ],
-  "needs": [],
+  "needs": [
+   "product-ui|plan"
+  ],
   "hold": 1.6
  },
  {
@@ -952,7 +1010,9 @@
    "studio-portfolio",
    "agency"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:0"
+  ],
   "hold": 0
  },
  {
@@ -972,7 +1032,46 @@
   "sectors": [
    "*"
   ],
-  "needs": [],
+  "needs": [
+   "pictures:1"
+  ],
   "hold": 1
+ },
+ {
+  "id": "sheets-tip-in-and-away",
+  "name": "Sheets tip in and away",
+  "family": "layer-stack",
+  "summary": "Three to five chapters lie in one held stage as full-screen sheets of the page's own ground, each with its name set very large along the top edge and a photograph filling the rest. A sheet comes up out of a lower corner turned about 10 degrees and straightens as it lands over the last one, its photograph trailing a beat behind inside its window and catching up just after; it lies flat for a third of a screen so the name can be read, then tips away toward the opposite upper corner while the next one arrives, so the chapters shuffle like loose pages instead of scrolling past. It is for a studio's projects, a yard's builds, a house's rooms or a label's collections: three to five parallel pieces with one strong photograph each.",
+  "place": "In the middle, on the work, the builds, the rooms or the collections, after a quiet section that introduces them; it is that section, told as sheets, not screens in front of it. The first sheet comes in while the section scrolls into place and the stage lets go of the last one lying flat, so the page moves on from a named piece.",
+  "content": "Three to five sheets (three reads best and holds about two screens), each one piece: one photograph of it, never repeated, of one family (the same kind of subject in the same light) with a clear change of colour between neighbours, at least 1920px wide, its subject in the middle third so one picture serves the 2:1 window on wide screens and the 1:2 window on a phone (frame each with --st-pos and --st-pos-phone); a name of one or two short words, set very large on one line (the script sizes every name to the longest); one line of 3-8 words saying what it is (kind, size, year); an optional link, the one accent. A section heading of 2-6 words, shown in the finished composition and kept for screen readers while the stage runs. On the work the photographs are the client's own pieces; a run of similar pictures makes the shuffle pointless.",
+  "options": "tilt 10 (0-16) degrees a sheet is turned as it comes in; tiltOut 5 (0-12) degrees the other way as it leaves; rest 0.34 (0.2-0.8) screens each sheet lies flat; move 0.5 (0.3-0.9) screens each hand-over takes; lag 0.1 (0-0.25) how far the photograph trails its sheet, as a share of a hand-over, inside the 5% margin its box has past every edge of its window (0 keeps it fixed); drift 0.08 (0-0.25) sideways travel as a share of the width; lean 6 (0-12) degrees of perspective lean on wide screens, gone at rest; from 'left' (in from the lower left, out to the upper right) | 'right'; preroll true, the first sheet comes in as the section scrolls into place; hold auto (sheets x rest + (sheets - 1) x move: 2.02 screens for three; a number scales both); scrub true with Lenis, else 0.5 (0.3 on a phone); phone 'same' | 'rest'; phoneTilt 5, phoneTiltOut 2.5, phoneDrift 0.05, phoneMove 0.45. The number of sheets comes from the markup. Per sheet --st-pos and --st-pos-phone; scene tokens --st-name-case (none; uppercase for a face drawn for capitals), --st-name-size, --st-gutter.",
+  "phone": "The same shuffle on the same full-width sheets, in 2D with smaller numbers: 5 degrees in and 2.5 out, a twentieth of the width sideways, no lean, 0.45 screen a hand-over (1.92 screens for three). The name runs across the top over its line and link, the photograph fills a 1:2 window under them, the arriving sheet's words come up a little earlier because it turns less, and the leaving sheet starts a little sooner, so its photograph fills the top of the screen down to the next name. phone 'rest' shows the finished composition: every sheet as a plain block, name, line and link over its photograph.",
+  "roles": [
+   "work",
+   "showcase",
+   "gallery",
+   "list"
+  ],
+  "position": "middle",
+  "sectors": [
+   "studio-portfolio",
+   "agency",
+   "architecture",
+   "real-estate",
+   "hospitality",
+   "culture",
+   "event",
+   "fashion",
+   "physical-product"
+  ],
+  "needs": [
+   "product-photo",
+   "pictures:3"
+  ],
+  "hold": 2,
+  "byRole": {
+   "work": "Here three to five pieces (three reads best): each lies flat at full screen for a third of a screen, its name on the sheet's top edge over its photograph. More go to a plain index under the scene."
+  },
+  "weight": 1
  }
 ]

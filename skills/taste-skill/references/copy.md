@@ -149,8 +149,9 @@ When the brief supplies no proof, use what is true by construction:
 the content but not every detail (six rooms "from €140", "a short menu", twelve speakers), write the
 full set of plausible details: each room with a name, a bed, a view and its own rate; each dish with
 its price; each speaker with a talk title. A design can only be judged at its real density, and a page
-that shows one rate where six rooms exist looks unfinished. List every sample detail in the report so
-the client confirms or replaces it.
+that shows one rate where six rooms exist looks unfinished. The details sit beside the room's or the
+dish's photograph (references/imagery.md §2), never in a spec panel or a filled box standing in for
+it. List every sample detail in the report so the client confirms or replaces it.
 
 **Facts about the real world are not sample details.** Distances, travel times, history, populations
 and awards of a real place or organisation come from the brief or are left out; a guess ("forty
@@ -161,7 +162,12 @@ country's range reserved for fiction where one exists (North America 555-0100 to
 07700 900000 to 900999, 01632 960000 to 960999 or 020 7946 0000 to 0999); otherwise it is a plainly
 patterned number in the country's format, zeros after the area code. Never a real area code with
 random digits, and never 555 outside North America: both can ring a real line. The email is at the
-brand's own domain, never `.example`. List both with the sample details in the report.
+brand's own domain, never `.example`. List both with the sample details in the report. When the brief
+gives no email address, the sample one is sample content, and no form that sends a visitor's details (an
+order, a booking, a delivery address, a sign-up) is wired to it: for a made-up brand that domain
+belongs to a stranger. Such a form posts to an endpoint the client gives, or stays unwired with its
+handler named in the report; the visible contact line and a mailto link on it stay as the house rules
+ask.
 
 ## 6. Things that read as generated
 

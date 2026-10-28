@@ -717,9 +717,10 @@ export function frame(opts = {}) {
     const boxes = [];
     const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const rr = document.createRange();
     for (let n = tw.nextNode(); n; n = tw.nextNode()) { if (!n.nodeValue.trim() || !n.parentElement) continue; if (seenOpacity(n.parentElement) < 0.2) continue; rr.selectNodeContents(n); for (const r of rr.getClientRects()) if (r.bottom > 0 && r.top < H && r.width > 1) boxes.push({ l: r.left - 6, r: r.right + 6, t: r.top - 4, b: r.bottom + 4 }); }
-    for (const el of document.querySelectorAll('img, video, picture, iframe, canvas, svg, [style*="background-image"], [class]')) {
+    // (a product window, [data-ui], is something to see as a whole, not only by its words)
+    for (const el of document.querySelectorAll('img, video, picture, iframe, canvas, svg, [style*="background-image"], [class], [data-ui]')) {
       const tag = el.tagName;
-      let media = /^(IMG|VIDEO|PICTURE|IFRAME)$/.test(tag) || (tag === 'CANVAS' && !ATMOSPHERE.has(el.closest('[data-scene]')?.dataset.scene)) || (tag === 'svg' && !el.parentElement?.closest('svg'));
+      let media = /^(IMG|VIDEO|PICTURE|IFRAME)$/.test(tag) || (tag === 'CANVAS' && !ATMOSPHERE.has(el.closest('[data-scene]')?.dataset.scene)) || (tag === 'svg' && !el.parentElement?.closest('svg')) || (el.hasAttribute('data-ui') && !el.parentElement?.closest('[data-ui]'));
       if (!media && !/^(IMG|VIDEO|PICTURE|IFRAME|CANVAS|svg)$/.test(tag)) { const bi = getComputedStyle(el).backgroundImage; media = /url\(/.test(bi); }
       if (!media) continue;
       const r = el.getBoundingClientRect(); if (r.width < 40 || r.height < 40 || r.bottom <= 0 || r.top >= H || r.right <= 0 || r.left >= W) continue;
@@ -730,6 +731,43 @@ export function frame(opts = {}) {
     let hits = 0, all = 0;
     for (let gx = 0; gx < 24; gx++) for (let gy = 0; gy < 15; gy++) { const x = (gx + 0.5) * (W / 24), y = (gy + 0.5) * (H / 15); all++; if (boxes.some((b) => x >= b.l && x <= b.r && y >= b.t && y <= b.b)) hits++; }
     return Math.round((hits / all) * 100) / 100;
+  }
+  // 1f. a heading alone on the screen (lone-heading): one heading and a short line at most in view, no picture, no
+  // fragment, nothing else, below the first screen. Seen means on top where it is drawn (a layer clipped away or covered
+  // is not seen). A display statement (6% of the screen or more, or five words or more) is the section's subject by
+  // design, the hero's h1 is the hero, and a closing line with its link or button is a close; none counts. r6-p31:
+  // "What it carries" alone on an empty screen.
+  let lone = null;
+  if (scrollY > H * 0.5) {
+    const seenAt = (el, pts) => pts.some(([x, y]) => { if (!(x >= 0 && x < W && y >= 0 && y < H)) return false; const hit = document.elementFromPoint(x, y); return !!hit && (hit === el || el.contains(hit) || hit.contains(el)); });
+    const shown = [];
+    for (const u of units.values()) {
+      if (u.op < 0.5 || pinnedTop(u.el) || u.el.closest('header, nav, [role=banner]')) continue;
+      if (seenAt(u.el, u.lines.slice(0, 3).map((l) => [(l.l + l.r) / 2, (l.t + l.b) / 2]))) shown.push(u);
+    }
+    const heads = shown.filter((u) => u.size >= 24);
+    if (heads.length === 1) {
+      const hd = heads[0], rest = shown.filter((u) => u !== hd);
+      // (a heading drawn twice in layers, as a scene does, reads once: "Four seasons Four seasons" is "Four seasons")
+      const ws = unitText(hd).split(' '), half = ws.length / 2;
+      const txt = ws.length % 2 === 0 && ws.slice(0, half).join(' ') === ws.slice(half).join(' ') ? ws.slice(0, half).join(' ') : ws.join(' '), n = txt.split(' ').length;
+      // (a closing line with its action, a link or a button beside it, is a close by design)
+      const action = rest.some((u) => u.el.closest('a[href], button') || u.el.querySelector('a[href], button'));
+      const restWords = rest.reduce((a, u) => a + unitText(u).split(' ').length, 0);
+      const area = hd.lines.reduce((a, l) => a + (l.r - l.l) * (l.b - l.t), 0);
+      const mid = (Math.min(...hd.lines.map((l) => l.t)) + Math.max(...hd.lines.map((l) => l.b))) / 2;
+      const picture = () => {
+        const els = [...document.querySelectorAll('img, video, picture, canvas, iframe, [data-ui], svg, [style*="background-image"]')];
+        let k = 0; for (const e of document.querySelectorAll('section, div, figure, a, span, li')) { if (++k > 3000) break; if (/url\(/.test(getComputedStyle(e).backgroundImage)) els.push(e); }
+        return els.some((m) => {
+          if (m.parentElement?.closest('svg, [data-ui]') || (m.tagName === 'CANVAS' && ATMOSPHERE.has(m.closest('[data-scene]')?.dataset.scene)) || pinnedTop(m) || opacityOf(m) < 0.3) return false;
+          const r = m.getBoundingClientRect(), l = Math.max(r.left, 0), rt = Math.min(r.right, W), t = Math.max(r.top, 0), b = Math.min(r.bottom, H);
+          if (!((rt - l) * (b - t) >= W * H * 0.02)) return false;
+          return seenAt(m, [[(l + rt) / 2, (t + b) / 2], [l + (rt - l) * 0.25, t + (b - t) * 0.25], [l + (rt - l) * 0.75, t + (b - t) * 0.75]]);
+        });
+      };
+      if (rest.length <= 2 && restWords <= 16 && n <= 4 && !action && area < W * H * 0.06 && mid > H * 0.1 && mid < H * 0.78 && !hd.el.closest('h1, [data-hero]') && !picture()) lone = { text: txt.slice(0, 50), size: Math.round(hd.size) };
+    }
   }
   if (opts.film) {
     hitStyle.remove();
@@ -776,7 +814,11 @@ export function frame(opts = {}) {
       const r = m.getBoundingClientRect(); const a = Math.max(0, Math.min(r.right, W) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, H) - Math.max(r.top, 0));
       if (a >= W * H * 0.002 && opacityOf(m) >= 0.5) pictureArea += a * (m.tagName === 'CANVAS' ? sampleOf(m).painted : 1);
     }
-    const media = [...document.querySelectorAll('img, video, canvas, [data-ui]')].filter((m) => { if (m.tagName === 'CANVAS' && (ATMOSPHERE.has(m.closest('[data-scene]')?.dataset.scene) || m.closest('[data-ui]'))) return false; const r = m.getBoundingClientRect(); return (Math.min(r.right, W) - Math.max(r.left, 0)) * (Math.min(r.bottom, H) - Math.max(r.top, 0)) >= W * H * 0.04 && opacityOf(m) >= 0.5; }).map((m) => (m.hasAttribute('data-ui') ? 'ui:' + ids.indexOf(m) : m.tagName === 'CANVAS' ? 'canvas:' + ids.indexOf(m) + ':' + frameOf(m) : (m.currentSrc || m.getAttribute('src') || m.getAttribute('poster') || '').split('?')[0].slice(-60) + '@' + Math.round(m.getBoundingClientRect().width / 40)));
+    // a product replay's window is new at each beat it shows (data-beat, set by replay.js)
+    const media = [...document.querySelectorAll('img, video, canvas, [data-ui]')].filter((m) => { if (m.tagName === 'CANVAS' && (ATMOSPHERE.has(m.closest('[data-scene]')?.dataset.scene) || m.closest('[data-ui]'))) return false; const r = m.getBoundingClientRect(); return (Math.min(r.right, W) - Math.max(r.left, 0)) * (Math.min(r.bottom, H) - Math.max(r.top, 0)) >= W * H * 0.04 && opacityOf(m) >= 0.5; }).map((m) => (m.hasAttribute('data-ui') ? 'ui:' + ids.indexOf(m) + ':' + (m.closest('[data-replay]')?.dataset.beat ?? '') : m.tagName === 'CANVAS' ? 'canvas:' + ids.indexOf(m) + ':' + frameOf(m) : (m.currentSrc || m.getAttribute('src') || m.getAttribute('poster') || '').split('?')[0].slice(-60) + '@' + Math.round(m.getBoundingClientRect().width / 40)));
+    // each product replay mostly in view, the beat it shows (replay-unseen: every beat must reach the film), and its
+    // window's size at that beat (replay-small)
+    const replays = [...document.querySelectorAll('[data-replay]')].map((r, i) => { const b = r.getBoundingClientRect(); const seen = (Math.min(b.bottom, H) - Math.max(b.top, 0)) / Math.max(1, Math.min(b.height, H)); const u = (r.querySelector('[data-ui]') || r).getBoundingClientRect(); return seen >= 0.6 ? [i, r.dataset.beat ?? null, Math.round(b.top), u.width / W, u.height / H] : null; }).filter(Boolean);
     // the stage that holds the screen: a running scene pinned on it, or a sticky or fixed layer (the bar aside)
     // that covers 80% of it
     let held = null;
@@ -791,7 +833,7 @@ export function frame(opts = {}) {
         if (held) break;
       }
     }
-    return { overText, seen, playing, straddle, content: contentShare(), held, shortLines, shortTops, texts, media, pictures: Math.round(Math.min(1, pictureArea / (W * H)) * 100) / 100, y: Math.round(scrollY) };
+    return { overText, seen, playing, straddle, content: contentShare(), held, shortLines, shortTops, texts, media, replays, lone, pictures: Math.round(Math.min(1, pictureArea / (W * H)) * 100) / 100, y: Math.round(scrollY) };
   }
   const pictures =[...document.querySelectorAll('img, picture, svg, canvas, video')].filter((m) => !m.parentElement?.closest('svg')).map((m) => ({ m, r: m.getBoundingClientRect() })).filter(({ r }) => r.width >= 80 && r.height >= 80 && r.bottom > 0 && r.top < H);
   for (const el of document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote, li, a, button, span, div')) {
@@ -847,6 +889,7 @@ export function frame(opts = {}) {
     const x = (gx + 0.5) * (W / 24), y = (gy + 0.5) * (H / 15); samples++;
     if (textRects.some((r) => x >= r.left - 6 && x <= r.right + 6 && y >= r.top - 4 && y <= r.bottom + 4)) { filled++; content++; continue; }
     let el = document.elementFromPoint(x, y);
+    if (el && el.closest('[data-ui]')) { filled++; content++; continue; } // a product window is content, panels and gaps included
     for (let i = 0; el && i < 6 && el !== document.body && el !== document.documentElement; i++, el = el.parentElement) {
       if (/^(IMG|VIDEO|PICTURE|IFRAME)$/.test(el.tagName) || (el.closest('svg') && el.closest('svg').getBoundingClientRect().width > 40)) { filled++; content++; break; }
       if (el.tagName === 'CANVAS') { filled++; if (!ATMOSPHERE.has(el.closest('[data-scene]')?.dataset.scene)) content++; break; }
@@ -856,8 +899,9 @@ export function frame(opts = {}) {
     }
   }
   // 3. the large text in view, to spot one statement held on screen for screen after screen
-  const big = [...new Set([...document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote')].filter((el) => { const r = el.getBoundingClientRect(); return !el.closest('.scene.is-live') && parseFloat(getComputedStyle(el).fontSize) >= 32 && r.top >= -4 && r.bottom <= H + 4 && r.height > 0; }).map((el) => (el.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 60)).filter((t) => t.length >= 4))];
-  return { covered, clipped, pinnedOver, overText, seen, playing, onMedia: [...onMedia.values()], straddle, filled: Math.round((filled / samples) * 100) / 100, content: contentShare(), big, y: Math.round(scrollY) };
+  // (a product replay's held stage changes its window at every beat; its heading is not a long pin)
+  const big = [...new Set([...document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote')].filter((el) => { const r = el.getBoundingClientRect(); return !el.closest('.scene.is-live, .replay-stage.is-held') && parseFloat(getComputedStyle(el).fontSize) >= 32 && r.top >= -4 && r.bottom <= H + 4 && r.height > 0; }).map((el) => (el.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 60)).filter((t) => t.length >= 4))];
+  return { covered, clipped, pinnedOver, overText, seen, playing, onMedia: [...onMedia.values()], straddle, filled: Math.round((filled / samples) * 100) / 100, content: contentShare(), big, lone, y: Math.round(scrollY) };
 }
 
 // reach() runs at each screen of the walk: is there a visible way back to the navigation's anchors or the

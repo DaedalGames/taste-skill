@@ -1,6 +1,6 @@
 // tasteskill / scenes / raster-cut.js — the raster cut between chapters (references/scenes.md).
 //
-// On a held stage the next chapter (B: a full-bleed picture, a calm texture or a flat colour) prints over
+// On a held stage the next chapter (B: a full-bleed picture, never flat) prints over
 // the current one (A: a full-bleed picture or a flat ground) through a raster of horizontal slats with
 // whole-pixel edges, interlaced like the two fields of a video frame: every other slat prints first, from
 // the bottom up, the frame holds for a beat as an even raster of both chapters (five bands of each over the
@@ -24,7 +24,7 @@
 //         <div class="rc-copy"><p class="rc-title">Two to four words</p></div>
 //       </div>
 //       <div class="rc-layer rc-b">
-//         <div class="rc-media"><img src="b.jpg" alt="" width="2400" height="1500"></div>  (empty = flat ground)
+//         <div class="rc-media"><img src="b.jpg" alt="" width="2400" height="1500"></div>  (B is a full-bleed picture, never flat)
 //         <div class="rc-copy">
 //           <h2 class="rc-title">Two to four words</h2>     (exactly the words of the A copy)
 //           <p class="rc-deck">One sentence of 12-22 words, shown only in B.</p>
@@ -49,7 +49,8 @@
 // lines from 360px up.
 //
 // Options (data-options JSON)            default        range
-//   pattern     'slats'       'slats' | 'blinds' (vertical windows) | 'bands' (heavy bands) | 'halftone'
+//   pattern     'slats'       'slats' | 'blinds' (vertical windows) | 'bands' (heavy bands) | 'halftone' (flat B
+//                             only, so never in a dealt scene)
 //   count       12            slats 3-24 on desktop (8-12 reads best); bands 3-8, by default 5, or 6 when
 //                             that puts an edge between the title's lines (bands stay even: no phase shift);
 //                             blinds 3 (2-5)
@@ -85,8 +86,8 @@
 //                             blinds each word takes the ink of the window under it: while the words sit on
 //                             both grounds the nav gets data-rc-ground="mixed" and each word's element an inline
 //                             colour (restored after). Also --rc-nav-ground, and data-rc-fill once the bar may
-//                             take the B ground without cutting a picture: over a flat B as soon as B covers its
-//                             whole strip, over a B picture when the pin releases. Style it
+//                             take the B ground without cutting the B picture: when the pin releases (B is a
+//                             full-bleed picture, never flat). Style it
 //                             .bar[data-rc-fill]{background:var(--rc-nav-ground)}
 //   scrub       0.5           seconds of catch-up; true when Lenis smooths the page
 //

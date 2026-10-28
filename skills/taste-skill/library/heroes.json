@@ -130,7 +130,9 @@
   "seenIn": [
    "aww-made-with-gsap-1",
    "aww-artem-shcherbakov"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "The headline is split in two and a picture frame sits between the halves: a picture between the words of a headline, the device the house rules ban (round 6 integration review)."
  },
  {
   "id": "headline-across-two-fields",
@@ -139,7 +141,6 @@
   "picture": false,
   "directions": [
    "colour-chapters",
-   "sentence-as-layout",
    "type-only-statement"
   ],
   "needs": [],
@@ -347,7 +348,6 @@
   "archetype": "type-poster",
   "directions": [
    "product-performs",
-   "sentence-as-layout",
    "type-only-statement"
   ],
   "needs": [],
@@ -357,7 +357,9 @@
   "motion": "masked-headline",
   "seenIn": [
    "opl-dialkit"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Three control chips lie on the headline, one over its second line, and they only restyle the headline: something lying on a headline, controls that do nothing for the product, and data-ui hides them from the inspector (round 6 review)."
  },
  {
   "id": "column-on-one-line",
@@ -982,8 +984,7 @@
   "archetype": "fullbleed-media",
   "directions": [
    "place-carries-it",
-   "hero-object",
-   "sentence-as-layout"
+   "hero-object"
   ],
   "needs": [],
   "blueprint": "One wide photograph or render fills the viewport, chosen with the subject in the lower 55% and open sky, fog or a plain wall above it. The headline is centred in that empty upper zone: two lines at clamp(72px, 7.2vw, 112px), leading 0.9, its cap line 72px from the top, the first line short and the second longer so the block widens towards the subject. On the horizon, with its baseline at 52% of the height, one supporting sentence is split into two halves at 22px: the first half right-aligned to end at column 5, the second left-aligned from column 8, so the subject shows through the 260px gap between them. Wordmark top-left on a 32px margin; up to three text links from column 9; the single action top-right as a solid rectangle in the paper colour. All type is in one ink chosen against the sky; on a pale sky use the photograph's darkest tone rather than black. Nothing else crosses the lower half.",
@@ -1115,7 +1116,8 @@
   "directions": [
    "clear-product",
    "product-performs",
-   "spec-sheet"
+   "spec-sheet",
+   "sentence-as-layout"
   ],
   "needs": [],
   "blueprint": "The headline and one sentence sit at the top of the content width, left-aligned or centred (one choice for the whole page), with one or two actions under them. Below, the product fills the width of the content area: a large interface fragment built in HTML (data-ui), the object, or what it produces, starting in the first screen and cropped by its bottom edge so the visitor scrolls into it. Generous space above the headline; the product is the largest thing on the screen.",
@@ -1137,7 +1139,8 @@
    "clear-product",
    "product-performs",
    "spec-sheet",
-   "clear-service"
+   "clear-service",
+   "sentence-as-layout"
   ],
   "needs": [],
   "blueprint": "The content width is split about 5 to 7. The headline, one sentence and the action sit in the narrower part, vertically centred or aligned to the top of the picture. The wider part holds the product, the object or the real place, large, running to the right edge of the screen. Nothing else on the first screen.",
@@ -1220,7 +1223,8 @@
   "directions": [
    "clear-service",
    "clear-product",
-   "calm-editorial"
+   "calm-editorial",
+   "sentence-as-layout"
   ],
   "needs": [],
   "blueprint": "The headline says what the service is and for whom; one sentence; the action. Beside or under it one real picture of the place or the people at work. Under both, a row of three or four facts a visitor would otherwise search for (price from, where, when, how long), set at the body size with their values at the head step. The facts are true and complete.",

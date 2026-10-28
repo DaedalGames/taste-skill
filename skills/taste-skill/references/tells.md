@@ -41,7 +41,7 @@ inspector fails the page; **warned** means it flags it and you need a reason.
 | Eyebrow / kicker: tiny tracked uppercase label above every heading | banned | Fold it into the heading, or delete |
 | Pill badge above the hero headline ("New", "Beta", "Introducing") | banned | Say it in the supporting sentence |
 | One word of the headline in italic serif, colour or underline | warned | One face, one colour |
-| Bento grid of rounded tiles as the feature section | warned as card rows | A composed section; tiles only in the dense-tiles direction, filled, strict sizes |
+| Bento grid of rounded tiles as the feature section | warned as card rows and bento; a list of boxes fails (boxed-list) | A composed section set as type on the ground; a tile only where it holds a picture |
 | Near-black ground with one neon accent and a glow | banned via shadow, gradient | A dealt dark palette, no glow |
 | Floating rounded pill navigation with blur | warned | A plain bar |
 | Fake dashboard hero built from grey bars and donut charts | no rule; see imagery.md §7 | A real interface fragment, or no image |

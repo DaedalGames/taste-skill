@@ -189,7 +189,8 @@
    "product-performs",
    "split-stage",
    "name-as-monument",
-   "contact-sheet"
+   "contact-sheet",
+   "sentence-as-layout"
   ],
   "needs": [],
   "blueprint": "One narrow module repeated four to six times down the page, never alternating sides. Each module is 640px wide at most and starts on the page's text margin (at about 22% of the viewport on an understated page). Left part: a flat panel 360px wide and 120 to 200px tall, one tone off the ground, radius 8px, holding one small exact demonstration: a cropped interface fragment at true size, or a tightly cropped photograph covering the panel. Right part, 20px away and top-aligned: a heading of one or two lines at 18px medium and two short paragraphs at 15px in the soft ink, in a column 250px wide. Panel heights vary with their content; text always hangs from the panel's top edge. 96–120px of empty ground between modules. The section heading is 24–28px, on the same left edge, 64px above the first module. In a column under 600px the text moves beneath its panel.",
@@ -286,7 +287,6 @@
    "colour-chapters",
    "loud-flat-poster",
    "type-only-statement",
-   "sentence-as-layout",
    "borrowed-category"
   ],
   "needs": [],
@@ -310,12 +310,11 @@
    "editorial-report",
    "uneven-photographs",
    "place-carries-it",
-   "sentence-as-layout",
    "colour-chapters"
   ],
   "needs": [],
-  "blueprint": "Everything hangs from one vertical axis at column 5, about 35% of the width. First the heading: a statement of up to five words at clamp(40px, 5vw, 80px) starting on the axis, vertically centred in an otherwise empty 70svh of ground. Then four or five benefit rows, each starting on the same axis: a title at clamp(28px, 3vw, 48px) and under it a paragraph of 34ch at 17px. Columns 1–4 stay empty. At the right margin each row carries one photograph, top-aligned with its title and deliberately unequal: 240px wide at 4:5 in one row, 320px at 3:2 in the next, 180px square after that. Rows are separated by 96–120px of space, not lines. On a saturated field, set all type in one pale ink and leave the photographs ungraded.",
-  "mobile": "The axis collapses to the left margin. The statement sits at 9vw in 50svh of empty ground. Each row stacks its title at 26px, the paragraph, then its photograph at alternating widths: 100%, 70% flush right, 55% flush left. 64px between rows.",
+  "blueprint": "Everything hangs from the left margin. First the heading: a statement of up to five words at clamp(40px, 5vw, 80px) on the margin, with the first row 96px under it. Then four or five benefit rows, each starting on the same margin: a title at clamp(28px, 3vw, 48px) and under it a paragraph of 34ch at 17px. At the right margin each row carries one photograph, top-aligned with its title and deliberately unequal: 240px wide at 4:5 in one row, 320px at 3:2 in the next, 180px square after that. Rows are separated by 96–120px of space, not lines. On a saturated field, set all type in one pale ink and leave the photographs ungraded.",
+  "mobile": "Everything stays on the left margin. The statement sits at 9vw with the first row 56px under it. Each row stacks its title at 26px, the paragraph, then its photograph at alternating widths: 100%, 70% flush right, 55% flush left. 64px between rows.",
   "seenIn": [
    "aww-px-push"
   ]
@@ -344,7 +343,9 @@
    "opl-uncle-rudy",
    "aww-cominvi",
    "opl-midnight-2"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Pictures set inline after the nouns of a paragraph at headline size: thumbnails inside running text, which the inspector fails (picture-in-sentence) (round 6 integration review, with the sentence direction rewritten)."
  },
  {
   "id": "features-capabilities-as-a-menu",
@@ -459,7 +460,9 @@
    "aww-the-watch",
    "opl-aevion",
    "aww-coffeetech-r"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "The object is placed over the heading and hides parts of its letters, whose other lines fade to 18%: something lying on a headline, and faded text (round 6 integration review, with the sentence direction rewritten)."
  },
  {
   "id": "showcase-band-of-unequal-panels",
@@ -529,7 +532,9 @@
   "seenIn": [
    "opl-dialkit",
    "opl-textmode-overlay"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A filled panel between empty bands of ground, with a column of sliders and toggles and a line telling the visitor how to start: a box on the page, range sliders and a control that needs instructions. On a software page the product replay already shows the product working in the one framed window a page may have, so a second live window doubles it (round 6 integration review)."
  },
  {
   "id": "showcase-one-frame-three-distances",
@@ -548,8 +553,8 @@
    "place-carries-it"
   ],
   "needs": [],
-  "blueprint": "A wrapper 200vh tall holds a sticky stage of 100svh. On the stage one frame is centred: 56vw wide at 3:2 (at least half the screen), square corners, overflow hidden. The frame holds the screen: no part of the held stage is more than about a third empty ground. Inside it the same photograph is shown at three distances as the reader scrolls: the whole subject, then scaled to 180% toward one detail, then to 320% on a second detail (transform: scale with a transform-origin per stage, 700ms ease, switched by IntersectionObserver on three invisible markers). The sentence is delivered in halves: its first two or three words sit above the frame at clamp(56px, 8vw, 130px), centred; the last words arrive below the frame at the second stage, overlapping the frame's bottom edge by 0.3em. At the third stage one caption of 28ch at 17px appears to the right of the frame, top-aligned. The two halves together are the heading and stay within two lines.",
-  "mobile": "The frame fills the width less the margins at 3:2 and stays sticky at centre. The first half of the sentence sits above it at 13vw, the second half below it at the same size. The third-stage caption appears under the sentence at 16px, centred.",
+  "blueprint": "A wrapper 200vh tall holds a sticky stage of 100svh. On the stage one frame is centred: 56vw wide at 3:2 (at least half the screen), square corners, overflow hidden. The frame holds the screen: no part of the held stage is more than about a third empty ground. Inside it the same photograph is shown at three distances as the reader scrolls: the whole subject, then scaled to 180% toward one detail, then to 320% on a second detail (transform: scale with a transform-origin per stage, 700ms ease, switched by IntersectionObserver on three invisible markers). The heading, one sentence on one or two lines at clamp(40px, 4.4vw, 72px), sits whole above the frame on the frame's left edge, 32px over it. At the third stage one caption of 28ch at 17px appears to the right of the frame, top-aligned.",
+  "mobile": "The frame fills the width less the margins at 3:2 and stays sticky at centre. The heading sits whole above it at 8.4vw on up to two lines, on its left edge. The third-stage caption appears under the frame at 16px, on the same left edge.",
   "seenIn": [
    "aww-vero-new-york",
    "aww-illoca",
@@ -683,7 +688,6 @@
   ],
   "directions": [
    "type-only-statement",
-   "sentence-as-layout",
    "loud-flat-poster",
    "editorial-report",
    "borrowed-category"
@@ -693,7 +697,9 @@
   "mobile": "Lines drop to 8.4vw and may wrap onto a second line. The staircase becomes a smaller indent of 6vw per stage, so the fourth line starts 18vw in. Each sentence sits under its line at 16px on the same indent. 40px between stages.",
   "seenIn": [
    "opl-rendez-vous-franceclat"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Lines that step right as a staircase, leaving the columns to the left of each empty: rows empty on the left and a stepped heading (round 6 review)."
  },
  {
   "id": "how-it-works-photographs-down-a-diagonal",
@@ -738,7 +744,9 @@
   "seenIn": [
    "opl-sarah-matt-wedding",
    "aww-no-art"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A sideways rail of moments with a scroll-progress bar under its heading: the bar fails drag-bar and the rail warns sideways-rail, both house bans (round 6 review)."
  },
  {
   "id": "how-it-works-pinned-fragment-changing-state",
@@ -753,7 +761,8 @@
    "product-performs",
    "quiet-instrument",
    "split-stage",
-   "pinned-poster"
+   "pinned-poster",
+   "sentence-as-layout"
   ],
   "needs": [
    "product-ui"
@@ -900,7 +909,6 @@
    "loud-flat-poster",
    "dark-room",
    "hero-object",
-   "sentence-as-layout",
    "place-carries-it"
   ],
   "needs": [],
@@ -947,7 +955,6 @@
    "quiet"
   ],
   "directions": [
-   "sentence-as-layout",
    "type-only-statement",
    "dark-room",
    "editorial-report"
@@ -1030,7 +1037,9 @@
   "mobile": "The tall tile comes first, at full width and 56vw high, with its figure at 15vw. The two smaller tiles follow side by side with a 6px gap, the right one starting 32px lower than the left, each with its figure at 11vw and its caption at the bottom. The heading sits above at 26px.",
   "seenIn": [
    "aww-aspen-search"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Three figures on colour tiles with 8px between them: a list drawn as boxes, which the inspector fails (boxed-list) (round 6 review)."
  },
  {
   "id": "stats-total-and-its-receipt",
@@ -1226,7 +1235,8 @@
    "place-carries-it",
    "one-motif",
    "editorial-report",
-   "hero-object"
+   "hero-object",
+   "sentence-as-layout"
   ],
   "needs": [],
   "blueprint": "A 12-column row on the page ground with wide margins. A portrait of the speaker, 3:4, fills columns 2–5 and is tall, about 70svh; it takes whatever mask the page gives its photographs (square corners, or the page's one motif shape). The quotation occupies columns 7–12 and starts 120px lower than the top of the portrait: four to six lines at clamp(26px, 2.6vw, 40px) in a light or regular weight, leading 1.2, measure about 26ch. The name and role sit 32px beneath the quotation at 16px, on its left edge. A second, small photograph (1:1, columns 10–11) hangs 96px below the attribution and shows the place or the thing the speaker is talking about. There is no heading. Nothing is centred; every edge lands on a column line, and the two vertical offsets are the design.",
@@ -1243,7 +1253,6 @@
    "poster"
   ],
   "directions": [
-   "sentence-as-layout",
    "type-only-statement",
    "name-as-monument",
    "loud-flat-poster",
@@ -1312,7 +1321,6 @@
   ],
   "directions": [
    "type-only-statement",
-   "sentence-as-layout",
    "name-as-monument",
    "dark-room",
    "loud-flat-poster"
@@ -1526,15 +1534,14 @@
    "poster"
   ],
   "directions": [
-   "sentence-as-layout",
    "type-only-statement",
    "loud-flat-poster",
    "name-as-monument",
    "colour-chapters"
   ],
   "needs": [],
-  "blueprint": "The whole offer is one sentence of five to seven short words that contains the price, set at 8–9vw across the full width on two lines, leading 0.95, flush left; it replaces any heading. The price is not styled as a different word. Instead it sits on a filled block of the accent colour exactly one line-height tall with 0.15em of padding at each side, so the figure reads as an object in the line. Below, on one shared baseline 64px under the sentence: a supporting sentence at 20px in columns 1–6 saying what the price includes, and one rectangular button right-aligned in columns 10–12. If a second option exists (annual, team), it is a plain text link under the button, not a second panel. The section is one flat colour field at least 80svh tall.",
-  "mobile": "The sentence is set at 11vw on two lines, with the price block on a line of its own between them, as wide as its figure. The supporting sentence follows at 17px, then a full-width button, then the text link for the second option.",
+  "blueprint": "The whole offer is one sentence of five to seven short words that contains the price, set at 8–9vw across the full width on two lines, leading 0.95, flush left; it replaces any heading. The price is set in the same face, weight and ink as the words around it, with no block, colour or underline: the sentence carries it. Below, on one shared baseline 64px under the sentence: a supporting sentence at 20px in columns 1–6 saying what the price includes, and one rectangular button right-aligned in columns 10–12. If a second option exists (annual, team), it is a plain text link under the button, not a second panel. The section is one flat colour field at least 80svh tall.",
+  "mobile": "The sentence is set at 11vw, the price starting its second line. The supporting sentence follows at 17px, then a full-width button, then the text link for the second option.",
   "seenIn": []
  },
  {
@@ -1575,7 +1582,8 @@
    "uneven-photographs",
    "quiet-instrument",
    "specimen-catalogue",
-   "dark-room"
+   "dark-room",
+   "sentence-as-layout"
   ],
   "needs": [],
   "blueprint": "Prices set the way a good menu sets them. A heading of two to three words at 32–40px sits in columns 1–3. Columns 5–12 hold the list in two text columns with a 64px gap. Items are grouped under plain group names at 24px in medium weight with 48px above each group. Each item is a row: the name at 19px on the left, the price at the same size on the right on the same baseline, with tabular figures and the currency sign shown only once per group; beneath the name, one line of description at 16px in the softer ink, no wider than 36ch. Rows are 22px apart. Name and price are joined only by empty space (flex with `justify-content: space-between`), with no dot leaders and no lines. One small photograph (4:5, three columns wide) may sit under the heading in the left zone.",
@@ -1667,7 +1675,9 @@
   "needs": [],
   "blueprint": "Three plans as flat colour tiles whose heights step like a bar chart, so the bigger plan is literally bigger. The tiles sit in one row with 8px gaps, bottoms on a common base line, each 4 columns wide: the first 360px tall, the second 480px, the third 600px. Each has its own palette colour, no border and one shared radius. Inside, top-left with 28px padding: the plan name at 28px bold, the price at 56px beneath it, then what is included as plain lines at 17px (the taller tiles simply have room for more lines). The bottom 64px of every tile is a strip in a darker flat tone of that tile's colour, and the whole strip is the button with its label left-aligned. A heading of two to four words at about 4vw occupies the empty space above the two shorter tiles, top-left.",
   "mobile": "Tiles stack full width in rising order, each as tall as its content, keeping its colour and its darker button strip along the bottom. Gaps of 8px. The heading leads at 9vw on two lines, and prices drop to 44px.",
-  "seenIn": []
+  "seenIn": [],
+  "banned": true,
+  "bannedWhy": "Each plan a colour tile with 8px between them: a list drawn as boxes, which the inspector fails (boxed-list) (round 6 review)."
  },
  {
   "id": "faq-large-questions-answers-beside",
@@ -1732,7 +1742,9 @@
   "mobile": "The heading sits above at 9vw, not sticky. Tiles run full width with 6px gaps, questions at 18px wrapping to two lines, closed height at least 64px. The open tile keeps the accent colour, and answers are set at 16px with 20px padding.",
   "seenIn": [
    "opl-locker-land"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Each question a filled tile with 8px between them: a list drawn as boxes, which the inspector fails (boxed-list, r6-p32) (round 6 review)."
  },
  {
   "id": "faq-open-two-column-reading",
@@ -1771,7 +1783,8 @@
    "uneven-photographs",
    "dark-room",
    "hero-object",
-   "page-is-the-object"
+   "page-is-the-object",
+   "sentence-as-layout"
   ],
   "needs": [],
   "blueprint": "One field in a deep or pale flat tone, split 5 to 7. Left, columns 1–5: a heading of two to four words at 36–44px; under it the three or four practical facts people ask first (address, times, how to arrive) as plain lines at 18px; then five or six questions as an accordion with no lines between rows, only 28px of space. Each question is a `<summary>` at 20px with a small chevron drawn from two 2px strokes at its right; the open answer sits beneath at 17px in the softer ink, on the same left edge. One filled button and one text link close the column. Right, columns 7–12: a tall photograph (3:4) that bleeds off the top edge of the section and stops 80px short of the bottom, with a second, square photograph a third of its width overlapping its lower-left corner by 40px.",
@@ -1792,15 +1805,16 @@
    "name-as-monument",
    "type-only-statement",
    "uneven-photographs",
-   "hero-object",
-   "sentence-as-layout"
+   "hero-object"
   ],
   "needs": [],
   "blueprint": "A heading of three to five words at about 5.5vw runs from the left margin on one or two lines and is the only large thing in the section. 80px beneath it the questions begin, indented to start at column 5 and running to column 12, so the left third under the heading stays empty. Each question is a row at 22–24px in the regular weight with a chevron of two 2px strokes at the far right; rows are separated by 36px of space and no rules. Opening a row lays a tile of the one-step tone behind that row and its answer (24px padding, extending 24px beyond the text on both sides) and shows the answer at 17px with a 48ch measure. Six questions. Nothing else shares the screen; the indent against the wide heading is the composition. Build with `<details>`.",
   "mobile": "The heading sits at 10vw on two lines. Questions lose the indent and run full width at 19px with 28px between rows; the open row keeps its tone tile, now bleeding to both screen edges, with the answer at 16px inside it.",
   "seenIn": [
    "opl-neuropelvic-surgery"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "The questions are indented so the left third under the heading stays empty: rows empty on the left (round 6 review)."
  },
  {
   "id": "faq-question-index-answer-pane",
@@ -1961,7 +1975,8 @@
    "uneven-photographs",
    "dark-room",
    "split-stage",
-   "pinned-poster"
+   "pinned-poster",
+   "sentence-as-layout"
   ],
   "needs": [],
   "blueprint": "A final full-bleed photograph, 100vw by 90svh, chosen so its subject sits in the left half and its right half is calm. All text is confined to the right half and never crosses the centre line: in columns 8–12, anchored to the lower third, a closing line of three to five words at about 3.4vw in a light weight, a paragraph of two or three lines at 17px, and one filled button in the paper colour with ink text, about 52px tall. If the image behind the text is not calm enough, darken the whole photograph slightly with `filter: brightness(0.8)` rather than laying a panel behind the words. The section butts directly against a footer in one solid colour, so the photograph's bottom edge is a hard line. No logo, no second action.",
@@ -2028,7 +2043,6 @@
    "ui-led"
   ],
   "directions": [
-   "sentence-as-layout",
    "product-performs",
    "type-only-statement",
    "one-motif",
@@ -2390,7 +2404,9 @@
   "seenIn": [
    "aww-warm-fuzzy",
    "opl-belgrade-architecture"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A photograph chip laid over the words of a paragraph at headline size, with gaps opened inside its lines: a picture on and inside running text (round 6 integration review, with the sentence direction rewritten)."
  },
  {
   "id": "intro-inline-thumbnails",
@@ -2415,7 +2431,9 @@
    "aww-noho",
    "aww-butter",
    "opl-sand-studio"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Three to five small frames between the words of a large statement: thumbnails inside running text (picture-in-sentence) (round 6 integration review, with the sentence direction rewritten)."
  },
  {
   "id": "intro-narrow-column",
@@ -2583,7 +2601,6 @@
    "pinned-poster",
    "uneven-photographs",
    "dark-room",
-   "sentence-as-layout",
    "place-carries-it"
   ],
   "needs": [],
@@ -2617,7 +2634,9 @@
    "aww-haoqi-design",
    "aww-coffeetech-r",
    "aww-monolog"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A portrait floated into the paragraph as its drop capital: a picture in place of a letter, inside running text (picture-in-sentence) (round 6 integration review, with the sentence direction rewritten)."
  },
  {
   "id": "about-side-facts-wide-paragraph",
@@ -3057,7 +3076,9 @@
    "opl-adam-ho",
    "aww-noho",
    "aww-artem-shcherbakov"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Project names run as a paragraph at headline size over five to seven lines, with a picture frame after each name: thumbnails inside running text (picture-in-sentence) (round 6 integration review, with the sentence direction rewritten)."
  },
  {
   "id": "gallery-staggered-pairs",
@@ -3181,7 +3202,9 @@
   "seenIn": [
    "aww-decathlon-yestalgia",
    "aww-pp-neue-montreal"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Prints dropped on top of the headline, hiding half its letters: something lying on a headline, which the inspector fails (round 6 integration review, with the sentence direction rewritten)."
  },
  {
   "id": "gallery-dense-masonry-sheet",
@@ -3231,7 +3254,9 @@
    "opl-beige-force",
    "opl-proooof",
    "opl-hebbia"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A board of identical filled tiles in rotating colour pairs, each holding a word or a drawn SVG shape: a page built from boxes, colour sprawl and drawn decoration at once. Without the tiles, the colours and the shapes nothing a gallery needs is left (round 6 integration review)."
  },
  {
   "id": "gallery-one-frame-changing",
@@ -3482,7 +3507,7 @@
  {
   "id": "list-statement-table-pushed-right",
   "role": "list",
-  "name": "Statement, table pushed right",
+  "name": "Statement, table beside its picture",
   "shape": "table",
   "tags": [
    "type-led",
@@ -3497,8 +3522,8 @@
    "name-as-monument"
   ],
   "needs": [],
-  "blueprint": "A heading of four to six words spans the full width on two lines at clamp(40px, 4.5vw, 68px), left-aligned with its first line indented 3vw and leading 0.98. 96px below, the table is pushed into the right-hand five columns (8–12) and the left stays open. One plain word naming the table (offices, hours, rates) hangs at 14px in column 7, top-aligned with the first row. Each row is a three-part line at 15–16px with 26px between rows: the kind or day in the soft ink at the left of the measure, the place or service at 30%, and the address, time or price right-aligned, with a small arrow where the row links. Rows are separated by space only; every fourth row has 44px above it to form groups. In columns 1–4, bottom-aligned with the last row, one 4:5 photograph 22vw wide may sit alone. Holds 5–14 rows.",
-  "mobile": "Heading at 9.5vw without the indent. The table takes the full width at 16px; each row stacks the kind above the place, with the value right-aligned on the first line. The naming word is dropped because the heading already says it. The photograph follows at 60% width on the right margin.",
+  "blueprint": "A heading of four to six words on two lines, flush to the left margin across the full width. 64–96px below, two parts, top-aligned: in columns 1–5, one 4:5 photograph of what the table lists (the room the rates are for, the office, the hall), running off the left edge; in columns 6–12, the table. Without such a photograph the table takes the full width instead, its three parts spread across columns 1–12, so no row is empty on its left. Each row is a three-part line at the body size with 26px between rows: the kind or day at the left of the measure, the place or service at 40%, and the address, time or price right-aligned, with a small arrow where the row links. Rows are separated by space only; every fourth row has 44px above it to form groups. The heading names the table: no label beside it. Holds 5–14 rows.",
+  "mobile": "Heading at the phone display size, flush left. The photograph first at full width (4:5), then the table at full width: each row stacks the kind above the place, with the value right-aligned on the first line.",
   "seenIn": [
    "aww-kononenko-architectural-bureau",
    "opl-monte"
@@ -3757,7 +3782,6 @@
    "poster"
   ],
   "directions": [
-   "sentence-as-layout",
    "type-only-statement",
    "product-performs",
    "loud-flat-poster",
@@ -3888,7 +3912,9 @@
   "needs": [],
   "blueprint": "Four or five capabilities, each one plain sentence of five to eight words about what the product will do for you, each ending in a working switch. Every sentence is a full-bleed band 20vh tall, butted against the next with no gap. Inside, on the 12-column grid: the sentence at clamp(30px, 3.6vw, 60px) on one line in columns 1–10, vertically centred; in columns 11–12, right-aligned, the product's real toggle, built in em with its root marked data-ui, 1.1em tall so it matches the type. Off, a band is the page ground and its sentence is in the soft ink. On, the band fills with a palette colour, a different one per band, the sentence turns to full ink and a second line at 17px appears beneath stating the consequence in figures. Two bands are on at load. Toggles answer click, Space and Enter. There is no heading; the first sentence does that work.",
   "mobile": "Bands are at least 132px tall. The sentence is set at 6.4vw on two lines in the left 76% of the width; the toggle sits at the right, vertically centred, with a 44px touch target. When a band is on, the consequence line opens under the sentence at 15px.",
-  "seenIn": []
+  "seenIn": [],
+  "banned": true,
+  "bannedWhy": "Features set as switches, the ones off greyed, a palette colour per band: the r6-p32 template; its data-ui root hides it from decorative-control (round 6 review)."
  },
  {
   "id": "features-panel-with-margin-notes",
@@ -4342,7 +4368,6 @@
   ],
   "directions": [
    "type-only-statement",
-   "sentence-as-layout",
    "dark-room",
    "loud-flat-poster"
   ],
@@ -4410,7 +4435,8 @@
    "split-stage",
    "pinned-poster",
    "editorial-report",
-   "product-performs"
+   "product-performs",
+   "sentence-as-layout"
   ],
   "needs": [],
   "blueprint": "A sticky stage of 100svh split 38/62. The right 62%, from x 560 to the right viewport edge, is one photograph the full height of the stage, bleeding off the right, top and bottom edges, square corners: a staged picture of the current project in use, in a real place. The left column, from the 20px margin to x 520, holds the heading at the top, two lines at clamp(80px, 8.2vw, 120px), leading 0.95, 40px under the navigation; then empty ground; then, anchored to the bottom with a 32px margin, the index: three to six rows 44px tall, each with the project's name at 28px on the left and two or three disciplines at 16px right-aligned in the soft ink. The current row is in the full ink and the others at 40% opacity; rows are told apart by space only. Each project gets one viewport of scroll: as it arrives, its photograph wipes in from the bottom edge (`clip-path: inset(100% 0 0 0)` to `inset(0)` over 900ms) and the current row moves down the list. The empty middle of the left column is closed by the heading above it and the index below.",

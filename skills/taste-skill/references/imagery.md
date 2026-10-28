@@ -52,11 +52,12 @@ In order of preference:
 3. **The photographs dealt on the direction sheet** and the rest of the library (section 4): sharp,
    modern photographs of places, light, texture and materials, free of credits. Use them where an
    honestly generic picture fits (the open sea for a house on the sea, stone for a mason). They never
-   stand in for a specific product, dish, room, person or screen.
+   stand in for a person or a screen, and for a room, a dish or a product only as below.
 4. **Sharp modern photographs from the open collections** (section 3), 1800px or wider, of the
    subject's world as it looks now: its city, its materials, its kind of work. Honest means nobody
-   could take one for the client's own product, room, dish, person or team. The one exception is a
-   product with no photographs of its own: real photographs of its kind in use show what it is, large,
+   could take one for the client's own building, premises, person, team or customers. Two exceptions,
+   both listed in the report as stand-ins for the client's own: rooms, dishes and products (below),
+   and a product with no photographs of its own, shown by real photographs of its kind in use, large,
    never named or priced as this model (the direction sheet's imagery section says how). Archive
    photographs, old maps and engravings only when they are the idea itself (the history this subject
    continues: a century-old firm's first workshop, the slip boxes behind a notes app), sharp, large and
@@ -68,6 +69,25 @@ In order of preference:
    software. Only when drawn with real care and precision; a rough drawing is worse than none.
 6. **Type and space alone,** done on purpose (section 9). An empty slot is better than a bad picture.
 
+**Rooms, dishes and products are shown, not boxed.** On a page for a place to stay, each room the
+page lists is shown with a photograph of that kind of room (the bed under its window, the view out of
+it); on a restaurant's page each dish it features with a photograph of that dish as served (the menu
+itself stays a list of names and prices); on a shop each product with a photograph of it or its kind.
+The client's own come first; without them, real photographs matched to each one's details and in one
+light: rooms from the open collections (`assets.mjs "<that kind of room>"`; the library has almost
+none), dishes and products from the library (`draw.mjs --photos <words>`) or the open collections. The
+report lists each as a stand-in for the client's own. A stand-in sits beside the room or dish it
+stands for, with that one's facts, never as the first picture of the house or the restaurant. Never
+grey spec panels, tabs or filled boxes standing in for them: in a blind test five rooms set as grey
+panels read as folder tabs, and the page had no picture of where a guest would sleep.
+
+**A product shown by its kind looks like one product.** Choose photographs in which the kind looks
+alike: the same configuration and build (all long-tail cargo bikes, or all with a box in front), a
+similar colour, the one the brief describes; never a different maker's design in each picture, which
+reads as a catalogue of competitors. The hero shows the product large, about half the hero or more,
+never a small figure in a landscape. Three that match beat six that do not; with one good match, show
+it large once and let type carry the rest.
+
 **The quality bar, for every picture before it goes on the page.** Open it at full size and look:
 
 - Sharp at the size it is shown: the source is at least 1.5 times the shown width (twice for the
@@ -75,6 +95,12 @@ In order of preference:
 - It shows this subject's world, and would not fit the nearest competitor's page or any page at all.
 - It belongs to one family with the others: one light, one era, one treatment.
 - No watermark, burned-in text, frame, scanner edge, noise or heavy compression.
+- Nothing in it that is not the client's to show, stand-ins and open-collection finds above all: no
+  other maker's brand name or logo, no shop or company sign, no readable house number or licence
+  plate, no words that would embarrass the client (a sticker, a slogan, a scrawl), and no child who
+  could be recognised (children only from behind, far off or unrecognisable). Crop it out or drop the
+  picture. A cargo-bike page in a preview showed children outside private homes, other makers' bikes
+  with their names readable, a shop's logo and a profane sticker.
 - It earns its size: a picture in a large slot has a clear subject; a picture that only fills a gap
   is removed and the gap closed.
 
@@ -133,7 +159,9 @@ two or three queries per idea. If nothing sharp and fitting turns up, do not fil
   era, or all close surfaces in one light. A 1900 postcard beside a modern stock photograph beside a
   botanical plate reads as a scrapbook.
 - No watermark, no burned-in text or logo, no frame or scanner edge you cannot crop away, and no
-  recognisable living person who could be taken for the client's staff or customers.
+  recognisable living person who could be taken for the client's staff or customers. Look at it at
+  full size for what the quality bar in §2 rules out (another maker's name or logo, a sign, a house
+  number or plate, embarrassing words, a recognisable child) and crop or drop it.
 
 **Use it with intent.** One sharp picture of the place, large, beats a row of small ones; a material
 close-up can hold a whole section behind its text; the same picture can return at a different crop
@@ -142,13 +170,16 @@ further down. Treatments stay within section 6 and the treatment the sheet deals
 **Stay honest.**
 
 - **A found picture is never the client's own.** It may show the client's city, its materials, its
-  history, the kind of thing it makes; it may never stand in for the client's product, room, dish,
-  person, team or customers. If a visitor could take it for the client's own (a bakery counter, a
-  plate of pasta, a smiling barista, a guest room), do not use it. The one exception is a product with
-  no photographs of its own: real photographs of its kind in use, never named or priced as this model,
-  listed in the report as not the client's (§2, item 4).
+  history, the kind of thing it makes; it may never stand in for the client's building, premises,
+  people, team or customers (a bakery counter, the house from outside, a smiling barista, a chef at
+  the pass). Rooms, dishes and products are shown with a photograph of their kind, and a product with
+  no photographs of its own by its kind in use, never named or priced as this model; a stand-in sits
+  beside the room or dish it stands for, never as the first picture of the house or restaurant; the
+  report lists each as not the client's (§2).
 - **Caption from the source** when a caption helps: what it is and when, as the archive describes it
-  ("Gand, unloading a steamer, 1905"). Never write a caption that ties it to the client.
+  ("Gand, unloading a steamer, 1905"). Never write a caption that ties it to the client. The one
+  exception is a stand-in for a room, a dish or a product: its own facts (bed, view, rate; name,
+  price) sit beside it, never a line saying it is the client's photograph.
 - **A caption names only what the picture shows.** Read every caption, label and number beside a
   picture against the picture at full size and against its source title: never a breed, a place, an
   object or a use that neither supports ("a dog in a crate", not "a Labrador, crated", when the source
@@ -228,7 +259,11 @@ One treatment for the whole page:
 
 - **Untouched.** The default. Pick images whose light already agrees.
 - **Greyscale.** `filter: grayscale(1) contrast(1.05)`, or `?grayscale` on the URL. Unifies a mixed
-  set instantly and suits editorial and typographic directions. Apply to every image or none.
+  set instantly and suits editorial and typographic directions. Apply to every image or none. Never
+  where the pictures carry the colour: food and drink, flowers, fashion, rooms and tables, the seasons
+  of a landscape, or a client whose name or brief names a colour or a light. A guesthouse called Hvit,
+  white, turned grey in black-and-white and its four seasons looked alike; the draw does not deal it
+  there.
 - **Multiply on a field.** On a light flat ground, `mix-blend-mode: multiply` makes a white studio
   background vanish so a product sits directly on the colour.
 - **Darkened for a dark page.** `filter: brightness(0.85) contrast(1.05)` so the image edges sink into
@@ -249,6 +284,14 @@ or a fade from 55% black to transparent over the lower third. Never a coloured o
   alignment. Grey bars standing in for text are worse than no image.
 - Put the fragment directly on the page or on one flat stage colour. No laptop, no phone frame unless
   the product is a phone app and the frame is a plain rounded rectangle.
+- **The interface sits in the page's own ground,** in the page's colours, cropped or bleeding off an
+  edge of the screen or its section; at most one framed window on the whole page (the replay's, when
+  one is dealt). Never the black ground with a white interface slab in every section: a blind judge
+  called it generic dark SaaS.
+- **One picture that is not interface** and carries the product's idea is worth more than another
+  panel: on a notes app's page, a photograph of a card catalogue carried the idea in a blind test.
+- **No form controls as decoration.** Switches, checkboxes and sliders appear only where they do what
+  the product does; a row of greyed toggles beside nothing reads as a template.
 - Inside a fragment the product's own interface conventions apply (its small radii, its 1px control
   borders, a shadow on its open menu). Put the attribute `data-ui` on the fragment's root element: the
   inspector and the linter then leave what is inside alone, and hold the page around it to the house
@@ -512,7 +555,8 @@ the links between a placement and the score as leanings, not laws.
 
 - Found on top pages more than their share and almost never on the lowest: the split, the picture held
   while text scrolls, the uneven mosaic, the inset frame that grows, the cut-out on a flat field, and
-  pictures set with the type (the last three rows together: 24 sites, 16 of them top, 1 lowest).
+  pictures set with the type (the last three rows together: 24 sites, 16 of them top, 1 lowest;
+  here a picture sits beside or behind the type, never inside a sentence or a headline).
 - The horizontal gallery is common in every band and lifts nothing. Use it where browsing is the point.
 - The 3D gallery is the one placement that goes with lower scores, and with the lowest usability in the
   table (5.9 against 6.35 for all sites).
@@ -632,35 +676,30 @@ Each entry gives when to use it, the geometry at 1440×900, the phone version an
 - *When.* A pause in the page: a single portrait or object. Or a small picture that gives a statement
   a face.
 - *Geometry.* A single centred picture at 3:4 and 75% of the viewport height, on a ground taken from
-  the picture. Or a small picture 7–26% of the width (108–374px) beside, above or between the lines
-  of a 48–136px statement, aligned to one of its lines.
+  the picture. Or a small picture 7–26% of the width (108–374px) beside or above a 48–136px
+  statement, aligned to one of its lines, never between its lines or its words.
 - *Phone.* The picture above the statement at 60–100% of the width.
 - *Fails.* Used as the default for every picture: a picture with equal margins on all sides reads as
   placed by default (section 5).
 
-**Small pictures between words**
+**Small pictures between words: not here**
 
-- *When.* A statement about the things themselves (materials, people, products), on a screen of its
-  own.
-- *Geometry.* Two to four chips in the statement, from the cap height to three-quarters of the type
-  size tall and one to one and a half times as wide (50×46px in a 60px line; 113×75px between the two
-  words of a 150px name), all from one shoot, square corners. Give them a width and height so the lines
-  do not jump while they load.
-- *Phone.* Keep them inline at the height of the text.
-- *Fails.* More than four; chips from different shoots; a chip that carries information the words do
-  not.
+In the study, two to four small chips sit inside a statement or between the words of a name. Here a
+sentence is words and a headline is words (the inspector fails `picture-in-sentence` and
+`picture-in-headline`): the same pictures go beside or above the statement, as above, or in a row of
+their own under it at a size that shows what each is.
 
-**Picture inside or behind display type**
+**Picture behind display type**
 
 - *When.* The object is the subject: a product, a building, a person.
-- *Geometry.* A small picture window sits inside a block of 150–200px display type and later opens
-  into the next screen; or the object stands behind the type, showing between and around the letters;
-  or it touches the edge of the word without covering a letter. In the study the object more often
-  stands in front and covers one or two letters, or a line of type runs behind a square picture; here
-  nothing lies on top of a headline (the inspector fails large text a fifth or more hidden), so the
-  type stays in front.
+- *Geometry.* The object stands behind 150–200px display type, showing around the letters, or touches
+  the edge of the word without covering a letter. In the study a small picture window also sits inside
+  the block of type, or the object stands in front and covers one or two letters; here neither: no
+  picture inside a headline, and nothing lies on top of one (the inspector fails large text a fifth or
+  more hidden), so the type stays in front and whole.
 - *Phone.* Keep it, with the type at about 15vw, and check the word still reads.
-- *Fails.* An object over the letters; type displaced or glitched by the picture.
+- *Fails.* A window in the words; an object over the letters; type displaced or glitched by the
+  picture.
 
 **Cut-out object on a flat field**
 

@@ -281,7 +281,8 @@ export function extra() {
   out.stickyBands = [];
   for (const el of B.querySelectorAll('*')) {
     const cs = getComputedStyle(el); if (cs.position !== 'sticky' && cs.position !== 'fixed') continue;
-    if (!visible(el) || el.closest('header, nav, [role=banner], .scene, [data-scene], dialog, [role=dialog]')) continue;
+    // (a product replay's held stage holds on phones too, like a scene: replay.js)
+    if (!visible(el) || el.closest('header, nav, [role=banner], .scene, [data-scene], dialog, [role=dialog], .replay-stage')) continue;
     const r = el.getBoundingClientRect();
     if (r.width >= W * 0.8 && r.height >= H * 0.33 && r.height < H * 0.97) out.stickyBands.push({ what: textOf(el).slice(0, 40) || el.tagName.toLowerCase(), h: Math.round((r.height / H) * 100) });
     if (out.stickyBands.length >= 4) break;
@@ -534,18 +535,253 @@ export function extra() {
     }
   }
 
-  // --- the product replay: its beats, its control, never a recording, never doubled with the entrance
+  // --- the product replay: its beats, its control, never a recording, never doubled with the entrance; the
+  // window's size, and how far its section holds it (replay.js holds the stage one beat at a time while the visitor
+  // scrolls; a window that plays small and unheld is not noticed, r6-p32)
   out.replays = [...document.querySelectorAll('[data-replay]')].map((r) => {
-    const beats = String(r.dataset.replay || '').split(',').map(Number).filter((n) => n > 0).length;
+    const list = String(r.dataset.replay || '').split(',').map(Number).filter((n) => n > 0);
+    const beats = list.length === 1 && list[0] <= 8 ? list[0] : list.length;
     const marks = new Set();
     for (const e of r.querySelectorAll('[data-at], [data-type-at], [data-roll-at], [data-select-at], [data-flip-at], [data-press-at], [data-point-at], [data-style-at], [data-frame-at]')) for (const k of ['at', 'typeAt', 'rollAt', 'selectAt', 'flipAt', 'pressAt', 'pointAt', 'styleAt', 'frameAt']) if (e.dataset[k]) marks.add(+e.dataset[k]);
-    for (const e of r.querySelectorAll('[data-says]')) for (const m of e.dataset.says.matchAll(/(\d+):/g)) marks.add(+m[1]);
-    const scope = r.closest('section, article, [data-replay-scope]') || r.parentElement || r;
+    for (const e of r.querySelectorAll('[data-says]')) for (const m of e.dataset.says.matchAll(/(\d+):/g)) if (+m[1] > 0) marks.add(+m[1]);
+    const scope = r.closest('.replay-hold, section, article, [data-replay-scope]') || r.parentElement || r;
     const control = [...scope.querySelectorAll('button, [role=button], a')].some((b) => visible(b) && /replay|again|play/i.test(textOf(b) + ' ' + (b.getAttribute('aria-label') || '')));
     const rr = r.getBoundingClientRect();
     const recording = [...r.querySelectorAll('video, img')].some((m) => { const q = m.getBoundingClientRect(); return q.width * q.height >= rr.width * rr.height * 0.4; });
     const clash = r.matches('[data-e], [data-moment], [data-reveal]') || !!r.querySelector('[data-e], [data-moment], [data-reveal]') || (!!r.closest('[data-hero]') && document.body?.dataset.entrance === 'product-at-work');
-    return { beats, marks: marks.size, control, recording, clash, hero: !!r.closest('[data-hero]') };
+    // the window a visitor sees: the product panel inside the figure when there is one
+    const ui = r.querySelector('[data-ui]'); const wr = (ui && visible(ui) ? ui : r).getBoundingClientRect();
+    // the hold: a sticky stage and the room its section gives it below (replay.js), or a pinned spacer (GSAP)
+    let hold = 0;
+    for (let e = r; e && e !== B; e = e.parentElement) {
+      const cs = getComputedStyle(e);
+      if (cs.position === 'sticky' && e.parentElement) {
+        const p = e.parentElement, pr = p.getBoundingClientRect(), pcs = getComputedStyle(p);
+        hold = Math.max(0, pr.bottom - parseFloat(pcs.paddingBottom) - parseFloat(pcs.borderBottomWidth) - e.getBoundingClientRect().bottom);
+        break;
+      }
+      if (e.parentElement?.classList.contains('pin-spacer')) { hold = Math.max(0, e.parentElement.offsetHeight - e.offsetHeight); break; }
+    }
+    return { beats, marks: marks.size, control, recording, clash, hero: !!r.closest('[data-hero]'), w: +(wr.width / W).toFixed(2), h: +(wr.height / H).toFixed(2), held: +(hold / H).toFixed(2), stage: !!r.closest('.replay-stage') };
   });
+
+  // ---------- round 6: what judges found on pages every check above passed ----------
+  // --- boxed-list: a list drawn as boxes. Three or more sibling items (questions, loads, specs, plans, features,
+  // options) each on a fill unlike the ground they stand on, or outlined, with ground between them; a zebra list of
+  // pills counts. Not inside a product window, a table, a scene or the navigation; not picture tiles; not fields that
+  // tile one band edge to edge. r6-p31 (the loads as pill rows, the configurator's option tiles) and r6-p32 (the
+  // questions as filled tiles) were called pages of boxes.
+  out.boxedLists = [];
+  {
+    const boxed = (e) => !!filledOn(e) || sides(e) >= 3;
+    // an item is drawn as a box itself, or by the one child that fills it (a label whose span is the tile)
+    const drawnAs = (item) => {
+      if (boxed(item)) return item;
+      const kids = [...item.children].filter(visible);
+      if (kids.length !== 1) return null;
+      const a = kids[0].getBoundingClientRect(), b = item.getBoundingClientRect();
+      return a.width * a.height >= b.width * b.height * 0.8 && boxed(kids[0]) ? kids[0] : null;
+    };
+    const hex = (c) => '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
+    let m = 0;
+    for (const list of B.querySelectorAll('*')) {
+      if (++m > 8000 || out.boxedLists.length >= 6) break;
+      if (list.childElementCount < 3 || out.boxedLists.some((x) => x.el.contains(list))) continue;
+      if (list.closest('[data-ui], table, header, nav, footer, svg, dialog, [role=dialog], .scene, [data-scene], [aria-hidden=true], .replay')) continue;
+      const items = [...list.children].filter((c) => !/^(SCRIPT|STYLE|TEMPLATE|BR|HR|INPUT)$/.test(c.tagName) && visible(c));
+      if (items.length < 3) continue;
+      // (filled fields are how a form draws its inputs without outlines; option tiles, radios and checkboxes, still count)
+      const FIELD = 'select, textarea, input:not([type=radio]):not([type=checkbox]):not([type=hidden]):not([type=submit]):not([type=button])';
+      if (items.filter((c) => c.matches(FIELD) || c.querySelector(FIELD)).length >= items.length * 0.5) continue;
+      // (option tiles in a form whose own fields are drawn the same way are that form's look, r6-p30's guests beside
+      // its date fields; a configurator of tiles alone, r6-p31, is a page of boxes)
+      const form = list.closest('form');
+      if (form && items.every((c) => c.querySelector('input[type=radio], input[type=checkbox]')) && [...form.querySelectorAll(FIELD)].some((f) => visible(f) && (filledOn(f) || sides(f) >= 3))) continue;
+      const rs = items.map((c) => c.getBoundingClientRect());
+      // (a band from screen edge to screen edge is a ground, not a box)
+      const filled = items.map((c, i) => ({ c, r: rs[i], d: drawnAs(c) })).filter((x) => x.d && x.r.width >= 44 && x.r.height >= 22 && !(x.r.left <= 1 && x.r.right >= W - 1) && textOf(x.c)
+        && ![...x.c.querySelectorAll('img, video, picture, canvas')].some((p) => { const q = p.getBoundingClientRect(); return q.width * q.height >= x.r.width * x.r.height * 0.5; }));
+      // of one kind: the same tag, three at least and nearly half the list or more (a zebra list of pills counts)
+      const tags = new Map(); for (const x of filled) tags.set(x.c.tagName, (tags.get(x.c.tagName) || 0) + 1);
+      const [tag, n] = [...tags.entries()].sort((a, b) => b[1] - a[1])[0] || [null, 0];
+      if (n < 3 || n < items.length * 0.45) continue;
+      // ground between them: items that tile a band edge to edge are fields of colour, not boxes
+      const order = [...rs].sort((a, b) => a.top - b.top || a.left - b.left);
+      let touching = 0;
+      for (let i = 1; i < order.length; i++) { const a = order[i - 1], b = order[i]; const row = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > Math.min(a.height, b.height) * 0.5; if (Math.abs(row ? b.left - a.right : b.top - a.bottom) <= 1) touching++; }
+      if (touching >= (order.length - 1) * 0.6) continue;
+      const box = filled.find((x) => x.c.tagName === tag);
+      const sec = list.closest('section, article') || list.parentElement;
+      out.boxedLists.push({ el: list, head: textOf(sec?.querySelector('h1, h2, h3') || sec || list).slice(0, 40), first: textOf(box.c).slice(0, 30), n, fill: filledOn(box.d) ? hex(filledOn(box.d)) : 'outlined' });
+    }
+    for (const x of out.boxedLists) delete x.el;
+  }
+
+  // --- lone-column: a split whose one column holds a heading and nothing else (one short line at most), or nothing
+  // for most of the row's height, while the column beside it runs on (r6-p32: "What it costs" and "Questions" alone at
+  // the top of an empty left column). A sticky column travels beside its content and is left out; the hero too.
+  out.loneColumns = [];
+  if (W >= 700) {
+    const MEDIA = 'img, video, picture, canvas, iframe, [data-ui], input, select, textarea, button';
+    const contentOf = (el) => {
+      const rs = textRects(el);
+      const add = (e) => { if (!visible(e)) return; const r = e.getBoundingClientRect(); if (r.width > 2 && r.height > 2) rs.push(r); };
+      if (el.matches(MEDIA) || filledOn(el) || sides(el) >= 3) add(el);
+      let k = 0;
+      for (const e of el.querySelectorAll('*')) {
+        if (++k > 600) break;
+        if (e.parentElement?.closest('svg, [data-ui]')) continue;
+        if (e.matches(MEDIA) || (e.tagName === 'svg' && e.getBoundingClientRect().width >= 40) || filledOn(e) || sides(e) >= 3 || /url\(/.test(getComputedStyle(e).backgroundImage)) add(e);
+      }
+      return rs;
+    };
+    // the height a set of boxes covers, each grown by 12px above and below (the gap between two paragraphs is not empty)
+    const cover = (rs, top, bot) => {
+      const iv = rs.map((r) => [Math.max(top, r.top - 12), Math.min(bot, r.bottom + 12)]).filter(([a, b]) => b > a).sort((a, b) => a[0] - b[0]);
+      let tot = 0, s = null, e = null;
+      for (const [a, b] of iv) { if (s === null || a > e) { if (s !== null) tot += e - s; s = a; e = b; } else e = Math.max(e, b); }
+      return s === null ? 0 : tot + e - s;
+    };
+    const sticky = (el, row) => { for (let e = el; e && e !== row; e = e.parentElement) if (/sticky|fixed/.test(getComputedStyle(e).position)) return true; return [...el.querySelectorAll('h1, h2, h3, h4, div, aside, header')].some((e) => getComputedStyle(e).position === 'sticky'); };
+    let m = 0;
+    for (const row of B.querySelectorAll('*')) {
+      if (++m > 6000 || out.loneColumns.length >= 6) break;
+      if (row.childElementCount < 2) continue;
+      if (row.closest('header, nav, footer, [data-ui], table, svg, dialog, [role=dialog], .scene, [data-scene], [data-hero], [aria-hidden=true]')) continue;
+      const rr = row.getBoundingClientRect(); if (rr.width < W * 0.55 || rr.height < 200) continue;
+      const kids = [...row.children].filter((c) => visible(c) && !/absolute|fixed/.test(getComputedStyle(c).position));
+      if (kids.length < 2) continue;
+      // the columns: children grouped by the horizontal room they share
+      let cols = kids.map((k) => { const r = k.getBoundingClientRect(); return { l: r.left, r: r.right, els: [k] }; });
+      for (let merged = true; merged;) {
+        merged = false;
+        outer: for (let i = 0; i < cols.length; i++) for (let j = i + 1; j < cols.length; j++) {
+          if (Math.min(cols[i].r, cols[j].r) - Math.max(cols[i].l, cols[j].l) > 8) { cols[i] = { l: Math.min(cols[i].l, cols[j].l), r: Math.max(cols[i].r, cols[j].r), els: [...cols[i].els, ...cols[j].els] }; cols.splice(j, 1); merged = true; break outer; }
+        }
+      }
+      if (cols.length < 2) continue;
+      for (const c of cols) { c.rects = c.els.flatMap(contentOf); c.words = c.els.reduce((a, e) => a + words(textOf(e)), 0); }
+      const all = cols.flatMap((c) => c.rects); if (!all.length) continue;
+      const top = Math.min(...all.map((r) => r.top)), bot = Math.max(...all.map((r) => r.bottom)), span = bot - top;
+      if (span < 260) continue;
+      for (const c of cols) c.fill = cover(c.rects, top, bot) / span;
+      // the column that runs on is text: beside a picture, a product window or a form, a short column is its caption
+      const BIG = 'img, video, picture, canvas, iframe, [data-ui], form, select, textarea, input';
+      for (const c of cols) c.media = cover(c.els.flatMap((e) => [e, ...e.querySelectorAll(BIG)]).filter((e) => e.matches(BIG) && visible(e)).map((e) => e.getBoundingClientRect()), top, bot) / span;
+      const fullCol = cols.reduce((a, b) => (b.fill > a.fill ? b : a));
+      if (fullCol.fill < 0.7 || fullCol.words < 40 || fullCol.media >= 0.5) continue;
+      for (const c of cols) {
+        if (c === fullCol || c.fill > 0.35 || c.r - c.l < W * 0.12 || c.els.some((e) => sticky(e, row))) continue;
+        // a heading and a short line alone; or any column, a tool or a paragraph, that floats over a screen or more of
+        // empty ground beside the text that runs on (r4-p25: the brew calculator beside the long menu)
+        const short = c.words <= 30;
+        if (!short && span * (1 - c.fill) < H * 0.75) continue;
+        const h = c.els.map((e) => (e.matches('h1, h2, h3, h4, [role=heading]') ? e : e.querySelector('h1, h2, h3, h4, [role=heading]'))).find(Boolean);
+        if (h && h.tagName === 'H1') continue;
+        out.loneColumns.push({ text: textOf(h || c.els[0]).slice(0, 40) || 'an empty column', heading: !!h && short, fill: +c.fill.toFixed(2), span: r2(span), y: r2(top + sy) });
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+// Decorative controls (round 6): a switch, checkbox or slider on the page that changes nothing when it is used
+// (r6-p32 listed its features as switches, the ones "off" greyed). Each is used once (clicked, or its value moved),
+// watched for 300ms and put back. It is real when words on the page change, something appears, goes or fades out, the
+// page's own state or colours (html, body, main) change, a picture or another control changes, or it sits in a form that
+// is sent (an action, a button or a submit handler). Restyling its own row is not a change. Also the rows that hold
+// these controls, by their contrast (a greyed row is text like any other: 4.5:1, 3:1 at 24px or more). Async: run it
+// after everything else, it uses the page.
+export async function controls() {
+  const W = innerWidth, H = innerHeight, B = document.body || document.documentElement;
+  const out = { decorative: [], greyed: [], tested: 0 };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const shows = (el) => { if (!el || !el.isConnected) return false; const cs = getComputedStyle(el); if (cs.display === 'none' || cs.visibility === 'hidden') return false; const r = el.getBoundingClientRect(); return r.width > 1 && r.height > 1; };
+  const textOf = (el) => (el.innerText || el.textContent || '').trim().replace(/\s+/g, ' ');
+  const SEL = 'input[type=checkbox], [role=switch], [role=checkbox], input[type=range], [role=slider]';
+  // (a form with a button of its own, or a submit handler, is sent, by the browser or by script; a switch drawn as a
+  // button is not the form's button)
+  const sent = (f) => !!f && (f.hasAttribute('action') || f.method === 'dialog' || !!f.onsubmit || [...f.querySelectorAll('button, [type=submit], input[type=image]')].some((b) => !b.matches(SEL) && !b.querySelector(SEL)));
+  const all = [...document.querySelectorAll(SEL)].filter((c) => !c.closest('[data-ui], header, nav, [role=banner], dialog, [role=dialog], [aria-hidden=true], .scene, [data-scene]') && !c.disabled);
+  // the control as a visitor sees it: itself, or its label when the input is hidden under a styled label
+  const face = (c) => (shows(c) && getComputedStyle(c).opacity > 0.05 ? c : c.closest('label') || (c.id && document.querySelector(`label[for="${CSS.escape(c.id)}"]`)) || c);
+  const cands = all.filter((c) => !sent(c.form || c.closest('form')) && shows(face(c))).slice(0, 10);
+  // its own row: the largest box round it that holds no other control (and is not the page or a whole section of controls)
+  const rowOf = (c) => { let row = c; for (let e = c.parentElement; e && e !== B && e !== document.documentElement && !e.matches('main, section, article, form'); e = e.parentElement) { if (all.some((o) => o !== c && e.contains(o))) break; row = e; } return row; };
+  // what the page shows outside the control itself (and the label it sits in): the visible words, how many elements
+  // show, the pictures, the other controls' state (an output beside a slider is the slider at work), and its look: the
+  // page's own colours (a theme switch done in CSS alone) and which texts outside the control's row are faded out (a
+  // price switch that swaps prices by opacity). Restyling its own row is not a change.
+  const state = (own, row) => {
+    const tw = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); let words = '', n;
+    while ((n = tw.nextNode())) { const el = n.parentElement; if (!el || own.contains(el) || !n.nodeValue.trim() || el.closest('script, style')) continue; if (el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden') words += n.nodeValue.trim() + ' '; }
+    let shown = 0; for (const e of B.querySelectorAll('*')) if (!own.contains(e) && e.getClientRects().length) shown++;
+    const pics = [...document.querySelectorAll('img, video, source')].map((e) => e.currentSrc || e.src || '').join('|');
+    const ctl = all.filter((o) => !own.contains(o)).map((o) => (o.checked ? 1 : 0) + ':' + (o.value || '') + ':' + (o.getAttribute('aria-checked') || '')).join('|');
+    const page = [document.documentElement, B].map((e) => [...e.attributes].map((a) => a.name + '=' + a.value).join(';')).join('|');
+    const look = [document.documentElement, B, document.querySelector('main')].filter(Boolean).map((e) => { const cs = getComputedStyle(e); return cs.backgroundColor + ' ' + cs.color; }).join('|');
+    let faded = '', k = 0;
+    for (const e of B.querySelectorAll('*')) { if (++k > 4000) break; if (row.contains(e) || e.contains(row) || !e.firstChild || /^(SCRIPT|STYLE)$/.test(e.tagName)) continue; if ([...e.childNodes].some((t) => t.nodeType === 3 && t.nodeValue.trim()) && +getComputedStyle(e).opacity < 0.1) faded += k + ','; }
+    return { words, shown, pics, ctl, page, look, faded };
+  };
+  // a slider is moved half its range (an ARIA slider by the arrow key), a checkbox or switch clicked
+  const key = (c, k) => c.dispatchEvent(new KeyboardEvent('keydown', { key: k, code: k, bubbles: true, cancelable: true }));
+  const use = (c) => {
+    if (c.matches('input[type=range]')) { const v = +c.value, max = +(c.max || 100), min = +(c.min || 0); c.value = String(v < max ? Math.min(max, v + (max - min) / 2) : min); c.dispatchEvent(new Event('input', { bubbles: true })); c.dispatchEvent(new Event('change', { bubbles: true })); return v; }
+    if (c.matches('[role=slider]')) { if (c.focus) c.focus({ preventScroll: true }); key(c, 'ArrowRight'); return 'key'; }
+    c.click(); return null;
+  };
+  const undo = (c, v) => { if (v === 'key') key(c, 'ArrowLeft'); else if (v != null) { c.value = String(v); c.dispatchEvent(new Event('input', { bubbles: true })); c.dispatchEvent(new Event('change', { bubbles: true })); } else c.click(); };
+  // nothing a control does may leave the page: no submit, no link followed
+  const stopSubmit = (e) => e.preventDefault();
+  const stopLink = (e) => { const a = e.target.closest && e.target.closest('a[href]'); if (a && !/^#/.test(a.getAttribute('href') || '')) e.preventDefault(); };
+  addEventListener('submit', stopSubmit, true); addEventListener('click', stopLink, true);
+  const x0 = scrollX, y0 = scrollY;
+  try {
+    for (const c of cands) {
+      const row = rowOf(c);
+      // a class, src or data change outside the row on an element that holds or is a picture (a swatch recolouring the
+      // product) is a change too; style writes are left out, running animations make them all the time
+      const seen = [];
+      const mo = new MutationObserver((list) => { for (const m of list) if (m.type === 'attributes' && m.attributeName !== 'style' && !row.contains(m.target) && !m.target.contains(row) && (m.target.matches('img, video, picture, canvas, svg') || m.target.querySelector?.('img, video, canvas'))) seen.push(m.attributeName); });
+      const own = c.closest('label') || c;
+      const before = state(own, row);
+      mo.observe(B, { attributes: true, subtree: true });
+      const v = use(c); await wait(300);
+      mo.disconnect();
+      const after = state(own, row);
+      undo(c, v); await wait(120);
+      out.tested++;
+      const changed = ['words', 'shown', 'pics', 'ctl', 'page', 'look', 'faded'].some((k) => before[k] !== after[k]) || seen.length;
+      const label = textOf(row).slice(0, 50) || c.getAttribute('aria-label') || c.name || c.id || c.tagName.toLowerCase();
+      if (!changed) out.decorative.push({ text: label, what: c.matches('input[type=range], [role=slider]') ? 'slider' : c.matches('[role=switch]') ? 'switch' : 'checkbox' });
+    }
+  } finally {
+    removeEventListener('submit', stopSubmit, true); removeEventListener('click', stopLink, true);
+    scrollTo(x0, y0);
+  }
+  // the rows of a list of controls, by their contrast: the text against the ground it stands on, faded by opacity
+  const rgba = (s) => { const m = s && s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 }; };
+  const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
+  const ground = (el) => { for (let e = el; e; e = e.parentElement) { const c = rgba(getComputedStyle(e).backgroundColor); if (c && c.a >= 0.9) return c; } return { r: 255, g: 255, b: 255, a: 1 }; };
+  // (the rows of a list of switches or checkboxes outside a form that is sent: a feature list set as settings)
+  const rows = cands.map(rowOf);
+  if (rows.length >= 2) {
+    for (const row of rows.slice(0, 12)) {
+      const tw = document.createTreeWalker(row, NodeFilter.SHOW_TEXT); let n;
+      while ((n = tw.nextNode())) {
+        const el = n.parentElement; const t = n.nodeValue.trim(); if (!el || t.length < 3 || !shows(el)) continue;
+        let o = 1; for (let e = el; e && e !== document.documentElement; e = e.parentElement) o *= +getComputedStyle(e).opacity;
+        const fg = rgba(getComputedStyle(el).color); if (!fg) continue; const bg = ground(el); const a = fg.a * o;
+        const mix = { r: fg.r * a + bg.r * (1 - a), g: fg.g * a + bg.g * (1 - a), b: fg.b * a + bg.b * (1 - a) };
+        const l1 = lum(mix), l2 = lum(bg); const ratio = Math.round(((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)) * 10) / 10;
+        // (the contrast check's own targets: 4.5:1 for text, 3:1 for large display, 24px or more)
+        const need = parseFloat(getComputedStyle(el).fontSize) >= 24 ? 3 : 4.5;
+        if (ratio < need) { out.greyed.push({ text: t.slice(0, 40), ratio, need }); break; }
+      }
+      if (out.greyed.length >= 6) break;
+    }
+  }
   return out;
 }

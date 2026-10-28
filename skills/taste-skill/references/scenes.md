@@ -118,7 +118,7 @@ say how many pictures and words it takes; these hold for all of them:
   shipment really takes, the four rooms of the house, the product's change of state. A scene filled
   with unrelated pictures is a gimmick and reads as one.
 - **Real content only.** If the scene needs eight pictures of the subject and there are three, take the
-  `--redraw scenes`, never pad it with stand-ins.
+  `--redraw scenes`, never pad it with stand-ins (twice at most: section 8).
 
 ## 4. Fitting it to the page
 
@@ -240,8 +240,15 @@ empty, and that the navigation or the one action is in reach after the hero.
 
 ## 8. When no scene in the library fits
 
-Redraw first (`--redraw scenes`). If the brief really needs a scene the library does not have, build it
-on the same stage so it inherits the guards:
+Redraw first (`--redraw scenes`), twice at most. A third `--redraw scenes` prints the scenes that still
+fit this page, each with what it needs, and the two ways out: take one by id
+(`--redraw scenes=<id>`, or two with `scenes=<id>,<id>`), or build the page without a scene
+(`--redraw scenes=none`), its motion then coming from the entrance, the replay or moving pictures. A
+page with one honest scene, or none, beats a fifth redraw: a cargo bike page lost two and a half
+hours to five.
+
+If the brief really needs a scene the library does not have, build it on the same stage so it
+inherits the guards:
 
 ```js
 Scenes['my-scene'] = (root, opts = {}) => Stage.scene(root, {
@@ -260,12 +267,20 @@ with `scenes.mjs` like any other.
 
 ## 9. The catalogue
 
-Thirty-three scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
+Thirty-four scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
 scene's full entry (where it goes, its content, its options, its phone plan);
 `node <skill>/scripts/draw.mjs --list scenes` prints the list, and each scene file's header is the full
-contract. A scene marked *product-photo* is dealt only with `--have product-photo`: photographs or
-renders of the client's own product, building or work. Every other scene works with real pictures of
-the subject's world, with drawings, or with type alone.
+contract. Each entry's `needs` says what the scene really takes, and the draw deals it only when the
+brief has it: *product-photo* (photographs or renders of the client's own product, building or work,
+`--have product-photo`), *pictures:N* (N distinct photographs of one family), *series:N* (N
+photographs shot or chosen as one series), *names:N* (N real names of its rooms, dishes, places,
+clients or products), *mark* (the brand's own solid mark, `--have mark`), *route* (a real route with
+stops), *product-ui* (the product's interface), *plan* (a real plan or exploded drawing), *video*
+(footage of the product). A page with no photographs of its own product, and a software page, can
+honestly show about three photographs of its subject and no series, and a page with no photographs of
+its own at all about six, so the scenes dealt there need no more between them; nor, on such a product
+page, a scene on the first screen, which shows the product large.
+`--list scenes` prints each scene's needs.
 
 **Camera through space**
 - **Descend through the weather** (`descend-through-weather`): the first screen sinks through cloud
@@ -278,8 +293,8 @@ the subject's world, with drawings, or with type alone.
   in stop mode (`{"stop": 0.5}`): each piece rests centred and flat at about 62% of the width with its
   title under it for half a screen; phones get the pieces stacked full width.
 - **Powers-of-ten pull-back** (`powers-of-ten-pullback`): a film becomes a screen on a wall, then the
-  place becomes a framed print. A film or a still, and a place photographed straight on with an
-  opening that can be measured.
+  place becomes a framed print. The product's own film, still or interface (never a stock picture of
+  another maker's), and a place photographed straight on with an opening that can be measured.
 - **Route journey** (`route-journey`): a parked traveller rides a tilted map along a route of 3-5 stops
   to a destination that lights up. A real route and a real unit to count. The map is drawn for this
   place as the page's own `.route-art`: the water, the coast and the relief where the route really runs
@@ -336,6 +351,11 @@ the subject's world, with drawings, or with type alone.
   one. A real paper or ticket idea and two to four tickets with equal copy. At rest they read as
   printed tickets (type set to the stub, the copy filling the sheet, the page's own corners), not as
   rounded pricing cards with a photograph on top, and the section's heading stays readable.
+- **Sheets tip in and away** (`sheets-tip-in-and-away`): three to five pieces lie as full-screen sheets
+  of the page's ground, each with its name very large on the top edge over one photograph; a sheet comes
+  up turned out of a lower corner, lands flat for a third of a screen, and tips away as the next one
+  arrives. One photograph a piece of the client's own work, one family with a clear change of colour
+  between neighbours (*product-photo*). Three hold about two screens.
 
 **Mask and reveal**
 - **Fly into the shape** (`fly-into-the-shape`): the brand's mark, a clean mask of its true shape with
@@ -380,7 +400,8 @@ the subject's world, with drawings, or with type alone.
   peels off, or the ground tears away. A top-down cut-out of a plane for the drag; nothing for the
   tear.
 - **Raster cut between chapters** (`raster-cut`): the next chapter prints over the current one through
-  slats while the title changes ink line by line. Two grounds and a title of 2-4 words.
+  slats while the title changes ink line by line. A full-bleed picture for the next chapter (a title
+  alone on two flat grounds reads as an empty screen) and a title of 2-4 words.
 - **Page lifts off a closing picture** (`page-lifts-off-closing-picture`): the last content section
   lifts away like a sheet, a little smaller and dimmer as it goes, and uncovers a picture held under it
   all along, which settles from a close 1.35x zoom to its framing as the scroll runs out; a band in the
@@ -396,7 +417,8 @@ the subject's world, with drawings, or with type alone.
   capitals are giant (about 10vw), and one clean cut-out about a third of the stage high. A longer
   sentence stays a static statement; the scene carries one phrase of it.
 - **Scroll-turned drum** (`scroll-turned-drum`): names turn on a 3D drum like a slot reel, with an
-  optional drum of pictures beside it. 8-20 real names.
+  optional drum of pictures beside it. 8-20 real names of the client's own rooms, dishes, places,
+  clients or products (`--have names`, or a sector that has such lists).
 - **Type re-layout** (`type-flip-relayout`): a list in giant capitals spreads, folds into an index and
   hands its size to the heading. A one-word heading and 3-6 short items, no pictures.
 - **Wordmark under strain** (`wordmark-under-strain`): a closing word is crushed, echoed, and drops

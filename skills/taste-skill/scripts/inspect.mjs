@@ -9,7 +9,13 @@
 // --film also photographs the scroll as a visitor sees it (a frame every third of a screen, real wheel
 // input) into desktop-film-NN.jpg, so a scroll scene is judged by its in-between states: a short line held
 // with nothing new (line-holds) and held frames that are mostly empty ground (held-dead-screen). A direction
-// that dealt scroll scenes switches it on by itself.
+// that dealt scroll scenes or a product replay switches it on by itself, and so does a page with a [data-replay]:
+// every beat of the replay must show in the film (replay-unseen).
+//
+// Round 6 checks: a section heading alone in its column or on its screen (lone-heading), a list drawn as boxes
+// (boxed-list), switches, checkboxes and sliders that change nothing when used (decorative-control: each is used
+// once and put back), and a product replay that is small (replay-small) or not held while it plays
+// (replay-not-held).
 //
 // --app judges an app screen (dashboard, admin, settings) by the rules in references/app-screens.md; a
 // direction dealt with draw.mjs --app switches it on by itself.
@@ -23,7 +29,7 @@ import { createServer } from 'node:http';
 import { Browser, sleep } from './lib/cdp.mjs';
 import { probe, frame, reach, layout, app, colourShare, groundShare } from './lib/probe.mjs';
 import { judge, judgeLayout, judgeApp, APP_SKIP } from './lib/rules.mjs';
-import { extra } from './lib/probe-extra.mjs';
+import { extra, controls } from './lib/probe-extra.mjs';
 import { judgeExtra } from './lib/rules-extra.mjs';
 import { viewportClass as name, screenshotLabel, isInspectionScreenshot } from './lib/inspection-files.mjs';
 
@@ -154,6 +160,8 @@ try {
     const fold = join(outDir, `${imageLabel}-fold.jpg`);
     await page.screenshot({ path: fold, quality: 82 });
     const metrics = await page.eval(probe);
+    // each product replay's window before the walk: replay.js has not armed it yet, so it shows its final state
+    const replayAtLoad = await page.eval(`[...document.querySelectorAll('[data-replay]')].map((r) => { const u = (r.querySelector('[data-ui]') || r).getBoundingClientRect(); return { w: u.width / innerWidth, h: u.height / innerHeight }; })`).catch(() => []);
 
     // walk the whole page one screen at a time so scroll reveals fire, photographing and checking each screen.
     // A page longer than MAX_SCREENS is walked in even strides, so its last screen is always seen.
@@ -223,7 +231,8 @@ try {
     // Each step is also checked twice while it moves (about 120 and 280ms after the wheel) for texts drawn over
     // each other and for which blocks of text can be read at all.
     const filmSheets = [], filmChecks = [], filmGround = [];
-    if (film && w >= 1100) {
+    const filmHere = (film || !!dealtReplay || !!(ex && ex.replays && ex.replays.length)) && w >= 1100;
+    if (filmHere) {
       await page.eval(`window.scrollTo({ top: 0, behavior: 'instant' })`).catch(() => {});
       await sleep(700);
       const shots = []; let lastY = -1, still = 0;
@@ -244,6 +253,20 @@ try {
         filmSheets.push(p);
       }
     }
+
+    // decorative controls: each switch, checkbox or slider is used once and put back (it touches the page, so it runs last)
+    if (ex) ex.controls = await page.eval(controls).catch((e) => { frameErrors.push('controls: ' + String(e.message).slice(0, 160)); return null; });
+    // a heading alone on a screen of the walk (any width) or of the film
+    const screenAt = (f, i) => (f && f.y != null ? Math.round(f.y / h) + 1 : i * stride + 1);
+    if (ex) ex.loneScreens = [...new Map([...frameChecks, ...filmChecks].map((f, i) => (f && f.lone ? [f.lone.text, { ...f.lone, screen: screenAt(f, i) }] : null)).filter(Boolean)).values()];
+    // each replay's window at its smallest (replay-small): extra() saw it at the page top after the walk, where
+    // replay.js has put it back to its first beat; it is also measured at load (its final state) and in the film at
+    // every beat it showed (the largest frame of each beat, so a window still growing in is not taken for its size)
+    if (ex) (ex.replays || []).forEach((r, i) => {
+      const byBeat = new Map();
+      for (const c of filmChecks) for (const [j, b, , rw, rh] of c?.replays || []) if (j === i && rw != null) { const s = byBeat.get(b) || { w: 0, h: 0 }; byBeat.set(b, { w: Math.max(s.w, rw), h: Math.max(s.h, rh) }); }
+      for (const s of [replayAtLoad[i], ...byBeat.values()]) if (s) { r.w = Math.min(r.w, +s.w.toFixed(2)); r.h = Math.min(r.h, +s.h.toFixed(2)); }
+    });
 
     const cols = w >= 1100 ? 2 : w >= 600 ? 3 : 4;
     const cellW = w >= 1100 ? 800 : w >= 600 ? 512 : 390;
@@ -393,6 +416,23 @@ try {
       }
       if (worst && worst.n >= 3) findings.push({ level: worst.n >= 4 ? 'FAIL' : 'WARN', id: 'held-dead-screen', width: w, message: `${worst.id}: ${Math.round((worst.n * stride / 3) * 10) / 10} screens of its hold are mostly empty ground (around screens ${[...new Set(worst.at)].join(', ')}).`, fix: 'Every frame of a held stage shows something to read or see. Shorten the hold to its beats, make the held picture large (at least half the screen), bring the next content in sooner, or cut the scene. A line of type on an empty stage is done in about one screen.' });
     }
+    // every beat of each product replay in the film: replay.js marks the beat it shows (data-beat)
+    if (filmHere && ex && (ex.replays || []).length && !allow.includes('replay-unseen')) {
+      const seenBeats = new Map(), stuck = new Map();
+      for (const c of filmChecks) for (const [i, b] of c?.replays || []) { if (!seenBeats.has(i)) seenBeats.set(i, new Set()); if (b != null && b !== '') seenBeats.get(i).add(+b); }
+      // how long each window stood still on screen while the film scrolled (the hold as a visitor gets it: an
+      // ancestor with overflow: hidden breaks a sticky stage that the markup alone says is held)
+      for (const k of [...new Set(filmChecks.filter((c) => c && c.step != null).map((c) => c.step))].sort((a, b) => a - b)) {
+        const c = [...filmChecks].reverse().find((x) => x && x.step === k);
+        for (const [i, , top] of c?.replays || []) { const s = stuck.get(i) || { last: null, prev: null, run: 0, best: 0 }; s.run = s.prev === k - 1 && s.last != null && Math.abs(top - s.last) <= h * 0.08 ? s.run + 1 : 0; s.best = Math.max(s.best, s.run); s.last = top; s.prev = k; stuck.set(i, s); }
+      }
+      ex.replays.forEach((r, i) => {
+        const filmHeld = Math.round((((stuck.get(i)?.best) || 0) * stride) / 3 * 10) / 10;
+        if (r.held >= Math.max(1, r.beats) * 0.35 && filmHeld < Math.max(1, r.beats) * 0.3 && !allow.includes('replay-not-held')) findings.push({ level: 'FAIL', id: 'replay-not-held', width: w, message: `The product replay's stage is marked held, but in the scroll film it stood still for only ${filmHeld} screens for ${r.beats} beats.`, fix: 'Something breaks the sticky stage: an ancestor with overflow: hidden or auto (overflow: clip keeps it working), or a section with other children after the stage. The stage stays put while the beats play.' });
+        const got = seenBeats.get(i), want = Array.from({ length: Math.max(1, r.beats) }, (_, k) => k + 1), missing = want.filter((k) => !got || !got.has(k));
+        if (missing.length) findings.push({ level: 'FAIL', id: 'replay-unseen', width: w, message: !got ? `The product replay${ex.replays.length > 1 ? ` ${i + 1}` : ''} never stood in view in the scroll film.` : !got.size ? `The product replay${ex.replays.length > 1 ? ` ${i + 1}` : ''} showed no beat in the scroll film (no data-beat: it does not run on the current assets/replay.js).` : `Beat(s) ${missing.join(', ')} of ${want.length} of the product replay never showed in the scroll film (it saw ${[...got].sort().join(', ') || 'none'}).`, fix: 'Build it with assets/replay.js in a held stage (.replay-hold > .replay-stage): each beat then holds about half a screen of scroll and every one of them is on screen long enough to read. A replay that runs on its own clock is over, or not begun, while the visitor scrolls past.' });
+      });
+    }
     // the product replay the sheet dealt (draw.mjs section 8)
     if (dealtReplay && w >= 1100 && ex && !(ex.replays || []).length && !allow.includes('replay-missing')) findings.push({ level: 'FAIL', id: 'replay-missing', width: w, message: `The sheet dealt the product replay "${dealtReplay.name || dealtReplay.id}" in the ${dealtReplay.carries || ''} section, but the page has no [data-replay].`, fix: 'Build the product replay the sheet deals (section 8): the product\'s window in its final state with data-replay and its marked beats, assets/replay.js, and a Replay button under it.' });
     if (w >= 1100 && empty.length >= 2 && !allow.includes('empty-screens')) findings.push({ level: 'FAIL', id: 'empty-screens', width: w, message: `${empty.length} of ${frameChecks.length} desktop screens are almost empty ground (under 20% of the screen holds text, a picture or a colour field): screens ${empty.map(({ f, i }) => screenOf(f, i)).join(', ')}.`, fix: 'An empty screen is a rest only once per page. Elsewhere it means the section is underbuilt: set its content larger, give it the full information, put it on a colour field, or cut it.' });
@@ -436,10 +476,19 @@ try {
 }
 
 // de-duplicate findings that repeat across viewports (keep the widest occurrence, note the others)
-const merged = [];
+const merged = [], joined = new Map();
 for (const f of report.findings) {
   const same = merged.find((x) => x.id === f.id && x.level === f.level);
-  if (same && f.id !== 'headline-lines' && f.id !== 'overflow') { same.alsoAt = [...(same.alsoAt || []), f.width]; continue; }
+  // (a second finding under the same id at the same width says something else: keep its words)
+  if (same && same.width === f.width && same.message !== f.message && f.id !== 'headline-lines' && f.id !== 'overflow') {
+    const k = (joined.get(same) || 0) + 1; joined.set(same, k);
+    if (k > 3 || same.message.includes(f.message)) continue;
+    same.message += ' ' + f.message;
+    const more = String(f.fix || '').split(/(?<=\.)\s+/).filter((s) => s && !String(same.fix || '').includes(s)).join(' ');
+    if (more) same.fix = same.fix ? same.fix + ' ' + more : more;
+    continue;
+  }
+  if (same && f.id !== 'headline-lines' && f.id !== 'overflow') { if (f.width !== same.width && !(same.alsoAt || []).includes(f.width)) same.alsoAt = [...(same.alsoAt || []), f.width]; continue; }
   merged.push(f);
 }
 report.findings = merged;

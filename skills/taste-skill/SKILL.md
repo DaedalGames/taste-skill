@@ -89,11 +89,16 @@ carry the rest; it never fills slots with whatever a search returns.
 Name the pictures a visitor needs before deciding: for a place to stay, the rooms, the house and the
 table; for food, the plates and the room; for a product, the product; for a practice, its work. When
 the project has none of them, say in the report that they are missing (or ask, when the user is there
-to answer) and choose a direction that does not promise them. Their slots are then set in type with
-the facts a visitor needs (the room's size, its view, its price), never filled with a drawing or with
-the place's birds and weather (`references/imagery.md` §8). A product is the exception: with no
-photographs of its own, it is shown by real photographs of its kind in use, large (the sheet says how),
-never claimed as this model and never replaced by a picture of what its name means.
+to answer); for a practice's work, choose a direction that does not promise them. **Rooms, dishes and
+products are shown, not boxed:** each room gets a real photograph of that kind of room, each featured
+dish one of that dish, each product one of that kind of product, from the open collections or the
+library, listed in the report as stand-ins for the client's own; never a grey spec panel or a filled
+box in place of the picture (a guesthouse whose rooms were grey panels read as tabs in a blind test).
+A stand-in sits beside the room or dish it stands for, never as the first picture of the house or the
+restaurant. Never a drawing, and never the place's birds and weather in their place
+(`references/imagery.md` §8). A product with no photographs of its own is shown by real photographs of
+its kind in use, large, of one configuration and build (the sheet says how), never claimed as this
+model and never replaced by a picture of what its name means.
 
 If the request is vague, decide and state your reading in one line instead of asking. Ask only when a
 missing fact blocks the work (for example, no product name).
@@ -145,13 +150,16 @@ and say why in the report.
 - `--tone` (optional): quiet, bold, warm, technical, playful, luxury, editorial. Only pass it when the
   brief clearly asks for one.
 - `--have`: assets that really exist, comma-separated: `photography` (the project's own photographs of
-  the place, people or work), `product-photo` (photographs of the specific product, or an image tool
-  that can make them), `product-ui` (real screenshots), `illustration`, `video`. Leave it out if you
-  have none: the draw then avoids compositions that depend on them and the sheet says how to fill
-  picture slots honestly (software shows its own interface built in HTML; a product with no photographs
-  of its own is shown by real photographs of its kind in use, never claimed as this model, never a
-  drawing and never a fake product shot). Pictures you will
-  find in the open collections are not the project's own; leave them out of `--have`.
+  the place, people or work), `product-photo` (photographs or renders of the specific product, building
+  or work, or an image tool that can make them; a practice or a house with its own photographs of its
+  pieces or rooms passes `photography,product-photo`), `product-ui` (real screenshots), `illustration`,
+  `video`, `mark` (the brand's own solid mark), `route` (a real route with stops the subject travels),
+  `plan` (a real floor plan or exploded drawing), `names` (eight or more real names of its rooms,
+  dishes, places, clients or products). Leave it out if you have none: the draw then avoids compositions that depend on them and
+  the sheet says how to fill picture slots honestly (software shows its own interface built in HTML; a
+  product with no photographs of its own is shown by real photographs of its kind in use, never
+  claimed as this model, never a drawing and never a fake product shot). Pictures you will find in the
+  open collections are not the project's own; leave them out of `--have`.
 - `--keep palette,type`: when the brand already fixes colours or typefaces. The draw then deals only
   the composition, and you map the brand's values onto the roles.
 
@@ -162,7 +170,10 @@ The command prints a **direction sheet**. It is the art direction for this build
 - Redraw one slot (`--redraw hero | type | palette | photos | scenes | entrance | section:<role> | direction`) only for a
   reason you can state: it contradicts a stated brand constraint, needs an asset that does not exist,
   or is a section that cannot hold the real content (next point). Never redraw to get something more
-  comfortable. Record every redraw in your report.
+  comfortable. Record every redraw in your report. Scenes are redrawn twice at most: a third
+  `--redraw scenes` lists the ones that still fit, with what each needs, and you take one by id
+  (`--redraw scenes=<id>`) or build without one (`--redraw scenes=none`). A page with one honest scene,
+  or none, beats a fifth redraw.
 - When a dealt section cannot hold the real content (it compares three plans and there is one price;
   it wants five quotations and there are none), do not bend the content to fit. List the others with
   `--alternatives <role>`, pick the one whose assumptions match the content, and take it with
@@ -293,10 +304,14 @@ not finished. Order of work:
    1. the project's own;
    2. generated, if you have an image tool: the best way to show this exact subject;
    3. the photographs dealt on the sheet and the rest of the library (`draw.mjs --photos <words>`):
-      sharp, modern, no credit needed; atmosphere, never a stand-in for the product or the client;
+      sharp, modern, no credit needed; atmosphere, never a stand-in for a person, and for a room, a
+      dish or a product only as a picture of its kind (step 1);
    4. sharp modern photographs of the subject's world from the open collections
-      (`node <skill>/scripts/assets.mjs "<query>"`, 1800px or wider by default). Look at each one at
-      full size before using it;
+      (`node <skill>/scripts/assets.mjs "<query>"`, 1800px or wider by default). Look at each one, and
+      every stand-in, at full size before using it, and crop or drop any that shows another maker's
+      name or logo, a shop or company sign, a readable house number or licence plate, words that would
+      embarrass the client, or a child who could be recognised (children only from behind, far off or
+      unrecognisable);
    5. never a drawing in place of a picture: SVG is for the logo, real charts, maps and plans that
       carry labels and numbers, and icons inside product fragments (references/imagery.md §8);
    6. type and space alone. An empty slot is better than a bad picture.
@@ -313,7 +328,12 @@ not finished. Order of work:
    one family; never as filler or a random old picture of the place. Never a picture inside a headline
    or a thumbnail inside a sentence. Software shows itself large on the first screen, at a size a
    visitor can read, and at least one other large picture that is not an interface card; never more
-   than two sections in a row made of interface cards. Credits a licence requires go in one "Image credits" dialog opened from a small footer link
+   than two sections in a row made of interface cards. Its interface sits in the page's own ground,
+   cropped or bleeding off an edge, with at most one framed window on the page; never the black ground
+   with a white interface slab in every section that every model builds. One photograph or object that
+   carries the product's idea (a card catalogue for a notes app) does more than another panel.
+   Switches, checkboxes and sliders appear only where they do what the product does, never as
+   decoration. Credits a licence requires go in one "Image credits" dialog opened from a small footer link
    (`assets.mjs --credits` prints it), never as a list across the footer, never as a sentence on the
    page. When the project has footage or a real picture of its own product, the first screen shows it,
    large. A portfolio whose work is invented for the brief shows each piece as a finished still of that
@@ -348,7 +368,8 @@ not finished. Order of work:
    replaces the content of the section it carries, never adds screens of nothing in front of it, and a
    page with scenes still has a length budget: about 12-16 screens at 1440 in all, of which the scenes
    hold about six. `references/scenes.md` says how to put one on a page, fill it, fit it and check it.
-   A software page gets one scroll scene at most.
+   A software page gets one scroll scene at most. A page built without one (`--redraw scenes=none`) is
+   about 8-12 screens, with nothing pinned in a scene's place.
 7. **Fullness.** Look at each desktop screen as a poster: one dominant thing and the content it
    carries. A screen that is mostly empty ground is an underbuilt section, not a rest; one deliberate
    rest per page is the limit, and the inspector fails a page with two or more near-empty screens.
@@ -385,8 +406,9 @@ node <skill>/scripts/scenes.mjs <url or path/to/index.html>     # when the page 
 ```
 
 `scenes.mjs` photographs every scroll scene at 0, 10 … 100% of its hold, on desktop and on a phone,
-and the reduced-motion page; with scenes on the sheet, `inspect.mjs` also films the whole scroll
-(`desktop-film-NN.jpg`). A scene that never started or rests on desktop is a `FAIL`.
+and the reduced-motion page; with scenes or a product replay on the sheet, `inspect.mjs` also films the
+whole scroll (`desktop-film-NN.jpg`). A scene that never started or rests on desktop is a `FAIL`, and
+so is a replay beat the film never shows.
 
 `lint.mjs` scans source for banned patterns and stock phrases. `inspect.mjs` opens the page in a real
 browser at 1440, 768 and 390 pixels, measures it (headline line counts, type sizes, fonts actually
@@ -419,8 +441,9 @@ elements that really move while the page loads and is scrolled, and fails a page
 under sixteen). Any scroll scenes are already built (step 6); around them the layer has four parts:
 
 1. **The signature move** named on the sheet: one, done well (a dealt scene can be it). On a software
-   page it is the product replay: the product's own window plays one task when it scrolls into view
-   (sheet section 8, `<skill>/assets/replay.js`).
+   page it is the product replay: the product's own window, large, acts out what the product does for
+   the visitor, its section held while the scroll steps the beats (sheet section 8,
+   `<skill>/assets/replay.js`).
 2. **The entrance the sheet deals** (section 8): `data-entrance` on the body, its markers on the first
    screen, its CSS already in base.css, and only its own rule below the fold. Nothing else enters: no
    fade-up on every block, and no masked line rise or shutter unless the dealt entrance is `set-type`.
@@ -483,8 +506,8 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **No headline in a card.** The hero headline stands on the page ground or on its picture, never in a panel, card or box. | The first screen as one composition: headline, one sentence, the action, the picture. |
 | **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges. | Neutral ground (white, off-white, near-black); colour from the pictures; the accent on the action. |
 | **No giant name or email anywhere, no credit walls.** | The email at the h3 step or smaller, with a Copy button and a mailto link; the dealt footer: links, contact, legal at text sizes; picture credits behind one small "Image credits" link. |
-| **No drag rails or progress bars** outside a working tool, and no range sliders: a length or a count is a row of stepped buttons; no sideways scrollers on desktop. | A list or grid that fits the width; stepped buttons of real values. |
-| **No page built from boxes,** no bento grids of cards, no staggered folder tabs, no empty half-rows (nothing on the left, text on the right). | Text straight on the page, separated by space and size; tabs, if needed, as one working row that opens on click. |
+| **No drag rails or progress bars** outside a working tool, no range sliders, and no switch, checkbox or toggle that changes nothing: a length or a count is a row of stepped buttons; no sideways scrollers on desktop. | A list or grid that fits the width; stepped buttons of real values; features as lines of text at full ink; a control only where it does what it says. |
+| **No page built from boxes,** no bento grids of cards, no list drawn as filled or outlined boxes (questions, loads, specs, plans, options), no staggered folder tabs, no heading alone in its column or on its screen, no empty half-rows (nothing on the left, text on the right). | Text straight on the page, separated by space and size: questions as plain rows, specs as name and figure, options as text buttons with only the chosen one filled; the heading over its content; tabs, if needed, as one working row that opens on click. The one framed surface is the product's own window. |
 | **No labels that carry nothing**, no walls of text. | Facts, few words; see step 5. |
 
 Three places keep their own conventions and are left alone by the inspector: real code in
@@ -588,8 +611,12 @@ Match the surrounding design, apply the house rules and the laws, and still insp
 **No checkout, no form backend.** The primary button goes to the real destination when the brief names
 one. Otherwise it opens an email to the client's real address with a written subject and body (`mailto:`
 with the visitor's choices filled in); with no real address, it points at the page's own contact or
-`#checkout` section and the report says it must be wired before launch. Never a made-up `.example`
-address, never a fake payment form.
+`#checkout` section and the report says it must be wired before launch. A sample address the brief did
+not give is not a real one (for a made-up brand its domain belongs to a stranger): the report lists it
+as sample content, and no form that sends a visitor's details (orders, bookings, delivery addresses,
+sign-ups) is wired to it; such a form posts to an endpoint the client gives, or stays unwired with its
+handler named in the report. The visible contact line and its mailto link stay (`references/copy.md`
+§5). Never a made-up `.example` address, never a fake payment form.
 
 **No Chrome or Node 22.** Run `lint.mjs` (Node 18+), take screenshots with whatever browser tool you
 have, and critique those. Say in the report that the inspector could not run.
