@@ -35,3 +35,19 @@
   [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:P%C3%A4ij%C3%A4nne_Korpilahden_satama.JPG),
   modified (camera noise reduced, the fog in the top 42% softened and its lens fall-off evened out, metadata
   removed; the 1920px copy resized from it), shared under the same licence.
+
+## sheets-tip-in-and-away
+
+The three boats of the demo's made-up boatyard, each recompressed at 1920px wide with its metadata
+removed:
+
+- `faering.jpg`: "Sunnmørsfæring - Herøy kystmuseum" by Silje L. Bakke,
+  [CC BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5/), via
+  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Sunnm%C3%B8rsf%C3%A6ring_-_Her%C3%B8y_kystmuseum.jpg),
+  shared under the same licence.
+- `nordlandsbat.jpg`: "Nordlandsbåtar" by Knut (nn.wikipedia), public domain, via
+  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Nordlandsb%C3%A5tar.JPG).
+- `robat.jpg`: "14 2024 Sogn og Fjordane 01" by Øyvind Holmstad,
+  [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), via
+  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:14_2024_Sogn_og_Fjordane_01.jpg), modified
+  (cropped to 1920x2000 around the boat from the 1920px copy), shared under the same licence.
