@@ -4,6 +4,10 @@
 // where that item is on screen: scattered as it enters at the right edge, swooping through its resting
 // line and settled by 45% of the width, so the row seems to assemble itself as it passes. The default
 // is a giant closing line whose letters land one by one and finish on a calm end frame with a button.
+// The letters already on screen when the section arrives swoop within under half the letter size, so the
+// line reads as one line at once; every letter that comes in during the travel arrives at the whole
+// amplitude. A letter still beyond the right edge waits on its line until just before it shows (nobody
+// sees that), so the line measured from the top of the page is one line, as it is at rest.
 // Two presets use the same mapping for a testimonial staircase and for project pictures that rise.
 //
 // Needs gsap + ScrollTrigger (no SplitText: the line is split here). Load after stage.js.
@@ -74,7 +78,8 @@
 //                      the measured hold is longer, the letters swoop faster instead of the hold growing
 //   rest    0.2-0.6    screens of still end frame after the travel stops (0.2; 0-2 accepted)
 //   amp     0.6-1.5    letter offset as a multiple of the letter height (1.5); always clamped so every
-//                      letter stays 64px inside the stage (plus `inset`)
+//                      letter stays 64px inside the stage (plus `inset`). The letters already on screen when
+//                      the section arrives take at most 0.45 of the font size, whatever amp says
 //   tilt    0-20       largest letter tilt in degrees (18). A letter's tilt follows its height: it
 //                      leans right below its line and left above it, 60-100% of `tilt` at its largest
 //                      offset, so neighbours passing each other never lean into each other. Cards: 0
@@ -98,11 +103,15 @@
 // in the scene's state (root.__settle.dbg.rest, px).
 //
 // Phone (below 768px): no pin and no sideways travel. The stack is laid out like the finished
-// composition and the same mapping is turned 90°: the letters swoop onto their lines in reading order
-// as the line rises from the bottom edge to 42% of the screen (the first row from above or below, the
-// rows under it from below, so rows never cross); the support line and button rise in as the last
-// letters land. As the first section it keeps a whole first screen, its first word reads level at
-// once, its button shows from the start, and the first scroll assembles the rest. Cards rise 16vh.
+// composition and the same mapping is turned 90°: once half the line is on screen, its letters swoop
+// onto their lines in reading order on a clock of 0.9s (the first row from above or below, the rows
+// under it from below, so rows never cross); the support line and button rise in as the last letters
+// land. Never keyed to the scroll: a line that lands with the scroll stands half-drawn wherever the
+// reader stops, and the inspector fails that (letters-mid-reveal). While the line is still wholly below
+// the screen, its letters wait on their lines and the support line and button at their place, so the
+// page read from the top is whole; back below the screen, it plays again the next time it comes up. As
+// the first section it keeps a whole first screen, its first word reads level at once, its button
+// shows from the start, and the rest lands in 0.6s just after load. Cards rise 16vh.
 // Reduced motion and no script: the finished composition (no split, nothing hidden), also when reduced
 // motion is switched on while the page is open. The line breaks into two lines at most, set as large
 // as two lines allow when script runs (min(14vw, 26vh) at most), min(11vw, 22vh) without script.
@@ -437,9 +446,16 @@
         if (rec) {
           const h = rec.chars[0] ? rec.chars[0].offsetHeight : 100;
           amax = Math.max(0, Math.min(o.amp * h, 0.5 * H - 0.5 * h - 64 - o.inset));
+          // the letters on screen when the section arrives swoop within under half the letter size, so the line
+          // still reads as one line at once; those that come in during the travel take the whole amplitude
+          const calm = amax > 0 ? Math.min(1, (0.45 * parseFloat(getComputedStyle(line).fontSize)) / amax) : 1;
           rec.chars.forEach((el, k) => {
             const c = el.offsetLeft + el.offsetWidth / 2;
-            items.push({ el, c, s: Math.max(o.settle, (c - travel) / W), A: sd[k].a * amax, R: sd[k].r * o.tilt, e: o.enter });
+            // how far its ink reaches from its centre when tilted (the tilt adds about a fifth of its height),
+            // and whether any of it is on screen when the section arrives (track at 0, the run-in ahead)
+            const reach = el.offsetWidth / 2 + 0.2 * h;
+            const f = c + run - reach < W ? calm : 1;
+            items.push({ el, c, reach, s: Math.max(o.settle, (c - travel) / W), A: sd[k].a * amax * f, R: sd[k].r * o.tilt * f, e: o.enter });
           });
           // the support line and button rise into their end place during the pull-back
           if (cluster) extras.push({ kind: 'rise', els: [cluster.querySelector('.settle__support'), cluster.querySelector('.settle__cta')].filter(Boolean) });
@@ -499,7 +515,11 @@
         const lead = run * (1 - qA);                                  // the short line's own run-in
         put(S.track, r1(x), 0, 0);
         for (const it of S.items) {
-          const r = (it.c + x + lead) / W;
+          const at = it.c + x + lead;                                  // its centre on screen, px
+          // a letter still wholly beyond the right edge waits on its line, and takes its scattered place just
+          // before its ink can show
+          if (at - it.reach > W + 2) { if (it.y !== 0 || it.r !== 0) put(it, 0, 0, 0); continue; }
+          const r = at / W;
           const u = it.s >= it.e ? 1 : clamp((it.e - r) / (it.e - it.s), 0, 1);
           if (u === 1 && it.y === 0 && it.r === 0) continue;          // settled, nothing to write
           put(it, 0, r1(it.A * curveAt(curve.y, u)), r2(it.R * curveAt(curve.r, u)));
@@ -562,14 +582,14 @@
       requestAnimationFrame(() => ScrollTrigger.refresh());
     };
 
-    // ── phone: the same mapping turned 90°, keyed to the line's own screen position ──────────────
+    // ── phone: the same mapping turned 90°, the letters on a short clock as the line enters ──────
     const buildPhone = () => {
       reset();
       S.mode = 'phone';
       const rec = preset === 'type' && line ? split(line) : null;
       const glyphs = rec ? rec.chars.map((c) => c.textContent) : null;
       const sd = rec ? seeds(rec.text, rec.chars.length, glyphs) : null;
-      let H = innerHeight, maxScroll = 0, first = false, top0 = 0, D = 1, clear = 0;
+      let H = innerHeight, maxScroll = 0, first = false, top0 = 0, boxH = 0, clear = 0, wait = 0;
       const docTop = (el) => { let y = 0; for (let n = el; n; n = n.offsetParent) y += n.offsetTop; return y; };
 
       S.measure = () => {
@@ -594,11 +614,11 @@
           const h = rec.chars[0] ? rec.chars[0].offsetHeight : 60;
           const N = rec.chars.length;
           top0 = docTop(line);
+          boxH = line.offsetHeight;
           // On screen in the upper part at scroll 0 (the first section): the first word is already
-          // level and the first scroll assembles the rest. Otherwise the line assembles as it rises.
+          // level and the rest lands right after load. Otherwise the line lands as it comes on screen.
           first = top0 < 0.62 * H;
           const w1 = first ? rec.chars.filter((c) => c.parentNode === rec.chars[0].parentNode).length : 0;
-          D = first ? clamp(Math.max(0.22 * H, top0 - 0.12 * H), 1, Math.max(1, maxScroll)) : 1;
           const amp = o.amp / 1.5;
           let k = 0;
           rows.forEach((row, ri) => row.els.forEach((el) => {
@@ -618,6 +638,8 @@
             });
             k++;
           }));
+          // the highest a risen letter of the first row reaches above the line, tilt included
+          wait = Math.max(0, ...items.map((it) => -it.A)) + 0.2 * h;
           if (cluster) {
             const kids = [cluster.querySelector('.settle__support'), cluster.querySelector('.settle__cta')].filter(Boolean);
             // room between the line's box and the cluster, less a tilted letter's overhang
@@ -638,7 +660,7 @@
         }
         S.items = items.map((it) => ({ ...it, x: NaN, y: NaN, r: NaN }));
         S.extras = extras.map((it) => ({ fade: true, ...it, x: NaN, y: NaN, r: NaN, o: NaN }));
-        S.dbg = { H, first, top0, D: Math.round(D), maxScroll };
+        S.dbg = { H, first, top0, boxH, maxScroll };
       };
 
       // u for something whose top moves from `from` to `to` of the screen height; if the page ends
@@ -647,31 +669,58 @@
         const end = Math.min(Math.max(to * H, docY - maxScroll), from * H - 1);
         return clamp((from * H - (docY - sy)) / (from * H - end), 0, 1);
       };
-      // g: the line's progress, 0 (entering at the bottom edge) to 1 (settled at 42% of the screen).
-      // A first section starts at 0.5, where the first word has landed.
-      const lineAt = (sy) => (first ? 0.5 + 0.5 * clamp(sy / D, 0, 1) : window01(top0, 1, 0.42, sy));
+      // g: the line's progress, 0 (letters at their start) to 1 (all landed), on a clock of its own: a
+      // line keyed to the scroll stands half-drawn wherever the reader stops ("B o"), so on a phone the
+      // letters land in under a second once half the line is on screen. A first section starts at 0.5,
+      // where the first word has landed, and lands the rest just after load.
+      const run = {};
+      S.run = run;                                                    // a later build's clock is not this one
+      let clk = null, raf = 0;
+      // (seconds from start to the last letter: 0.9, or 0.6 for the rest of a first section's line)
+      const gNow = () => (clk ? clamp(clk.g0 + ((1 - clk.g0) * Math.max(0, performance.now() - clk.t0)) / (clk.land * 1000), 0, 1) : 0);
+      const tick = () => {
+        raf = 0;
+        if (!clk || S.run !== run || S.mode !== 'phone') return;
+        const g = gNow();
+        paint(g);
+        if (g < 1) raf = requestAnimationFrame(tick);
+      };
+      const start = () => { clk = { t0: performance.now() + (first ? 150 : 0), g0: first ? 0.5 : 0, land: first ? 0.6 : 0.9 }; cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); };
+      const stop = () => { clk = null; cancelAnimationFrame(raf); raf = 0; };
+      const paint = (g) => {
+        let low = 0;                                                    // the last row's deepest letter
+        for (const it of S.items) {
+          const v = clamp((g - 0.5 * it.f) / 0.5, 0, 1);              // letters land in reading order
+          if (v === 1 && it.y === 0 && it.r === 0) continue;
+          put(it, 0, r1(Math.max(it.cap, it.A * curveAt(curve.y, v))), r2(it.R * curveAt(curve.r, v)));
+          if (it.last && it.y > low) low = it.y;
+        }
+        for (const ex of S.extras) {
+          if (first) {
+            // a first section shows its button from the start; the last row's falling letters push
+            // the cluster down, and it tucks in under the line as they land
+            put(ex, 0, r1(Math.max(0, low - clear)), 0, 1);
+          } else {
+            // the support line and button rise as the last letters land
+            const v = clamp((g - 0.7 - ex.lag) / (0.3 - ex.lag), 0, 1);
+            put(ex, 0, r1(ex.lift * Math.pow(1 - v, 3)), 0, r2(clamp(v / 0.6, 0, 1)));
+          }
+        }
+      };
       S.map = () => {
         const sy = window.scrollY;
         if (rec) {
-          const g = lineAt(sy);
-          let low = 0;                                                  // the last row's deepest letter
-          for (const it of S.items) {
-            const v = clamp((g - 0.5 * it.f) / 0.5, 0, 1);            // letters land in reading order
-            if (v === 1 && it.y === 0 && it.r === 0) continue;
-            put(it, 0, r1(Math.max(it.cap, it.A * curveAt(curve.y, v))), r2(it.R * curveAt(curve.r, v)));
-            if (it.last && it.y > low) low = it.y;
+          // wholly below the screen, risen letters included: the letters wait on their lines and the support
+          // line and button at their place, and take their start positions before any of them can show.
+          // Back below the screen, the line plays again the next time it comes up.
+          if (!first && top0 - sy > H + wait + 4) {
+            stop();
+            for (const it of S.items) put(it, 0, 0, 0);
+            for (const ex of S.extras) put(ex, 0, 0, 0, 1);
+            return;
           }
-          for (const ex of S.extras) {
-            if (first) {
-              // a first section shows its button from the start; the last row's falling letters push
-              // the cluster down, and it tucks in under the line as they land
-              put(ex, 0, r1(Math.max(0, low - clear)), 0, 1);
-            } else {
-              // the support line and button rise as the last letters land
-              const v = clamp((g - 0.7 - ex.lag) / (0.3 - ex.lag), 0, 1);
-              put(ex, 0, r1(ex.lift * Math.pow(1 - v, 3)), 0, r2(clamp(v / 0.6, 0, 1)));
-            }
-          }
+          if (!clk && (first || top0 - sy + 0.5 * boxH < H)) start();
+          paint(gNow());
           return;
         }
         for (const ex of S.extras) {

@@ -5,96 +5,203 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Product replays</title>
 <!-- tasteskill / the six product replays draw.mjs deals (library/replays.json), one held section each. Each
-     section is the replay's whole stage: its heading (the promise the window acts out), the window at 70% of the
-     width or more, one sentence and the Replay button, held while the visitor's scroll steps the beats. The motion
-     and the hold come from replay.js and the replay block of base.css; this file only lays the stages out. The
-     content is a placeholder for a made-up product: every label and figure on a real page comes from the real one. -->
+     section is the replay's whole stage and fills the held screen: its heading (the promise the window acts out),
+     the window at 70% of the width or more, one sentence and a quiet Replay button. Every beat is one large change
+     (a panel opens, the item at work takes the accent, a full-size item arrives or moves, a figure at display size
+     rolls, the view moves in on the region at work); no drawn cursor; the window is one surface, its parts set
+     apart by space and type. The motion and the hold come from replay.js and the replay block of base.css; this
+     file only lays the stages out. The content is a placeholder for a made-up product: every label and figure on a
+     real page comes from the real one. -->
 <script>document.documentElement.classList.add('js')</script>
 <link rel="stylesheet" href="base.css">
 <style>
-  :root { --bg: #f3f2ee; --surface: #e4e2dc; --ink: #151515; --muted: #54524c; --accent: #1d5c46; --accent-ink: #ffffff; --ui: #ffffff; --ui-line: #d8d6d0; }
+  :root { --bg: #f3f2ee; --ink: #151515; --muted: #57554e; --accent: #1d5c46; --accent-ink: #ffffff; --ui: #ffffff; --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
   body { background: var(--bg); color: var(--ink); font-family: var(--font-text); }
   .intro { padding: 4rem var(--margin) 2rem; }
   h1 { font-size: var(--step-head); line-height: 1; letter-spacing: -0.02em; max-width: 22ch; }
   .intro p { margin-top: 1rem; max-width: 52ch; }
-  h2 { font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.75rem); line-height: 1.05; letter-spacing: -0.015em; max-width: 24ch; }
-  p { max-width: 60ch; font-size: var(--step-body); }
+  p { margin: 0; }
 
-  /* the held section and its stage: one screen, the window as wide as the stage, about three quarters of a desktop
-     screen (wider and a table's columns drift apart); with feature lines beside it the stage is wider */
-  .replay-hold { padding: 3rem var(--margin); }
-  .replay-stage { display: grid; gap: 1.25rem; width: min(100%, 68.75rem); margin-inline: auto; }
-  .replay-stage:has(.tour) { width: min(100%, 80rem); }
+  /* the held section and its stage: the stage fills the held screen (no empty band above or below it) */
+  .replay-hold { padding: 1.5rem var(--margin); }
+  .replay-stage { display: grid; gap: clamp(0.875rem, 2.2svh, 1.5rem); width: min(100%, 74rem); margin-inline: auto; }
+  .replay-stage:has(.tour) { width: min(100%, 84rem); }
+  .replay-stage h2 { font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.75rem); line-height: 1.05; letter-spacing: -0.015em; max-width: 24ch; }
   .replay { width: 100%; }
-  .replay__said { color: var(--muted); }
-  [data-replay-again] { justify-self: start; }
+  .replay__foot { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 2rem; }
+  .replay__said { color: var(--muted); max-width: 62ch; }
+  /* Replay is quiet: the accent belongs to what changes in the window */
+  .replay__again { min-height: 2.75rem; padding: 0; font: inherit; color: var(--ink); background: none; border: 0; text-decoration: underline; text-underline-offset: 0.22em; cursor: pointer; }
 
-  /* the windows: the product's own panels, no device frame */
-  .w { display: grid; gap: 1rem; padding: clamp(1rem, 2vw, 1.75rem); background: var(--ui); font-size: clamp(1.0625rem, 0.55rem + 0.75vw, 1.25rem); line-height: 1.35; border-radius: 6px; }
-  .w table { width: 100%; border-collapse: collapse; }
-  .w td, .w th { padding: 0.8rem 0.75rem; text-align: left; border-bottom: 1px solid var(--ui-line); font-weight: 400; }
-  .w th { color: var(--muted); font-size: 0.9em; }
-  .w .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .w input { width: 100%; padding: 0.8rem 0.9rem; font: inherit; background: var(--bg); border: 1px solid var(--ui-line); border-radius: 4px; }
-  .w .btn { justify-self: start; padding: 0.7rem 1.2rem; font: inherit; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 4px; }
-  .w .is-selected { background: #e7efe9; }
-  .w ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
-  .w li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.85rem 0.9rem; background: var(--bg); border-radius: 4px; }
-  .w li small { display: block; color: var(--muted); font-size: 0.85em; }
-  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
-  .cols h3 { display: flex; justify-content: space-between; font-size: 1em; font-weight: 600; margin-bottom: 0.6rem; }
-  .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 1rem; }
-  .src { margin: 0; padding: 1.1rem; background: #171a19; color: #e8ece9; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.95em; line-height: 1.5; white-space: pre-wrap; }
-  .src code { font: inherit; }
-  .bars { position: relative; height: clamp(12rem, 30vh, 18rem); background: var(--bg); border-radius: 4px; }
-  .bars i { position: absolute; bottom: 0; width: 7%; background: var(--accent); }
-  .status { color: var(--muted); }
-  /* the feature lines stand beside the regions they name, top, middle and foot of the window */
-  .tour { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 2rem; }
-  .tour__lines { display: grid; align-content: space-between; gap: 0.9rem; padding-block: 4.5rem 1.5rem; }
-  .tour__lines button { text-align: left; font: inherit; font-size: var(--step-lead); line-height: 1.2; color: var(--muted); background: none; border: 0; padding: 0; }
+  /* the window: one surface; inside it, space and type only (no rules, no tiles, no panel in a panel) */
+  .w { position: relative; display: grid; gap: 1.1em; padding: clamp(1.25rem, 2.6vw, 2.25rem); background: var(--ui); border-radius: 12px; overflow: clip; font-size: clamp(1.0625rem, 0.8rem + 0.55vw, 1.25rem); line-height: 1.35; }
+  /* the window's lines span their row (base.css caps a paragraph at 62ch for reading, not for a product's rows) */
+  .w p { max-width: none; }
+  /* a panel the final state does not show is written hidden; its own display must not undo that */
+  [data-ui] [hidden] { display: none; }
+  .muted { color: var(--muted); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .fig { font-size: clamp(2rem, 1.2rem + 2.4vw, 3.25rem); line-height: 1; letter-spacing: -0.02em; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .w .fig.is-focus { background: none; color: var(--accent); }
+  .ask { width: 100%; min-height: 2.9em; padding: 0.6em 0.8em; font: inherit; color: var(--ink); background: var(--ui); border: 1px solid #c9c7c0; border-radius: 8px; }
+  .rows { display: grid; gap: 0.25em; }
+  .row { display: grid; grid-template-columns: var(--cols); align-items: center; gap: 1em; min-height: 3.1em; padding: 0.55em 0.8em; border-radius: 8px; }
+  .row.th { min-height: 0; padding-block: 0 0.2em; color: var(--muted); }
+  .row.is-focus .muted, .item.is-focus .muted, .blk.is-focus .muted { color: inherit; opacity: 0.82; }
+  .btn { justify-self: start; min-height: 2.9em; padding: 0 1.2em; font: inherit; color: var(--accent-ink); background: var(--accent); border: 0; border-radius: 8px; }
+
+  /* 1. one-task: the list answers, the draft opens over it, the month's figure rolls */
+  .bill { --cols: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 0.8fr) minmax(0, 0.9fr); }
+  .bill__top { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 2em; }
+  .bill__month { display: grid; justify-items: end; gap: 0.2em; }
+  /* (six rows on desktop: the stage then fills 80% of a 1440 by 900 screen, clear of replay-bands' 75%) */
+  .bill__rows { grid-auto-rows: 3.1em; height: calc(6 * 3.1em + 5 * 0.25em + 2.2em); overflow: clip; align-content: start; }
+  /* the panel that does the work opens over the list on the ink, so its opening is the change the eye follows */
+  .drawer { position: absolute; inset: 0 0 0 auto; z-index: 2; width: min(28rem, 50%); display: grid; align-content: start; gap: 0.9em; padding: clamp(1.25rem, 2.6vw, 2.25rem); background: var(--ink); color: #f3f2ee; }
+  .drawer .muted { color: #bdbab2; }
+  .drawer__line, .drawer__total { display: flex; justify-content: space-between; gap: 1em; }
+  .drawer__total { align-items: baseline; margin-block: 0.4em 0.6em; }
+  .drawer .btn { color: var(--ink); background: #f3f2ee; }
+
+  /* 2. agent-run: the request, the agent's own line, the rows it acts on, the total */
+  .agent { --cols: 5.5em minmax(0, 1fr) 6em; }
+  .agent .status { min-height: 2.6em; display: flex; align-items: center; padding: 0.4em 0.8em; border-radius: 8px; font-weight: 500; }
+  .agent__total { display: flex; justify-content: space-between; align-items: baseline; gap: 1em; padding-inline: 0.8em; }
+
+  /* 3. board-move: three columns of type; the order at work is the one filled item, and it travels */
+  .board { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 1.25em; align-items: start; }
+  .col h3 { display: flex; align-items: baseline; gap: 0.6em; margin: 0 0 0.6em 0.8em; font-size: 1em; font-weight: 500; }
+  .col h3 .fig { order: -1; }
+  .col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3em; align-content: start; min-height: calc(4 * 4.1em + 2.7em + 3 * 0.3em); }
+  .item { display: grid; gap: 0.1em; min-height: 4.1em; padding: 0.65em 0.8em; border-radius: 8px; align-content: center; }
+  .item small { font-size: 0.9em; color: var(--muted); }
+  .item.is-focus small { color: inherit; opacity: 0.85; }
+  /* the order at work shows what is in it while it travels */
+  .item .more { display: none; }
+  .item.is-focus .more { display: block; padding-top: 0.45em; }
+
+  /* 4. turns: the plan, a block changed by each person in turn, their name on it */
+  .doc__top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.4em 2em; }
+  .doc__top h3 { font-size: 1.45em; line-height: 1.15; font-weight: 500; letter-spacing: -0.01em; }
+  .doc__state { padding: 0.15em 0.5em; margin-right: -0.5em; border-radius: 6px; }
+  .doc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25em; }
+  .blk { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 1em; min-height: 3.9em; padding: 0.55em 0.8em; border-radius: 8px; align-content: center; }
+  .blk .muted { grid-column: 1; }
+  .by { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-weight: 600; visibility: hidden; }
+  .blk.is-focus .by { visibility: visible; }
+  /* Tom's comment opens on the ink (a panel on the window's own white would change only its letters) and closes
+     again once his deadline lands in the block */
+  .note { position: absolute; right: 0.8em; top: calc(100% - 0.5em); z-index: 2; width: min(22em, 70%); padding: 0.8em 1em; background: var(--ink); color: #f3f2ee; border-radius: 8px; }
+
+  /* 5. source-output: the source line, its menu, the output it makes, the read-out */
+  .query .src { font-size: 1.05em; line-height: 1.5; }
+  .query code { font-family: var(--mono); font-size: 0.9em; }
+  .val { padding: 0.05em 0.3em; margin-inline: -0.1em; border-radius: 5px; box-shadow: inset 0 -2px 0 var(--accent); }
+  .val.is-focus { box-shadow: none; }
+  /* the menu of choices opens over the output on the ink */
+  .menu { position: absolute; z-index: 2; left: clamp(1.25rem, 2.6vw, 2.25rem); top: calc(clamp(1.25rem, 2.6vw, 2.25rem) + 2.4em); list-style: none; margin: 0; padding: 0.5em; display: grid; min-width: 15em; background: var(--ink); color: #f3f2ee; border-radius: 8px; }
+  .menu li { padding: 0.5em 0.8em; border-radius: 5px; }
+  .menu .pick { background: var(--accent); color: var(--accent-ink); }
+  .bars { position: relative; height: clamp(11rem, 34svh, 20rem); }
+  .bars i { position: absolute; bottom: 0; width: 5.6%; background: #3b3a36; border-radius: 3px 3px 0 0; }
+  .axis { display: flex; justify-content: space-between; color: var(--muted); }
+  .readout { display: flex; align-items: baseline; gap: 0.6em; }
+
+  /* 6. lens-tour: the whole screen, the view moving in on each region the feature lines name */
+  .tour { display: grid; grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); gap: 2rem; }
+  .tour__lines { display: grid; align-content: center; gap: 2.5rem; }
+  .tour__lines button { text-align: left; font: inherit; font-size: var(--step-lead); line-height: 1.2; color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; transition: color 240ms ease; }
   .tour__lines button.is-current { color: var(--ink); }
+  .stock { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 2.5em; row-gap: 1.2em; --cols: minmax(0, 1fr) auto; }
+  .stock__top { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 0.5em 2em; }
+  .stock__top p:first-child { display: grid; gap: 0.2em; }
+  .stock h3 { font-size: 1em; font-weight: 500; color: var(--muted); padding-left: 0.8em; margin-bottom: 0.2em; }
+
   @media (max-width: 63.99em) {
     .tour { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-    .tour__lines { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0.75rem; padding: 0; }
+    .tour__lines { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0.75rem; }
     .tour__lines button { font-size: 1.0625rem; }
   }
-  @media (max-width: 47.99em) {
-    .w { font-size: 1rem; }
-    .w td, .w th { padding: 0.65rem 0.5rem; }
-    .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cols > :last-child { display: none; }
-    .pair { grid-template-columns: minmax(0, 1fr); }
-    .hide-s { display: none; }
+  /* a tablet held upright has a tall screen: larger type and more rows, so the stage still fills it */
+  @media (min-width: 48em) and (max-width: 63.99em) {
+    .w { font-size: 1.1875rem; }
+    .row { min-height: 3.5em; }
+    .bill__rows { grid-auto-rows: 3.1em; height: calc(7 * 3.1em + 6 * 0.25em + 2.2em); }
+    .item { min-height: 4.6em; }
+    .col ul { min-height: calc(4 * 4.6em + 3.4em + 3 * 0.3em); }
+    .blk { min-height: 4.5em; }
+    .bars { height: 24rem; }
+    .stock { row-gap: 1.6em; }
   }
+  @media (max-width: 47.99em) {
+    .hide-s { display: none; }
+    .bill { --cols: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 1fr); }
+    .bill__top { grid-template-columns: minmax(0, 1fr); gap: 0.8em; }
+    .bill__month { justify-items: start; grid-auto-flow: column; align-items: baseline; justify-content: start; gap: 0.5em; }
+    .bill__rows { height: calc(5 * 3.1em + 4 * 0.25em + 2.2em); }
+    .drawer { width: 88%; }
+    .agent { --cols: 4.4em minmax(0, 1fr) 4.6em; }
+    .row { gap: 0.6em; padding-inline: 0.6em; }
+    /* the board stacks its three columns; each shows its first two items, so the order still travels down */
+    .board { grid-template-columns: minmax(0, 1fr); row-gap: 0.9em; }
+    .col h3 { margin-bottom: 0.25em; }
+    .col ul { min-height: calc(2 * 3.4em + 0.25em); }
+    /* (an order pushed out until its beat carries .is-out and does not count) */
+    .col li:nth-child(n + 3 of :not(.is-out)) { display: none; }
+    .item { min-height: 3.4em; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 0.8em; }
+    .item.is-focus .more { display: none; }
+    .agent .rows .hide-s { display: none; }
+    .blk { min-height: 3.4em; }
+    .note { width: 86%; }
+    .menu { top: calc(1.25rem + 3.7em); }
+    .stock { grid-template-columns: minmax(0, 1fr); }
+    .stock .reorders { display: none; }
+    .stock .reorders-s { display: grid; }
+  }
+  @media (min-width: 48em) { .stock .reorders-s { display: none; } }
 </style>
 </head>
 <body>
 <header class="intro">
   <h1>Six ways the product plays one task</h1>
-  <p>Each section holds its window while you scroll; every half screen of scroll is one beat. Scroll back and it steps back.</p>
+  <p>Each section holds its window while you scroll; every half screen of scroll is one beat, and each beat changes something large. Scroll back and it steps back.</p>
 </header>
 <main>
   <!-- 1. one-task: the promise is the bill sent, so the window sends one -->
   <section class="replay-hold" aria-labelledby="r1">
     <div class="replay-stage">
       <h2 id="r1">Bill a client in one line</h2>
-      <figure class="replay" data-replay="1500,900,1100,1500" aria-hidden="true">
-        <div class="w" data-ui>
-          <input value="Invoice Acme for March, 4,200 €" data-type-at="1" aria-label="New invoice">
-          <table>
-            <tr><th>Client</th><th>Status</th><th class="num">Amount</th></tr>
-            <tr data-at="2" data-select-at="4" class="is-selected"><td>Acme</td><td data-at="4" data-from="Draft">Sent</td><td class="num">4,200 €</td></tr>
-            <tr><td>Brightline</td><td>Paid</td><td class="num">1,850 €</td></tr>
-            <tr><td>Norra Hus</td><td>Paid</td><td class="num">960 €</td></tr>
-            <tr><td>Ostra AB</td><td>Paid</td><td class="num">780 €</td></tr>
-          </table>
-          <button class="btn" type="button" tabindex="-1" data-press-at="3">Send invoice</button>
-          <p>This month: <b data-roll-at="4" data-from="3">4</b> invoices, <b data-roll-at="4" data-from="3,590">7,790</b> €</p>
+      <figure class="replay" data-replay="1700,1300,1300,1400" aria-hidden="true">
+        <div class="w bill" data-ui>
+          <div class="bill__top">
+            <input class="ask" value="Invoice Acme for March, 4,200 €" data-type-at="1" aria-label="New invoice" tabindex="-1">
+            <p class="bill__month"><span class="muted" data-at="4" data-from="March, 3 invoices">March, 4 invoices</span><span><b class="fig" data-roll-at="4" data-from="3,590" data-focus-at="4">7,790</b> €</span></p>
+          </div>
+          <div class="rows bill__rows">
+            <div class="row th"><span>Client</span><span class="hide-s">Date</span><span>Status</span><span class="num">Amount</span></div>
+            <div class="row" data-at="1" data-push data-focus-at="1-3"><span>Acme</span><span class="muted hide-s">12 Mar</span><span data-at="3" data-from="Draft">Sent</span><span class="num">4,200 €</span></div>
+            <div class="row"><span>Brightline</span><span class="muted hide-s">9 Mar</span><span>Paid</span><span class="num">1,850 €</span></div>
+            <div class="row"><span>Norra Hus</span><span class="muted hide-s">6 Mar</span><span>Paid</span><span class="num">960 €</span></div>
+            <div class="row"><span>Ostra AB</span><span class="muted hide-s">2 Mar</span><span>Paid</span><span class="num">780 €</span></div>
+            <div class="row"><span>Helm &amp; Co</span><span class="muted hide-s">27 Feb</span><span>Paid</span><span class="num">1,200 €</span></div>
+            <div class="row"><span>Lindqvist</span><span class="muted hide-s">21 Feb</span><span>Paid</span><span class="num">640 €</span></div>
+            <div class="row"><span>Brightline</span><span class="muted hide-s">14 Feb</span><span>Paid</span><span class="num">2,100 €</span></div>
+            <div class="row"><span>Norra Hus</span><span class="muted hide-s">8 Feb</span><span>Paid</span><span class="num">720 €</span></div>
+          </div>
+          <aside class="drawer" data-open-at="2" data-close-at="3" data-open-from="right" hidden>
+            <p class="muted">Invoice 0412 · due 11 April</p>
+            <p class="fig" style="font-size: 1.6em">Acme</p>
+            <p class="drawer__line"><span>Design, March</span><span class="num">2,800 €</span></p>
+            <p class="drawer__line"><span>Build, March</span><span class="num">1,400 €</span></p>
+            <p class="drawer__total"><span>Total</span><b class="fig">4,200 €</b></p>
+            <button class="btn" type="button" tabindex="-1" data-press-at="3">Send invoice</button>
+          </aside>
         </div>
-        <span class="replay__cursor" data-replay-cursor><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
       </figure>
-      <p class="replay__said">A March invoice for Acme is written, sent, and the month's total updates.</p>
-      <button type="button" class="button" data-replay-again>Replay</button>
+      <div class="replay__foot">
+        <p class="replay__said">A March invoice for Acme is written, sent, and the month's total updates.</p>
+        <button type="button" class="replay__again" data-replay-again>Replay</button>
+      </div>
     </div>
   </section>
 
@@ -102,65 +209,91 @@
   <section class="replay-hold" aria-labelledby="r2">
     <div class="replay-stage">
       <h2 id="r2">It finds the refund you paid twice</h2>
-      <figure class="replay" data-replay="1400,1300,1300,1500" aria-hidden="true">
-        <div class="w" data-ui>
-          <input value="Find double refunds in March" data-type-at="1" aria-label="Request">
-          <p class="status" data-says="2:Reading 412 entries|3:Checking against the bank feed|4:Fixed: a duplicate refund">Fixed: a duplicate refund</p>
-          <table>
-            <tr><th>Date</th><th>Payee</th><th class="num">Refund</th></tr>
-            <tr><td>4 Mar</td><td>Ostra AB</td><td class="num">120.00</td></tr>
-            <tr data-frame-at="3"><td>11 Mar</td><td>Ostra AB</td><td class="num" data-roll-at="4" data-from="120.00">0.00</td></tr>
-            <tr><td>19 Mar</td><td>Helm &amp; Co</td><td class="num">48.50</td></tr>
-            <tr><td>26 Mar</td><td>Lindqvist</td><td class="num">36.00</td></tr>
-            <tr><th colspan="2">Total</th><th class="num" data-roll-at="4" data-from="324.50">204.50</th></tr>
-          </table>
+      <figure class="replay" data-replay="1700,1400,1500" aria-hidden="true">
+        <div class="w agent" data-ui>
+          <input class="ask" value="Find refunds we paid twice in March" data-type-at="1" aria-label="Request" tabindex="-1">
+          <p class="status" data-says="1:Reading 412 entries|2:Checking them against the bank feed|3:Fixed: Ostra AB was refunded twice" data-focus-at="1-2">Fixed: Ostra AB was refunded twice</p>
+          <div class="rows">
+            <div class="row th"><span>Date</span><span>Payee</span><span class="num">Refund</span></div>
+            <div class="row" data-focus-at="2"><span>4 Mar</span><span>Ostra AB</span><span class="num">120.00</span></div>
+            <div class="row"><span>6 Mar</span><span>Helm &amp; Co</span><span class="num">48.50</span></div>
+            <div class="row" data-focus-at="2"><span>11 Mar</span><span>Ostra AB<span class="muted hide-s" data-at="3" data-from="">, reversed</span></span><span class="num" data-roll-at="3" data-from="120.00">0.00</span></div>
+            <div class="row"><span>19 Mar</span><span>Lindqvist</span><span class="num">36.00</span></div>
+            <div class="row"><span>26 Mar</span><span>Brightline</span><span class="num">84.00</span></div>
+          </div>
+          <p class="agent__total"><span>Refunds in March</span><b class="fig" data-roll-at="3" data-from="408.50" data-focus-at="3">288.50</b></p>
         </div>
       </figure>
-      <p class="replay__said">The agent reads the refunds, checks them against the bank and removes a duplicate.</p>
-      <button type="button" class="button" data-replay-again>Replay</button>
+      <div class="replay__foot">
+        <p class="replay__said">The agent reads the refunds, checks them against the bank and reverses a duplicate.</p>
+        <button type="button" class="replay__again" data-replay-again>Replay</button>
+      </div>
     </div>
   </section>
 
-  <!-- 3. board-move: the promise is every order packed the day it lands, so the new one moves on -->
+  <!-- 3. board-move: the promise is every order packed the day it lands, so the new one travels the board -->
   <section class="replay-hold" aria-labelledby="r3">
     <div class="replay-stage">
-      <h2 id="r3">Every order is packed the day it lands</h2>
-      <figure class="replay" data-replay="1100,1000,1200,1400" aria-hidden="true">
-        <div class="w" data-ui>
-          <div class="cols">
-            <div><h3>New <span data-says="0:3|1:4|3:3">3</span></h3><ul id="b-new"><li data-at="1"><span>Order 1043<small>Lund, 2 items</small></span></li><li><span>Order 1041<small>Oslo, 1 item</small></span></li><li><span>Order 1040<small>Aarhus, 3 items</small></span></li></ul></div>
-            <div><h3>Packing <span data-roll-at="3" data-from="3">4</span></h3><ul><li data-flip-at="3" data-flip-from="#b-new" data-point-at="2"><span>Order 1039<small data-at="4" data-from="New, Malmö">Packing, Malmö</small></span></li><li><span>Order 1038<small>Packing, Turku</small></span></li><li><span>Order 1037<small>Packing, Riga</small></span></li><li><span>Order 1036<small>Packing, Tartu</small></span></li></ul></div>
-            <div><h3>Shipped 4</h3><ul><li><span>Order 1035<small>Bergen, today</small></span></li><li><span>Order 1034<small>Turku, today</small></span></li><li><span>Order 1033<small>Espoo, today</small></span></li><li><span>Order 1032<small>Lund, today</small></span></li></ul></div>
+      <h2 id="r3">Every order ships the day it lands</h2>
+      <figure class="replay" data-replay="1300,1400,1500" aria-hidden="true">
+        <div class="w board" data-ui>
+          <div class="col">
+            <h3>New <b class="fig" data-says="0:2|1:3|2:2">2</b></h3>
+            <ul id="b-new">
+              <li class="item"><span>Order 1041</span><small>Oslo, 1 item</small></li>
+              <li class="item"><span>Order 1040</span><small>Aarhus, 3 items</small></li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>Packing <b class="fig" data-says="0:3|2:4|3:3">3</b></h3>
+            <ul id="b-pack">
+              <li class="item"><span>Order 1039</span><small>Malmö, 2 items</small></li>
+              <li class="item"><span>Order 1038</span><small>Turku, 1 item</small></li>
+              <li class="item"><span>Order 1037</span><small>Riga, 4 items</small></li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>Shipped today <b class="fig" data-says="0:3|3:4">4</b></h3>
+            <ul>
+              <li class="item" data-at="1" data-push data-flip-at="2,3" data-flip-from="#b-new, #b-pack" data-focus-at="1-3"><span>Order 1043</span><small data-says="1:Lund, 2 items|2:Packed 11:05, label printed|3:Shipped 16:40, DHL">Shipped 16:40, DHL</small><small class="more">2 shirts, a tote, a gift note</small></li>
+              <li class="item"><span>Order 1036</span><small>Tartu, 16:10</small></li>
+              <li class="item"><span>Order 1035</span><small>Bergen, 15:30</small></li>
+              <li class="item"><span>Order 1034</span><small>Espoo, 14:55</small></li>
+            </ul>
           </div>
         </div>
-        <span class="replay__cursor" data-replay-cursor><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
       </figure>
-      <p class="replay__said">A new order arrives and order 1039 moves from New to Packing.</p>
-      <button type="button" class="button" data-replay-again>Replay</button>
+      <div class="replay__foot">
+        <p class="replay__said">Order 1043 arrives at 09:12, is packed by 11:05 and leaves with the 16:40 pickup.</p>
+        <button type="button" class="replay__again" data-replay-again>Replay</button>
+      </div>
     </div>
   </section>
 
-  <!-- 4. turns: the promise is a plan three people finish without a meeting -->
+  <!-- 4. turns: the promise is a plan three people finish without a meeting; each change carries its author's name -->
   <section class="replay-hold" aria-labelledby="r4">
     <div class="replay-stage">
       <h2 id="r4">Three people finish the plan without a meeting</h2>
-      <figure class="replay" data-replay="1300,1300,1300,1200" aria-hidden="true">
-        <div class="w" data-ui>
-          <ul id="t-plan">
-            <li data-point-at="1" data-cursor="Ines">Kick-off with the client <span>Mon</span></li>
-            <li>Site visit <span>Tue</span></li>
-            <li data-at="1">Budget review <span data-at="2" data-from="—">12,400 €</span></li>
-            <li data-point-at="2" data-cursor="Agent">Draft the brief <span>Thu</span></li>
-            <li data-point-at="3" data-cursor="Tom">Send the brief <span data-at="3" data-from="Fri">Fri · Tom: send by noon</span></li>
-            <li class="hide-s">Review the answers <span>Mon</span></li>
-          </ul>
+      <figure class="replay" data-replay="1400,1400,1400,1300" aria-hidden="true">
+        <div class="w doc" data-ui>
+          <div class="doc__top">
+            <h3>Launch plan, spring range</h3>
+            <p class="doc__state" data-at="4" data-from="Draft, three people editing" data-focus-at="4">Agreed by Ines, Tom and the agent</p>
+          </div>
+          <ol id="plan">
+            <li class="blk"><span>Site visit, Tuesday</span><span class="muted">Ines and Tom, Bergen</span></li>
+            <li class="blk" data-focus-at="2"><span>Budget <span data-at="2" data-from="">12,400 €</span></span><span class="muted" data-at="2" data-from="Not costed yet, waiting for the printer's quote">Design 6,200 · Build 4,800 · Print 1,400</span><b class="by">Agent</b></li>
+            <li class="blk" data-flip-at="1" data-flip-from="#plan" data-focus-at="1"><span>Kick-off with the client, Thursday</span><span class="muted">Video call, 45 minutes</span><b class="by">Ines</b></li>
+            <li class="blk" data-focus-at="3"><span>Send the brief, Friday</span><span class="muted" data-at="3" data-from="To the printer and the client">By Thursday noon, to the printer and the client</span><b class="by">Tom</b>
+              <span class="note" data-open-at="3" data-close-at="4" data-open-from="top" hidden>Tom: send it by Thursday noon, the printer needs a day.</span></li>
+            <li class="blk"><span>Review the answers, Monday</span><span class="muted">All three</span></li>
+          </ol>
         </div>
-        <span class="replay__cursor" data-replay-cursor data-name="Ines"><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
-        <span class="replay__cursor" data-replay-cursor data-name="Agent"><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
-        <span class="replay__cursor" data-replay-cursor data-name="Tom"><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
       </figure>
-      <p class="replay__said">Ines adds the budget review, the agent fills in its figure and Tom leaves a note.</p>
-      <button type="button" class="button" data-replay-again>Replay</button>
+      <div class="replay__foot">
+        <p class="replay__said">Ines moves the kick-off after the visit, the agent costs the budget and Tom sets a deadline; the plan is agreed.</p>
+        <button type="button" class="replay__again" data-replay-again>Replay</button>
+      </div>
     </div>
   </section>
 
@@ -168,30 +301,37 @@
   <section class="replay-hold" aria-labelledby="r5">
     <div class="replay-stage">
       <h2 id="r5">Change one word and the report follows</h2>
-      <figure class="replay" data-replay="1600,1200,1400" aria-hidden="true">
-        <div class="w" data-ui>
-          <div class="pair">
-            <pre class="src"><code>orders where placed in <span data-at="1" data-from="last 30 days">last 90 days</span> group by week</code></pre>
-            <div class="bars">
-              <i style="left: 4%; height: 40%" data-style-at="2" data-style-from="height: 22%"></i>
-              <i style="left: 16%; height: 52%" data-style-at="2" data-style-from="height: 30%"></i>
-              <i style="left: 28%; height: 47%" data-style-at="2" data-style-from="height: 61%"></i>
-              <i style="left: 40%; height: 70%" data-style-at="2" data-style-from="height: 44%"></i>
-              <i style="left: 52%; height: 64%" data-style-at="2" data-style-from="height: 38%"></i>
-              <i style="left: 64%; height: 82%" data-style-at="2" data-style-from="height: 70%"></i>
-              <i style="left: 76%; height: 90%" data-style-at="2" data-style-from="height: 55%"></i>
-              <i style="left: 88%; height: 76%" data-style-at="2" data-style-from="height: 48%"></i>
-            </div>
+      <figure class="replay" data-replay="1300,1500,1400" aria-hidden="true">
+        <div class="w query" data-ui>
+          <p class="src"><code>orders where placed in <span class="val" data-at="2" data-from="last 30 days" data-focus-at="1-2">last 90 days</span> group by week</code></p>
+          <ul class="menu" data-open-at="1" data-close-at="2" hidden><li>last 7 days</li><li>last 30 days</li><li class="pick">last 90 days</li><li>this year</li></ul>
+          <div class="bars">
+            <i style="left: 1.5%; height: 34%" data-style-at="2" data-style-from="height: 0%"></i>
+            <i style="left: 9.1%; height: 41%" data-style-at="2" data-style-from="height: 0%"></i>
+            <i style="left: 16.7%; height: 38%" data-style-at="2" data-style-from="height: 0%"></i>
+            <i style="left: 24.3%; height: 52%" data-style-at="2" data-style-from="height: 0%"></i>
+            <i style="left: 31.9%; height: 47%" data-style-at="2" data-style-from="height: 0%"></i>
+            <i style="left: 39.5%; height: 60%" data-style-at="2" data-style-from="height: 0%"></i>
+            <i style="left: 47.1%; height: 56%" data-style-at="2" data-style-from="height: 0%"></i>
+            <i style="left: 54.7%; height: 66%" data-style-at="2" data-style-from="height: 0%"></i>
+            <i style="left: 62.3%; height: 61%" data-style-at="2" data-style-from="height: 0%"></i>
+            <i style="left: 69.9%; height: 72%" data-style-at="2" data-style-from="left: 6%; width: 14%"></i>
+            <i style="left: 77.5%; height: 80%" data-style-at="2" data-style-from="left: 30%; width: 14%"></i>
+            <i style="left: 85.1%; height: 74%" data-style-at="2" data-style-from="left: 54%; width: 14%"></i>
+            <i style="left: 92.7%; height: 92%" data-style-at="2" data-style-from="left: 78%; width: 14%"></i>
           </div>
-          <p><b data-roll-at="3" data-from="1,240">3,912</b> rows · 0.4 s</p>
+          <p class="axis"><span data-at="2" data-from="Week of 2 March">Week of 5 January</span><span>Week of 23 March</span></p>
+          <p class="readout"><b class="fig" data-roll-at="3" data-from="1,240" data-focus-at="3">3,912</b><span>orders, <span data-at="3" data-from="4">13</span> weeks</span></p>
         </div>
       </figure>
-      <p class="replay__said">The query widens from 30 to 90 days and the chart and row count follow.</p>
-      <button type="button" class="button" data-replay-again>Replay</button>
+      <div class="replay__foot">
+        <p class="replay__said">The query widens from 30 to 90 days; the chart and the order count follow.</p>
+        <button type="button" class="replay__again" data-replay-again>Replay</button>
+      </div>
     </div>
   </section>
 
-  <!-- 6. lens-tour: the promise is a stock room that counts itself -->
+  <!-- 6. lens-tour: the promise is a stock room that counts and reorders itself; the view moves in on each -->
   <section class="replay-hold" aria-labelledby="r6">
     <div class="replay-stage">
       <h2 id="r6">Stock that counts and reorders itself</h2>
@@ -201,22 +341,38 @@
           <button type="button" data-line-at="2">Low items reorder</button>
           <button type="button" data-line-at="3">The total follows</button>
         </div>
-        <figure class="replay" data-replay="1500,1500,1600" aria-hidden="true">
-          <div class="w" data-ui>
-            <table>
-              <tr><th>Item</th><th>Status</th><th class="num">In stock</th></tr>
-              <tr><td>Oat milk, 1 l</td><td>Fine</td><td class="num" data-frame-at="1" data-roll-at="1" data-from="38">41</td></tr>
-              <tr><td>Paper cups</td><td data-frame-at="2" data-at="2" data-from="Low">Ordered</td><td class="num">120</td></tr>
-              <tr><td>Beans, Huila</td><td>Fine</td><td class="num">14</td></tr>
-              <tr class="hide-s"><td>Lids, 12 oz</td><td>Fine</td><td class="num">300</td></tr>
-              <tr><td>Chai syrup</td><td>Fine</td><td class="num">6</td></tr>
-              <tr><th colspan="2">Stock value</th><th class="num" data-frame-at="3" data-roll-at="3" data-from="2,310">2,346</th></tr>
-            </table>
+        <figure class="replay" data-replay="1600,1600,1600" aria-hidden="true">
+          <div class="w stock" data-ui>
+            <div class="stock__top">
+              <p><span class="muted">Stock value</span><span><b class="fig" data-roll-at="3" data-from="2,310" data-focus-at="3">2,346</b> €</span></p>
+              <p class="muted">Kafé Norr, counted at 07:00</p>
+            </div>
+            <div class="rows" data-zoom-at="1">
+              <h3>Counted this morning</h3>
+              <div class="row" data-focus-at="1"><span>Oat milk, 1 l</span><b class="num" data-roll-at="1" data-from="38">41</b></div>
+              <div class="row"><span>Beans, Huila</span><span class="num">14 kg</span></div>
+              <div class="row"><span>Chai syrup</span><span class="num">6</span></div>
+              <div class="row"><span>Lids, 12 oz</span><span class="num">300</span></div>
+              <div class="row"><span>Paper cups</span><span class="num">40</span></div>
+            </div>
+            <div class="rows reorders" data-zoom-at="2">
+              <h3>Reorders</h3>
+              <div class="row" data-focus-at="2"><span>Paper cups</span><b class="num" data-at="2" data-from="Low">Ordered, 500</b></div>
+              <div class="row"><span>Chai syrup</span><span class="num">Fine</span></div>
+              <div class="row"><span>Beans, Huila</span><span class="num">Due Friday</span></div>
+              <div class="row"><span>Oat milk, 1 l</span><span class="num">Fine</span></div>
+              <div class="row"><span>Lids, 12 oz</span><span class="num">Fine</span></div>
+            </div>
+            <div class="rows reorders-s" data-zoom-at="2">
+              <div class="row" data-focus-at="2"><span>Reorder paper cups</span><b class="num" data-at="2" data-from="Low">Ordered, 500</b></div>
+            </div>
           </div>
         </figure>
       </div>
-      <p class="replay__said">Stock is counted, a low item is reordered and the stock value follows.</p>
-      <button type="button" class="button" data-replay-again>Replay</button>
+      <div class="replay__foot">
+        <p class="replay__said">The oat milk count is corrected, paper cups are reordered and the stock value follows.</p>
+        <button type="button" class="replay__again" data-replay-again>Replay</button>
+      </div>
     </div>
   </section>
 </main>

@@ -148,26 +148,40 @@ When the brief supplies no proof, use what is true by construction:
 **Sample details are different from proof, and they are expected.** Where the brief gives the shape of
 the content but not every detail (six rooms "from €140", "a short menu", twelve speakers), write the
 full set of plausible details: each room with a name, a bed, a view and its own rate; each dish with
-its price; each speaker with a talk title. A design can only be judged at its real density, and a page
-that shows one rate where six rooms exist looks unfinished. The details sit beside the room's or the
+its price; each speaker with a talk title; or, when there are fewer good photographs than rooms, each
+kind of room (references/imagery.md §2), with its picture and its rate. A design can only be judged at
+its real density, and a page that shows one rate where six rooms exist looks unfinished. The details
+sit beside the room's or the
 dish's photograph (references/imagery.md §2), never in a spec panel or a filled box standing in for
 it. List every sample detail in the report so the client confirms or replaces it.
 
-**Facts about the real world are not sample details.** Distances, travel times, history, populations
-and awards of a real place or organisation come from the brief or are left out; a guess ("forty
-minutes from Reykjavik" for a house in the Westfjords, hours away) is wrong to every reader who knows.
+**Facts about the real world are not sample details, and they are not to be left out either.** A page
+about a real place names the real, checkable things a visitor needs to get there and to picture it:
+the region and its towns, the road that reaches it, the ferry, the train or the airport that serves
+it, and distances by road ("70 km by road" is a distance; "an hour's drive" is a travel time), only
+when read from a map or the brief in this session; otherwise the towns and the road without a number,
+since a recalled number is how "forty minutes" happened. What cannot be checked
+from a map or the brief stays off the page: travel times, populations, history, awards, records and
+"the oldest" or "the only". A guess ("forty minutes from Reykjavik" for a house in the Westfjords,
+hours away) is wrong to every reader who knows; a page that names no town, road or flight at all
+reads as thin and tells the visitor nothing. List every real-world fact the page states in the report,
+with where it came from, for the client to confirm.
 
-**Sample contacts are unmistakably fictional.** A phone number the brief does not give comes from the
-country's range reserved for fiction where one exists (North America 555-0100 to 555-0199; the UK
-07700 900000 to 900999, 01632 960000 to 960999 or 020 7946 0000 to 0999); otherwise it is a plainly
-patterned number in the country's format, zeros after the area code. Never a real area code with
-random digits, and never 555 outside North America: both can ring a real line. The email is at the
-brand's own domain, never `.example`. List both with the sample details in the report. When the brief
-gives no email address, the sample one is sample content, and no form that sends a visitor's details (an
-order, a booking, a delivery address, a sign-up) is wired to it: for a made-up brand that domain
-belongs to a stranger. Such a form posts to an endpoint the client gives, or stays unwired with its
-handler named in the report; the visible contact line and a mailto link on it stay as the house rules
-ask.
+**Visit details the brief does not give are left out, not made up.** With no street address in the
+brief, the page prints the town or area the brief names (a neighbourhood only when the brief names
+one: "Berlin" stays Berlin, never a district picked for it) and sample opening hours, listed in the
+report with the other sample details; a house or a hotel may print its season and its check-in times
+instead of opening hours. Never a placeholder street (Musterstrasse 12, 1 Main Street, Example Road).
+With no phone number, it prints none: never a zeroed or patterned number (030 000 000 00, 555-0123)
+and never a real area code with random digits, which can ring a real line. The email is at the
+brand's own domain, never `.example`. A page with no door in its brief (a product sold online, an
+app, a portfolio) prints no street, hours or phone at all: the email and the city the brief names.
+The report lists the address, the phone, the hours and the email to fill. When the
+brief gives no email address, the sample one is sample content, and no form that sends a visitor's
+details (an order, a booking, a delivery address, a sign-up) is wired to it: for a made-up brand that
+domain belongs to a stranger. Such a form posts to an endpoint the client gives, or stays unwired with
+its handler named in the report; the visible contact line and a mailto link on it stay as the house
+rules ask.
 
 **A brand the brief does not name gets a coined name.** A plausible word (Engram, Inkwell, Kasten) is
 often already a real product's name, sometimes in the same trade, and the page then reads as theirs.

@@ -130,6 +130,18 @@ A product site that shows its interface is a page; the interface fragments on it
 for their insides (mark each fragment's root with `data-ui`). When a request holds both, build each
 with its own run and share one palette and one typeface.
 
+A fragment on a page is seen smaller and for less time than the screen it comes from, so three of the
+rules below tighten there (house rule, from two blind tests where the product read as "stacks of dark
+boxes on a dark ground"): the fragment is **one surface**, its rows and items set apart by space and
+type, never filled rows, cards or tiles inside a filled panel (the inspector warns, `fragment-boxes`);
+its main text is 14px or more; and it shows fewer rows at a larger size rather than the whole screen
+shrunk. The product replay's window (references/motion.md, "Product replay") goes further, because it
+is the page's big moment: no rules between its rows, even where it is a table; nothing in it under
+14px and what changes at a beat 16px or more; the accent only on what changes; no drawn cursor; and
+only the item at work or a panel that opens on a fill of its own (`replay-nested`, `replay-type`,
+`replay-accent`, `replay-cursor`). The section 9.4 surfaces (a fill step, nested panels) are for a screen people work in,
+not for a fragment on a page.
+
 The study is 23 desktop screens. It has no phone screens, no loading or error states, one settings
 page, no inbox and no dense operations table (the densest screen shows about 120 data points). Where a
 rule below goes past the study, it says **house rule**.

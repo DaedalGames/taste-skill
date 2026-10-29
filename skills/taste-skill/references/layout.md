@@ -196,6 +196,11 @@ are from the study of 97 Sites of the Day (October 2026).
   screens in the study mostly 50–150px), two lines at most, that says what this is: the name with
   what it does, the product with what it is for, the event with its date and place. If the `h1` is
   the name, the line under it, at 18px or more, says what the thing is.
+- A split first screen (the words in one part, a picture holding the other half or more) has a large
+  headline or a full-bleed picture: the `h1` beside the picture is about 5vw or more at 1440 (72px),
+  on two lines of about 13-15 characters each; words that cannot be that large go over the picture,
+  full-bleed, on its calm side. A 48px headline beside a half-screen photograph read as a shop
+  template in a blind test ("an undersized headline and no focal point", §10).
 - It is there on the first paint. About a third of the studied pages still showed a loader or nothing readable 4.5
   seconds.
 

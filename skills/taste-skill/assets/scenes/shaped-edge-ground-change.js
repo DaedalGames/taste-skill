@@ -57,11 +57,16 @@
 // Options (data-options JSON; defaults, ranges):
 //   hero          "sky"            "sky": the headline is set in --ink straight on the photograph's sky, with
 //                                  no scrim. Only for a photograph with open, even sky behind the headline
-//                                  (no cloud texture, no ridge line, no subject reaching up into it).
-//                                  | "band": a flat translucent fill (rgb(8 14 24 / .45)) sits behind the
-//                                  headline block and the type turns white; use it for any photograph
-//                                  whose top-left is busy. (The class seg--band on the section does the
-//                                  same and also holds without script.)
+//                                  (no cloud texture, no ridge line, no subject reaching up into it). The
+//                                  lede, small text, never trusts the sky: it sits on a solid strip of
+//                                  --ground (the sky's own colour, so on an even sky it does not show),
+//                                  in --ink at 7:1, at every width.
+//                                  | "band": a solid band in --ink sits behind the headline block and the
+//                                  type takes --ground (7:1 by the colour contract); use it for any
+//                                  photograph whose top-left is busy. A translucent fill reads under
+//                                  4.5:1 over a pale sky, so the band is opaque and flat, never a
+//                                  gradient. (The class seg--band on the section does the same and also
+//                                  holds without script.)
 //   zoom          1.5    1.2-1.8   end scale of the photograph (it starts at 1.06; linear, done at 0.88)
 //   phoneZoom     1.3    1.1-1.5   (starts at 1.04)
 //   fade          false            the photograph also fades into the ground while it zooms (dusk or
@@ -382,11 +387,21 @@
       //    0.8 * hold * H of scroll, which the CSS height makes equal
       tl.fromTo(ground, { y: () => H() }, { y: () => -C(), duration: 0.8 }, 0.08);
       // 4. the title turns in, letter by letter (one tween per letter, so every letter is set to its
-      //    start state the moment the scene is built, not only the first)
-      chars.forEach((c, k) => {
-        tl.fromTo(c, { rotationY: 90, yPercent: 50, autoAlpha: 0, transformPerspective: 900 },
-          { rotationY: 0, yPercent: 0, autoAlpha: 1, duration: 0.08, ease: 'power3.out' }, 0.6 + (chars.length > 1 ? (0.08 * k) / (chars.length - 1) : 0));
-      });
+      //    start state the moment the scene is built, not only the first). On a phone the letters turn
+      //    on a clock of 0.7s once half the title is on screen, never with the scroll: a title keyed to
+      //    the scroll stands half-drawn where the reader stops, and one waiting for a point of the
+      //    timeline stands empty on screen until then (the inspector's letters-mid-reveal, both).
+      const turned = { rotationY: 90, yPercent: 50, autoAlpha: 0, transformPerspective: 900 };
+      let titleTw = null, titleOn = false;
+      if (phone && chars.length) {
+        gsap.set(chars, turned);
+        titleTw = gsap.to(chars, { rotationY: 0, yPercent: 0, autoAlpha: 1, duration: 0.4, ease: 'power3.out', paused: true, stagger: { amount: 0.3 } });
+      } else {
+        chars.forEach((c, k) => {
+          tl.fromTo(c, turned,
+            { rotationY: 0, yPercent: 0, autoAlpha: 1, duration: 0.08, ease: 'power3.out' }, 0.6 + (chars.length > 1 ? (0.08 * k) / (chars.length - 1) : 0));
+        });
+      }
       // 5. the inset opens from the bottom while its picture settles
       if (inset) {
         tl.fromTo(inset, { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.16, ease: 'power2.out' }, 0.78);
@@ -398,7 +413,13 @@
 
       // the words spread with the timeline (0.10-0.56): driven from its progress, so every render,
       // scrub catch-up and refresh lands on the right spread
-      tl.eventCallback('onUpdate', () => arc.layout(gapNow()));
+      // (and the phone's title clock: played once the ground has carried half the title onto the screen,
+      // played back when it drops below the screen again)
+      const titleIn = () => { const r = title.getBoundingClientRect(); return r.height > 0 && r.top + r.height / 2 < (window.innerHeight || H()); };
+      tl.eventCallback('onUpdate', () => {
+        arc.layout(gapNow());
+        if (titleTw) { const on = titleIn(); if (on !== titleOn) { titleOn = on; if (on) titleTw.play(); else titleTw.reverse(); } }
+      });
       // re-measure the curve whenever ScrollTrigger refreshes (resize, fonts, pictures)
       ScrollTrigger.create({ trigger: root, start: 'top bottom', end: 'bottom top', onRefresh: relayout });
       chromeTrigger(true);

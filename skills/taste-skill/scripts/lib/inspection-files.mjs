@@ -6,4 +6,4 @@ export function screenshotLabel(width, widths) {
   return sameClass.size > 1 ? `${label}-${width}` : label;
 }
 
-export const isInspectionScreenshot = (file) => /^(desktop|tablet|mobile)(?:-\d+)?-(fold|page-\d+|film-\d+)\.jpg$/.test(file);
+export const isInspectionScreenshot = (file) => /^(desktop|tablet|mobile)(?:-\d+)?-(fold|page-\d+|film-\d+|replay-\d+)\.jpg$/.test(file);

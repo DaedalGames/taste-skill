@@ -111,7 +111,9 @@ dividers, cards and background decoration at once.
 - When photographs carry the colour, the interface stays neutral and takes its ink from the darkest
   tone in the imagery.
 - Do not wash a photograph with the brand colour. Either leave it alone, or commit to a real treatment
-  for every image on the page (all greyscale, or all untouched).
+  for every image on the page (all greyscale where section 0 deals it, or all untouched). Where the
+  pictures carry the colour (food, seasons, rooms, products, a client named for a colour or a light)
+  they stay in colour, black-and-white files included (references/imagery.md §6).
 - Text over a photograph needs a calm region. If there is none, move the text off the image. A neutral
   scrim (black or the ink colour, 30–55% opacity, flat or fading over the text area only) is the one
   gradient the inspector allows.

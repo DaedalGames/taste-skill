@@ -17,6 +17,23 @@
 // once and put back), and a product replay that is small (replay-small) or not held while it plays
 // (replay-not-held).
 //
+// Round 7: the product replay beat by beat. On desktop each beat it shows is photographed with its stage held and
+// any drawn cursor hidden, and compared with the beat before inside the window: a replay most of whose beats barely
+// change the screen fails, one faint beat warns (replay-faint), and a held stage with empty bands round it fails
+// (replay-bands). Its beats are
+// laid side by side in desktop-replay-NN.jpg, at a size the words can be read. From the page itself: type under 14px
+// in the window (replay-type), a drawn cursor (replay-cursor), boxes in the window (replay-nested), an item that
+// changes among its look-alikes (replay-lookalike) and the accent on what does not change (replay-accent).
+//
+// Round 9: every picture the page asks for and does not get (404, any way it is asked for: img, srcset, a CSS
+// background, a preload, an Image() built in script) fails (missing-image). At every width each screen of the walk
+// measures the text that lies on a photograph against the pixels under its letters (text-on-photo); on a phone a
+// heading set in letters that a screen shows mid-way, letters still turned, moved or faded once it rests, fails
+// (letters-mid-reveal); on desktop a wall of six or more tiles is photographed and fails when three fills or more
+// colour it (tile-wall). From the page: a split hero's headline under 5vw (split-hero-title), placeholder streets and
+// phones (placeholder-contact), small list and table text (small-body), drawn diagrams (drawn-illustration) and
+// lines with dots or a knob that read as sliders (decorative-control).
+//
 // --app judges an app screen (dashboard, admin, settings) by the rules in references/app-screens.md; a
 // direction dealt with draw.mjs --app switches it on by itself.
 //
@@ -27,9 +44,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, statSync, createRea
 import { resolve, join, relative, dirname, extname, sep } from 'node:path';
 import { createServer } from 'node:http';
 import { Browser, sleep } from './lib/cdp.mjs';
-import { probe, frame, reach, layout, app, colourShare, groundShare } from './lib/probe.mjs';
+import { probe, frame, reach, layout, app, colourShare, groundShare, cellDiff } from './lib/probe.mjs';
 import { judge, judgeLayout, judgeApp, APP_SKIP } from './lib/rules.mjs';
-import { extra, controls } from './lib/probe-extra.mjs';
+import { extra, controls, replayState, photoText, photoTextDone, photoContrast, splitLetters, tileFills } from './lib/probe-extra.mjs';
 import { judgeExtra } from './lib/rules-extra.mjs';
 import { viewportClass as name, screenshotLabel, isInspectionScreenshot } from './lib/inspection-files.mjs';
 
@@ -143,6 +160,97 @@ async function sheet(frames, cols, cellW, cellH, path) {
   await helper.screenshot({ path, quality: 76 });
 }
 
+// The product replay, beat by beat (replay-faint, replay-bands). A held replay is scrolled to the middle of each
+// beat's stretch of its hold; one on its own clock is put in the middle of the screen and played from its Replay
+// button, each new state taken once it rests. Every state is photographed twice, the second time with any drawn
+// cursor hidden, after its change has run (2s); a beat is then the part of the window that changed since the beat
+// before, as a share of the whole screen (cellDiff).
+const HIDE_CURSOR = `(() => { if (!document.getElementById('ts-hide-cursor')) { const s = document.createElement('style'); s.id = 'ts-hide-cursor'; s.textContent = '[data-replay-cursor], .replay__cursor { visibility: hidden !important; }'; document.head.appendChild(s); } return 1; })()`;
+const SHOW_CURSOR = `(() => { const s = document.getElementById('ts-hide-cursor'); if (s) s.remove(); return 1; })()`;
+async function replayBeats(page, i, w, h) {
+  const state = () => page.eval(replayState, i).catch(() => null);
+  const shoot = async (s) => {
+    const cursor = s.cursor ? await page.screenshot({ format: 'png' }) : null;
+    await page.eval(HIDE_CURSOR).catch(() => {});
+    const png = await page.screenshot({ format: 'png' });
+    await page.eval(SHOW_CURSOR).catch(() => {});
+    return { ...s, png, cursorPng: cursor };
+  };
+  const states = [];
+  const s0 = await state();
+  if (!s0) return null;
+  if (s0.held && s0.beat != null) {
+    // where on the page each beat shows with the stage held (scanned once), then each beat from the middle of its stretch
+    const span = await page.eval(`(() => { const r = document.querySelectorAll('[data-replay]')[${i}]; const p = r.closest('.replay-stage').parentElement.getBoundingClientRect(); return { top: Math.round(p.top + scrollY), bottom: Math.round(p.bottom + scrollY) }; })()`);
+    const at = new Map(), stepY = Math.max(24, Math.round(h * 0.04));
+    for (let y = Math.max(0, span.top - h); y <= span.bottom; y += stepY) {
+      await page.eval(`window.scrollTo({ top: ${y}, behavior: 'instant' })`).catch(() => {});
+      await sleep(45);
+      const s = await page.eval(`(() => { const r = document.querySelectorAll('[data-replay]')[${i}]; const st = r.closest('.replay-stage'); return [r.dataset.beat ?? null, Math.abs(st.getBoundingClientRect().top - (parseFloat(getComputedStyle(st).top) || 0)) < 2, Math.round(scrollY)]; })()`).catch(() => null);
+      if (!s || s[0] == null || !s[1]) continue;
+      const g = at.get(+s[0]) || { from: s[2], to: s[2] }; g.to = s[2]; at.set(+s[0], g);
+    }
+    for (const k of [...at.keys()].sort((a, b) => a - b)) {
+      const g = at.get(k);
+      await page.eval(`window.scrollTo({ top: ${Math.round((g.from + g.to) / 2)}, behavior: 'instant' })`).catch(() => {});
+      await sleep(2000);
+      const s = await state();
+      if (s && s.beat != null && +s.beat === k) states.push({ k, ...(await shoot(s)) });
+    }
+  } else {
+    // on its own clock: in the middle of the screen, played once from its Replay button
+    const list = await page.eval(`String(document.querySelectorAll('[data-replay]')[${i}].dataset.replay || '')`).catch(() => '');
+    const ms = String(list).split(',').map(Number).filter((n) => n > 0);
+    const total = (ms.length === 1 && ms[0] <= 8 ? ms[0] * 1200 : ms.reduce((a, b) => a + b, 0)) + 2500;
+    await page.eval(`(() => { const r = document.querySelectorAll('[data-replay]')[${i}]; const b = r.getBoundingClientRect(); window.scrollTo({ top: Math.max(0, Math.round(b.top + scrollY - (innerHeight - b.height) / 2)), behavior: 'instant' }); return 1; })()`).catch(() => {});
+    await sleep(900);
+    const pressed = await page.eval(`(() => { const r = document.querySelectorAll('[data-replay]')[${i}]; const sc = r.closest('.replay-stage, .replay-hold, section, article, [data-replay-scope]') || r.parentElement; const b = sc && (sc.querySelector('[data-replay-again]') || [...sc.querySelectorAll('button')].find((x) => /replay|again/i.test(x.textContent))); if (!b) return false; b.click(); return true; })()`).catch(() => false);
+    if (!pressed) return { states: [], clock: true };
+    await sleep(120);
+    let s = await state(); if (!s) return null;
+    states.push({ k: 0, ...(await shoot(s)) });
+    // (compared with the state as photographed, so a change that lands while a photograph is taken is still seen)
+    let last = s.sig, k = 0;
+    const t0 = Date.now();
+    while (Date.now() - t0 < total && k < 6) {
+      await sleep(90);
+      const now = await state(); if (!now || now.sig === last) continue;
+      // a change: taken once its parts have rested for 450ms (1.6s at most)
+      let rest = now.sig, since = Date.now();
+      for (const t1 = Date.now(); Date.now() - t1 < 1600;) { await sleep(110); const x = await state(); if (!x) break; if (x.sig !== rest) { rest = x.sig; since = Date.now(); } else if (Date.now() - since >= 450) break; }
+      s = await state(); if (!s) break;
+      states.push({ k: ++k, ...(await shoot(s)) });
+      last = s.sig;
+    }
+  }
+  // each beat against the one before, inside the window, with the stage where it was
+  const diffs = [];
+  for (let j = 1; j < states.length; j++) {
+    const a = states[j - 1], b = states[j];
+    if (Math.abs(a.win.y - b.win.y) > 2 || Math.abs(a.win.x - b.win.x) > 2 || !b.win.w) { diffs.push({ k: b.k, cells: null }); continue; }
+    const d = await helper.eval(cellDiff, ['data:image/png;base64,' + a.png, 'data:image/png;base64,' + b.png, b.win, w, h]).catch(() => null);
+    const dc = a.cursorPng && b.cursorPng ? await helper.eval(cellDiff, ['data:image/png;base64,' + a.cursorPng, 'data:image/png;base64,' + b.cursorPng, b.win, w, h]).catch(() => null) : null;
+    diffs.push({ k: b.k, cells: d ? d.cells : null, withCursor: dc ? dc.cells : null });
+  }
+  return { states, diffs, clock: !(s0.held && s0.beat != null) };
+}
+// The beats of one replay side by side, each the window as photographed, at a size its words can be read
+async function replaySheet(rb, w, h, path) {
+  const tiles = rb.states.filter((s) => s.win.w > 8 && s.win.h > 8);
+  if (!tiles.length) return null;
+  const tileW = 720, cols = tiles.length > 1 ? 2 : 1, sc = tileW / Math.max(...tiles.map((s) => s.win.w));
+  const tileH = Math.round(Math.max(...tiles.map((s) => s.win.h)) * sc);
+  const label = (s) => { const d = rb.diffs.find((x) => x.k === s.k); return `${rb.clock ? 'Change' : 'Beat'} ${s.k}` + (d && d.cells != null ? ` · ${(d.cells * 100).toFixed(1)}% of the screen changed` : s.k === 0 ? (rb.clock ? ' · as Replay was pressed' : ' · the first state') : ' · not measured: the stage moved'); };
+  await helper.setViewport({ width: cols * tileW + (cols + 1) * 16, height: Math.ceil(tiles.length / cols) * (tileH + 40) + 16, dsf: 1 });
+  await helper.eval((a) => {
+    document.body.style.cssText = `margin:0;padding:16px;background:#777;display:grid;grid-template-columns:repeat(${a.cols},${a.tileW}px);gap:16px;font:600 16px/24px system-ui,sans-serif;color:#fff`;
+    document.body.innerHTML = a.tiles.map((t) => `<div><div>${t.label}</div><div style="position:relative;overflow:hidden;width:${Math.round(t.win.w * a.sc)}px;height:${Math.round(t.win.h * a.sc)}px"><img src="data:image/png;base64,${t.png}" style="position:absolute;left:${-t.win.x * a.sc}px;top:${-t.win.y * a.sc}px;width:${a.vw * a.sc}px;height:${a.vh * a.sc}px;max-width:none"></div></div>`).join('');
+    return Promise.all([...document.images].map((i) => i.decode().catch(() => {})));
+  }, { tiles: tiles.map((s) => ({ png: s.png, win: s.win, label: label(s) })), cols, tileW, sc, vw: w, vh: h });
+  await helper.screenshot({ path, quality: 80 });
+  return path;
+}
+
 try {
   for (const w of widths) {
     const h = HEIGHT[w] || Math.round(w * 0.625);
@@ -150,6 +258,16 @@ try {
     const imageLabel = screenshotLabel(w, widths);
     const page = await browser.newPage({ width: w, height: h, dsf: 1, mobile: w < 600 });
     await page.send('Page.addScriptToEvaluateOnNewDocument', { source: MOTION_RECORDER }).catch(() => {});
+    // every picture the page asks for and does not get (missing-image): a 4xx answer or a file not found, whether an
+    // img, a srcset candidate, a CSS background, a preload or an Image() built in script asked for it
+    const missingPics = new Map(), asked = new Map();
+    const isPicture = (type, u) => !/^data:/.test(u) && (type === 'Image' || /\.(jpe?g|png|webp|avif|gif|svg|jxl|heic)(\?|#|$)/i.test(u));
+    await page.send('Network.enable').catch(() => {});
+    const netOff = [
+      browser.on(page.sessionId, 'Network.requestWillBeSent', (p) => { if (asked.size < 4000) asked.set(p.requestId, { url: p.request.url, type: p.type }); }),
+      browser.on(page.sessionId, 'Network.responseReceived', (p) => { const s = p.response.status; if (s >= 400 && s < 500 && isPicture(p.type, p.response.url)) missingPics.set(p.response.url, s); }),
+      browser.on(page.sessionId, 'Network.loadingFailed', (p) => { const q = asked.get(p.requestId); if (q && !p.canceled && /ERR_FILE_NOT_FOUND|ERR_INVALID_URL/.test(p.errorText || '') && isPicture(p.type || q.type, q.url)) missingPics.set(q.url, p.errorText); }),
+    ];
     const how = await page.goto(url, { timeoutMs: 30000, settleMs: 600 });
     await sleep(600); // about 1.2s after the load event: is the title there to read yet?
     const early = await page.eval(TITLE_SEEN).catch(() => null);
@@ -170,7 +288,36 @@ try {
     const frames = [readFileSync(fold).toString('base64')];
     const frameErrors = []; // a check that throws loses its screen; the report keeps why
     const check = (opts) => page.eval(frame, opts).catch((e) => { if (frameErrors.length < 5) frameErrors.push(String(e.message).slice(0, 200)); return null; });
+    // text on a photograph against the pixels under its letters (text-on-photo): its words made transparent for one
+    // photograph of what lies under them, then put back
+    const photoRuns = [];
+    const photoCheck = async () => {
+      const units = await page.eval(photoText).catch((e) => { if (frameErrors.length < 5) frameErrors.push('photo text: ' + String(e.message).slice(0, 160)); return null; });
+      if (!units || !units.length) return;
+      let png = null;
+      try { png = await page.screenshot({ format: 'png' }); } catch {} finally { await page.eval(photoTextDone).catch(() => {}); }
+      if (!png) return;
+      const y = await page.eval('Math.round(scrollY || document.scrollingElement.scrollTop || 0)').catch(() => 0);
+      const res = await helper.eval(photoContrast, ['data:image/png;base64,' + png, units]).catch(() => null);
+      for (const r of res || []) if (r) photoRuns.push({ ...r, y });
+    };
+    // a heading set in letters on a phone, at each screen once it rests (letters-mid-reveal): measured again after a
+    // second when any letter is off, so an entrance still running on its own clock is let finish
+    const letterSeen = new Map();
+    // each letter against the word's own middle (the median letter): a word that moves or scales as one, a parallax or
+    // a line set lower, is not a word coming apart
+    const relLetters = (ls) => { const med = (k) => { const v = ls.map((l) => l[k]).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; }; const m = [0, med(1), med(2), med(3) || 1, med(4)]; return ls.map((l) => [l[0], l[1] - m[1], l[2] - m[2], l[3] / m[3], l[4] - m[4]]); };
+    // (a letter is off once it is faded under 0.85 or out of place; it reads as gone, a dot, under 0.5 or out of place)
+    const letterOff = (size, l, faded = 0.85) => l[0] < faded || Math.abs(l[1]) > Math.max(2, size * 0.08) || Math.abs(l[2]) > Math.max(2, size * 0.08) || Math.abs(l[3] - 1) > 0.06 || Math.abs(l[4]) > 4;
+    const letterCheck = async () => {
+      if (w >= 600) return;
+      let s = await page.eval(splitLetters, {}).catch(() => null); if (!s || !s.length) return;
+      if (s.some((x) => relLetters(x.letters).some((l) => letterOff(x.size, l)))) { await sleep(1000); s = (await page.eval(splitLetters, {}).catch(() => null)) || s; }
+      const y = await page.eval('Math.round(scrollY || document.scrollingElement.scrollTop || 0)').catch(() => 0);
+      for (const x of s) { if (!x.inView) continue; const v = letterSeen.get(x.id) || { text: x.text, size: x.size, at: [] }; v.at.push({ y, top: x.top, chars: x.chars, letters: x.letters, shows: relLetters(x.letters).map((l, i) => (letterOff(x.size, l, 0.5) ? '·' : x.chars[i])).join('') }); letterSeen.set(x.id, v); }
+    };
     const frameChecks = [await check()];
+    await photoCheck(); await letterCheck();
     const reached = [await page.eval(reach, metrics.reach).catch(() => null)];
     let upReach = null, atFoot = total <= 1;
     const where = () => page.eval('({ y: Math.round(scrollY || document.scrollingElement.scrollTop || 0), max: Math.round(document.scrollingElement.scrollHeight - innerHeight) })').catch(() => null);
@@ -186,6 +333,7 @@ try {
       lastY = pos.y;
       frames.push(await page.screenshot({ quality: 78 }));
       frameChecks.push(await check());
+      await photoCheck(); await letterCheck();
       reached.push(await page.eval(reach, metrics.reach).catch(() => null));
       await page.eval('window.__motionSample && window.__motionSample()').catch(() => {});
       // once, about two thirds down a long page: back up half a screen, where a bar that hides on the way down returns
@@ -198,6 +346,8 @@ try {
       }
       if (pos.y >= pos.max - 2) { atFoot = true; break; }
     }
+    // each heading set in letters at the end of the walk, the whole page scrolled through: its letters' final state
+    const letterEnd = letterSeen.size ? new Map(((await page.eval(splitLetters, { all: true }).catch(() => null)) || []).map((x) => [x.id, x.letters])) : new Map();
     const motion = await page.eval('window.__motion ? window.__motion() : null').catch(() => null);
     // re-measure after everything has revealed (catches content that only exists post-reveal)
     await page.eval(`window.scrollTo({ top: 0, behavior: 'instant' })`).catch(() => {});
@@ -254,6 +404,34 @@ try {
       }
     }
 
+    // the product replay beat by beat (replay-faint, replay-bands), on desktop; it scrolls the page, so before the controls
+    const replayRuns = [], replaySheets = [];
+    if (w >= 1100 && !appMode && ex && (ex.replays || []).length) {
+      for (let i = 0; i < Math.min(ex.replays.length, 8); i++) {
+        const rb = await replayBeats(page, i, w, h).catch((e) => { frameErrors.push('replay beats: ' + String(e.message).slice(0, 160)); return null; });
+        replayRuns.push(rb);
+        if (rb && rb.states.length) {
+          const p = await replaySheet(rb, w, h, join(outDir, `${imageLabel}-replay-${String(i + 1).padStart(2, '0')}.jpg`)).catch(() => null);
+          if (p) replaySheets.push(p);
+          for (const s of rb.states) { delete s.png; delete s.cursorPng; delete s.sig; }
+        }
+      }
+    }
+
+    // tile walls (tile-wall), on desktop: each candidate extra() marked is brought into view and photographed, and each
+    // tile's fill read from the pixels; it scrolls the page, so it runs before the controls too
+    const wallRuns = [];
+    if (w >= 1100 && !appMode && ex && (ex.tileWalls || []).length) {
+      for (const [i, wall] of ex.tileWalls.slice(0, 3).entries()) {
+        await page.eval(`window.scrollTo({ top: ${Math.max(0, Math.round(wall.top + Math.min(wall.h, h) / 2 - h / 2))}, behavior: 'instant' })`).catch(() => {});
+        await page.wheel(2); await sleep(900);
+        const rects = await page.eval(`[...document.querySelectorAll('[data-ts-tile^="${i}-"]')].map((e) => { const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; })`).catch(() => []);
+        const png = rects.length ? await page.screenshot({ format: 'png' }).catch(() => null) : null;
+        const fills = png ? await helper.eval(tileFills, ['data:image/png;base64,' + png, rects, ex.ground]).catch(() => null) : null;
+        if (fills) wallRuns.push({ ...wall, ...fills });
+      }
+    }
+
     // decorative controls: each switch, checkbox or slider is used once and put back (it touches the page, so it runs last)
     if (ex) ex.controls = await page.eval(controls).catch((e) => { frameErrors.push('controls: ' + String(e.message).slice(0, 160)); return null; });
     // a heading alone on a screen of the walk (any width) or of the film
@@ -294,6 +472,44 @@ try {
     if (ent && ['line-blocks', 'set-type'].includes(ent.id) && ent.wrapped.length && !allow.includes('entrance-line-wraps')) findings.push({ level: ent.id === 'line-blocks' ? 'FAIL' : 'WARN', id: 'entrance-line-wraps', width: w, message: `${ent.wrapped.length} headline line(s) wrap at this width, so ${ent.id === 'line-blocks' ? 'one block covers the whole column and leaves a bar beside the shorter line' : 'two lines rise as one'}: ` + ent.wrapped.slice(0, 3).map((t) => `"${t}"`).join(', '), fix: 'Each [data-line] must fit on one line at every width: break the headline into shorter lines (three at most), or set a smaller display step on phones.' });
     if (lay) findings.push(...judgeLayout(lay, { width: w, allow }));
     if (ex) findings.push(...judgeExtra(ex, { width: w, allow, screens: total, app: !!appMode }));
+    // ---------- round 9 ----------
+    // pictures the page asks for that are not there (r8-p37 asked for four)
+    netOff.forEach((off) => off());
+    const tail = (u) => { try { const x = new URL(u); return x.origin === new URL(url).origin ? decodeURIComponent(x.pathname).replace(/^\//, '') : x.host + decodeURIComponent(x.pathname); } catch { return u; } };
+    if (missingPics.size && !allow.includes('missing-image')) findings.push({ level: 'FAIL', id: 'missing-image', width: w, message: `${missingPics.size} picture(s) the page asks for are not there: ${[...missingPics.entries()].slice(0, 5).map(([u, s]) => `${tail(u).slice(-60)} (${s})`).join(', ')}.`, fix: 'Every src, srcset candidate, CSS background, preload and Image() in script names a file that exists: fetch the picture, correct the path or the crop\'s name, or take the reference out. A picture missing on one width only is usually a srcset or a media query naming a crop that was never saved.' });
+    // text on a photograph: the worst screen of each block, against the pixels under its letters (r7-p35's sentence
+    // under "Hvít means white" over the sea stack: 16% of its letters' ground under 4.5:1 on a tablet, 24% on a phone,
+    // where the judge could not read it; the blocks the judges read measured 9% or less). It fails when 12% or more of
+    // its letters' ground is under the target (4.5:1), or two stretches of a word or so or more (a tenth of the block)
+    // are. Display type from 24px reads through more of a busy picture (r5-p28's 208px "Tern", 16% of its ground under
+    // 3:1 where a wing crosses the T, read clearly): it fails when a stretch of a word or so is under 3:1, or 30% of
+    // its ground is.
+    const onPhoto = new Map(), lowShare = (r) => (r.segs ? r.segLow / r.segs : 0), bad = (r) => r.under * 2 + lowShare(r);
+    const unreadOnPhoto = (r) => (r.size >= 24 ? r.segLow >= 1 || r.under >= 0.3 : r.under >= 0.12 || r.p25 < r.need || (r.segLow >= 2 && lowShare(r) >= 0.1));
+    const rank = (r) => (unreadOnPhoto(r) ? 10 : 0) + bad(r); // (each block's worst screen, a failing one first)
+    for (const r of photoRuns) { const o = onPhoto.get(r.text); if (!o || rank(r) > rank(o)) onPhoto.set(r.text, r); }
+    const lowOnPhoto = [...onPhoto.values()].filter(unreadOnPhoto).sort((a, b) => bad(b) - bad(a));
+    if (lowOnPhoto.length && !allow.includes('text-on-photo')) findings.push({ level: 'FAIL', id: 'text-on-photo', width: w, message: `${lowOnPhoto.length} block(s) of text on a photograph cannot be read against the picture under them: ` + lowOnPhoto.slice(0, 4).map((r) => `"${r.text.slice(0, 40)}" ${r.size}px on ${r.media}: ${r.segLow} of its ${r.segs} words or so under ${r.need}:1 against the picture (the worst ${r.segWorst}:1), ${Math.round(r.under * 100)}% of its letters' ground under it, screen ${Math.round(r.y / h) + 1}`).join('; ') + '.', fix: 'Text on a picture sits on its calm part: move the words or the crop (object-position) so the letters fall on sky, wall or shadow of one tone, or set the text beside the picture on the ground. A scrim strong enough to rescue busy detail greys the photograph; never a text shadow. Check it at every width: the crop moves when the screen narrows.' });
+    // a heading in letters left mid-way on a phone (r7-p35's "Booking" as "B o"): at a screen of the walk, once it
+    // rested, letters still turned, moved or faded unlike both their own place and their state at the end of the walk
+    if (w < 600 && letterSeen.size && !allow.includes('letters-mid-reveal')) {
+      const caught = [];
+      for (const [id, v] of letterSeen) {
+        const end = letterEnd.get(id) ? relLetters(letterEnd.get(id)) : null; const tol = Math.max(2, v.size * 0.08);
+        const differs = (a, b) => !b || Math.abs(a[0] - b[0]) > 0.15 || Math.abs(a[1] - b[1]) > tol || Math.abs(a[2] - b[2]) > tol || Math.abs(a[3] - b[3]) > 0.06 || Math.abs(a[4] - b[4]) > 4;
+        for (const s of v.at) {
+          const rel = relLetters(s.letters), mask = rel.map((l, i) => letterOff(v.size, l) && differs(l, end && end[i])), off = mask.filter(Boolean).length;
+          // (what the visitor reads: a letter turned, moved, clipped or faded under half prints as a dot)
+          if (off >= 2 && off >= s.letters.length * 0.2) { caught.push({ text: v.text, shows: s.chars.map((ch, i) => (mask[i] && letterOff(v.size, rel[i], 0.5) ? '·' : ch)).join(''), off, n: s.letters.length, screen: Math.round(s.y / h) + 1, at: Math.round((s.top / h) * 100) }); break; }
+        }
+      }
+      if (caught.length) findings.push({ level: 'FAIL', id: 'letters-mid-reveal', width: w, message: `${caught.length} heading(s) set in letters stand half-drawn on a screen where the visitor stops: ` + caught.slice(0, 3).map((c) => `"${c.text}" shows as "${c.shows}" (${c.off} of ${c.n} letters still turned, moved or faded, screen ${c.screen}, ${c.at}% down it)`).join('; ') + '.', fix: 'On a phone a heading is whole wherever the scroll stops: let its letters arrive on a short clock as it enters (done within about a second), or show it whole (the scene\'s phone: "rest"). A letter reveal tied to the scroll leaves words like "B o" on the screen in between.' });
+    }
+    // a wall of tiles in several fills (r8-p37's hero: frames of flat red, teal, brown and yellow in six columns)
+    for (const wr of wallRuns) {
+      if (allow.includes('tile-wall') || wr.filled < 6 || wr.fills.length < 3) continue;
+      findings.push({ level: 'FAIL', id: 'tile-wall', width: w, message: `${wr.hero ? 'The first screen' : `"${wr.head}"`} is a wall of ${wr.n} tiles, ${wr.filled} of them filled in ${wr.fills.length} colours (${wr.fills.slice(0, 6).map((f) => `${f.hex} ×${f.n}`).join(', ')}).`, fix: 'One picture leads a section: the strongest frame large, two or three more beside it at most, each on the page\'s ground. Fields of flat colour, one per project or card, read as a wall of boxes and spread the palette; keep a project\'s colours inside its one frame and set the rest of the work as a list of type (references/layout.md).' });
+    }
     if (appMode) {
       findings = findings.filter((f) => !APP_SKIP.has(f.id) && f.id !== 'no-title' && f.id !== 'small-title');
       if (appM) findings.push(...judgeApp(appM, m, { width: w, allow }));
@@ -368,6 +584,16 @@ try {
       s.y = c.y; filmSteps.set(c.step, s);
     }
     const stepOrder = [...filmSteps.keys()].sort((a, b) => a - b);
+    // a replay beat that changed under 0.5% of the screen (the beat pass) is not something new in the film: it reads as
+    // the beat before it, so a held stage whose beats barely change is held empty (held-dead-screen, line-holds)
+    replayRuns.forEach((rb, i) => {
+      if (!rb || !rb.diffs.length || rb.clock) return;
+      const uid = rb.states[0]?.uid; if (uid == null || uid < 0) return;
+      const faint = new Set(rb.diffs.filter((d) => d.cells != null && d.cells < 0.005).map((d) => d.k));
+      if (!faint.size) return;
+      const eff = (b) => { let k = b; while (faint.has(k) && k > 0) k--; return k; };
+      for (const s of filmSteps.values()) s.media = new Set([...s.media].map((x) => { const m = x.match(/^ui:(\d+):(\d+)$/); return m && +m[1] === uid ? `ui:${uid}:${eff(+m[2])}` : x; }));
+    });
     // line-holds: a short line at display size that is nearly all the screen has to read (two other blocks of
     // 20 words or fewer beside it: a support line, a button) while nothing new arrives (no new words, picture or fragment)
     // and the line stands still (it moved 4% of the screen or less since the last step: the frames where it slides in
@@ -428,17 +654,47 @@ try {
       }
       ex.replays.forEach((r, i) => {
         const filmHeld = Math.round((((stuck.get(i)?.best) || 0) * stride) / 3 * 10) / 10;
-        if (r.held >= Math.max(1, r.beats) * 0.35 && filmHeld < Math.max(1, r.beats) * 0.3 && !allow.includes('replay-not-held')) findings.push({ level: 'FAIL', id: 'replay-not-held', width: w, message: `The product replay's stage is marked held, but in the scroll film it stood still for only ${filmHeld} screens for ${r.beats} beats.`, fix: 'Something breaks the sticky stage: an ancestor with overflow: hidden or auto (overflow: clip keeps it working), or a section with other children after the stage. The stage stays put while the beats play.' });
+        // (replay.js plays from data-replay-start when the window's first state shows under half its words)
+        const played = Math.max(1, r.beats - (r.start || 0));
+        if (r.held >= played * 0.35 && filmHeld < played * 0.3 && !allow.includes('replay-not-held')) findings.push({ level: 'FAIL', id: 'replay-not-held', width: w, message: `The product replay's stage is marked held, but in the scroll film it stood still for only ${filmHeld} screens for ${played} beats.`, fix: 'Something breaks the sticky stage: an ancestor with overflow: hidden or auto (overflow: clip keeps it working), or a section with other children after the stage. The stage stays put while the beats play.' });
         const got = seenBeats.get(i), want = Array.from({ length: Math.max(1, r.beats) }, (_, k) => k + 1), missing = want.filter((k) => !got || !got.has(k));
-        if (missing.length) findings.push({ level: 'FAIL', id: 'replay-unseen', width: w, message: !got ? `The product replay${ex.replays.length > 1 ? ` ${i + 1}` : ''} never stood in view in the scroll film.` : !got.size ? `The product replay${ex.replays.length > 1 ? ` ${i + 1}` : ''} showed no beat in the scroll film (no data-beat: it does not run on the current assets/replay.js).` : `Beat(s) ${missing.join(', ')} of ${want.length} of the product replay never showed in the scroll film (it saw ${[...got].sort().join(', ') || 'none'}).`, fix: 'Build it with assets/replay.js in a held stage (.replay-hold > .replay-stage): each beat then holds about half a screen of scroll and every one of them is on screen long enough to read. A replay that runs on its own clock is over, or not begun, while the visitor scrolls past.' });
+        const skipped = r.start && missing.length && missing.every((k) => k <= r.start);
+        if (missing.length) findings.push({ level: 'FAIL', id: 'replay-unseen', width: w, message: !got ? `The product replay${ex.replays.length > 1 ? ` ${i + 1}` : ''} never stood in view in the scroll film.` : !got.size ? `The product replay${ex.replays.length > 1 ? ` ${i + 1}` : ''} showed no beat in the scroll film (no data-beat: it does not run on the current assets/replay.js).` : skipped ? `Beat(s) ${missing.join(', ')} of ${want.length} of the product replay never show: its window shows under half its words before beat 1, so replay.js starts at beat ${r.start}.` : `Beat(s) ${missing.join(', ')} of ${want.length} of the product replay never showed in the scroll film (it saw ${[...got].sort().join(', ') || 'none'}).`, fix: skipped ? 'Write the window\'s first state full: the visitor\'s own rows and figures before the task, and mark only what the task adds (references/motion.md, "Product replay"); an empty window before beat 1 is skipped.' : 'Build it with assets/replay.js in a held stage (.replay-hold > .replay-stage): each beat then holds about half a screen of scroll and every one of them is on screen long enough to read. A replay that runs on its own clock is over, or not begun, while the visitor scrolls past.' });
       });
     }
+    // round 7: how much of the screen each beat visibly changes, measured with the stage still and any drawn cursor
+    // hidden (r7-p33's beats changed 0.6%, 0.0%, 3.8% and 0.4% of the screen; the judge saw no big moment). A beat that
+    // registers changes about 2.5% of the screen or more (a row 650px by 50px at 1440); the largest, 8% or more.
+    // Round 9: a faint beat (under 2.5%) is a warning, and so is a largest beat under 8%; most beats faint (more than
+    // half) fails. r8-p38's replay, whose first beat measured 0.4% to 0.7%, was seen and named by its judge.
+    replayRuns.forEach((rb, i) => {
+      if (!rb) return;
+      const r = ex?.replays?.[i] || {}, which = ex?.replays?.length > 1 ? ` ${i + 1}` : '';
+      const pct = (v) => `${(Math.round(v * 1000) / 10).toFixed(1)}%`;
+      const ds = rb.diffs.filter((d) => d.cells != null);
+      if (ds.length && !allow.includes('replay-faint')) {
+        const max = Math.max(...ds.map((d) => d.cells));
+        const faint = ds.filter((d) => d.cells < 0.025);
+        const cursorOnly = ds.filter((d) => d.withCursor != null && d.cells < 0.005 && d.withCursor >= d.cells + 0.0004);
+        const level = faint.length > ds.length / 2 ? 'FAIL' : faint.length || max < 0.08 ? 'WARN' : null;
+        if (level) findings.push({ level, id: 'replay-faint', width: w, message: `The product replay${which} ${level === 'FAIL' ? 'barely changes the screen from beat to beat' : faint.length ? `has ${faint.length === 1 ? 'a faint beat' : `${faint.length} faint beats`}` : 'has no large beat'}${rb.clock ? ' (played on its own clock from its Replay button, each change taken once it rested)' : ''}: ${ds.map((d) => `${rb.clock ? 'change' : 'beat'} ${d.k} ${pct(d.cells)}${faint.includes(d) ? ' (faint)' : ''}${cursorOnly.includes(d) ? ' (only the cursor moved)' : ''}`).join(', ')} of the screen, the largest ${pct(max)}. A beat that registers changes 2.5% of the screen or more, and the largest one 8% or more; most beats faint fails.${r.boxes?.length >= 3 ? ' Its items are boxes a step from the window\'s fill, so a change among them hardly shows.' : ''}`, fix: 'Make each beat one large change: a panel or drawer opens (data-open-at), the item at work takes the accent fill (data-focus-at), a full-size item arrives or moves while the rest make room (data-push, data-flip-at), a figure at display size rolls, or the view moves in on the region at work (data-zoom-at). The item that changes is a third of the window wide or more, its text 16px or more. A word swapped in a muted line, a 2px press or frame, a fill a step from its ground or a cursor moving is not a beat (references/motion.md, "Product replay"); look at the beats side by side in the replay sheet.' });
+      }
+      // the held stage fills the screen: the empty bands above and below it (a bar fixed to the top is not empty)
+      const held = rb.states.filter((s) => s.stuck);
+      if (held.length && !allow.includes('replay-bands')) {
+        const s = held[held.length - 1];
+        const above = Math.max(0, s.top - s.bar), below = Math.max(0, h - s.foot), share = (above + below) / h;
+        const level = share > 0.33 ? 'FAIL' : share > 0.25 || above > h * 0.15 || below > h * 0.15 ? 'WARN' : null;
+        if (level) findings.push({ level, id: 'replay-bands', width: w, message: `While the product replay${which} is held, ${Math.round(share * 100)}% of the screen is empty: ${above}px above its stage and ${below}px below it.`, fix: 'The held stage fills the screen: replay.js centres it, so the stage (heading, window, sentence, Replay) is 75% of the screen\'s height or more (about 680px at 1440 by 900). Make the window larger (larger type, more of the rows, the panel that does the task at full height), the heading and the sentence close to it, no padding round the stage; empty bands while the visitor scrolls through the hold read as dead space.' });
+      }
+    });
     // the product replay the sheet dealt (draw.mjs section 8)
     if (dealtReplay && w >= 1100 && ex && !(ex.replays || []).length && !allow.includes('replay-missing')) findings.push({ level: 'FAIL', id: 'replay-missing', width: w, message: `The sheet dealt the product replay "${dealtReplay.name || dealtReplay.id}" in the ${dealtReplay.carries || ''} section, but the page has no [data-replay].`, fix: 'Build the product replay the sheet deals (section 8): the product\'s window in its final state with data-replay and its marked beats, assets/replay.js, and a Replay button under it.' });
     if (w >= 1100 && empty.length >= 2 && !allow.includes('empty-screens')) findings.push({ level: 'FAIL', id: 'empty-screens', width: w, message: `${empty.length} of ${frameChecks.length} desktop screens are almost empty ground (under 20% of the screen holds text, a picture or a colour field): screens ${empty.map(({ f, i }) => screenOf(f, i)).join(', ')}.`, fix: 'An empty screen is a rest only once per page. Elsewhere it means the section is underbuilt: set its content larger, give it the full information, put it on a colour field, or cut it.' });
-    report.viewports.push({ width: w, height: h, load: how, screens: frames.length, pageScreens, stride, extra: ex, reached: reached.map((r) => (r ? r.found : null)), upReach: upReach ? upReach.found : null, unread, overText, frameErrors, filled: frameChecks.map((f) => f?.filled ?? null), content: frameChecks.map((f) => f?.content ?? null), filmContent: filmChecks.map((f) => (f ? [Math.round(f.y / h * 10) / 10, f.content] : null)), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5) });
+    report.viewports.push({ width: w, height: h, load: how, screens: frames.length, pageScreens, stride, extra: ex, reached: reached.map((r) => (r ? r.found : null)), upReach: upReach ? upReach.found : null, unread, overText, frameErrors, filled: frameChecks.map((f) => f?.filled ?? null), content: frameChecks.map((f) => f?.content ?? null), filmContent: filmChecks.map((f) => (f ? [Math.round(f.y / h * 10) / 10, f.content] : null)), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5), missingImages: [...missingPics.keys()].slice(0, 12), photoText: [...onPhoto.values()].slice(0, 24), letters: [...letterSeen.values()].map((v) => ({ text: v.text, size: v.size, shows: v.at.map((s) => s.shows) })), tileWalls: wallRuns });
     report.findings.push(...(appMode ? findings.filter((f) => !APP_SKIP.has(f.id)) : findings));
-    report.images.push({ viewport: label, width: w, fold, pages: sheets, film: filmSheets, walked: frames.length, stride, pageScreens, atFoot });
+    report.images.push({ viewport: label, width: w, fold, pages: sheets, film: filmSheets, replay: replaySheets, walked: frames.length, stride, pageScreens, atFoot });
+    if (replayRuns.length) report.viewports[report.viewports.length - 1].replayBeats = replayRuns.map((rb) => (rb ? { clock: rb.clock, beats: rb.diffs, states: rb.states.map((s) => ({ k: s.k, win: s.win, top: s.top, foot: s.foot, bar: s.bar, bare: s.bare, stuck: s.stuck })) } : null));
     await page.close();
   }
   // Under prefers-reduced-motion the page is the finished page: nothing may stay hidden waiting for an
@@ -526,6 +782,7 @@ for (const im of report.images) {
   line(`  ${(im.viewport + ' ' + im.width + 'px').padEnd(15)} ${rel(im.fold)}   (${im.walked} screens photographed and checked${im.stride > 1 ? `, one in every ${im.stride}` : ''}; ${im.atFoot ? 'the walk reached the foot of the page' : `the walk stopped before the foot of a ${im.pageScreens}-screen page`})`);
   for (const p of im.pages) line(`  ${''.padEnd(15)} ${rel(p)}`);
   for (const p of im.film || []) line(`  ${'scroll film'.padEnd(15)} ${rel(p)}  (6 frames a row, a third of a screen apart)`);
+  for (const p of im.replay || []) line(`  ${'replay beats'.padEnd(15)} ${rel(p)}  (each beat of the product replay, its window held still, with the share of the screen it changed)`);
 }
 line('');
 line(`report: ${rel(join(outDir, 'report.json'))}`);

@@ -410,8 +410,8 @@
   ],
   "needs": [],
   "idea": "Software is most convincing when it is doing its job in front of you. Instead of describing features, put small, true, working fragments of the product on the page: the actual control, with real content, responding to the pointer. A colour picker's loupe reads the page's own background and prints its value. A list tool lets you tick an item right there. A type-scale plugin sets the page's own headings. Find the one interaction that is the product and make the hero that interaction; then show each further capability as another fragment at real size. No dashboard collage, no browser frame, no screenshots shrunk until unreadable.",
-  "composition": "Hero: a short plain headline (4–6vw, left-aligned, upper-left third) and one sentence; the rest of the first screen is the main fragment at actual interface size, sitting directly on the page or on one flat stage colour, large enough to read every label. The fragment is built in HTML and works. Below, capabilities are a single-column sequence, each a row of two parts on a 5/7 split: a two-line statement on one side and the relevant fragment on the other, with the fragments varying in size and shape so the column never becomes a zigzag of equal blocks. Fragments are cropped pieces of interface (a menu, a row, a control, a panel edge), not whole windows. One section pins a fragment while three short statements change it.",
-  "typography": "The marketing type matches the product's interface type so the fragments and the page feel like one thing. Headline modest; interface text at its true size (13–15px) inside fragments.",
+  "composition": "Hero: a short plain headline (5–6vw, left-aligned, upper-left third) and one sentence; the rest of the first screen is the main fragment at actual interface size, sitting directly on the page or on one flat stage colour, large enough to read every label. The fragment is built in HTML and works. Below, capabilities are a single-column sequence, each a row of two parts on a 5/7 split: a two-line statement on one side and the relevant fragment on the other, with the fragments varying in size and shape so the column never becomes a zigzag of equal blocks. Fragments are cropped pieces of interface (a menu, a row, a control, a panel edge), not whole windows. One section pins a fragment while three short statements change it.",
+  "typography": "The marketing type matches the product's interface type so the fragments and the page feel like one thing. Headline plain in its words, never small: beside the main fragment it is 5vw or more at 1440 (72px); interface text at its true size (13–15px) inside fragments.",
   "typeClasses": [
    "grotesk-tight",
    "grotesk-light",
@@ -511,7 +511,7 @@
    "product-photo"
   ],
   "idea": "Show the thing, bigger than seems reasonable. One photographed object fills the first screen, scaled until the viewport crops it, with the text small and tucked beside or behind it. The crop is the idea: a record whose edge leaves the top-right corner, a bottle whose shoulder runs off the bottom, a chair seen so close you read its grain. Being that close reads as confidence in the object. Everything else on the page serves it: details as tight close-ups, facts as short lines, one way to buy.",
-  "composition": "First screen: the object occupies 55–75% of the viewport and breaks at least one edge. It sits on a flat field (ground colour or one bold colour), never in a box. The headline is short and either very large and partly hidden behind the object (10–13vw, the object overlapping two or three letters) or small (28–36px) in the opposite corner with a one-line description. No navigation bar beyond a wordmark and one action. Following sections: a row of three or four close-up details at different crop ratios (not equal tiles), a single wide photograph of the object in use, a plain list of facts set large (materials, size, price) aligned to one edge, then the purchase action. The object returns once at the end from a different angle.",
+  "composition": "First screen: the object occupies 55–75% of the viewport and breaks at least one edge. It sits on a flat field (ground colour or one bold colour), never in a box. The headline is short and either very large and partly hidden behind the object (10–13vw, the object overlapping two or three letters) or small (28–36px) in the opposite corner with a one-line description, and small only when the object stands in the middle of a wide field with the words well clear of it: beside an object that holds one half of a split, the headline is 5vw or more at 1440 (72px). No navigation bar beyond a wordmark and one action. Following sections: a row of three or four close-up details at different crop ratios (not equal tiles), a single wide photograph of the object in use, a plain list of facts set large (materials, size, price) aligned to one edge, then the purchase action. The object returns once at the end from a different angle.",
   "typography": "Either very large and structural or very small and precise; pick one for the headline and hold it. Facts are set in the text face at 22–28px, not in a table.",
   "typeClasses": [
    "grotesk-light",
@@ -567,8 +567,8 @@
   "needs": [
    "product-photo"
   ],
-  "idea": "Present what is on offer the way a field guide presents birds: each item alone on a flat colour, same scale, same angle, named plainly. A bakery's pastries become specimens and the specimens become the menu. A furniture maker's chairs each get their own colour tile. The format flatters ordinary objects because it treats each as worth looking at, and it replaces both the feature grid and the product-card grid with something that has a point of view.",
-  "composition": "Hero: a left-aligned statement of what this is (5–7vw, upper-left) beside or above a tight cluster of four to seven specimen tiles of different sizes arranged as a loose mosaic that runs off the right edge. Each tile is a flat colour square or 4:5 rectangle with one photograph centred on it, no border, 8–12px gaps. The main section is the catalogue itself: a grid of tiles in which each item has its name and one fact set beneath the tile in the text face, aligned left to the tile edge. Tile colours rotate through three or four fields from the palette. One tile in every six or seven is double size. Supporting sections (about, how to order) are plain text on the ground colour, kept short.",
+  "idea": "Present what is on offer the way a field guide presents birds: each item alone on the same plain field, same scale, same angle, named plainly. A bakery's pastries become specimens and the specimens become the menu. A furniture maker's chairs each stand alone in the same pale frame. The format flatters ordinary objects because it treats each as worth looking at, and it replaces both the feature grid and the product-card grid with something that has a point of view.",
+  "composition": "Hero: a left-aligned statement of what this is (5–7vw, upper-left) beside or above a tight cluster of four to seven specimen tiles of different sizes arranged as a loose mosaic that runs off the right edge. Each tile is a square or 4:5 rectangle in one fill, the page's surface one step off the ground, with one photograph centred on it, no border, 8–12px gaps. The main section is the catalogue itself: a grid of tiles in which each item has its name and one fact set beneath the tile in the text face, aligned left to the tile edge. Every tile takes that same fill: the items carry the colour, never the tiles. One tile in every six or seven is double size. Supporting sections (about, how to order) are plain text on the ground colour, kept short.",
   "typography": "Friendly and plain. Item names at 18–22px in medium weight, facts beneath in the soft ink. One big statement in the hero; no other display type.",
   "typeClasses": [
    "grotesk-tight",
@@ -576,20 +576,20 @@
    "slab",
    "rounded-friendly"
   ],
-  "colour": "The tiles are the colour: three or four flat fields from the palette, repeated in a steady rotation. Ground stays neutral.",
+  "colour": "The items are the colour. The ground stays quiet and every tile takes one fill, the surface a step off the ground; the accent goes on the action only. Tiles in three or four colours read as a wall of boxes and spread the palette (the inspector fails it, tile-wall).",
   "paletteTags": [
-   "pastel-fields",
-   "flat-loud",
-   "light-neutral"
+   "light-neutral",
+   "earth",
+   "mono-accent"
   ],
-  "imagery": "Photographs of single items on plain backgrounds, all cropped to sit at the same apparent size within their tile. On light tiles, `mix-blend-mode: multiply` removes white studio backgrounds. If the subject's own item photographs are missing, use the dealt set and say so.",
+  "imagery": "Photographs of single items on plain backgrounds, all cropped to sit at the same apparent size within their tile. On pale tiles, `mix-blend-mode: multiply` removes white studio backgrounds. If the subject's own item photographs are missing, use the dealt set and say so.",
   "sectionTags": [
    "object-led",
    "colour-field",
    "photo-led"
   ],
   "motion": "drag-row",
-  "richness": "Rhythm of colour tiles and the pleasure of comparing like with like.",
+  "richness": "Rhythm of like objects on one ground and the pleasure of comparing like with like.",
   "pitfalls": "It needs at least six items that can be shown as objects; with three it is a feature row. Keep labels outside the tiles. No shadows under the objects, no hover lift.",
   "seenIn": [
    "aww-noho",
@@ -743,8 +743,8 @@
    "two-tone",
    "mono-accent"
   ],
-  "imagery": "Photographs used as blocks in mosaics alongside flat colour tiles; mixed subjects are fine if cropped tight and converted to one treatment.",
-  "photoTreatment": "Give all photographs in a mosaic one treatment: greyscale via `filter: grayscale(1) contrast(1.05)`, or all full colour. Do not mix.",
+  "imagery": "Photographs used as blocks in mosaics alongside flat colour tiles; mixed subjects are fine if cropped tight and given one treatment, the one section 0 deals.",
+  "photoTreatment": "Give all photographs in a mosaic the one treatment section 0 deals, never mixed: in full colour unless it deals black-and-white.",
   "sectionTags": [
    "type-led",
    "colour-field",
@@ -861,7 +861,7 @@
   ],
   "motion": "slow-crossfade",
   "richness": "A full-height photograph always in view, against a quiet, well-set column of text.",
-  "pitfalls": "The reading column must be genuinely well typeset, since it is half the page. Do not put cards or grids in it. Check that the fixed image crops well at short viewport heights. In blind tests the commonest complaint was monotony: several screens of the same split with only the text changing. Change what the reading half holds from section to section (a list, a large figure, a table, a full-colour panel, a drawing) and let at least one section break the split and run full width.",
+  "pitfalls": "The reading column must be genuinely well typeset, since it is half the page. Do not put cards or grids in it. Check that the fixed image crops well at short viewport heights. In blind tests the commonest complaint was monotony: several screens of the same split with only the text changing. Change what the reading half holds from section to section (a list, a large figure, a table, a full-colour panel, a second photograph) and let at least one section break the split and run full width.",
   "seenIn": [
    "opl-le-petit-bleu",
    "opl-rafael-derolez-2026",
@@ -1106,8 +1106,8 @@
   ],
   "needs": [],
   "idea": "Explain the product the way the best technology companies do: one plain sentence that says what it is and who it is for, then the product itself, large and real, then each thing it does shown rather than told. The idea is not a metaphor; it is the product's own best moment, chosen and framed so a visitor understands it in five seconds. Find the one screen, object or result that makes someone want it, and open with that.",
-  "composition": "The first screen is a modest, confident headline (the dealt display step, two lines at most), one sentence under it and one or two actions, with the product filling most of what is left: a large interface fragment, the object, or the result it produces. Below it the page alternates between wide product moments (one capability, one picture or fragment at full width with a short heading) and compact rows that pair two sentences with a cropped fragment. Somewhere in the middle a calm overview lists the remaining capabilities as short items (a name and one sentence each), set in two or three columns with no icons and no boxes. Facts that matter (prices, limits, platforms, numbers) are set as facts: a table, a list, a figure. Sections are separated by space, not by colour.",
-  "typography": "Sentence case everywhere. The headline is a sensible size, not a poster; the hierarchy comes from weight and space as much as from size. Interface text inside fragments at its true size.",
+  "composition": "The first screen is a confident headline (the dealt display step, which the sheet raises to 5vw at 1440 when the words sit beside the product; two lines at most), one sentence under it and one or two actions, with the product filling most of what is left: a large interface fragment, the object, or the result it produces. Below it the page alternates between wide product moments (one capability, one picture or fragment at full width with a short heading) and compact rows that pair two sentences with a cropped fragment. Somewhere in the middle a calm overview lists the remaining capabilities as short items (a name and one sentence each), set in two or three columns with no icons and no boxes. Facts that matter (prices, limits, platforms, numbers) are set as facts: a table, a list, a figure. Sections are separated by space, not by colour.",
+  "typography": "Sentence case everywhere. The headline is large but not a poster (about 5vw at 1440 beside the product); the hierarchy comes from weight and space as much as from size. Interface text inside fragments at its true size.",
   "typeClasses": [
    "grotesk-tight",
    "grotesk-light",
@@ -1277,7 +1277,7 @@
    "dark-neutral",
    "mono-accent"
   ],
-  "imagery": "The subject photographed or generated cleanly, from the front, the side, close up; drawings of its construction where they explain something.",
+  "imagery": "The subject photographed or generated cleanly, from the front, the side, close up; its construction shown by a close photograph of the joint or part, never a drawing.",
   "sectionTags": [
    "object-led",
    "dense",

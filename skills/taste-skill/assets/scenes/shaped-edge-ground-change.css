@@ -28,8 +28,9 @@
      --seg-inset-ratio  its shape, default 2 / 1 (phone 4 / 3, so the end frame holds a picture, not a strip)
 
    The headline is set in --ink straight on the sky, with no scrim: that needs open, even sky behind it.
-   For any other photograph put the class seg--band on the section (or pass hero: "band"): the headline
-   block gets a flat translucent fill and white type.
+   The lede under it sits on a solid strip of the ground. For any other photograph put the class
+   seg--band on the section (or pass hero: "band"): the headline block gets a solid band in --ink and
+   type in the ground's colour.
    Weights follow the page: --display-weight (the headline, the words on the arch, the statement and the
    chapter title; 500 here when the page sets none). A weight the page has not loaded is never faked:
    the nearest loaded one shows. */
@@ -97,24 +98,34 @@
   text-transform: uppercase;
   text-wrap: balance;
 }
+/* The lede is small text and never trusts the sky: a sky that looks even still carries haze, a ridge or
+   the zoom's next crop under 19px letters (the demo's read 4.1:1 at its worst). It sits on a solid strip
+   of the ground, the sky's own colour, so on an even sky it does not show, and --ink reads 7:1 on it
+   at every width. Flat, never a gradient. */
 [data-scene="shaped-edge-ground-change"] .seg-hero__lede {
-  margin: clamp(16px, 2.4svh, 28px) 0 0;
+  width: fit-content;
+  margin: clamp(16px, 2.4svh, 28px) 0 0 -0.55em;
+  padding: 0.3em 0.55em 0.4em;
   max-width: 25rem;
+  background: var(--seg-ground);
   font-family: var(--font-text, inherit);
   font-size: clamp(17px, 1.35vw, 20px);
   line-height: 1.45;
   text-wrap: pretty;
 }
-/* hero: "band" — for a photograph whose sky is not open and even behind the headline */
+/* hero: "band" — for a photograph whose sky is not open and even behind the headline. The band is
+   solid --ink with the type in the ground's colour (7:1 by the colour contract): a translucent fill
+   reads under 4.5:1 over a pale sky. */
 [data-scene="shaped-edge-ground-change"].seg--band .seg-hero {
   box-sizing: border-box;
   width: auto;
   max-width: min(52rem, 56vw);
   margin-left: calc(-1 * clamp(20px, 2.2vw, 36px));
   padding: clamp(20px, 2.2vw, 36px);
-  background: rgb(8 14 24 / 0.45);
-  color: #fff;
+  background: var(--seg-ink);
+  color: var(--seg-ground);
 }
+[data-scene="shaped-edge-ground-change"].seg--band .seg-hero__lede { margin-left: 0; padding: 0; background: none; }
 
 /* The ground: one element, an elliptical cap on a flat body, so there is no seam between them. */
 [data-scene="shaped-edge-ground-change"] .seg-ground {

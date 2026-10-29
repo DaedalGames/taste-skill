@@ -267,15 +267,16 @@
   "id": "striped-card-beside-room",
   "name": "Striped card beside the room",
   "archetype": "split",
+  "split": true,
   "directions": [
    "one-motif",
    "page-is-the-object",
    "split-stage"
   ],
   "needs": [],
-  "blueprint": "The viewport is split 50/50 with a 12px gap and 12px outer margins. The right half is one full-height photograph of the room, corners radiused 16px, `position: sticky` so it stays in view while the left half scrolls. The left half is a printed card: a flat paper-colour panel with the same 16px radius, and the subject's stripe (from its awning, label or ribbon) as the only ornament. Across the card's top runs a band 56px tall made of alternating bars of the single ink colour and paper, each bar 28px wide, built as a flex row of filled blocks. The same stripe returns as an 8px band above the footer and inside the button on hover. Under the band, centred: the wordmark about 300px wide, then a two-line headline in a light serif at clamp(40px, 3.6vw, 56px) in the ink colour, one supporting sentence at 17px held to 36ch, and the single action as a solid rectangular button. Three text links sit in one centred row at 15px, 28px above the card's bottom edge. One ink on paper; the photograph supplies every other colour.",
-  "mobile": "The photograph comes first at full width inside 12px margins, 48svh tall, with the 16px radius. The card follows and overlaps the photograph's bottom edge by 24px using a negative margin. Its striped band is 40px tall; below it the wordmark at 56% width, the headline at 8vw on two lines, the sentence and the button, all centred. The links wrap into the card's foot.",
-  "headline": "A warm two-line welcome of three to six words, up to about 18 characters per line at 3.6vw.",
+  "blueprint": "The viewport is split 50/50 with a 12px gap and 12px outer margins. The right half is one full-height photograph of the room, corners radiused 16px, `position: sticky` so it stays in view while the left half scrolls. The left half is a printed card: a flat paper-colour panel with the same 16px radius, and the subject's stripe (from its awning, label or ribbon) as the only ornament. Across the card's top runs a band 56px tall made of alternating bars of the single ink colour and paper, each bar 28px wide, built as a flex row of filled blocks. The same stripe returns as an 8px band above the footer and inside the button on hover. Under the band, centred: the wordmark about 300px wide, then a two-line headline in a light serif at clamp(56px, 5vw, 80px) in the ink colour, one supporting sentence at 17px held to 36ch, and the single action as a solid rectangular button. Three text links sit in one centred row at 15px, 28px above the card's bottom edge. One ink on paper; the photograph supplies every other colour.",
+  "mobile": "The photograph comes first at full width inside 12px margins, 48svh tall, with the 16px radius. The card follows and overlaps the photograph's bottom edge by 24px using a negative margin. Its striped band is 40px tall; below it the wordmark at 56% width, the headline at 9vw on two lines, the sentence and the button, all centred. The links wrap into the card's foot.",
+  "headline": "A warm two-line welcome of three to five words, at most 30 characters, about 15 per line at 5vw (72px at 1440).",
   "motion": "slow-crossfade",
   "seenIn": [
    "opl-le-petit-bleu",
@@ -308,6 +309,7 @@
   "id": "fragment-on-shaped-stage",
   "name": "Fragment on a shaped stage",
   "archetype": "split",
+  "split": true,
   "directions": [
    "product-performs",
    "one-motif",
@@ -328,15 +330,16 @@
   "id": "control-reads-the-page",
   "name": "Control that reads the page",
   "archetype": "split",
+  "split": true,
   "directions": [
    "product-performs",
    "quiet-instrument",
    "dark-room"
   ],
   "needs": [],
-  "blueprint": "A near-black or deep neutral ground split into two halves by tone alone: the right half is one step lighter than the left, and they meet at a clean vertical edge at 50%. Left half: a small logo mark top-left at a 40px margin, then two-thirds of empty ground, then everything else anchored bottom-left, 40px from the edges: a one-line headline at clamp(26px, 2.1vw, 32px) in medium weight, one supporting sentence at 17px in the softer ink held to 44ch, and the single action as a light rectangular button. Right half: one fragment of the product, centred, about 450px square, built in HTML and working. It is the product's defining control (a loupe, a picker, a dial, a field) and it acts on the page itself: it reads the real background colour, the real headline size or the pointer position and prints that value in its own readout at 13px. Mark its root with data-ui so the product's own radii and borders apply inside it. There is no navigation bar; one text link sits top-right at 15px.",
-  "mobile": "The halves stack as two tones. The fragment comes first: 78vw square, centred in the lighter block, which is 58svh tall, still live and reading the page under the visitor's finger. The darker block below holds the headline at 6.4vw on up to two lines, the sentence at 16px and the button, left-aligned at 20px. The logo mark sits top-left over the first block.",
-  "headline": "One plain line at 26–32px naming what the tool is, up to about 32 characters, wrapping to two lines on a phone.",
+  "blueprint": "A near-black or deep neutral ground split into two halves by tone alone: the right half is one step lighter than the left, and they meet at a clean vertical edge at 50%. Left half: a small logo mark top-left at a 40px margin, then two-thirds of empty ground, then everything else anchored bottom-left, 40px from the edges: a headline on one or two lines at clamp(48px, 5vw, 80px) in medium weight, one supporting sentence at 17px in the softer ink held to 44ch, and the single action as a light rectangular button. Right half: one fragment of the product, centred, about 450px square, built in HTML and working. It is the product's defining control (a loupe, a picker, a dial, a field) and it acts on the page itself: it reads the real background colour, the real headline size or the pointer position and prints that value in its own readout at 13px. Mark its root with data-ui so the product's own radii and borders apply inside it. There is no navigation bar; one text link sits top-right at 15px.",
+  "mobile": "The halves stack as two tones. The fragment comes first: 78vw square, centred in the lighter block, which is 58svh tall, still live and reading the page under the visitor's finger. The darker block below holds the headline at 9vw on up to two lines, the sentence at 16px and the button, left-aligned at 20px. The logo mark sits top-left over the first block.",
+  "headline": "A plain line naming what the tool is, at 5vw (72px at 1440), up to about 26 characters on two lines.",
   "motion": "masked-headline",
   "seenIn": [
    "opl-dabbit"
@@ -445,6 +448,7 @@
   "id": "object-on-the-seam",
   "name": "Object on the seam",
   "archetype": "object-centre",
+  "split": true,
   "directions": [
    "hero-object",
    "quiet-instrument"
@@ -452,9 +456,9 @@
   "needs": [
    "product-photo"
   ],
-  "blueprint": "A white or very pale page organised by one change of tone. A square-cornered panel one step darker than the page (a flat pale blue-grey or warm grey) fills the top 44% of the viewport inside 12px margins; the page colour runs below it. The object, photographed on a plain background and blended with `mix-blend-mode: multiply`, straddles the seam between the two tones: it is about 62% of the viewport wide, starts at column 6 and runs off the right edge, with its upper half over the panel and its lower half over the page. Type is small and exact. The headline is two lines at 24px in medium weight, far left on columns 1–3 at a 32px margin, its first baseline resting exactly on the seam; the second line is set in the softer ink. One supporting sentence at 15px, max 34ch, sits 120px lower on the same margin with the single action as a small rectangular button under it. A plain top row inside the panel at 14px: wordmark left, three text links centred, one text link right.",
-  "mobile": "The tonal panel takes the top 46svh. The object is 120vw wide, centred on the seam and cropped by the right edge. The headline sits just under the seam at 22px on two lines at a 20px margin, with the sentence at 15px beneath and then the button. The wordmark sits top-left inside the panel; the links collapse to one word top-right.",
-  "headline": "Two short sentences at 24px, one per line and up to about 28 characters each, the second in the softer ink.",
+  "blueprint": "A white or very pale page organised by one change of tone. A square-cornered panel one step darker than the page (a flat pale blue-grey or warm grey) fills the top 44% of the viewport inside 12px margins; the page colour runs below it. The object, photographed on a plain background and blended with `mix-blend-mode: multiply`, straddles the seam between the two tones: it is about 62% of the viewport wide, starts at column 6 and runs off the right edge, with its upper half over the panel and its lower half over the page. The words are few and exact. The headline is two lines at clamp(56px, 5vw, 80px) in medium weight, far left on columns 1–5 at a 32px margin, clear of the object, its first baseline resting exactly on the seam; the second line is set in the softer ink. One supporting sentence at 17px, max 34ch, sits 64px lower on the same margin with the single action as a small rectangular button under it. A plain top row inside the panel at 14px: wordmark left, three text links centred, one text link right.",
+  "mobile": "The tonal panel takes the top 46svh. The object is 120vw wide, centred on the seam and cropped by the right edge. The headline sits just under the seam at 9vw on two lines at a 20px margin, with the sentence at 16px beneath and then the button. The wordmark sits top-left inside the panel; the links collapse to one word top-right.",
+  "headline": "Two short lines at 5vw (72px at 1440), one per line and up to about 13 characters each, the second in the softer ink.",
   "motion": "shutter-image",
   "seenIn": [
    "opl-aevion"
@@ -464,6 +468,7 @@
   "id": "statement-beside-specimen-mosaic",
   "name": "Statement beside specimen mosaic",
   "archetype": "mosaic",
+  "split": true,
   "directions": [
    "specimen-catalogue",
    "split-stage",
@@ -472,7 +477,7 @@
   "needs": [
    "product-photo"
   ],
-  "blueprint": "The viewport is split 50/50 by tone alone: the left half is the page ground, the right half a field one step darker, meeting at a clean vertical edge with no line. Left half: the wordmark at 22px sits top-left on a 32px margin; under it the statement at clamp(44px, 4.4vw, 68px), bold, tracking -0.04em, leading 1.0, top-left aligned and filling the upper 40% of the half. The lower part of this side stays empty except for one supporting sentence at 18px pinned bottom-left and the single action as a solid rectangle beside it. Right half: a loose mosaic of seven specimen tiles on a 4-column, 3-row grid with 14px gaps. Each tile is a flat palette colour at 3:4 holding one cut-out item, centred, object-fit: contain, mix-blend-mode: multiply. Five cells are left empty so the tiles stagger; one tile spans two columns and two rows; the rightmost column is cropped by the viewport edge. Two text links sit top-right over the darker field. The right half may be position: sticky while the left scrolls.",
+  "blueprint": "The viewport is split 50/50 by tone alone: the left half is the page ground, the right half a field one step darker, meeting at a clean vertical edge with no line. Left half: the wordmark at 22px sits top-left on a 32px margin; under it the statement at clamp(52px, 5.2vw, 84px), bold, tracking -0.04em, leading 1.0, top-left aligned and filling the upper 40% of the half. The lower part of this side stays empty except for one supporting sentence at 18px pinned bottom-left and the single action as a solid rectangle beside it. Right half: a loose mosaic of seven specimen tiles on a 4-column, 3-row grid with 14px gaps. Every tile takes one fill, the page ground, so the tiles read as openings in the darker field, each at 3:4 holding one cut-out item, centred, object-fit: contain, mix-blend-mode: multiply; the items carry the colour, never the tiles. Five cells are left empty so the tiles stagger; one tile spans two columns and two rows; the rightmost column is cropped by the viewport edge. Two text links sit top-right over the darker field. The right half may be position: sticky while the left scrolls.",
   "mobile": "The split becomes a stack. The statement comes first at 10.5vw on two lines inside 20px margins, the supporting sentence under it at 16px, then the action. Below, the darker field runs full width and the mosaic becomes two columns of tiles, the right column started 48px lower than the left; five tiles show and the last row is cropped by the bottom of the screen. Navigation is the wordmark and one link.",
   "headline": "A 3-5 word statement of what is on offer, at most 28 characters so it holds two lines at 10.5vw on a phone.",
   "motion": "shutter-image",
@@ -493,7 +498,7 @@
   "needs": [
    "product-photo"
   ],
-  "blueprint": "There is no header and no display headline: the whole viewport is a wall of specimens. Square tiles of about 112px (7.8vw) with 8px gaps fill the screen edge to edge in eight rows; alternate rows shift half a tile sideways so the wall reads as brickwork, and tiles at every edge are cropped by the viewport (overflow: hidden on the section). Each tile is a flat fill, rotating through three palette colours, holding one cut-out item at 60% of the tile, centred, with mix-blend-mode: multiply on light fills. A solid panel in the ink colour, 800px wide (columns 4-9) and about 170px tall with square corners, is docked at the bottom centre, 24px above the bottom edge, covering the tiles behind it. Inside, on 28px padding: the sentence that says what this is at 24px semibold on the left across two lines, the single action as a filled rectangle in the paper colour on the right, and beneath them a row holding the wordmark and four text links at 15px. Nothing else overlays the wall.",
+  "blueprint": "There is no header and no display headline: the whole viewport is a wall of specimens. Square tiles of about 112px (7.8vw) with 8px gaps fill the screen edge to edge in eight rows; alternate rows shift half a tile sideways so the wall reads as brickwork, and tiles at every edge are cropped by the viewport (overflow: hidden on the section). Every tile takes the same fill, the page's surface one step off the ground, and holds one cut-out item at 60% of the tile, centred, with mix-blend-mode: multiply. The items carry the colour, never the tiles. A solid panel in the ink colour, 800px wide (columns 4-9) and about 170px tall with square corners, is docked at the bottom centre, 24px above the bottom edge, covering the tiles behind it. Inside, on 28px padding: the sentence that says what this is at 24px semibold on the left across two lines, the single action as a filled rectangle in the paper colour on the right, and beneath them a row holding the wordmark and four text links at 15px. Nothing else overlays the wall.",
   "mobile": "Tiles become 22vw squares with 6px gaps, four and a half per row, still offset as brickwork and cropped at both sides. The panel turns into a full-width block fixed to the bottom of the first screen, about a third of its height: the sentence at 6vw on two lines, the action full width beneath it, the wordmark and links in one wrapped row at 14px. The wall fills everything above.",
   "headline": "No display line: one plain sentence of up to 56 characters inside the panel names what the items are.",
   "motion": "index-preview",
@@ -623,8 +628,8 @@
    "colour-chapters"
   ],
   "needs": [],
-  "blueprint": "The top 52% of the viewport is a full-width masthead band built as a gutterless mosaic: a CSS grid of 6 columns and 2 rows in which four cells are photographs (object-fit: cover, all greyscale via filter: grayscale(1) contrast(1.05)) and the rest are flat tiles in two or three palette colours. One photograph spans two columns and one colour tile spans both rows; cells butt together with no gap. The header lies flush on the band's upper edge: the wordmark in a solid ink block at far left, a flat accent-coloured tab holding three text links that runs from the block to 42% of the width, and the single action as a text link at the far right. Below the band, on the paper ground: a standfirst of one sentence at 20px on the 16px left margin, max 30ch, and, starting exactly at 42% of the width, the title on two lines at clamp(64px, 8.3vw, 128px), medium weight, tracking -0.06em, leading 0.9, running to the right margin. The title's first baseline sits about 110px under the band.",
-  "mobile": "The band becomes a mosaic of 3 columns and 2 rows taking the top 38% of the screen: two photographs and four colour tiles. The header is a single row above it with the wordmark block and a menu word. The axis collapses to the 16px left margin: the title at 13vw on two lines, then the standfirst at 17px beneath it. The action sits as a text link at the foot of the screen.",
+  "blueprint": "The top 52% of the viewport is a full-width masthead band built as a gutterless mosaic: a CSS grid of 6 columns and 2 rows in which four cells are photographs (object-fit: cover, all greyscale via filter: grayscale(1) contrast(1.05)) and the rest are flat tiles in one palette colour, the same for all. One photograph spans two columns and one flat tile spans both rows; cells butt together with no gap. The header lies flush on the band's upper edge: the wordmark in a solid ink block at far left, a flat accent-coloured tab holding three text links that runs from the block to 42% of the width, and the single action as a text link at the far right. Below the band, on the paper ground: a standfirst of one sentence at 20px on the 16px left margin, max 30ch, and, starting exactly at 42% of the width, the title on two lines at clamp(64px, 8.3vw, 128px), medium weight, tracking -0.06em, leading 0.9, running to the right margin. The title's first baseline sits about 110px under the band.",
+  "mobile": "The band becomes a mosaic of 3 columns and 2 rows taking the top 38% of the screen: two photographs and four flat tiles in that one colour. The header is a single row above it with the wordmark block and a menu word. The axis collapses to the 16px left margin: the title at 13vw on two lines, then the standfirst at 17px beneath it. The action sits as a text link at the foot of the screen.",
   "headline": "The title of the report, programme or product, 2-5 words, at most 26 characters across two lines.",
   "motion": "masked-headline",
   "seenIn": [
@@ -692,14 +697,15 @@
   "id": "menu-column-sticky-photo",
   "name": "Menu column, sticky photograph",
   "archetype": "split",
+  "split": true,
   "directions": [
    "split-stage",
    "place-carries-it"
   ],
   "needs": [],
-  "blueprint": "The viewport is two panels of equal width with a 12px gap between them and 12px outer margins, both with a 20px radius. Right panel: one photograph of the place filling it edge to edge (object-fit: cover), set to position: sticky; top: 12px; height: calc(100svh - 24px), so it stays put while the left side scrolls. A solid bar in the paper colour, 56px tall, lies across the photograph's bottom edge inside the panel and carries opening hours on the left and the address on the right at 15px. Left panel: a filled paper-colour sheet set like a menu card, everything centred. Its top row holds the wordmark, about 300px wide, in the centre with one text link either side. Below, at 34% of the height, the headline in a light serif at clamp(40px, 3.6vw, 56px) on two lines in the accent ink, max 18ch per line. Under it one sentence at 17px, max 40ch, then the single action as a solid rectangle in the accent ink. The lower quarter of the sheet is empty before the first section begins.",
+  "blueprint": "The viewport is two panels of equal width with a 12px gap between them and 12px outer margins, both with a 20px radius. Right panel: one photograph of the place filling it edge to edge (object-fit: cover), set to position: sticky; top: 12px; height: calc(100svh - 24px), so it stays put while the left side scrolls. A solid bar in the paper colour, 56px tall, lies across the photograph's bottom edge inside the panel and carries opening hours on the left and the address on the right at 15px. Left panel: a filled paper-colour sheet set like a menu card, everything centred. Its top row holds the wordmark, about 300px wide, in the centre with one text link either side. Below, at 34% of the height, the headline in a light serif at clamp(48px, 5vw, 80px) on two lines in the accent ink, max 18ch per line. Under it one sentence at 17px, max 40ch, then the single action as a solid rectangle in the accent ink. The lower quarter of the sheet is empty before the first section begins.",
   "mobile": "The photograph comes first as a rounded panel 56svh tall on 12px margins, sticky at the top so the paper sheet slides up over its lower part. The hours bar stays on the photograph's bottom edge. The sheet holds the wordmark centred at 46% of the width, the headline at 9vw on two lines, the sentence and a full-width action.",
-  "headline": "A warm 3-6 word line in a light serif, at most 34 characters, centred on two lines.",
+  "headline": "A warm 3-5 word line in a light serif, at most 30 characters, centred on two lines.",
   "motion": "slow-crossfade",
   "seenIn": [
    "opl-le-petit-bleu",
@@ -730,6 +736,7 @@
   "id": "anchored-text-specimen-half",
   "name": "Anchored text, specimen half",
   "archetype": "split",
+  "split": true,
   "directions": [
    "split-stage",
    "specimen-catalogue",
@@ -738,9 +745,9 @@
   "needs": [
    "product-photo"
   ],
-  "blueprint": "The viewport is split exactly in half by two flat tones that meet at a clean vertical edge: the ground on the left, a palette colour on the right. Left half: the wordmark sits top-left on a 40px margin; the next two thirds of the height are empty; everything else is anchored bottom-left and ends 40px above the bottom edge: a headline on one or two lines at clamp(28px, 2.6vw, 40px), medium weight; one sentence at 18px in the soft ink, max 38ch; the single action as a solid rectangle. Right half: position: sticky; top: 0; height: 100svh. In its centre sits a square tile in a second palette colour, 450px wide (31vw) with a 24px radius, holding one cut-out item at 70% of the tile, object-fit: contain, mix-blend-mode: multiply on light fills. Under the tile's left corner the item's name and one fact sit at 15px. As the left column scrolls through the catalogue, the tile's item and colour swap to match the entry in view. One text link sits top-right on the colour field.",
-  "mobile": "The colour half comes first as a block 52svh tall holding the square tile at 62vw, centred, and stays sticky while the text slides over its lower edge. The text block follows on the ground: the headline at 7vw on two lines, the sentence at 16px, the action full width. The wordmark and one link sit on the top row over the colour.",
-  "headline": "A modest 3-6 word line at 28-40px, at most 40 characters; the object, not the type, carries the screen.",
+  "blueprint": "The viewport is split exactly in half by two flat tones that meet at a clean vertical edge: the ground on the left, a palette colour on the right. Left half: the wordmark sits top-left on a 40px margin; the next two thirds of the height are empty; everything else is anchored bottom-left and ends 40px above the bottom edge: a headline on one or two lines at clamp(48px, 5vw, 80px), medium weight; one sentence at 18px in the soft ink, max 38ch; the single action as a solid rectangle. Right half: position: sticky; top: 0; height: 100svh. In its centre sits a square tile in a second palette colour, 450px wide (31vw) with a 24px radius, holding one cut-out item at 70% of the tile, object-fit: contain, mix-blend-mode: multiply on light fills. Under the tile's left corner the item's name and one fact sit at 15px. As the left column scrolls through the catalogue, the tile's item and colour swap to match the entry in view. One text link sits top-right on the colour field.",
+  "mobile": "The colour half comes first as a block 52svh tall holding the square tile at 62vw, centred, and stays sticky while the text slides over its lower edge. The text block follows on the ground: the headline at 9vw on two lines, the sentence at 16px, the action full width. The wordmark and one link sit on the top row over the colour.",
+  "headline": "A 3-5 word line at 5vw (72px at 1440), at most 28 characters on two lines; the words and the object share the screen.",
   "motion": "pinned-story",
   "seenIn": [
    "opl-dabbit"
@@ -961,6 +968,8 @@
  {
   "id": "navigation-on-the-midline",
   "name": "Navigation on the midline",
+  "banned": true,
+  "bannedWhy": "The rail across the middle of the screen is both the navigation and the h1, so the first screen has no header in reach (the inspector's no-nav) and the h1 is set at nav size, about 32px. r8-p38 built it as a mid-screen strip between product cards: the judge read the first screen as a dashboard with no headline. Giving it a top navigation and a display-size h1 would leave nothing of the idea, so it is retired.",
   "archetype": "fullbleed-media",
   "directions": [
    "place-carries-it",
@@ -1135,6 +1144,7 @@
   "id": "words-beside-product",
   "name": "Words beside the product",
   "archetype": "split",
+  "split": true,
   "directions": [
    "clear-product",
    "product-performs",
@@ -1143,9 +1153,9 @@
    "sentence-as-layout"
   ],
   "needs": [],
-  "blueprint": "The content width is split about 5 to 7. The headline, one sentence and the action sit in the narrower part, vertically centred or aligned to the top of the picture. The wider part holds the product, the object or the real place, large, running to the right edge of the screen. Nothing else on the first screen.",
+  "blueprint": "The content width is split about 5 to 7. The headline, one sentence and the action sit in the narrower part, vertically centred or aligned to the top of the picture; the headline is large, 5vw or more (72px at 1440) on two lines at most, since a small headline beside a half-screen picture reads as a shop template. The wider part holds the product, the object or the real place, large, running to the right edge of the screen. When the words cannot be that large in their part, the picture goes full-bleed behind them instead, with the words on its calm side. Nothing else on the first screen.",
   "mobile": "Words first, then the picture at full width.",
-  "headline": "What it is, two to six words.",
+  "headline": "What it is, two to five words, at most about 26 characters.",
   "motion": "shutter-image",
   "seenIn": [
    "pro-mercury",
@@ -1206,7 +1216,7 @@
    "shop-window"
   ],
   "needs": [],
-  "blueprint": "The name and one line sit above, centred, with two actions (buy and learn more). Below them the object stands large on the plain ground (photographed or generated on that ground, or drawn precisely), filling most of the rest of the screen. Nothing else.",
+  "blueprint": "The name and one line sit above, centred, with two actions (buy and learn more). Below them the object stands large on the plain ground (photographed or generated on that ground, never drawn), filling most of the rest of the screen. Nothing else.",
   "mobile": "The same, the object at full width.",
   "headline": "The product's name, then one line that says what is new about it.",
   "motion": "shutter-image",
@@ -1220,6 +1230,7 @@
   "id": "answer-first",
   "name": "The answer first",
   "archetype": "split",
+  "split": true,
   "directions": [
    "clear-service",
    "clear-product",
@@ -1227,9 +1238,9 @@
    "sentence-as-layout"
   ],
   "needs": [],
-  "blueprint": "The headline says what the service is and for whom; one sentence; the action. Beside or under it one real picture of the place or the people at work. Under both, a row of three or four facts a visitor would otherwise search for (price from, where, when, how long), set at the body size with their values at the head step. The facts are true and complete.",
+  "blueprint": "The headline says what the service is and for whom; one sentence; the action. Beside or under it one real picture of the place or the people at work. Beside it, the headline is 5vw or more (72px at 1440); a headline that cannot be that large goes above the picture, or over it full-bleed. Under both, a row of three or four facts a visitor would otherwise search for (price from, where, when, how long a stay or a session lasts, never a travel time the brief does not give), set at the body size with their values at the head step. The facts are true and complete.",
   "mobile": "Headline, sentence, action, picture, then the facts as a short list.",
-  "headline": "What it is and for whom, three to eight words.",
+  "headline": "What it is and for whom, three to eight words; at most about 28 characters when it stands beside the picture.",
   "motion": "masked-headline",
   "seenIn": []
  }

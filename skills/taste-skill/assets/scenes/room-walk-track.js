@@ -40,7 +40,7 @@
 //    <div class="rw-relay" data-name="Projects">                                           2-11 cards
 //      <article class="rw-card" style="--block: var(--rw-oat)">
 //        <figure class="rw-card__photo"><img></figure>                          landscape, subject centred
-//        <div class="rw-card__block"><span class="rw-card__year">2018</span><span class="rw-card__place">Antwerp</span>   year and place sit together, top left
+//        <div class="rw-card__block"><span class="rw-card__year">2018</span><span class="rw-card__place">Antwerp</span>   year and place sit together, top left in the walk, under the name in the column
 //          <h3 class="rw-card__name">Name, 14 characters</h3><a class="rw-card__link" href="…">Action</a></div>
 //      </article> …</div>
 //    <div class="rw-hold" data-name="How we work">                                         the held column
@@ -92,7 +92,9 @@
 //
 // Walk mode needs a wide landscape screen: (min-width: 900px) and (min-aspect-ratio: 5/4). Narrower
 // or portrait screens get the rooms as a vertical column in the same colour order, each with its own
-// small scrubbed move (no pin). Reduced motion and no script get that column finished and still.
+// small scrubbed move (no pin). Letters are the exception: the card names and the question's letters
+// rise on a clock of under a second once half of them is on screen, so a name is whole wherever the
+// reader stops. Reduced motion and no script get that column finished and still.
 (() => {
   const ID = 'room-walk-track';
   const WIDE = '(min-width: 900px) and (min-aspect-ratio: 5/4)';
@@ -582,6 +584,10 @@
     root.classList.add('rw-v');
     root.__rwPlace = null;
     const S = (trigger, start, end) => gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger, start, end, scrub: 0.4, invalidateOnRefresh: true } });
+    // Letters never ride the scroll here: a name keyed to the scroll stands half-drawn wherever the reader
+    // stops ("O  e"), which the inspector fails (letters-mid-reveal). They play on a clock of under a
+    // second once half of `el` is on screen, and drop back when it goes below the screen again.
+    const C = (el) => gsap.timeline({ scrollTrigger: { trigger: el, start: () => `top bottom-=${Math.round(el.offsetHeight / 2)}`, toggleActions: 'play none none reverse', invalidateOnRefresh: true } });
     const one = (sel) => root.querySelector(sel);
     fit(root);
 
@@ -625,20 +631,22 @@
       }
       const blk = card.querySelector('.rw-card__block');
       if (!blk) continue;
-      const t = S(blk, 'top 95%', 'top 62%');
-      const yp = blk.querySelectorAll('.rw-card__year > .rw-in, .rw-card__place > .rw-in');
-      if (yp.length) t.fromTo(yp, { yPercent: 105 }, { yPercent: 0, duration: 0.4 }, 0);
+      // the name's letters, then the year and place under it, then the link, in 0.75s once half the name
+      // is on screen
       const nm = blk.querySelector('.rw-card__name');
-      if (nm && nm.__chars) stag(t, nm.__chars, { yPercent: 110 }, { yPercent: 0, duration: 0.4, stagger: { amount: 0.3 } }, 0.15);
+      const t = C(nm || blk);
+      if (nm && nm.__chars) stag(t, nm.__chars, { yPercent: 110 }, { yPercent: 0, duration: 0.35, ease: 'power3.out', stagger: { amount: 0.25 } }, 0);
+      const yp = blk.querySelectorAll('.rw-card__year > .rw-in, .rw-card__place > .rw-in');
+      if (yp.length) t.fromTo(yp, { yPercent: 105 }, { yPercent: 0, duration: 0.35, ease: 'power3.out' }, 0.2);
       const link = blk.querySelector('.rw-card__link');
-      if (link) t.fromTo(link, { yPercent: 100, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.3 }, 0.55);
+      if (link) t.fromTo(link, { yPercent: 100, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.3, ease: 'power2.out' }, 0.45);
     }
 
-    // every line rises from below, as in the walk
+    // every line rises from below, as in the walk, its letters in 0.85s once half the question is on screen
     const qh = one('.rw-q');
     if (qh) {
       const qch = [...qh.querySelectorAll('.rw-line')].flatMap((ln) => ln.__chars || []);
-      if (qch.length) stag(S(qh, 'top 90%', 'top 50%'), qch, { yPercent: 110 }, { yPercent: 0, duration: 0.5, stagger: { amount: 0.5 } }, 0);
+      if (qch.length) stag(C(qh), qch, { yPercent: 110 }, { yPercent: 0, duration: 0.45, ease: 'power3.out', stagger: { amount: 0.4 } }, 0);
     }
 
     const win = one('.rw-window');

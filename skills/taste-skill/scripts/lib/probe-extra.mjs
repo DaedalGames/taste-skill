@@ -165,18 +165,46 @@ export function extra() {
   out.sentences = [...document.querySelectorAll('p, li, td, dd, figcaption')].filter((p) => visible(p) && words(textOf(p)) > 12).length;
 
   // --- text inside mock-ups too small to read, placeholder contacts, notes the builder left for the client
+  // Placeholder contacts (round 9, r7-p36 shipped "Musterstraße 12" and "030 000 000 00"): a template street fails, and
+  // so does a phone number whose digits end in seven zeros or more or that sits in the US fiction range 555-01xx; six
+  // of one digit in a row is a warning. A run of digits counts as a phone when it starts with +, ( or 0, sits in a
+  // tel: link, or has a phone word beside it, so a price or a count of ten million is not one.
   out.tinyUi = 0; out.placeholders = []; out.builderNotes = [];
   {
     const tw = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); let n, k = 0;
     const noteRe = /\b(until|once)\b[^.]{0,40}\b(are|is|have been|has been|get|gets)\s+(photographed|shot|supplied)|\bplaceholder (image|photo|picture|text|copy)|\bstand-?in (picture|photo|image|drawing)|\bto be replaced\b|\breplace (this|these) (picture|photo|image)s?\b|\bsample (content|copy|text)\b|\blorem ipsum\b/i;
+    const streetRe = /Musterstra(?:ss|ß)e|Beispielstra(?:ss|ß)e|\b1 Main Street\b|\bMain Street 1\b|\b123 Main St\b|\bExample (?:Road|Street)\b/i;
+    const runRe = /(?:\+\s?)?(?:\(\d{1,5}\)\s?)?\d[\d\s().\/-]{5,}\d/g;
+    const phoneWord = /\b(tel|tél|phone|telephone|telefon|téléphone|telefoon|telefono|call|ring|fon|mobile?|cell)\b/i;
+    const unitAfter = /^\s*(€|\$|£|kr|eur|usd|chf|sek|nok|dkk|km|kg|m²|m2|m\b|mm|cm|%|words|pages|people|views|downloads|users)/i;
+    const seen = new Set();
+    const add = (text, level, why) => { const t = text.replace(/\s+/g, ' ').trim().slice(0, 50); if (seen.has(t) || out.placeholders.length >= 6) return; seen.add(t); out.placeholders.push({ text: t, level, why }); };
+    // (a round number, a 1 and zeros, is a count or a price unless it is written as a phone: +1 (000) 000-0000 is one)
+    const phoneCheck = (run, ctx, linked) => {
+      const digits = run.replace(/\D/g, ''); if (digits.length < 7 || digits.length > 15) return;
+      const strict = linked || /^\s*[+(0]/.test(run);
+      if (!strict && /^[1-9]0+$/.test(digits)) return;
+      if (!strict && !phoneWord.test(ctx)) return;
+      if (/0{7,}$/.test(digits)) add(run, 'FAIL', 'its digits end in zeros');
+      else if (/\b555[-\s.]?01\d\d\b/.test(run)) add(run, 'FAIL', 'the 555-01xx fiction range');
+      else if (/(\d)\1{5,}/.test(digits)) add(run, 'WARN', 'one digit six times in a row');
+    };
     while ((n = tw.nextNode()) && k < 6000) {
       const t = n.nodeValue.trim(); if (!t) continue; k++;
       const el = n.parentElement; if (!el || !visible(el)) continue;
       if (el.closest('[data-ui]') && parseFloat(getComputedStyle(el).fontSize) < 11.5) out.tinyUi++;
       if (noteRe.test(t) && out.builderNotes.length < 4) out.builderNotes.push(t.slice(0, 70));
-      if (/[\w.-]+@[\w-]+\.example\b|\bexample\.(com|org)\b/i.test(t) && out.placeholders.length < 4) out.placeholders.push(t.slice(0, 50));
+      if (/[\w.-]+@[\w-]+\.example\b|\bexample\.(com|org)\b/i.test(t)) add(t, 'WARN', 'an example domain');
+      if (el.closest('[data-ui], script, style')) continue;
+      const sm = t.match(streetRe); if (sm) add(t.slice(Math.max(0, sm.index - 12), sm.index + sm[0].length + 8), 'FAIL', 'a template street');
+      const ctx = textOf(el.closest('p, li, dd, address, td, div') || el).slice(0, 200);
+      for (const m of t.matchAll(runRe)) { if (unitAfter.test(t.slice(m.index + m[0].length)) || /[€$£]\s*$/.test(t.slice(0, m.index))) continue; phoneCheck(m[0].trim(), ctx, !!el.closest('a[href^="tel:"]')); }
     }
-    for (const a of document.querySelectorAll('a[href]')) { const h = a.getAttribute('href') || ''; if (/\.example\b|example\.(com|org)/i.test(h) && out.placeholders.length < 4) out.placeholders.push(h.slice(0, 50)); }
+    for (const a of document.querySelectorAll('a[href]')) {
+      const h = a.getAttribute('href') || '';
+      if (/\.example\b|example\.(com|org)/i.test(h)) add(h, 'WARN', 'an example domain');
+      if (/^tel:/i.test(h)) phoneCheck(decodeURIComponent(h.slice(4)), '', true);
+    }
   }
 
   // --- the same large picture twice, the same heading twice, boxes with nothing in them, switches as a feature list
@@ -224,13 +252,29 @@ export function extra() {
   }
 
   // --- drawn illustrations (inline SVG pictures of things), and words in the first screen and per section
+  // Round 9 (r8-p37 explained its process with three drawn SVG diagrams of squares and bars, labels and all): outside a
+  // scene, an inline SVG larger than an icon (more than 64px on a side) with three or more painted shapes is a drawing,
+  // labelled or not: a process diagram, a chart, an illustration. A brand's logo is not: the Simple Icons files that
+  // assets.mjs --logo saves (a 24 x 24 view box, one path), [data-mark], an element named logo or wordmark, and a row
+  // of three or more marks of one height. A real map marked data-map or data-plan is left alone (r6-p30, a won page,
+  // shows the Westfjords on a traced outline of Iceland so), but the fix never suggests one: the house bans drawn SVG.
   out.drawings = []; out.sceneDrawings = [];
   const sceneOf = (el) => el.closest('.scene, [data-scene]');
   const sceneId = (s) => (s && (s.dataset.scene || s.id)) || 'scene';
+  const painted = (s) => { const cs = getComputedStyle(s); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.05) return false; const on = (v) => v && v !== 'none' && !/rgba\([^)]*,\s*0\)/.test(v) && v !== 'transparent'; return on(cs.fill) || (on(cs.stroke) && parseFloat(cs.strokeWidth) > 0); };
+  const logoLike = (svg) => {
+    const vb = (svg.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+    if (vb.length === 4 && vb[2] === 24 && vb[3] === 24 && svg.querySelectorAll('path').length <= 2 && !svg.querySelector('rect, circle, ellipse, polygon, polyline, line, text')) return true;
+    if (svg.closest('[data-mark], [data-logo], [class*=logo i], [class*=wordmark i], [aria-label*=logo i]')) return true;
+    const r = svg.getBoundingClientRect(); const row = svg.parentElement?.parentElement;
+    if (r.height <= 96 && row) { const kin = [...row.querySelectorAll('svg')].filter((o) => !o.parentElement?.closest('svg') && Math.abs(o.getBoundingClientRect().height - r.height) <= r.height * 0.25); if (kin.length >= 3) return true; }
+    return false;
+  };
   for (const svg of document.querySelectorAll('svg')) {
     if (svg.parentElement?.closest('svg') || !visible(svg) || svg.closest('[data-ui], header, nav, footer, button, a')) continue;
     const r = svg.getBoundingClientRect(); const share = (r.width * r.height) / (W * H);
-    const shapes = svg.querySelectorAll('path, circle, ellipse, rect, polygon, polyline, line').length;
+    const all = [...svg.querySelectorAll('path, circle, ellipse, rect, polygon, polyline, line')];
+    const shapes = all.length;
     const labels = [...svg.querySelectorAll('text')].filter((t) => t.textContent.trim()).length;
     const scene = sceneOf(svg);
     if (scene) {
@@ -239,8 +283,11 @@ export function extra() {
       if (share >= 0.02 && shapes >= 1 && labels < 3 && !svg.closest('.route-art, [data-map], .portal-src, .portal-mark, [data-plan], [data-mark]') && out.sceneDrawings.length < 6) out.sceneDrawings.push({ id: sceneId(scene), shapes, share: +share.toFixed(3) });
       continue;
     }
-    if (share < 0.012) continue;
-    if (shapes >= 6 && labels <= 2) out.drawings.push({ share: +share.toFixed(3), shapes, near: textOf(svg.closest('section, article, div') || svg).slice(0, 40) });
+    if (Math.max(r.width, r.height) <= 64 || share < 0.004 || logoLike(svg) || svg.closest('[data-map], [data-plan]')) continue;
+    const paintedShapes = all.slice(0, 400).filter(painted).length;
+    if (paintedShapes < 3) continue;
+    const kind = labels >= 2 ? 'a labelled diagram or chart' : 'a drawing';
+    out.drawings.push({ share: +share.toFixed(3), shapes: paintedShapes, labels, kind, size: `${r2(r.width)}x${r2(r.height)}`, near: textOf(svg.closest('section, article, div') || svg).slice(0, 40) });
     if (out.drawings.length >= 12) break;
   }
   {
@@ -413,23 +460,34 @@ export function extra() {
     }
   }
 
-  // --- small-body: running text under 16px (15px on a phone), and small text under a display heading
+  // --- small-body: running, list and table text set small, and small text under a display heading. Round 9 (r7-p34,
+  // r8-p39): under 14px is a FAIL on desktop and tablet and 14-15px a warning on desktop (14px on a tablet); on a phone
+  // under 15px fails. Tables and lists of short rows count as one block each. Captions, photo credits, and the legal
+  // lines of the footer (copyright, imprint, privacy, credits), are left out; the rest of the footer counts.
   out.smallBody = []; out.smallUnderHead = [];
   {
-    // 16px on desktop, 15px on a phone; a tablet sits between its fluid steps, so it takes the phone floor
-    const floor = W < 1100 ? 15 : 16;
+    const failUnder = W < 600 ? 15 : 14, warnUnder = W >= 1100 ? 16 : 15;
+    const legal = /©|\(c\)\s*\d{4}|copyright|all rights|impressum|imprint|privacy|datenschutz|cookie|terms|credits?\b|licen[cs]e|\bvat\b|ust-?id|kvk|registered|company no/i;
+    // (a photo credit is a caption wherever it stands: "Photographs of the icefield by …, on Unsplash")
+    const credit = /\bphoto(graph)?s?\b[^.]{0,40}\b(by|from|via)\b|unsplash|pexels|wikimedia|picsum/i;
     const done = new Set();
-    // paragraphs, and any span or div that carries a sentence of its own (a description set as a span)
+    // paragraphs, and any span or div that carries a sentence of its own (a description set as a span); a table, and a
+    // list whose rows are short, as one block
     const ownWords = (el) => { let t = ''; for (const c of el.childNodes) if (c.nodeType === 3) t += c.nodeValue + ' '; return words(t); };
-    const blocks = [...document.querySelectorAll('p, li, dd, blockquote'), ...[...B.querySelectorAll('span, div, small, a, em')].filter((e) => ownWords(e) >= 8 && !e.closest('p, li, dd, blockquote'))];
+    const shortRows = (l) => [...l.children].filter((c) => /^(LI|DT|DD|DIV)$/.test(c.tagName)).every((c) => words(textOf(c)) < 8);
+    const blocks = [...document.querySelectorAll('table'), ...[...document.querySelectorAll('ul, ol, dl')].filter((l) => shortRows(l) && words(textOf(l)) >= 8), ...document.querySelectorAll('p, li, dd, blockquote'), ...[...B.querySelectorAll('span, div, small, a, em')].filter((e) => ownWords(e) >= 8 && !e.closest('p, li, dd, blockquote, table'))];
     for (const p of blocks) {
       if (done.size > 400) break;
-      if (!visible(p) || [...done].some((d) => d.contains(p)) || p.closest('[data-ui], nav, header, footer, figcaption, label, button, table, dialog, [role=dialog], [aria-hidden=true]')) continue;
-      const t = textOf(p); if (words(t) < 8) continue;
+      if (!visible(p) || [...done].some((d) => d.contains(p)) || p.closest('[data-ui], nav, header, figcaption, label, button, dialog, [role=dialog], [aria-hidden=true]')) continue;
+      if (p.matches('ul, ol') && p.querySelectorAll('a[href]').length >= p.children.length && p.children.length) continue; // a list of links is navigation
+      const t = textOf(p); if (words(t) < (p.matches('table') ? 6 : 8)) continue;
+      if ((p.closest('footer, [role=contentinfo]') && (legal.test(t) || credit.test(t))) || (words(t) <= 40 && credit.test(t))) continue;
       // the size most of its words are set in (a name at 17px over a 13px description reads as 13px text)
-      const by = new Map(); { const tw = document.createTreeWalker(p, NodeFilter.SHOW_TEXT); let n; while ((n = tw.nextNode())) { if (!n.parentElement || !n.nodeValue.trim()) continue; const z = parseFloat(getComputedStyle(n.parentElement).fontSize); by.set(z, (by.get(z) || 0) + n.nodeValue.trim().length); } }
+      // (a list's or table's own labels, dt and the header row, are labels: its values and rows are what is read)
+      const by = new Map(); { const tw = document.createTreeWalker(p, NodeFilter.SHOW_TEXT); let n; while ((n = tw.nextNode())) { if (!n.parentElement || !n.nodeValue.trim() || n.parentElement.closest('figcaption, caption, thead') || (p.matches('dl, table') && n.parentElement.closest('dt'))) continue; const z = parseFloat(getComputedStyle(n.parentElement).fontSize); by.set(z, (by.get(z) || 0) + n.nodeValue.trim().length); } }
       const s = [...by.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? parseFloat(getComputedStyle(p).fontSize);
-      if (s < floor - 0.25) { done.add(p); out.smallBody.push({ text: t.slice(0, 40), size: +s.toFixed(1) }); continue; }
+      const what = p.matches('table') ? 'table' : p.matches('ul, ol, dl') ? 'list' : p.closest('footer, [role=contentinfo]') ? 'footer' : 'text';
+      if (s < warnUnder - 0.25) { done.add(p); out.smallBody.push({ text: t.slice(0, 40), size: +s.toFixed(1), level: s < failUnder - 0.25 ? 'FAIL' : 'WARN', what }); continue; }
       if (W >= 1100 && s < 17.75) {
         const prev = p.previousElementSibling || (p.parentElement && !p.previousElementSibling ? p.parentElement.previousElementSibling : null);
         const hs = prev && prev.matches('h1, h2, h3, h4') ? parseFloat(getComputedStyle(prev).fontSize) : 0;
@@ -506,7 +564,8 @@ export function extra() {
   // --- hollow-fragment: the first screen's product fragment with panes that hold nothing
   out.hollowFragment = [];
   {
-    const ui = [...document.querySelectorAll('[data-ui]')].find((u) => !u.parentElement?.closest('[data-ui]') && visible(u) && u.getBoundingClientRect().top + sy < H);
+    // (a product replay's window shows its first state here, unfinished on purpose; its beats are judged on their own)
+    const ui = [...document.querySelectorAll('[data-ui]')].find((u) => !u.parentElement?.closest('[data-ui]') && !u.closest('[data-replay]') && visible(u) && u.getBoundingClientRect().top + sy < H);
     if (ui) {
       const panes = [ui, ...ui.querySelectorAll('div, section, aside, main, article, ul, ol, form')].filter((p) => { const r = p.getBoundingClientRect(); return r.width >= 160 && r.height >= 120 && visible(p) && (p === ui || filledOn(p) || sides(p) >= 2); });
       for (const p of panes) { const e = emptyInside(p); if (e >= 0.55) out.hollowFragment.push({ text: textOf(p).slice(0, 30), empty: +e.toFixed(2), size: `${r2(p.getBoundingClientRect().width)}x${r2(p.getBoundingClientRect().height)}` }); if (out.hollowFragment.length >= 4) break; }
@@ -538,11 +597,21 @@ export function extra() {
   // --- the product replay: its beats, its control, never a recording, never doubled with the entrance; the
   // window's size, and how far its section holds it (replay.js holds the stage one beat at a time while the visitor
   // scrolls; a window that plays small and unheld is not noticed, r6-p32)
+  // (what changes at a beat: every element replay.js plays; data-point-at only aimed the old cursor, so it is not one)
+  const MARK = '[data-at], [data-type-at], [data-roll-at], [data-select-at], [data-flip-at], [data-press-at], [data-style-at], [data-frame-at], [data-says], [data-focus-at], [data-open-at], [data-zoom-at]';
+  const beatList = (v) => { const s = []; for (const p of String(v ?? '').split(',')) { const m = p.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/); if (m) for (let k = +m[1]; k <= Math.min(+(m[2] ?? m[1]), 9); k++) s.push(k); } return s; };
+  const accentOf = (() => { for (const el of [D, B]) { const v = getComputedStyle(el).getPropertyValue('--accent').trim(); if (!v) continue; const p = document.createElement('i'); p.style.color = v; B.appendChild(p); const c = rgb(getComputedStyle(p).color); p.remove(); if (c) return c; } return null; })();
+  const nearAccent = (c) => !!c && !!accentOf && c.every((v, i) => Math.abs(v - accentOf[i]) <= 14);
   out.replays = [...document.querySelectorAll('[data-replay]')].map((r) => {
     const list = String(r.dataset.replay || '').split(',').map(Number).filter((n) => n > 0);
     const beats = list.length === 1 && list[0] <= 8 ? list[0] : list.length;
     const marks = new Set();
-    for (const e of r.querySelectorAll('[data-at], [data-type-at], [data-roll-at], [data-select-at], [data-flip-at], [data-press-at], [data-point-at], [data-style-at], [data-frame-at]')) for (const k of ['at', 'typeAt', 'rollAt', 'selectAt', 'flipAt', 'pressAt', 'pointAt', 'styleAt', 'frameAt']) if (e.dataset[k]) marks.add(+e.dataset[k]);
+    for (const e of r.querySelectorAll(MARK)) {
+      // (data-frame-at still sets .is-framed, but a 2px frame is not a beat)
+      for (const k of ['at', 'typeAt', 'rollAt', 'selectAt', 'pressAt', 'styleAt', 'openAt', 'closeAt']) if (e.dataset[k]) marks.add(+e.dataset[k]);
+      for (const k of ['flipAt', 'focusAt', 'zoomAt']) for (const b of beatList(e.dataset[k])) marks.add(b);
+    }
+    marks.delete(0);
     for (const e of r.querySelectorAll('[data-says]')) for (const m of e.dataset.says.matchAll(/(\d+):/g)) if (+m[1] > 0) marks.add(+m[1]);
     const scope = r.closest('.replay-hold, section, article, [data-replay-scope]') || r.parentElement || r;
     const control = [...scope.querySelectorAll('button, [role=button], a')].some((b) => visible(b) && /replay|again|play/i.test(textOf(b) + ' ' + (b.getAttribute('aria-label') || '')));
@@ -562,8 +631,88 @@ export function extra() {
       }
       if (e.parentElement?.classList.contains('pin-spacer')) { hold = Math.max(0, e.parentElement.offsetHeight - e.offsetHeight); break; }
     }
-    return { beats, marks: marks.size, control, recording, clash, hero: !!r.closest('[data-hero]'), w: +(wr.width / W).toFixed(2), h: +(wr.height / H).toFixed(2), held: +(hold / H).toFixed(2), stage: !!r.closest('.replay-stage') };
+    // round 7: what the window is built from. r7-p33 and r6-p32 passed every check above and the judges still did not
+    // see their replays: 13-15px type, a drawn cursor, nine look-alike cards on fills a step from their board, and the
+    // accent on a filled Replay button instead of on what changed.
+    const win = ui || r;
+    // its type: every text in the window, the parts that only show at a later beat included
+    const sizes = [];
+    { const tw = document.createTreeWalker(win, NodeFilter.SHOW_TEXT); let n;
+      while ((n = tw.nextNode()) && sizes.length < 600) {
+        const el = n.parentElement; const t = n.nodeValue.trim();
+        if (!el || !t || el.closest('script, style, svg, [data-replay-cursor], .replay__cursor')) continue;
+        const marked = !!el.closest(MARK);
+        if (!marked && !visible(el)) continue;
+        const size = Math.round(parseFloat(getComputedStyle(el).fontSize) * 10) / 10; if (size) sizes.push({ size, text: t.slice(0, 30), marked });
+      } }
+    const small = sizes.filter((s) => s.size < 14).sort((a, b) => a.size - b.size);
+    const markedSmall = sizes.filter((s) => s.marked).sort((a, b) => a.size - b.size);
+    // a drawn cursor or pointer standing in for the visitor (replay.js before round 7 moved one); a utility class
+    // (Tailwind's cursor-pointer, pointer-events-none) on an icon is not one
+    const UTIL = /^(cursor-(auto|default|pointer|text|move|grab|grabbing|wait|help|crosshair|not-allowed|none|zoom-in|zoom-out)|pointer-events-.*)$/i;
+    const drawn = (c) => [...c.classList].some((t) => { const u = t.split(':').pop(); return /(^|[-_])(cursor|pointer)($|[-_])/i.test(u) && !UTIL.test(u); });
+    const cursors = r.querySelectorAll('[data-replay-cursor], .replay__cursor').length + [...r.querySelectorAll('[class*="cursor" i], [class*="pointer" i]')].filter((c) => { if (!drawn(c) || c.matches('[data-replay-cursor], .replay__cursor') || c.closest('[data-replay-cursor], .replay__cursor')) return false; const q = c.getBoundingClientRect(), cs = getComputedStyle(c); return /absolute|fixed/.test(cs.position) && q.width <= 56 && q.height <= 56 && q.width >= 6 && visible(c); }).length;
+    // boxes in the window: a part with its own fill unlike what it stands on, or outlined on three sides, holding
+    // text. The window is the one surface; fields, buttons and whatever a beat changes (the item at work, a panel
+    // that opens) are not counted.
+    const EXEMPT = 'input, textarea, select, button, [role=button], [role=textbox], .is-focus, .is-selected, .is-open, .is-framed, ' + MARK;
+    const boxes = [];
+    if (ui) for (const e of ui.querySelectorAll('*')) {
+      if (boxes.length >= 24) break;
+      if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME|svg)$/.test(e.tagName) || e.closest('svg') || e.closest(EXEMPT)) continue;
+      // (a status pill or a tag is not a box in the window; a row or a card is: 120px wide and 6000px² or more)
+      const q = e.getBoundingClientRect(); if (q.width < 120 || q.width * q.height < 6000 || !visible(e) || !textOf(e)) continue;
+      if (filledOn(e) || sides(e) >= 3) boxes.push({ text: textOf(e).slice(0, 28), size: `${r2(q.width)}x${r2(q.height)}`, how: filledOn(e) ? '#' + filledOn(e).map((v) => v.toString(16).padStart(2, '0')).join('') : 'outlined' });
+    }
+    // look-alikes: an item a beat changes with four or more twins in the window (the same tag and class, a size within
+    // 10%, the same fill) and no accent of its own to tell it apart (it is not the item at work, data-focus-at)
+    const firstClass = (e) => String(e.className && typeof e.className === 'string' ? e.className : '').split(/\s+/).filter((c) => c && !/^is-/.test(c))[0] || '';
+    let lookalike = null;
+    if (ui) for (const m of ui.querySelectorAll(MARK)) {
+      if (m === ui || m.querySelector('[data-focus-at], [data-select-at]') || m.closest('[data-focus-at], [data-select-at]')) continue;
+      const q = m.getBoundingClientRect(); if (q.width * q.height < 8000 || !textOf(m)) continue;
+      const fill = opaqueBg(m) || groundOf(m), mcs = getComputedStyle(m);
+      // (an accent edge tells it apart only when it is a real share of the item, not a 3px line)
+      const edge = ['Left', 'Right', 'Top', 'Bottom'].reduce((a, s) => a + (nearAccent(rgb(mcs[`border${s}Color`])) ? parseFloat(mcs[`border${s}Width`]) * (s === 'Left' || s === 'Right' ? q.height : q.width) : 0), 0);
+      if (nearAccent(opaqueBg(m)) || edge >= q.width * q.height * 0.1) continue;
+      const twins = [...ui.querySelectorAll(m.tagName)].filter((e) => { if (e === m || firstClass(e) !== firstClass(m)) return false; const b = e.getBoundingClientRect(); if (!b.width || Math.abs(b.width - q.width) > q.width * 0.1 || Math.abs(b.height - q.height) > q.height * 0.1) return false; const f = opaqueBg(e) || groundOf(e); return !differs(f, fill, 12); });
+      if (twins.length >= 4) { lookalike = { text: textOf(m).slice(0, 30), twins: twins.length, size: `${r2(q.width)}x${r2(q.height)}` }; break; }
+    }
+    // the accent on parts no beat changes, and the Replay button filled with it (it outshines the change)
+    const accentStill = [];
+    if (ui && accentOf) for (const e of ui.querySelectorAll('*')) {
+      if (accentStill.length >= 4) break;
+      if (e.closest(MARK) || e.closest('input, textarea, select') || !visible(e)) continue;
+      const cs = getComputedStyle(e), q = e.getBoundingClientRect();
+      const bg = nearAccent(rgb(cs.backgroundColor)) && q.width * q.height >= 300;
+      const ink = !e.childElementCount && textOf(e) && nearAccent(rgb(cs.color));
+      const edge = ['Left', 'Top', 'Right', 'Bottom'].some((s) => parseFloat(cs[`border${s}Width`]) >= 2 && nearAccent(rgb(cs[`border${s}Color`])));
+      if (bg || ink || edge) accentStill.push(textOf(e).slice(0, 24) || e.tagName.toLowerCase());
+    }
+    const againEl = scope.querySelector('[data-replay-again]') || [...scope.querySelectorAll('button')].find((b) => /replay|again/i.test(textOf(b)));
+    const accentButton = !!againEl && !!accentOf && nearAccent(opaqueBg(againEl));
+    // (replay.js starts a window that shows under half its words before beat 1 at a later beat, data-replay-start, and
+    // holds only for the beats it plays)
+    return { beats, start: Math.max(0, Math.min(beats - 1, +r.dataset.replayStart || 0)), marks: marks.size, control, recording, clash, hero: !!r.closest('[data-hero]'), w: +(wr.width / W).toFixed(2), h: +(wr.height / H).toFixed(2), held: +(hold / H).toFixed(2), stage: !!r.closest('.replay-stage'),
+      minText: sizes.length ? Math.min(...sizes.map((s) => s.size)) : null, small: small.slice(0, 4), markedMin: markedSmall.length ? markedSmall[0].size : null, markedSmall: markedSmall.filter((s) => s.size < 16).slice(0, 3),
+      cursors, boxes, lookalike, accentStill, accentButton };
   });
+  // boxes in a panel in a window: any other fragment of the product that sets three or more boxes side by side on a
+  // fill unlike its own (r7-p33's step fragments, a list of filled rows inside a filled panel)
+  out.fragmentBoxes = [];
+  for (const u of document.querySelectorAll('[data-ui]')) {
+    if (out.fragmentBoxes.length >= 4) break;
+    if (u.parentElement?.closest('[data-ui]') || u.closest('[data-replay]') || !visible(u)) continue;
+    for (const list of u.querySelectorAll('*')) {
+      if (list.childElementCount < 3) continue;
+      const items = [...list.children].filter((c) => visible(c) && textOf(c) && !c.matches('input, textarea, select, button') && (filledOn(c) || sides(c) >= 3));
+      if (items.length < 3) continue;
+      const q = items[0].getBoundingClientRect();
+      if (q.width < 120 || q.width * q.height < 6000) continue;
+      out.fragmentBoxes.push({ text: textOf(u).slice(0, 30), n: items.length, first: textOf(items[0]).slice(0, 24) });
+      break;
+    }
+  }
 
   // ---------- round 6: what judges found on pages every check above passed ----------
   // --- boxed-list: a list drawn as boxes. Three or more sibling items (questions, loads, specs, plans, features,
@@ -683,7 +832,317 @@ export function extra() {
       }
     }
   }
+
+  // ---------- round 9 ----------
+  // --- split-hero-title: on desktop, the h1 on the first screen with a picture or product window 40% of the width or
+  // more beside it, held in the other half of the screen, the h1 not set on it; or with such pictures both above and
+  // below it, the h1 in a strip between them. Part A raised split heroes to 5vw: under about 4.4vw (64px at 1440)
+  // fails, under 5vw (72px) warns. r7-p34: 57px beside a half-width photograph; r8-p38: 39px in a strip between two
+  // product panels. A picture the title sits on is full bleed, not a split. A picture only above or only below the h1
+  // is not a split either: hero-object's small corner headline under its object, or a headline over a product window.
+  out.splitHero = null;
+  if (W >= 1100) {
+    const h1 = [...document.querySelectorAll('h1')].find((h) => visible(h) && !h.closest('[data-ui]'));
+    const hr = h1 && h1.getBoundingClientRect();
+    if (h1 && hr.top + sy < H * 0.9 && hr.bottom + sy > 0 && hr.height > 0) {
+      let size = 0; { const tw = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT); let n; while ((n = tw.nextNode())) if (n.nodeValue.trim() && n.parentElement) size = Math.max(size, parseFloat(getComputedStyle(n.parentElement).fontSize)); }
+      const h = { l: hr.left, r: hr.right, t: hr.top + sy, b: hr.bottom + sy };
+      const cands = [...document.querySelectorAll('img, video, canvas, [data-ui]')].filter((e) => !e.parentElement?.closest('[data-ui]'));
+      let k = 0; for (const e of B.querySelectorAll('section, div, figure, a, span, li')) { if (++k > 3000) break; if (/url\(/.test(getComputedStyle(e).backgroundImage)) cands.push(e); }
+      const kindOf = (e) => (e.matches('[data-ui]') ? 'product window' : e.tagName === 'VIDEO' ? 'video' : e.tagName === 'CANVAS' ? 'canvas' : 'picture');
+      const hMid = (h.l + h.r) / 2;
+      let best = null; const above = [], below = [];
+      for (const e of cands) {
+        if (e.contains(h1) || h1.contains(e) || !visible(e)) continue;
+        const r = e.getBoundingClientRect();
+        const v = { l: Math.max(0, r.left), r: Math.min(W, r.right), t: Math.max(0, r.top + sy), b: Math.min(H, r.bottom + sy) };
+        const w = v.r - v.l, ht = v.b - v.t; if (!(w >= W * 0.4) || !(ht >= H * 0.2)) continue;
+        const ox = Math.min(h.r, v.r) - Math.max(h.l, v.l), oy = Math.min(h.b, v.b) - Math.max(h.t, v.t);
+        if (ox > 0 && oy > 0 && ox * oy >= (h.r - h.l) * (h.b - h.t) * 0.5) continue; // the title is set on it
+        const area = w * ht, item = { area, w, ht, kind: kindOf(e) };
+        // beside: no overlap across, half the title's height shared, the picture's middle in the other half of the screen
+        if (ox <= 0 && oy >= (h.b - h.t) * 0.5 && ((v.l + v.r) / 2 < W / 2) !== (hMid < W / 2)) { if (!best || area > best.area) best = { ...item, how: 'beside' }; continue; }
+        if (w >= W * 0.9) continue; // full bleed above or below
+        if (v.b <= h.t + 2) above.push(item); else if (v.t >= h.b - 2) below.push(item);
+      }
+      if (!best && above.length && below.length) { const big = [...above, ...below].sort((p, q) => q.area - p.area)[0]; best = { ...big, how: 'between' }; }
+      if (best) out.splitHero = { text: textOf(h1).slice(0, 50), size: +size.toFixed(1), vw: +((size / W) * 100).toFixed(1), how: best.how, kind: best.kind, w: r2((best.w / W) * 100), h: r2((best.ht / H) * 100) };
+    }
+  }
+
+  // --- tile-wall: a hero or section built as a wall of tiles (r8-p37: about 14 framed frames in six columns, flat red,
+  // teal, brown and yellow among them). Here only the candidates: six or more tiles (pictures, or boxes filled unlike
+  // their ground, 80px or more and under 45% of the section's width, the outermost of each nest) in three columns or
+  // more and two rows. Each is marked data-ts-tile="wall-tile"; the inspector photographs the wall and reads each
+  // tile's fill from the pixels (tileFills), so a frame that is a flat field of colour counts like a coloured box.
+  out.tileWalls = []; out.ground = null;
+  if (W >= 1100) {
+    const tv = document.createElement('canvas'); tv.width = tv.height = 1; const tx = tv.getContext('2d', { willReadFrequently: true });
+    const norm = (c) => { tx.clearRect(0, 0, 1, 1); tx.fillStyle = 'rgba(0,0,0,0)'; tx.fillStyle = c || 'transparent'; tx.fillRect(0, 0, 1, 1); return [...tx.getImageData(0, 0, 1, 1).data]; };
+    const behind = (el) => { for (let e = el; e && e !== D.parentNode; e = e.parentElement) { const c = norm(getComputedStyle(e).backgroundColor); if (c[3] >= 230) return c; } return [255, 255, 255, 255]; };
+    const filledTile = (e) => { const c = norm(getComputedStyle(e).backgroundColor); return c[3] >= 230 && differs(c.slice(0, 3), behind(e.parentElement || B).slice(0, 3)); };
+    out.ground = behind(B).slice(0, 3);
+    for (const old of document.querySelectorAll('[data-ts-tile]')) old.removeAttribute('data-ts-tile');
+    const secs = [...document.querySelectorAll('section, [data-hero], main > div, article')].filter((s) => !s.parentElement?.closest('section, [data-hero], article') && visible(s) && !s.closest('[data-ui], header, footer, nav, dialog'));
+    for (const s of secs.slice(0, 40)) {
+      const sr = s.getBoundingClientRect(); if (sr.width < W * 0.6 || sr.height < 240) continue;
+      const cands = [];
+      for (const e of s.querySelectorAll('img, video, canvas, figure, div, li, article, a, aside')) {
+        if (cands.length > 80 || e.parentElement?.closest('[data-ui]')) continue;
+        const r = e.getBoundingClientRect(); if (r.width < 80 || r.height < 80 || r.width > sr.width * 0.45 || !visible(e)) continue;
+        if (/^(IMG|VIDEO|CANVAS)$/.test(e.tagName) || filledTile(e) || e.matches('[data-ui]')) cands.push(e);
+      }
+      const tiles = cands.filter((e) => !cands.some((o) => o !== e && o.contains(e))).slice(0, 40);
+      if (tiles.length < 6) continue;
+      const rs = tiles.map((t) => t.getBoundingClientRect());
+      const distinct = (vals) => vals.sort((a, b) => a - b).filter((v, i, a) => !i || v - a[i - 1] > 24).length;
+      if (distinct(rs.map((r) => r.left)) < 3 || distinct(rs.map((r) => r.top)) < 2) continue;
+      const wi = out.tileWalls.length;
+      tiles.forEach((t, i) => t.setAttribute('data-ts-tile', `${wi}-${i}`));
+      out.tileWalls.push({ head: textOf(s.querySelector('h1, h2, h3') || s).slice(0, 50), top: r2(sr.top + sy), h: r2(sr.height), n: tiles.length, hero: !!s.closest('[data-hero]') || sr.top + sy < H * 0.5 });
+      if (out.tileWalls.length >= 3) break;
+    }
+  }
+
+  // --- dot-and-knob tracks: a horizontal line with a round knob or dots on it, which reads as a slider and is none
+  // (r8-p38: three "threads" with dots and a white knob on a 2px line). It is no control: no input, no slider or button
+  // role, no tab stop, no pointer cursor. Reported with the decorative controls, at every width.
+  out.dotTracks = [];
+  {
+    // (colours as the browser computes them, color-mix() and color(srgb ...) included)
+    const cv = document.createElement('canvas'); cv.width = cv.height = 1; const cx = cv.getContext('2d', { willReadFrequently: true });
+    const paints = (c) => { if (!c || c === 'transparent') return false; cx.clearRect(0, 0, 1, 1); cx.fillStyle = 'rgba(0,0,0,0)'; cx.fillStyle = c; cx.fillRect(0, 0, 1, 1); return cx.getImageData(0, 0, 1, 1).data[3] > 25; };
+    const paintedLine = (cs) => (paints(cs.backgroundColor) || /gradient|url\(/.test(cs.backgroundImage)) && parseFloat(cs.height) > 0 && parseFloat(cs.height) <= 4;
+    const roundBox = (e) => {
+      const r = e.getBoundingClientRect(); if (r.width < 5 || r.height < 5 || r.width > 44 || Math.abs(r.width - r.height) > 2) return null;
+      const cs = getComputedStyle(e); if (parseFloat(cs.borderTopLeftRadius) < r.width * 0.4 || cs.visibility === 'hidden' || +cs.opacity < 0.2) return null;
+      return paints(cs.backgroundColor) || (parseFloat(cs.borderTopWidth) >= 1 && cs.borderTopStyle !== 'none' && paints(cs.borderTopColor)) ? r : null;
+    };
+    const tracks = new Map(); let k = 0;
+    for (const e of B.querySelectorAll('i, b, span, em, div, li, s, u, small, mark')) {
+      if (++k > 9000) break;
+      if (e.closest('svg, button, a[href], input, select, label, [role=slider], [role=tab], [role=button], [role=radio], [role=checkbox]')) continue;
+      const r = roundBox(e); if (!r) continue;
+      const cy = r.top + r.height / 2;
+      for (let t = e.parentElement, d = 0; t && t !== B && d < 3; t = t.parentElement, d++) {
+        const tr = t.getBoundingClientRect(); if (tr.width < Math.max(120, r.width * 5) || cy < tr.top - 2 || cy > tr.bottom + 2) continue;
+        // the line: the track itself, its ::before or ::after, a thin child, or a border, through the dots' middle
+        const tcs = getComputedStyle(t);
+        let line = (tr.height <= 4 && (paints(tcs.backgroundColor) || /gradient/.test(tcs.backgroundImage)));
+        for (const ps of ['::before', '::after']) { if (line) break; const p = getComputedStyle(t, ps); if (p.content && p.content !== 'none' && p.content !== 'normal' && paintedLine(p) && (parseFloat(p.width) >= tr.width * 0.6 || p.position === 'absolute')) line = true; }
+        if (!line) for (const c of t.children) { if (c === e || c.contains(e)) continue; const cr = c.getBoundingClientRect(); if (cr.height > 0 && cr.height <= 4 && cr.width >= tr.width * 0.6 && Math.abs(cr.top + cr.height / 2 - cy) <= 6 && (paints(getComputedStyle(c).backgroundColor) || /gradient/.test(getComputedStyle(c).backgroundImage))) { line = true; break; } }
+        if (!line && ((parseFloat(tcs.borderTopWidth) >= 1 && tcs.borderTopStyle !== 'none' && paints(tcs.borderTopColor) && Math.abs(tr.top - cy) <= 6) || (parseFloat(tcs.borderBottomWidth) >= 1 && tcs.borderBottomStyle !== 'none' && paints(tcs.borderBottomColor) && Math.abs(tr.bottom - cy) <= 6))) line = true;
+        if (!line) continue;
+        if (t.closest('button, a[href], [role=slider], [tabindex]:not([tabindex="-1"])') || /pointer|grab/.test(tcs.cursor) || /pointer|grab/.test(getComputedStyle(e).cursor)) break;
+        const g = tracks.get(t) || { dots: [], t }; g.dots.push({ w: r.width, cy }); tracks.set(t, g);
+        break;
+      }
+    }
+    for (const g of tracks.values()) {
+      const big = g.dots.some((d) => d.w >= 12), mid = g.dots.map((d) => d.cy).sort((a, b) => a - b)[Math.floor(g.dots.length / 2)];
+      const on = g.dots.filter((d) => Math.abs(d.cy - mid) <= 4);
+      if (on.length < 2 && !(big && on.length >= 1)) continue;
+      const row = g.t.parentElement && textOf(g.t.parentElement).length <= 80 ? g.t.parentElement : g.t;
+      out.dotTracks.push({ text: textOf(row).slice(0, 40) || 'a track', dots: on.length, knob: big, ui: !!g.t.closest('[data-ui]') });
+      if (out.dotTracks.length >= 8) break;
+    }
+  }
   return out;
+}
+
+// Text over a picture on this screen (text-on-photo, round 9, r7-p35): each block of text that lies on a photograph,
+// a video or a canvas (through any translucent layer), with the band its letters fill on each line, its colour and
+// opacity. Its text is then made transparent ([data-ts-ink]) so the inspector can photograph what lies under the
+// letters; photoTextDone() puts it back. Text over a solid ground is the contrast check's business. Runs in the page.
+export function photoText() {
+  const W = innerWidth, H = innerHeight;
+  const UNITS = 'h1, h2, h3, h4, h5, h6, p, blockquote, li, figcaption, dd, dt, td, th, label, button, a, caption, summary';
+  const cvs = document.createElement('canvas'); cvs.width = cvs.height = 1; const cx = cvs.getContext('2d', { willReadFrequently: true });
+  const colour = (c) => { cx.clearRect(0, 0, 1, 1); cx.fillStyle = 'rgba(0,0,0,0)'; cx.fillStyle = c; cx.fillRect(0, 0, 1, 1); const d = cx.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2], d[3] / 255]; };
+  // (a bar pinned to the top passes over every picture of the page; it is judged on the first screen only)
+  const pinned = (el) => { for (let p = el; p && p !== document.body; p = p.parentElement) { const cs = getComputedStyle(p); if (cs.position === 'fixed' || cs.position === 'sticky') { const r = p.getBoundingClientRect(); if (r.top < 140 && r.height < 180) return true; } } return false; };
+  const memo = new Map();
+  const opacityOf = (el) => { if (!el || el === document.documentElement) return 1; if (memo.has(el)) return memo.get(el); const cs = getComputedStyle(el); const v = cs.visibility === 'hidden' ? 0 : +cs.opacity * opacityOf(el.parentElement); memo.set(el, v); return v; };
+  // (a layer above the text covers it: a picture, an opaque ground, or a copy of the words in another colour, as a
+  // colour swap lays over the ink copy; the visitor sees that layer, so the point is not counted)
+  const rq = document.createRange();
+  const ownTextAt = (e, x, y) => { for (const c of e.childNodes) { if (c.nodeType !== 3 || !c.nodeValue.trim()) continue; rq.selectNodeContents(c); for (const q of rq.getClientRects()) if (x >= q.left && x <= q.right && y >= q.top && y <= q.bottom) return true; } return false; };
+  const covers = (e, x, y) => {
+    if (opacityOf(e) < 0.5) return false;
+    if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME)$/.test(e.tagName)) return true;
+    const cs = getComputedStyle(e);
+    if (colour(cs.backgroundColor)[3] >= 0.9) return true;
+    return colour(cs.color)[3] >= 0.1 && ownTextAt(e, x, y);
+  };
+  const groundAt = (el, x, y) => {
+    const stack = document.elementsFromPoint(x, y); const i = stack.indexOf(el) >= 0 ? stack.indexOf(el) : stack.findIndex((e) => el.contains(e)); if (i < 0) return null;
+    for (const e of stack.slice(0, i)) if (!e.contains(el) && covers(e, x, y)) return { covered: true };
+    for (const e of stack.slice(i + 1)) {
+      if (e === document.body || e === document.documentElement) break;
+      if (e.contains(el) && e !== el) { const cs = getComputedStyle(e); if (!/url\(/.test(cs.backgroundImage)) { const c = colour(cs.backgroundColor); if (c[3] >= 0.9) return { solid: true }; continue; } }
+      const ecs = getComputedStyle(e);
+      const url = (ecs.backgroundImage.match(/url\(["']?([^"')]+)/) || [])[1] || '';
+      const size = ecs.backgroundSize.split(',')[0].trim(), stretched = /^\S+\s+\S+$/.test(size) && !/auto|cover|contain/.test(size);
+      const picture = /^(IMG|VIDEO|CANVAS|PICTURE|IFRAME)$/.test(e.tagName) || (url && !(/^data:/.test(url) && url.length < 4000) && !stretched && (/cover|contain|%/.test(size) || /no-repeat/.test(ecs.backgroundRepeat)));
+      if (picture) return { media: (e.currentSrc || e.getAttribute('poster') || url || e.tagName.toLowerCase()).split('/').pop().split('?')[0].slice(0, 48) || e.tagName.toLowerCase() };
+      if (colour(ecs.backgroundColor)[3] >= 0.9) return { solid: true };
+    }
+    return null;
+  };
+  // (hit-testing skips pointer-events: none, which scenes set on their layers: switched on while sampling)
+  const hit = document.createElement('style'); hit.textContent = '*, *::before, *::after { pointer-events: auto !important; }'; document.head.appendChild(hit);
+  const units = new Map(); const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const rg = document.createRange();
+  let lines = 0;
+  try { for (let n = tw.nextNode(); n && lines < 900; n = tw.nextNode()) {
+    const t = n.nodeValue.replace(/\s+/g, ' ').trim(); const el = n.parentElement;
+    if (t.length < 2 || !el || /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE|OPTION)$/.test(el.tagName) || el.closest('svg, [data-ui], dialog:not([open])')) continue;
+    rg.selectNodeContents(n); const rects = [...rg.getClientRects()].filter((r) => r.width >= 4 && r.bottom > 0 && r.top < H && r.right > 0 && r.left < W);
+    if (!rects.length) continue;
+    const cs = getComputedStyle(el); const size = parseFloat(cs.fontSize); const op = opacityOf(el); const c = colour(cs.color);
+    if (op < 0.85 || c[3] < 0.1 || size < 9 || (pinned(el) && scrollY > H * 0.5)) continue;
+    const unit = el.closest(UNITS) || el;
+    for (const r of rects) {
+      lines++;
+      const mid = (r.top + r.bottom) / 2, band = { l: Math.max(0, r.left), r: Math.min(W, r.right), t: Math.max(0, mid - size * 0.35), b: Math.min(H, mid + size * 0.35) };
+      if (band.r - band.l < 4 || band.b - band.t < 3) continue;
+      // (seven points along the line; the band is then cut to the stretch that lies on the picture where the visitor
+      // sees these letters, so a copy clipped to a window, or a line half under a cover, is measured where it shows)
+      let on = 0, seen = 0, media = null, gl = Infinity, gr = -Infinity; const bw = band.r - band.l;
+      for (let k = 0; k < 7; k++) { const x = Math.min(W - 1, band.l + bw * ((k + 0.5) / 7)), g = groundAt(el, x, Math.min(H - 1, Math.max(0, mid))); if (!g || g.covered) continue; seen++; if (g.media) { on++; media = g.media; gl = Math.min(gl, x); gr = Math.max(gr, x); } }
+      if (!seen || on / seen < 0.6) continue;
+      band.l = Math.max(band.l, gl - bw / 14); band.r = Math.min(band.r, gr + bw / 14);
+      if (band.r - band.l < 4) continue;
+      // (the words once: a colour-swap copy repeats them inside the same block)
+      const said = (unit.innerText || t).replace(/\s+/g, ' ').trim(), twice = said.match(/^(.{3,}?)\s*\1$/);
+      const u = units.get(unit) || { els: new Set(), text: (twice ? twice[1] : said).slice(0, 60), size: Math.round(size * 10) / 10, weight: +cs.fontWeight || 400, color: c, op: Math.round(op * 100) / 100, media, rects: [] };
+      // (each line keeps its own colour and opacity: the copies of a colour swap are inked differently)
+      u.els.add(el); if (u.rects.length < 16) u.rects.push({ l: Math.round(band.l), r: Math.round(band.r), t: Math.round(band.t), b: Math.round(band.b), c: [c[0], c[1], c[2], Math.round(c[3] * op * 100) / 100] });
+      units.set(unit, u);
+    }
+    if (units.size >= 40) break;
+  } } finally { hit.remove(); }
+  if (!units.size) return [];
+  for (const u of units.values()) for (const el of u.els) el.setAttribute('data-ts-ink', '');
+  const s = document.createElement('style'); s.id = 'ts-ink';
+  s.textContent = '[data-ts-ink], [data-ts-ink] * { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; -webkit-text-stroke-color: transparent !important; text-decoration-color: transparent !important; caret-color: transparent !important; transition: none !important; }';
+  document.head.appendChild(s);
+  void document.body.offsetHeight;
+  return [...units.values()].map(({ els, ...u }) => u);
+}
+export function photoTextDone() {
+  const s = document.getElementById('ts-ink'); if (!s) return 0;
+  // the colour comes back with transitions still off, so a colour transition does not fade the words in again
+  s.textContent = '[data-ts-ink], [data-ts-ink] * { transition: none !important; }';
+  for (const el of document.querySelectorAll('[data-ts-ink]')) void getComputedStyle(el).color;
+  s.remove(); for (const el of document.querySelectorAll('[data-ts-ink]')) el.removeAttribute('data-ts-ink');
+  return 1;
+}
+
+// The contrast of each block of text from photoText() against the pixels under its letters, from a screenshot taken
+// with the text made transparent: the WCAG ratio of the text's colour (blended by its opacity) against every sampled
+// pixel of its letter bands, given as the 10th, 25th and 50th percentile and the share under its target (4.5:1, or 3:1
+// at 24px and up or 18.5px bold). Runs inside any page; takes [dataUrl, units].
+export async function photoContrast([src, units]) {
+  const img = new Image(); img.src = src; await img.decode();
+  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0);
+  const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const L = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  // (each line is also cut into stretches of about two letters' height wide, a word or so: a stretch whose median is
+  // under the target is a word that cannot be read, however clear the rest of the line is)
+  const need = (u) => (u.size >= 24 || (u.size >= 18.5 && u.weight >= 700) ? 3 : 4.5);
+  return units.map((u) => {
+    const ratios = [], segs = [];
+    for (const r of u.rects) {
+      const fg = r.c || [u.color[0], u.color[1], u.color[2], u.color[3] * u.op], a = Math.min(1, fg[3]);
+      const x0 = Math.max(0, Math.floor(r.l)), y0 = Math.max(0, Math.floor(r.t)), x1 = Math.min(c.width, Math.ceil(r.r)), y1 = Math.min(c.height, Math.ceil(r.b));
+      if (x1 - x0 < 2 || y1 - y0 < 2) continue;
+      const d = x.getImageData(x0, y0, x1 - x0, y1 - y0).data, w = x1 - x0, hh = y1 - y0;
+      const step = Math.max(1, Math.round(Math.sqrt((w * hh) / 1200)));
+      const segW = Math.max(40, u.size * 2.5), nSeg = Math.max(1, Math.round(w / segW)), bySeg = Array.from({ length: nSeg }, () => []);
+      for (let yy = 0; yy < hh; yy += step) for (let xx = 0; xx < w; xx += step) {
+        const i = (yy * w + xx) * 4, br = d[i], bg = d[i + 1], bb = d[i + 2];
+        const l1 = L(fg[0] * a + br * (1 - a), fg[1] * a + bg * (1 - a), fg[2] * a + bb * (1 - a)), l2 = L(br, bg, bb);
+        const v = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+        ratios.push(v); bySeg[Math.min(nSeg - 1, Math.floor((xx / w) * nSeg))].push(v);
+      }
+      for (const s of bySeg) if (s.length >= 6) { s.sort((p, q) => p - q); segs.push(s[Math.floor(s.length / 2)]); }
+    }
+    if (ratios.length < 24) return null;
+    ratios.sort((p, q) => p - q);
+    const at = (f) => Math.round(ratios[Math.floor(f * (ratios.length - 1))] * 100) / 100;
+    const n = need(u), low = segs.filter((v) => v < n);
+    return { text: u.text, size: u.size, need: n, media: u.media, p10: at(0.1), p25: at(0.25), p50: at(0.5), under: Math.round((ratios.filter((v) => v < n).length / ratios.length) * 100) / 100, segs: segs.length, segLow: low.length, segWorst: segs.length ? Math.round(Math.min(...segs) * 100) / 100 : null };
+  });
+}
+
+// Headings set in letters (letters-mid-reveal, round 9, r7-p35's "Booking" captured as "B o" on a phone): an h1-h6,
+// [role=heading], paragraph or quotation of 24px or more (any h1-h3) whose text is mostly in elements of one or two
+// letters. For each, every letter's opacity and its own transform (with any wrapper's up to the heading): translation,
+// scale and rotation. Each heading is numbered once (data-ts-split) so the inspector can compare a screen with the
+// state at the end of the walk. { all: true } returns every one, in view or not. Runs in the page.
+export function splitLetters(opts = {}) {
+  const H = innerHeight;
+  window.__tsSplit = window.__tsSplit || 0;
+  const out = [];
+  const parse = (cs) => {
+    let tx = 0, ty = 0, sc = 1, rot = 0;
+    const m = cs.transform && cs.transform !== 'none' ? cs.transform.match(/matrix(3d)?\(([^)]+)\)/) : null;
+    if (m) { const v = m[2].split(',').map(Number); const [a, b, e, f] = m[1] ? [v[0], v[1], v[12], v[13]] : [v[0], v[1], v[4], v[5]]; tx += e; ty += f; sc *= Math.hypot(a, b); rot += (Math.atan2(b, a) * 180) / Math.PI; }
+    if (cs.translate && cs.translate !== 'none') { const p = cs.translate.split(/\s+/).map(parseFloat); tx += p[0] || 0; ty += p[1] || 0; }
+    if (cs.scale && cs.scale !== 'none') sc *= parseFloat(cs.scale) || 1;
+    if (cs.rotate && cs.rotate !== 'none') rot += parseFloat(cs.rotate) || 0;
+    return [tx, ty, sc, rot];
+  };
+  for (const h of document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role=heading], p, blockquote')) {
+    if (h.parentElement?.closest('h1, h2, h3, h4, h5, h6, [role=heading], p, blockquote') || h.closest('svg, [data-ui]')) continue;
+    const letters = [...h.querySelectorAll('*')].filter((e) => !e.childElementCount && /^\S{1,2}$/.test((e.textContent || '').trim()));
+    if (letters.length < 3) continue;
+    const total = (h.textContent || '').replace(/\s+/g, '').length; const inLetters = letters.reduce((a, e) => a + e.textContent.trim().length, 0);
+    if (inLetters < total * 0.6) continue;
+    const size = parseFloat(getComputedStyle(letters[0]).fontSize); if (size < 24 && !/^H[1-3]$/.test(h.tagName)) continue;
+    if (!h.dataset.tsSplit) h.dataset.tsSplit = String(window.__tsSplit++);
+    const r = h.getBoundingClientRect(); const seen = r.height > 0 ? (Math.min(r.bottom, H) - Math.max(r.top, 0)) / r.height : 0;
+    const inView = seen >= 0.8 && getComputedStyle(h).visibility !== 'hidden';
+    if (!opts.all && !inView) continue;
+    const state = letters.slice(0, 60).map((l) => {
+      let op = 1, tx = 0, ty = 0, sc = 1, rot = 0;
+      for (let e = l; e && e !== h; e = e.parentElement) { const cs = getComputedStyle(e); op *= cs.visibility === 'hidden' ? 0 : +cs.opacity; const [a, b, c, d] = parse(cs); tx += a; ty += b; sc *= c; rot += d; }
+      return [Math.round(op * 100) / 100, Math.round(tx), Math.round(ty), Math.round(sc * 100) / 100, Math.round(rot)];
+    });
+    out.push({ id: h.dataset.tsSplit, text: (h.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40), chars: letters.slice(0, 60).map((l) => l.textContent.trim()), size: Math.round(size), inView, top: Math.round(r.top), letters: state });
+    if (out.length >= 30) break;
+  }
+  return out;
+}
+
+// The fill of each tile of a wall (tile-wall), from a screenshot: the commonest colour (4 bits a channel) and its
+// share of the tile, sampled on a 3px grid; a tile is filled when one colour covers 45% of it or more and it is not
+// the page's ground. Filled tiles are grouped into fills: by hue for colours (22 degrees, 0.2 of lightness), by
+// lightness for greys. Runs inside any page; takes [dataUrl, rects, ground].
+export async function tileFills([src, rects, ground]) {
+  const img = new Image(); img.src = src; await img.decode();
+  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0);
+  const hsl = ([r, g, b]) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); const l = (mx + mn) / 2; let h = 0, s = 0; if (mx !== mn) { const d = mx - mn; s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; } return { h, s, l }; };
+  const tiles = [];
+  for (const r of rects) {
+    const x0 = Math.max(0, Math.floor(r.x)), y0 = Math.max(0, Math.floor(r.y)), x1 = Math.min(c.width, Math.ceil(r.x + r.w)), y1 = Math.min(c.height, Math.ceil(r.y + r.h));
+    if (x1 - x0 < 40 || y1 - y0 < 40 || (x1 - x0) * (y1 - y0) < r.w * r.h * 0.6) continue;
+    const d = x.getImageData(x0, y0, x1 - x0, y1 - y0).data, w = x1 - x0, hh = y1 - y0; const bins = new Map(); let n = 0;
+    for (let yy = 1; yy < hh; yy += 3) for (let xx = 1; xx < w; xx += 3) { const i = (yy * w + xx) * 4; const k = (d[i] >> 4) << 8 | (d[i + 1] >> 4) << 4 | (d[i + 2] >> 4); const b = bins.get(k) || [0, 0, 0, 0]; b[0] += d[i]; b[1] += d[i + 1]; b[2] += d[i + 2]; b[3]++; bins.set(k, b); n++; }
+    const top = [...bins.values()].sort((a, b) => b[3] - a[3])[0]; if (!top) continue;
+    const rgb = [top[0] / top[3], top[1] / top[3], top[2] / top[3]].map(Math.round), share = top[3] / n;
+    const off = Math.max(...rgb.map((v, i) => Math.abs(v - (ground ? ground[i] : 255))));
+    tiles.push({ rgb, share: Math.round(share * 100) / 100, filled: share >= 0.45 && off > 30 });
+  }
+  const fills = [];
+  for (const t of tiles.filter((q) => q.filled)) {
+    const v = hsl(t.rgb), chroma = v.s >= 0.25 && v.l > 0.12 && v.l < 0.9;
+    const f = fills.find((q) => q.chroma === chroma && (chroma ? Math.min(Math.abs(q.h - v.h), 360 - Math.abs(q.h - v.h)) < 22 && Math.abs(q.l - v.l) < 0.2 : Math.abs(q.l - v.l) < 0.15));
+    if (f) f.n++; else fills.push({ chroma, h: v.h, l: v.l, n: 1, hex: '#' + t.rgb.map((q) => q.toString(16).padStart(2, '0')).join('') });
+  }
+  return { measured: tiles.length, filled: tiles.filter((q) => q.filled).length, fills: fills.map((f) => ({ hex: f.hex, n: f.n, colour: f.chroma })) };
 }
 
 // Decorative controls (round 6): a switch, checkbox or slider on the page that changes nothing when it is used
@@ -784,4 +1243,57 @@ export async function controls() {
     }
   }
   return out;
+}
+
+// One product replay at the moment it is called (the inspector's beat pass): the beat it shows, whether its stage
+// stands held, the window as a visitor sees it (inside the figure when the figure clips a view that moves in, and
+// inside the screen), the top and foot of what its stage shows, a bar fixed to the top of the screen, how much of
+// the window is bare, and a signature of its parts (a replay on its own clock has no data-beat to read).
+// Runs in the page; takes the replay's index among [data-replay].
+export function replayState(i) {
+  const r = document.querySelectorAll('[data-replay]')[i]; if (!r) return null;
+  const W = innerWidth, H = innerHeight;
+  const ui = r.querySelector('[data-ui]') || r;
+  const u = ui.getBoundingClientRect(), f = r.getBoundingClientRect();
+  const clips = getComputedStyle(r).overflowX !== 'visible';
+  const l = Math.max(0, u.left, clips ? f.left : -1e9), t = Math.max(0, u.top, clips ? f.top : -1e9);
+  const rt = Math.min(W, u.right, clips ? f.right : 1e9), b = Math.min(H, u.bottom, clips ? f.bottom : 1e9);
+  const win = { x: Math.round(l), y: Math.round(t), w: Math.max(0, Math.round(rt - l)), h: Math.max(0, Math.round(b - t)) };
+  const stage = r.closest('.replay-stage');
+  const held = !!stage && stage.classList.contains('is-held');
+  const stuck = held && Math.abs(stage.getBoundingClientRect().top - (parseFloat(getComputedStyle(stage).top) || 0)) < 2;
+  let top = Infinity, foot = -Infinity;
+  for (const c of (stage || r.parentElement || r).children) {
+    if (c.classList.contains('replay-hold__run')) continue;
+    const cs = getComputedStyle(c); if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+    const q = c.getBoundingClientRect(); if (q.width < 2 || q.height < 2) continue;
+    top = Math.min(top, q.top); foot = Math.max(foot, q.bottom);
+  }
+  // a bar fixed or stuck to the top of the screen is not empty space above the stage
+  let bar = 0;
+  for (const e of document.querySelectorAll('header, nav, [role=banner], body > div, body > *')) {
+    const cs = getComputedStyle(e); if (!/fixed|sticky/.test(cs.position) || cs.visibility === 'hidden' || +cs.opacity < 0.1 || e.contains(r)) continue;
+    const q = e.getBoundingClientRect(); if (q.top <= 2 && q.bottom > 0 && q.height < H * 0.2 && q.width >= W * 0.5) bar = Math.max(bar, q.bottom);
+  }
+  // bare window: a 12 x 8 grid of points over it, a point covered within 8px of a line of text, a picture, a field
+  // or a painted leaf element (a bar, a dot)
+  const fill = [];
+  { const tw = document.createTreeWalker(ui, NodeFilter.SHOW_TEXT); const rg = document.createRange(); let n;
+    while ((n = tw.nextNode())) { if (!n.nodeValue.trim() || !n.parentElement) continue; const cs = getComputedStyle(n.parentElement); if (cs.visibility === 'hidden' || +cs.opacity < 0.1) continue; rg.selectNodeContents(n); for (const q of rg.getClientRects()) if (q.width > 1 && q.height > 1) fill.push(q); } }
+  for (const e of ui.querySelectorAll('*')) {
+    const cs = getComputedStyle(e); if (cs.visibility === 'hidden' || +cs.opacity < 0.1) continue;
+    if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME|INPUT|TEXTAREA|SELECT|svg)$/.test(e.tagName) || (!e.childElementCount && (cs.backgroundColor !== 'rgba(0, 0, 0, 0)' || cs.backgroundImage !== 'none'))) fill.push(e.getBoundingClientRect());
+  }
+  let bare = 0;
+  if (win.w > 8 && win.h > 8) {
+    for (let a = 0; a < 12; a++) for (let c = 0; c < 8; c++) {
+      const x = win.x + ((a + 0.5) * win.w) / 12, y = win.y + ((c + 0.5) * win.h) / 8;
+      if (!fill.some((q) => x >= q.left - 8 && x <= q.right + 8 && y >= q.top - 8 && y <= q.bottom + 8)) bare++;
+    }
+    bare = Math.round((bare / 96) * 100) / 100;
+  }
+  const cursor = [...r.querySelectorAll('[data-replay-cursor], .replay__cursor')].some((c) => { const cs = getComputedStyle(c); return cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > 0.1; });
+  // the parts' classes and words, in order: what a beat on a clock changes
+  const sig = [...ui.querySelectorAll('*')].slice(0, 500).map((e) => (typeof e.className === 'string' ? e.className : '') + (e.childElementCount ? '' : ':' + String(e.matches('input, textarea') ? e.value : e.textContent).slice(0, 40)) + (getComputedStyle(e).opacity < 0.5 ? '~' : '')).join('|');
+  return { beat: r.dataset.beat ?? null, held, stuck, win, top: Math.round(top), foot: Math.round(foot), bar: Math.round(bar), bare, cursor, uid: [...document.querySelectorAll('canvas, [data-ui]')].indexOf(ui), sig, y: Math.round(scrollY) };
 }

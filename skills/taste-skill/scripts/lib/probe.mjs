@@ -849,6 +849,8 @@ export function frame(opts = {}) {
     const pinned = size >= 32 && pinnedLow(el) && !el.closest('.scene.is-live');
     // lines of one heading set as separate spans overlap each other's glyph boxes; that is not a collision
     const unit = el.closest('h1, h2, h3, h4, h5, h6, p, blockquote');
+    // (inside a product replay's window a drawer or menu of the product opening over its own rows is the product at work)
+    const ownWindow = el.closest('[data-replay] [data-ui]');
     const range = document.createRange(); let total = 0, hidden = 0, cutTop = false, area = 0, over = 0;
     for (const node of el.childNodes) {
       if (node.nodeType !== 3 || !node.nodeValue.trim()) continue;
@@ -861,7 +863,7 @@ export function frame(opts = {}) {
         for (const dy of [-0.2, 0.2]) for (const fx of [0.12, 0.37, 0.63, 0.88]) {
           const x = r.left + r.width * fx, y = r.top + r.height * 0.55 + band * dy; if (x < 0 || x >= W || y < 0 || y >= H) continue;
           total++; const hit = document.elementFromPoint(x, y);
-          if (hit && hit !== el && !el.contains(hit) && !hit.contains(el) && !pinnedTop(hit) && !(unit && unit.contains(hit) && !/^(IMG|VIDEO|CANVAS|PICTURE|svg)$/.test(hit.tagName) && !hit.closest('svg')) && paints(hit, el)) hidden++;
+          if (hit && hit !== el && !el.contains(hit) && !hit.contains(el) && !pinnedTop(hit) && !(ownWindow && ownWindow.contains(hit) && hit.closest('[data-open-at]')) && !(unit && unit.contains(hit) && !/^(IMG|VIDEO|CANVAS|PICTURE|svg)$/.test(hit.tagName) && !hit.closest('svg')) && paints(hit, el)) hidden++;
         }
         // the glyph box starts above the capitals (ascender room), so only a cut well into it is a real crop
         if (size >= 40 && r.top >= -4 && clips.some((c) => c.top > r.top + r.height * 0.3 && c.top < r.bottom - r.height * 0.2)) cutTop = true;
@@ -1347,4 +1349,25 @@ export async function palette(dataUrl) {
   return [...bins.values()].sort((a, b) => b[3] - a[3]).slice(0, 6).map((b) => ({
     color: '#' + [0, 1, 2].map((i) => Math.round(b[i] / b[3]).toString(16).padStart(2, '0')).join(''), share: Math.round((b[3] / total) * 100) / 100,
   }));
+}
+
+// How much of the screen visibly changed between two screenshots (the product replay's beats, replay-faint): the
+// share of the screen covered by 16px cells in which at least 8 pixels differ by more than 24/255 in a channel, inside
+// a rectangle (the replay's window). Cells, not pixels, so anti-aliasing and a rolled digit do not count as area and a
+// fill a step from its ground does not either. Runs inside any page; takes [dataUrlA, dataUrlB, {x, y, w, h}, W, H].
+export async function cellDiff([a, b, rect, W, H]) {
+  const load = async (s) => { const i = new Image(); i.src = s; await i.decode(); return i; };
+  const [ia, ib] = await Promise.all([load(a), load(b)]);
+  const w = Math.min(ia.width, ib.width), h = Math.min(ia.height, ib.height);
+  const x0 = Math.max(0, Math.floor(rect.x)), y0 = Math.max(0, Math.floor(rect.y)), x1 = Math.min(w, Math.ceil(rect.x + rect.w)), y1 = Math.min(h, Math.ceil(rect.y + rect.h));
+  if (x1 - x0 < 2 || y1 - y0 < 2) return { cells: 0, px: 0 };
+  const data = (img) => { const c = document.createElement('canvas'); c.width = x1 - x0; c.height = y1 - y0; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, -x0, -y0); return x.getImageData(0, 0, x1 - x0, y1 - y0).data; };
+  const da = data(ia), db = data(ib), cw = x1 - x0, ch = y1 - y0, cell = 16, gw = Math.ceil(cw / cell), grid = new Uint16Array(gw * Math.ceil(ch / cell));
+  let px = 0;
+  for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+    const i = (y * cw + x) * 4;
+    if (Math.max(Math.abs(da[i] - db[i]), Math.abs(da[i + 1] - db[i + 1]), Math.abs(da[i + 2] - db[i + 2])) > 24) { px++; grid[Math.floor(y / cell) * gw + Math.floor(x / cell)]++; }
+  }
+  let cells = 0; for (const v of grid) if (v >= 8) cells++;
+  return { cells: Math.round(((cells * cell * cell) / (W * H)) * 10000) / 10000, px };
 }

@@ -199,8 +199,8 @@
   "summary": "A photograph with a wide, even sky zooms slowly while a field painted exactly in the sky's colour rises over it as a full-width arch, a short heading spreading word by word along its curve, until the arch has passed the top and the field is the flat ground of the next chapter, whose title turns in letter by letter over a small picture. It is a chapter divider for places, buildings, travel and property: the sky seems to come loose and become the page.",
   "place": "Between two sections: it ends one chapter on its photograph and opens the next (the intro, the rooms, the gallery, the contact) on the sky's colour, which the next section keeps. Two or three a page at most, each on a different photograph and ground.",
   "content": "One photograph, 3:2 or 16:10, 3000px wide or more, with open, even sky in the top third and a subject that runs edge to edge across the lower half (a range, a skyline, terraces, a shore; a single tower on a big sky hides the move), plus a 2:3 crop for phones. One small inset picture, 2:1, 1200x600 or more, from the next chapter. --ground sampled from the photograph's sky (the median of a 5% patch in the top third), never chosen by eye, and --ink at 7:1 on it. Words: a headline of 3-6 words and a lede of 14 or fewer; an arc heading of 4 words (6 at most on desktop, 34 characters); a statement of 6-10 words; a chapter title of 1-3 words (16 characters). Without a photograph with that sky, redraw.",
-  "options": "hero 'sky' (the headline in --ink straight on the sky) | 'band' (a flat translucent fill behind it and white type, for a busy top left); zoom 1.5 (1.2-1.8) end scale of the photograph; phoneZoom 1.3 (1.1-1.5); fade false (true also fades the photograph as it zooms, for dusk or interiors); arc 'spread' | 'static'; spread 0.10 (0.04-0.12) the widest word gap; phoneSpread 0.08 (0.04-0.10); chrome '', the selector of a fixed header, with chromeLight '#fff' its ink over the photograph and chromeX (0-100) for a centred logo; scrub 0.6; phone 'same' | 'rest'. The hold is not an option: the CSS sets it from the arch's height (2.25 screens by default).",
-  "phone": "The same scene with a tall arch that reads as a doorway and an arc heading of four words at most. Under 600px tall, or with a longer heading, the phone gets the finished composition.",
+  "options": "hero 'sky' (the headline in --ink straight on the sky, the lede on a solid strip of --ground, so small type never relies on the sky) | 'band' (a solid band in --ink behind the headline block, the type in --ground, for a busy top left; a translucent fill reads under 4.5:1 over a pale sky); zoom 1.5 (1.2-1.8) end scale of the photograph; phoneZoom 1.3 (1.1-1.5); fade false (true also fades the photograph as it zooms, for dusk or interiors); arc 'spread' | 'static'; spread 0.10 (0.04-0.12) the widest word gap; phoneSpread 0.08 (0.04-0.10); chrome '', the selector of a fixed header, with chromeLight '#fff' its ink over the photograph and chromeX (0-100) for a centred logo; scrub 0.6; phone 'same' | 'rest'. The hold is not an option: the CSS sets it from the arch's height (2.25 screens by default).",
+  "phone": "The same scene with a tall arch that reads as a doorway and an arc heading of four words at most; the chapter title's letters turn in on a clock of 0.7s once half the title is on screen, never with the scroll. Under 600px tall, or with a longer heading, the phone gets the finished composition.",
   "roles": [
    "intro",
    "about",
@@ -335,11 +335,11 @@
   "id": "arrive-and-settle-track",
   "name": "Arrive and settle on a sideways track",
   "family": "horizontal-travel",
-  "summary": "A held row slides sideways with the scroll and each item's height and tilt come from where it is on screen, so the letters of one giant closing line enter scattered at the right edge, swoop through their line and settle by the middle; then the camera pulls back until the whole line fits, ending on a calm frame with the line whole and a button. Its default is the page's last word and its action; the stair preset makes it a staircase of testimonials and the rise preset a short track of projects.",
+  "summary": "A held row slides sideways with the scroll and each item's height and tilt come from where it is on screen, so the letters of one giant closing line enter scattered at the right edge, swoop through their line and settle by the middle (the letters already on screen when the section arrives swoop within under half the letter size, so the line reads at once); then the camera pulls back until the whole line fits, ending on a calm frame with the line whole and a button. Its default is the page's last word and its action; the stair preset makes it a staircase of testimonials and the rise preset a short track of projects.",
   "place": "At the end of the page, as the call to action before the footer. With a preset it can carry the testimonials (stair, real quotes only) or the work (rise) instead. A quiet section comes before it.",
   "content": "Type preset: one line of 3-5 words, 14-28 characters, a question or an invitation, its first word of four letters or more and no word over 16 characters; a support line of 6-12 words and a button of 2-3 words. No pictures: the type is the picture, on one flat ground. The end frame shows the whole line, verb included: read the 100% frame at 1440, 768 and 390, and if it rests on the last words alone, shorten the line or set it smaller. The line is set at --display-weight (600 when the page sets none): set that token to a weight the page loads, or load 600 of the display face. Stair preset: a heading of six words or fewer and 5-7 real quotes of 25-45 words, each with name, role and a square portrait. Rise preset: a heading of up to five words and one sentence, 3-5 projects each with a 1.46:1 picture, a 1-3 word title, 12-20 words and a link, and one closing sentence with an action.",
-  "options": "preset 'type' | 'stair' | 'rise' (the data-settle attribute); speed 0.7-1.3, px of sideways travel per px of scroll (1 type, 1 stair, 1.2 rise; the hold is measured from it, 1-4 screens); rest 0.2-0.6 screens of still end frame (0.2); maxHold 1 type, 3 stair, 2.5 rise: a longer line swoops faster instead of holding longer; amp 0.6-1.5 letter offset in letter heights (1.5); tilt 0-20 degrees (18; cards 0); lift 20-60 vh card offset (36 stair, 60 rise); curve 'swoop' | 'calm' | 'linear' (swoop type, linear stair, calm rise); settle 0.30-0.60 share of the width by which an item has settled (0.45, 0.30, 0.50); enter 1.00-1.25 where the move begins (1.04, 1.20, 1.20); inset px of a fixed header to keep the letters clear of (0); scrub true with Lenis, else 0.5.",
-  "phone": "No pin and no sideways travel: the line stands stacked as in the finished composition, its letters swooping onto their lines as each line rises up the screen, and the support line and button rise in after them; cards rise 16vh each.",
+  "options": "preset 'type' | 'stair' | 'rise' (the data-settle attribute); speed 0.7-1.3, px of sideways travel per px of scroll (1 type, 1 stair, 1.2 rise; the hold is measured from it, 1-4 screens); rest 0.2-0.6 screens of still end frame (0.2); maxHold 1 type, 3 stair, 2.5 rise: a longer line swoops faster instead of holding longer; amp 0.6-1.5 letter offset in letter heights (1.5; the letters on screen when the section arrives take at most 0.45 of the font size, so the page measured from the top reads one line); tilt 0-20 degrees (18; cards 0); lift 20-60 vh card offset (36 stair, 60 rise); curve 'swoop' | 'calm' | 'linear' (swoop type, linear stair, calm rise); settle 0.30-0.60 share of the width by which an item has settled (0.45, 0.30, 0.50); enter 1.00-1.25 where the move begins (1.04, 1.20, 1.20); inset px of a fixed header to keep the letters clear of (0); scrub true with Lenis, else 0.5.",
+  "phone": "No pin and no sideways travel: the line stands stacked as in the finished composition, and once half of it is on screen its letters swoop onto their lines in reading order on a clock of 0.9s, never with the scroll, so the line is whole wherever the reader stops; the support line and button rise in after them; while the line is still wholly below the screen they all wait at their place; cards rise 16vh each.",
   "roles": [
    "cta",
    "contact"
@@ -363,7 +363,7 @@
   "place": "From the middle to the end of the page: the work, the projects or the tour of the building, handing over to the contact, whose ground it ends on. About ten screens: it is a whole page on its own (the work, the about and the contact in one), over the six screens the draw gives all of a page's scenes, so it is never dealt beside another scene. Build it only when the client's own photographs carry the whole page, with the hero and at most one short section around it, and nothing loud after it.",
   "content": "Fourteen photographs of the client's own work or building, from one shoot or in one grade: a wide interior (2200px or more) and two views of one room, close and wide, for the photo room; two 3:4 portraits; five landscape project pictures with the subject centred; two more for the held column; two at 16:9 for the last room. Words, about 280: a threshold headline of two lines and a lede of 25-35 words; a two-line heading and about 30 words for the photo room; a statement of 35-45 words in five lines; one chapter word; three value words of 13 characters or fewer with a note; five projects (a name of 14 characters or fewer, a year, a place, a link); a question of two lines with 40-60 words; two captions; a closing headline of 2-4 words. Rooms can be left out; the photographs cannot: without the client's own pictures, redraw.",
   "options": "rate 0.8-1.25 screen widths walked per screen of scroll (1); ramp 0.15-0.35 screens the walk takes to start and stop (0.25); open 50-66 vw, an open project card (60); closed 12-18 vw, a waiting strip (15); stack 0.5-1.2 screens held on the column while its photos stack (0.7); swap 0.5-1 screens held on the last room's photo swap (0.5); rest 0.2-0.6 screens of still closing headline (0.3); scrub 0.3 with Lenis, else 0.6 (0.1-1.5); intro true, the threshold title rises once when the walk is on screen at load. The hold is measured from the rooms: 10.5 screens for the full set with five cards, 0.6 more a card.",
-  "phone": "Below 900px wide or on a portrait screen: no pin and no sideways travel; the rooms stand as a vertical column in the same colour order, each with its own small scrubbed move.",
+  "phone": "Below 900px wide or on a portrait screen: no pin and no sideways travel; the rooms stand as a vertical column in the same colour order, each with its own small scrubbed move, except the letters: the card names and the question rise on a clock of under a second once half of them is on screen, so no name stands half-drawn.",
   "roles": [
    "work",
    "gallery",
@@ -454,7 +454,7 @@
   "place": "The first screen, as the hero (the page's one action stays in the header bar), opening onto the first chapter, which is the place itself. The page's ground is one flat colour that the shutter matches exactly.",
   "content": "One landscape photograph of the place, 3:2 or 16:10, about 3600px wide, with a diagonal of interest from lower left to upper right (each window frames something at the start), a calm top third for the word and nothing important on the vertical centre line; a 9:16 crop for phones; or a muted 8-12 s loop with little motion and the still as its poster. Two optional props for the bottom corners (foliage, a lamp, a chair), as cut-outs or keyed from a photograph of something dark against a bright sky. A title of 4-7 words on two lines (about 25 characters), a caption of 10-18 words (wide screens only, and left out where it does not fit under the windows, so repeat its key fact in the lede), one chapter word of 6-12 letters, and a lede of 18-32 words with a 2-3 word link.",
   "options": "hold 2.4 (1.8-3); phoneHold 2.0 (1.6-2.6); stagger 0.16 (0.08-0.165) how far each window starts off the shared band, 0.08 a calm diptych; phoneStagger 0.08 (0.05-0.12); bar 'auto' or 8-24 px of ground between the windows; high 'right' | 'left', the window that starts high; overscan 1.08 (1.04-1.15); phoneOverscan 1.16 (1.04-1.2); worldScale 0.8 (0.75-1) the world's start scale; wordTop 80 px (phoneWordTop 72); wordWidth 0.92 (0.6-0.96; phoneWordWidth 0.86); parallax 0.2 (0-0.3); scrub 0.6, true with Lenis; phone 'same' | 'rest'.",
-  "phone": "The same push with two slim windows across 85% of the width, the title full width above them, no caption and the word fitted to 86% of the width; hold 2. Portrait tablets get the same.",
+  "phone": "The same push with two slim windows across 85% of the width, the title full width above them, no caption and the word fitted to 86% of the width, its letters landing on a clock of 0.75s once the push reaches them, never with the scroll; hold 2. Portrait tablets get the same.",
   "roles": [
    "hero",
    "intro",
@@ -696,6 +696,7 @@
  {
   "id": "picture-develops",
   "name": "Picture develops from marks",
+  "weight": 0,
   "family": "picture-transform",
   "summary": "A near full-width pen drawing is laid down by the scroll, heaviest strokes first, then the hatching, then the faint construction lines, each stroke growing along its length with a wet tip in the accent that dries to ink, while the camera pulls back from a close-up of its densest part to the whole sheet. It is for a subject that owns drawn material (sketches, plans, maps, engravings) and a story about process; for a photograph, mode 'darkroom' develops the print, shadows first.",
   "place": "In the middle, on how it works, the about or the work, where the drawing being made is the argument. Once per page.",
@@ -915,6 +916,7 @@
  {
   "id": "type-flip-relayout",
   "name": "Type re-layout",
+  "weight": 0,
   "family": "type-choreography",
   "summary": "A short list in giant capitals on a held, picture-free stage is re-set three times by the scroll: its ragged lines spread into a justified slab and the short last item slides flush right, then the small heading relays letter by letter to the opposite corner, the slab folds line by line into a small index and the heading swells over a paragraph. It is for what a studio makes, a programme or a set of benefits, on editorial and type-led pages.",
   "place": "In the middle, on the services, the programme or the about: a section that is really a list of four to six things.",
@@ -1002,10 +1004,6 @@
   ],
   "position": "opening",
   "sectors": [
-   "dev-tool",
-   "ai-product",
-   "saas",
-   "finance",
    "culture",
    "studio-portfolio",
    "agency"
@@ -1162,5 +1160,34 @@
   ],
   "hold": 2.4,
   "weight": 1
+ },
+ {
+  "id": "line-carries-colour-swap",
+  "name": "One line carries the colour swap",
+  "family": "colour-and-ground",
+  "summary": "A straight-edged photograph that closes one chapter is cropped away from the bottom by a square clip while one very large line of the page's display face climbs under it, already at its final size and the full content width but showing only its first word; each further word slides in from the right with a short slide that lands it beside the word before, and on the last word the stage's ground and the line's ink swap in one jump (ink to paper, paper to ink, never a blend) while the next chapter's first picture, already rising under the line, settles whole beneath it. It turns a change of chapter or of mood into one precise moment, in any sector.",
+  "place": "Between two sections, as the hand-over from a dark chapter (the opening, the work, the evening) to a light one (the detail, the about, the order), or the other way with direction 'to-ink'. The section before sits on the first ground and ends on the photograph; the section after continues on the second ground straight under the picture, and the line is its heading. Once per page.",
+  "content": "One straight-edged landscape photograph that closes the section before (3:2 or wider, 1920px or more, dark and calm enough to end the ink chapter). One picture that opens the section after: it rests whole under the line, so it must crop well both wide (about 2.2:1 on desktop) and tall (about 2:3 on phones), 2400px or more. One line of 3-5 words, 14-24 characters, in the line's one colour; a full stop only where the page's voice uses them everywhere. Two grounds that contrast 7:1 or better both ways (the page's ink and paper). Nothing else on the stage: no labels, captions or buttons. Without a closing photograph and an opening picture, redraw: the line alone on flat colour reads as an empty screen.",
+  "options": "hold 1.2 (1-1.5); phoneHold 1.2 (1-1.5); direction 'to-paper' (ink ground to paper, paper line to ink) | 'to-ink' (the reverse; add class lcs--to-ink to the section too); slide 0.6 (0.3-1) how far a word slides in, as a share of its own width, never more than 1.1 times the type size; min 0.08 (0.05-0.12) share of the stage height under which a one-row line takes two rows; max 0.3 (0.2-0.4) share of the stage height the line's box never passes; drift 0.05 (0-0.1) how far the old photograph keeps rising while it is cropped; nav '', the selector of a fixed header, and navClass 'is-swapped', the class it gets from the swap on (style it to swap the bar's own ground and ink in the same jump); scrub 0.5, true with Lenis and on touch; phone 'same' | 'rest'. Tokens: --lcs-top, --lcs-foot, --lcs-gap, --lcs-size (no script), --lcs-photo-pos, --lcs-next-pos, --lcs-photo-h, --lcs-next-h.",
+  "phone": "The same scene with phone numbers: the line breaks into two rows where they are most even (never three) and is fitted to the full width, the words still landing one by one; the next picture crops tall under it; hold 1.2. Screens under 480px tall get the finished composition.",
+  "roles": [
+   "intro",
+   "about",
+   "features",
+   "list",
+   "how-it-works",
+   "gallery",
+   "contact"
+  ],
+  "position": "transition",
+  "sectors": [
+   "*"
+  ],
+  "needs": [
+   "pictures:2"
+  ],
+  "hold": 1.2,
+  "source": "lib-0240",
+  "inkChapter": true
  }
 ]

@@ -79,6 +79,13 @@ const SMALL_PICTURE_HEROES = new Set(['name-split-to-corners', 'pinned-title-ove
 // (the sheet's imagery section). The cap counts the scenes of a page together: in r6-p31 a cargo bike page redrew its
 // scenes five times for photo cards, chapters, a mark and a route it could not fill.
 const SCENE_PICTURE_CAP = { 'no-product-photo': 3, interface: 3, atmosphere: 6 };
+// A page short of pictures of its own subject (no photographs of its product, or a brief that says it has few) is dealt
+// first from the scenes and techniques that need no photograph or one: scenes of type, the product's own interface
+// where the page has it, techniques labelled 0 or 1. In r7-p34 a cargo bike page with no photographs redrew its scenes
+// three times, each wanting three to six photographs of one family, and was built with no scene at all.
+const FEW_PICTURE_WORDS = /\b(?:no|few|without|hardly any|not many)\s+(?:(?:good|real|own|usable|product)\s+)?(?:photo(?:graph)?s?|pictures?|images?|imagery)\b/i;
+function fewPictures(input) { const mode = imageryMode(input); return mode === 'no-product-photo' || (mode !== 'own' && FEW_PICTURE_WORDS.test(input.brief || '')); }
+function lightScene(sc) { return scenePictures(sc) <= 1; }
 const ROUTE_WORDS = /\b(?:routes?|treks?|itinerar(?:y|ies)|voyages?|crossings?|ferr(?:y|ies)|pilgrimages?|expeditions?)\b/i;
 // months, weekdays and seasons are not places: "open from May to September" names no route
 const NOT_PLACE = /^(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|mon(?:day)?|tues?(?:day)?|wed(?:nesday)?|thu(?:rs?(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?|spring|summer|autumn|fall|winter|easter|christmas)s?$/i;
@@ -185,7 +192,7 @@ if (opt('list')) {
   else if (what === 'tones') console.log(TONES.join('\n'));
   else if (what === 'roles') console.log([...new Set(Object.values(ROLE_ALIAS))].join('\n'));
   else if (what === 'scenes') { const all = existsSync(join(LIB, 'scenes.json')) ? load('scenes') : []; for (const sc of all) console.log(`${sc.id.padEnd(34)} ${sc.name} — ${sc.family}; ${sc.summary.split(/(?<=\.)\s/)[0]} Needs: ${sceneNeedsWords(sc)}.${sc.weight === 0 || NEVER_SCENES.has(sc.id) ? ' (not dealt)' : ''}`); if (!all.length) console.log('No scene library yet.'); }
-  else if (what === 'techniques') { const all = existsSync(join(LIB, 'techniques.json')) ? load('techniques') : []; for (const t of all) { const sc = techniqueScene(t); console.log(`${t.id}  ${t.name} — ${t.family}; ${t.position}, ${t.energy}, hold ${t.hold}; ${t.sectors.join(', ')}. Needs: ${sceneNeedsWords(sc)}.`); } if (!all.length) console.log('No technique library yet.'); }
+  else if (what === 'techniques') { const all = existsSync(join(LIB, 'techniques.json')) ? load('techniques') : []; const scenes = existsSync(join(LIB, 'scenes.json')) ? load('scenes') : []; for (const t of all) { const sc = techniqueScene(t); const built = scenes.find((x) => x.source === t.id); console.log(`${t.id}  ${t.name} — ${t.family}; ${t.position}, ${t.energy}, hold ${t.hold}; ${t.sectors.join(', ')}. Needs: ${sceneNeedsWords(sc)}.${built ? ` (not dealt: now the tested scene ${built.id})` : ''}`); } if (!all.length) console.log('No technique library yet.'); }
   else if (what === 'entrances') { const all = existsSync(join(LIB, 'entrances.json')) ? load('entrances') : []; for (const e of all) console.log(`${e.id.padEnd(16)} ${e.name} — ${e.family}, ${e.energy}, weight ${e.weight}; ${e.summary || e.sees.split(/(?<=\.)\s/)[0]}`); if (!all.length) console.log('No entrance library yet.'); }
   else if (what === 'replays') { const all = existsSync(join(LIB, 'replays.json')) ? load('replays') : []; for (const r of all) console.log(`${r.id.padEnd(14)} ${r.name} — ${r.sectors.join(', ')}${r.brief ? ` (or a brief matching /${r.brief}/)` : ''}; ${r.beats}`); if (!all.length) console.log('No replay library yet.'); }
   else for (const d of load('directions')) console.log(`${d.id.padEnd(30)} ${d.name} — ${d.sectors.join(', ')}`);
@@ -201,7 +208,7 @@ if (opt('photos')) {
     const hits = Object.values(lib.sets).flatMap((s) => s.photos).filter((ph) => words.some((w) => (ph.alt + ' ' + (ph.colours || []).join(' ')).toLowerCase().includes(w)));
     if (!hits.length) console.log('No photograph matches. `--photos list` shows the sets.'); else for (const ph of hits.slice(0, 24)) console.log(line(ph));
   }
-  console.log('\nPath numbers are width/height; add ?grayscale to desaturate. Photographs are atmosphere, never a stand-in for a person; a room, a dish or a product only as a picture of its kind, listed as such in the report.');
+  console.log('\nPath numbers are width/height; ?grayscale only where section 0 of the sheet deals the black-and-white treatment. A line marked black-and-white is a black-and-white file: never where the pictures carry the colour (food, seasons, rooms, products, a client named for a colour or a light). Photographs are atmosphere, never a stand-in for a person; a room, a dish or a product only as a picture of its kind, listed as such in the report.');
   process.exit(0);
 }
 if (opt('site')) {
@@ -234,7 +241,8 @@ if (opt('show')) {
 }
 
 const L = { directions: load('directions'), heroes: load('heroes'), sections: load('sections'), type: load('type'), palettes: load('palettes'), photos: load('photos'), sites: load('sites'), motions: load('motions'), fonts: load('fonts').fonts, scenes: existsSync(join(LIB, 'scenes.json')) ? load('scenes') : [], entrances: existsSync(join(LIB, 'entrances.json')) ? load('entrances') : [], replays: existsSync(join(LIB, 'replays.json')) ? load('replays') : [] };
-L.techniques = (existsSync(join(LIB, 'techniques.json')) ? load('techniques') : []).map(techniqueScene);
+// a technique since built and tested as a scene (the scene's `source`) is dealt as that scene, never built fresh again
+L.techniques = (existsSync(join(LIB, 'techniques.json')) ? load('techniques') : []).filter((t) => !L.scenes.some((sc) => sc.source === t.id)).map(techniqueScene);
 const sceneById = (id) => L.scenes.find((x) => x.id === id) || L.techniques.find((x) => x.id === id);
 // --technique <id> forces one in place of a scene (for tests); --no-technique deals none, and the sheet keeps it so
 const FORCED_TECHNIQUE = opt('technique') === undefined ? null : opt('technique');
@@ -271,10 +279,13 @@ if (opt('redraw')) {
   const what = String(opt('redraw'));
   const dir = L.directions.find((d) => d.id === sheet.direction.id);
   if (what === 'direction') {
-    // a new direction keeps the count of scene redraws, so it is no way around the limit of two
-    const { sceneRedraws, scenesTried } = sheet;
-    sheet = deal({ ...sheet.input, direction: null, avoid: [...(sheet.input.avoid || []), sheet.direction.id] }, sheet.redraws);
-    if (sceneRedraws) Object.assign(sheet, { sceneRedraws, scenesTried });
+    // a new direction keeps the count of scene redraws, so it is no way around the limit of two, and deals none of the
+    // scenes already redrawn away from
+    // (the old direction's own scenes among them: r9 brought the same track back under a new direction)
+    const { sceneRedraws } = sheet;
+    const scenesTried = [...new Set([...(sheet.scenesTried || []), ...(sheet.scenes || []).map((x) => x.id)])];
+    sheet = deal({ ...sheet.input, direction: null, avoid: [...(sheet.input.avoid || []), sheet.direction.id] }, sheet.redraws, scenesTried);
+    Object.assign(sheet, { scenesTried, ...(sceneRedraws ? { sceneRedraws } : {}) });
   }
   else if (what === 'hero') sheet.hero = dealHero(dir, sheet.input, [sheet.hero?.id]);
   else if (what === 'type') sheet.type = dealType(dir, [sheet.type?.id], sheet.input.tone, isDark(sheet.palette));
@@ -288,10 +299,17 @@ if (opt('redraw')) {
     // the replay keeps its section; a scene never carries it or a section next to it
     const reserved = sheet.replay ? [sheet.replay.carries] : [];
     const wanted = what.startsWith('scenes=') ? what.slice(7).trim().toLowerCase() : null;
-    if (wanted === 'none') { sheet.scenes = []; sheet.noScenes = true; }
+    delete sheet.lightOptions;
+    // none is still allowed, but the sheet names the scenes that need no photograph or one and still fit
+    if (wanted === 'none') { sheet.scenesTried = [...new Set([...(sheet.scenesTried || []), ...(sheet.scenes || []).map((x) => x.id)])]; sheet.scenes = []; sheet.noScenes = true; sheet.lightOptions = lightOptions(dir, sheet); }
     else if (wanted !== null) {
-      // a scene taken by id: it must fit this page (sector, needs) and find a section to carry
-      try { sheet.scenes = dealScenes(dir, sheet.input, [], reserved, list(wanted)); sheet.noScenes = false; } catch (e) { console.error(e.message); process.exit(2); }
+      // a scene taken by id: it must fit this page (sector, needs) and find a section to carry. The ones it replaces are
+      // kept as dealt, so a later redraw does not bring them back (r9: a fly-through returned after a scene taken by id)
+      try {
+        const next = dealScenes(dir, sheet.input, [], reserved, list(wanted));
+        sheet.scenesTried = [...new Set([...(sheet.scenesTried || []), ...(sheet.scenes || []).map((x) => x.id)])];
+        sheet.scenes = next; sheet.noScenes = false;
+      } catch (e) { console.error(e.message); process.exit(2); }
     } else {
       // Scenes are redrawn twice at most: the builder of r6-p31 redrew them five times for scenes it could not fill. The
       // third asks for a choice instead: the scenes that still fit, with what each needs, and the two ways out.
@@ -303,11 +321,24 @@ if (opt('redraw')) {
         console.log(sceneChoices(dir, sheet));
         process.exit(0);
       }
-      // a technique that could not be built honestly gives way to tested scenes; otherwise the redraw may deal one again
+      // a technique that could not be built honestly gives way to tested scenes; otherwise the redraw may deal one again.
+      // Nothing dealt on this sheet before comes back, across all its redraws: in r7-p36 two redraws both returned the
+      // same fly-through.
       const hadTechnique = (sheet.scenes || []).some((x) => x.technique);
       sheet.scenesTried = [...new Set([...(sheet.scenesTried || []), ...(sheet.scenes || []).map((x) => x.id)])];
-      sheet.scenes = dealScenes(dir, sheet.input, (sheet.scenes || []).map((x) => x.id), reserved); sheet.noScenes = false;
-      if (!hadTechnique) sheet.scenes = dealTechnique(dir, sheet.input, sheet.scenes, reserved, { exclude: sheet.scenesTried });
+      let next = dealScenes(dir, sheet.input, sheet.scenesTried, reserved);
+      // (a page short of pictures may take another technique that needs none or one: better than a scene it cannot fill)
+      // (and when no tested scene is left to deal, a technique that fits is dealt rather than nothing)
+      if (!hadTechnique || fewPictures(sheet.input) || !next.length) next = dealTechnique(dir, sheet.input, next, reserved, { exclude: sheet.scenesTried, always: !next.length });
+      if (!next.length) {
+        // nothing that has not been dealt here fits: no redraw, the list of what does instead
+        sheet.sceneRedraws -= 1; sheet.redraws -= 1;
+        mkdirSync(outDir, { recursive: true });
+        writeFileSync(sheetPath, JSON.stringify(sheet, null, 1));
+        console.log(sceneChoices(dir, sheet, 'none-new'));
+        process.exit(0);
+      }
+      sheet.scenes = next; sheet.noScenes = false;
     }
   } else if (what === 'entrance') sheet.entrance = dealEntrance(sheet, [sheet.entrance?.id].filter(Boolean));
   else if (what === 'replay') {
@@ -410,11 +441,19 @@ function directionPool(input) {
   // software shows itself large on the first screen: not a direction whose first screen has no picture, or none of whose
   // heroes sets one large (a first screen of type only was dealt to saas pages whose sheet asked for the product large)
   if (isSoftware(input)) { const meets = heroMeets(input); const shown = pool.filter((d) => !firstScreenBare(d) && heroPool(d, input).some((h) => meets(h) && heroShowsLarge(h))); if (shown.length >= 3) pool = shown; }
+  // a client named for a light or a pale colour stands on a light ground with bright pictures: not a direction whose
+  // grounds are nearly all dark (Hvit lost on navy-black in r6, and r7-p35 put a dark overlay on a house named white)
+  if (nameColours(input.brief).lean === 'light') { const lit = pool.filter((d) => !darkDirection(d)); if (lit.length >= 3) pool = lit; }
   if (input.tone) { const toned = pool.filter((d) => (d.tones || []).includes(input.tone)); if (toned.length >= 2) pool = toned; }
   // directions that put whole pages on loud colour are dealt only when the brief asks for a loud tone
   if (!['bold', 'playful'].includes(input.tone)) { const calm = pool.filter((d) => !d.loud); if (calm.length >= 2) pool = calm; }
   if (!pool.length) pool = L.directions.filter((d) => !input.avoid.includes(d.id) && (d.weight ?? 1) > 0);
   return pool;
+}
+// A direction whose own palettes are nearly all on dark grounds (dark-room).
+function darkDirection(d) {
+  const pool = L.palettes.filter((p) => (d.palettes || []).includes(p.id) || (p.tags || []).some((t) => (d.paletteTags || []).includes(t)));
+  return pool.length > 0 && pool.filter((p) => groundTone(p) === 'dark').length / pool.length > 0.8;
 }
 // Three directions dealt at random from the pool, for the builder to choose the one that carries its idea.
 function dealOptions(input, n) {
@@ -426,7 +465,7 @@ function dealOptions(input, n) {
   }
   return out;
 }
-function deal(input, redraws) {
+function deal(input, redraws, sceneExclude = []) {
   const pool = directionPool(input);
   const forced = input.direction ? L.directions.find((d) => d.id === input.direction) : null;
   // weighted: the directions every model already reaches for carry a weight under 1 in the library
@@ -434,7 +473,8 @@ function deal(input, redraws) {
   const s = { version: 1, at: new Date().toISOString(), seed: startSeed, redraws, input, imagery: imageryMode(input), allow: dir.allow || [], direction: dir };
   s.hero = dealHero(dir, input, []);
   // colour first, so a dark ground never gets a hairline text face
-  s.palette = input.keep.includes('palette') ? null : dealPalette(dir, input, []);
+  // a colour or a light in the client's name decides the ground from the first deal (SKILL.md step 1)
+  s.palette = input.keep.includes('palette') ? null : dealPalette(dir, input, [], nameColours(input.brief).lean);
   s.type = input.keep.includes('type') ? null : dealType(dir, [], input.tone, isDark(s.palette));
   s.photos = dealPhotos(dir, input);
   // signature moves that built the reviewed pages' worst parts (drag rails, a scaling giant name, colour
@@ -454,9 +494,9 @@ function deal(input, redraws) {
   // replay is the signature move, so no other one is dealt
   s.replay = dealReplay(s, []);
   if (s.replay) s.motion = null;
-  s.scenes = dealScenes(dir, input, [], s.replay ? [s.replay.carries] : []);
+  s.scenes = dealScenes(dir, input, sceneExclude, s.replay ? [s.replay.carries] : []);
   // a forced technique is for the first deal only; a new direction deals at the usual rate
-  try { s.scenes = dealTechnique(dir, input, s.scenes, s.replay ? [s.replay.carries] : [], { forced: opt('redraw') ? null : FORCED_TECHNIQUE }); } catch (e) { console.error(e.message); process.exit(2); }
+  try { s.scenes = dealTechnique(dir, input, s.scenes, s.replay ? [s.replay.carries] : [], { forced: opt('redraw') ? null : FORCED_TECHNIQUE, exclude: sceneExclude }); } catch (e) { console.error(e.message); process.exit(2); }
   const last = hist[0]?.frame || {};
   s.frame = dealFrame({ rnd, input, imagery: s.imagery, recent: last });
   // pictures that carry the colour are never black-and-white: dealt again until the treatment keeps colour
@@ -540,8 +580,14 @@ function sceneWhyNot(sc, input, sector = true) {
   if (sector && !(sc.sectors || ['*']).some((x) => x === '*' || x === input.sector)) return `it is not written for a ${input.sector} page`;
   const unmet = unmetNeeds(sc, input);
   if (unmet.length) return `it needs ${unmet.map((n) => needWhy(n, input)).join(' and ')}`;
+  // a client named for a light or a pale colour takes a light ground and bright pictures (imagery.md §6): never a
+  // chapter on the ink that ends on a dark photograph (Hvit was dealt line-carries-colour-swap into its intro)
+  if (sc.inkChapter && nameColours(input.brief).lean === 'light') return "it puts a chapter on the ink under a dark photograph, and this client's name asks for a light ground and bright pictures";
   // a product with no photographs of its own shows its kind large on the first screen; a scene there shows a place (r6-p31)
   if (imageryMode(input) === 'no-product-photo' && sc.position === 'opening') return "it takes the first screen for a picture of a place, and this page's first screen shows the product large";
+  // a software page's first screen shows its own interface large: never an opening scene that carries the first screen
+  // without it (r8-p38 was dealt the dither field, which allows no pictures, and had to redraw it away)
+  if (isSoftware(input) && sc.position === 'opening' && !(sc.needs || []).some((n) => n.split('|').includes('product-ui'))) return "it takes the first screen, which on a software page shows the product's own interface large";
   // on a software page the product replay is the big moment: a closing scene would end the page on a second one
   if (isSoftware(input) && sc.position === 'closing') return 'a software page ends on its product, not on a closing scene';
   if (!creativePage(input) && ATMOSPHERE.has(sc.id)) return 'it carries one line and no information, which only a loud or creative page can spend';
@@ -616,9 +662,12 @@ function dealScenes(dir, input, exclude, reserved = [], chosen = null) {
   const creative = creativePage(input);
   // A scene of weight 0 (scenes.json) stays in the library but is never dealt; a software page with nothing that
   // fits gets no scene at all.
+  // (whether the sector is asked is decided before the exclusions: a redraw that has used up a sector's scenes deals
+  // a technique or prints the list, never scenes written for other sectors)
   let sectorAsked = true;
-  let pool = L.scenes.filter((sc) => !exclude.includes(sc.id) && !sceneWhyNot(sc, input));
-  if (pool.length < 2) { sectorAsked = false; pool = L.scenes.filter((sc) => !exclude.includes(sc.id) && !sceneWhyNot(sc, input, false)); }
+  let pool = L.scenes.filter((sc) => !sceneWhyNot(sc, input));
+  if (pool.length < 2) { sectorAsked = false; pool = L.scenes.filter((sc) => !sceneWhyNot(sc, input, false)); }
+  pool = pool.filter((sc) => !exclude.includes(sc.id));
   const most = sceneMost(input);
   if (chosen) {
     if (!chosen.length) throw new Error('Name a scene: --redraw scenes=<id>, scenes=<id>,<id> or scenes=none.');
@@ -691,9 +740,12 @@ function dealScenes(dir, input, exclude, reserved = [], chosen = null) {
       first ||= why;
     }
     throw new Error(chosen.length > 1 ? `These scenes do not go on this page together, in any order (${first}).` : `${first}.`);
-  } else while (out.length < n) {
-    let cands = fresh(pool, recentIds).filter(allowed);
-    if (!cands.length) cands = pool.filter(allowed);
+  }
+  // a page short of pictures takes the scenes that need no photograph or one first (fewPictures, at the top)
+  const tiers = fewPictures(input) ? [pool.filter(lightScene), pool] : [pool];
+  while (out.length < n) {
+    let cands = [];
+    for (const tier of tiers) { cands = fresh(tier, recentIds).filter(allowed); if (!cands.length) cands = tier.filter(allowed); if (cands.length) break; }
     if (!cands.length) break;
     // a scene's weight (scenes.json, default 1) lowers the odds of the ones pages across models already
     // repeat, so the deal spreads over the whole library instead of the same few set pieces
@@ -706,21 +758,34 @@ function dealScenes(dir, input, exclude, reserved = [], chosen = null) {
 // score, avoiding the techniques of the last few draws, and placed by the scene rules (a free section for its position
 // clear of the replay and the other scenes, another family, the picture cap, the hold budget, one long scene).
 // forced: an id that must go on (--technique); it throws with the reason when it cannot. exclude: ids not to deal.
-function dealTechnique(dir, input, scenes, reserved, { forced = null, exclude = [] } = {}) {
+function dealTechnique(dir, input, scenes, reserved, { forced = null, exclude = [], always = false } = {}) {
   if (!L.techniques.length || input.noTechnique) return scenes;
-  if (!forced && rnd() >= TECHNIQUE_RATE) return scenes;
+  // A page short of pictures takes only those that need no photograph or one, and always one when no tested scene of
+  // that kind could be dealt (none, or one that wants several photographs), in place of the hungriest first: it never
+  // ends with no scene, or a scene it cannot fill, for want of photographs.
+  const few = fewPictures(input);
+  const hungry = few && (!scenes.length || scenes.some((x) => !lightScene(x)));
+  if (!forced && !hungry && !always && rnd() >= TECHNIQUE_RATE) return scenes;
   const ids = scenes.map((x) => x.id);
   let why = null;
   const placed = (t) => {
-    // in place of each dealt scene in turn, in random order
-    for (const i of ids.length ? shuffle(ids.map((_, k) => k)) : [-1]) {
+    // in place of each dealt scene in turn, in random order (on a page short of pictures, the hungry ones first)
+    const order = ids.length ? shuffle(ids.map((_, k) => k)) : [-1];
+    if (few) order.sort((a, b) => (a < 0 || b < 0 ? 0 : scenePictures(scenes[b]) - scenePictures(scenes[a])));
+    for (const i of order) {
       try { const out = dealScenes(dir, input, [], reserved, [...ids.filter((_, k) => k !== i), t.id]); if (out.some((x) => x.id === t.id)) return out; } catch (e) { why = e.message; }
+    }
+    // on a page short of pictures, alone, keeping only the dealt scenes that need no photograph or one beside it
+    if (few && ids.length) {
+      const light = scenes.filter(lightScene).map((x) => x.id);
+      for (const keep of [light, []]) { if (keep.length === ids.length) continue; try { const out = dealScenes(dir, input, [], reserved, [...keep, t.id]); if (out.some((x) => x.id === t.id)) return out; } catch (e) { why = e.message; } }
     }
     return null;
   };
   if (forced) {
     const t = L.techniques.find((x) => x.id === forced);
-    if (!t) throw new Error(`No technique with id ${forced}. \`node draw.mjs --list techniques\` lists them.`);
+    const built = L.scenes.find((sc) => sc.source === forced);
+    if (!t) throw new Error(built ? `${forced} is now the tested scene ${built.id}: deal without --technique, then take it with \`--redraw scenes=${built.id}\`.` : `No technique with id ${forced}. \`node draw.mjs --list techniques\` lists them.`);
     const unfit = techniqueWhyNot(t, input);
     if (unfit) throw new Error(`${forced} does not fit this page: ${unfit}.`);
     // in place of one dealt scene, else alone: the scene it would sit beside may clash with it
@@ -730,42 +795,83 @@ function dealTechnique(dir, input, scenes, reserved, { forced = null, exclude = 
     return out;
   }
   const recentIds = hist.slice(0, TECHNIQUE_RECENT).map((h) => h.technique).filter(Boolean);
-  let pool = fresh(L.techniques.filter((t) => !exclude.includes(t.id) && !techniqueWhyNot(t, input)), recentIds);
-  while (pool.length) {
-    // score 7, 8, 9 weigh 1, 2, 3; one written for every sector at half, so the few that fit every page do not take most deals
-    const t = wpick(pool.map((x) => [x, Math.max(1, x.score - 6) * (x.sectors.includes('*') ? 0.5 : 1)]));
-    const out = placed(t);
-    if (out) return out;
-    pool = pool.filter((x) => x !== t);
+  let fits = L.techniques.filter((t) => !exclude.includes(t.id) && !techniqueWhyNot(t, input));
+  if (few) fits = fits.filter(lightScene);
+  // the ones of recent draws only when none of the others can be placed
+  const tried = new Set();
+  for (const first of [fresh(fits, recentIds), fits]) {
+    let pool = first.filter((x) => !tried.has(x));
+    while (pool.length) {
+      // score 7, 8, 9 weigh 1, 2, 3; one written for every sector at half, so the few that fit every page do not take most deals
+      const t = wpick(pool.map((x) => [x, Math.max(1, x.score - 6) * (x.sectors.includes('*') ? 0.5 : 1)]));
+      tried.add(t);
+      const out = placed(t);
+      if (out) return out;
+      pool = pool.filter((x) => x !== t);
+    }
   }
   return scenes;
 }
 // After two scene redraws, a choice instead of a third: every scene that fits this page and has a section to carry,
 // one line each with what it needs, and the two ways out (one by id, or none).
-function sceneChoices(dir, s) {
+// why: 'cap' after two redraws; 'none-new' when no scene that has not been dealt on this sheet fits
+function sceneChoices(dir, s, why = 'cap') {
   const reserved = s.replay ? [s.replay.carries] : [];
   const now = (s.scenes || []).map((x) => x.id); const before = s.scenesTried || [];
+  const few = fewPictures(s.input);
   const fit = [];
   for (const sc of L.scenes) { try { const [d] = dealScenes(dir, s.input, [], reserved, [sc.id]); if (d) fit.push(d); } catch { /* does not fit */ } }
+  const lightTechniques = few || !fit.length ? fittingTechniques(dir, s).filter(lightScene).slice(0, 5) : [];
   const most = sceneMost(s.input);
-  const o = ['# Scroll scenes: redrawn twice, so now a choice', ''];
-  o.push('Scenes are redrawn at most twice: a page with one honest scene, or none, beats a fifth redraw.', '');
-  if (!fit.length) {
+  const o = why === 'none-new' ? ['# Scroll scenes: nothing new fits, so a choice', ''] : ['# Scroll scenes: redrawn twice, so now a choice', ''];
+  o.push(why === 'none-new' ? 'Every scene that fits this page, and every technique that would, has been dealt on this sheet already, so a redraw would only deal one again. This one did not count.' : 'Scenes are redrawn at most twice: a page with one honest scene, or none, beats a fifth redraw.', '');
+  if (!fit.length && !lightTechniques.length) {
     o.push('No scene in the library fits this page. Build it without one: `node draw.mjs --redraw scenes=none`, and say so in your report.');
     return o.join('\n');
   }
-  o.push('These still fit this page (its sector, what the brief really has, a section free to carry them):', '');
   // two that fit alone may still clash (one family, one section, the photographs between them): each line names the
   // ones it goes with
   const partners = new Map(fit.map((d) => [d.id, []]));
   if (most > 1) for (let i = 0; i < fit.length; i++) for (let j = i + 1; j < fit.length; j++) { try { dealScenes(dir, s.input, [], reserved, [fit[i].id, fit[j].id]); partners.get(fit[i].id).push(fit[j].id); partners.get(fit[j].id).push(fit[i].id); } catch { /* not together */ } }
   const pairs = [...partners.values()].some((x) => x.length);
   const goes = (d) => (most < 2 ? '' : partners.get(d.id).length ? ` Goes with ${partners.get(d.id).map((x) => `\`${x}\``).join(', ')}.` : ' Goes with none of the others.');
-  for (const d of fit) o.push(`- \`${d.id}\` — ${d.name} (${d.family}). Needs: ${sceneNeedsWords(d)}. Carries ${d.carries === 'hero' ? 'the first screen' : `the ${d.carries} section`}, hold ${d.hold}.${goes(d)}${now.includes(d.id) ? ' On the sheet now.' : before.includes(d.id) ? ' Dealt before.' : ''}`);
+  const sceneLine = (d) => `- \`${d.id}\` — ${d.name} (${d.family}). Needs: ${sceneNeedsWords(d)}. Carries ${d.carries === 'hero' ? 'the first screen' : `the ${d.carries} section`}, hold ${d.hold}.${goes(d)}${now.includes(d.id) ? ' On the sheet now.' : before.includes(d.id) ? ' Dealt before.' : ''}`;
+  const techLine = (d) => `- \`${d.id}\` — ${d.name} (${d.family}), a researched technique to build fresh. ${String(d.principle || '').split(/(?<=\.)\s/)[0]} Needs: ${sceneNeedsWords(d)}. Carries ${d.carries === 'hero' ? 'the first screen' : `the ${d.carries} section`}, hold ${d.hold}.${now.includes(d.id) ? ' On the sheet now.' : before.includes(d.id) ? ' Dealt before.' : ''}`;
+  const TECH = 'A technique has no files and no demo: you build it on the shared stage (references/scenes.md §8) and check it like any scene.';
+  if (few) {
+    // a page short of pictures of its own subject: the ones that need no photograph or one first, tested or not
+    const lightFit = fit.filter(lightScene), heavy = fit.filter((d) => !lightScene(d));
+    if (lightFit.length || lightTechniques.length) {
+      o.push('This page is short of pictures of its own subject. These need no photograph or one and still fit it (its sector, what the brief really has, a section free to carry them); take one of them first. Its one picture may be a photograph the page already shows, at another crop.', '');
+      for (const d of lightFit) o.push(sceneLine(d));
+      for (const d of lightTechniques) o.push(techLine(d));
+      if (lightTechniques.length) o.push('', TECH);
+    }
+    if (heavy.length) { o.push('', `${lightFit.length || lightTechniques.length ? 'These fit too, but need more photographs than this page is likely to find:' : 'These still fit this page (its sector, what the brief really has, a section free to carry them):'}`, ''); for (const d of heavy) o.push(sceneLine(d)); }
+  } else {
+    if (fit.length) { o.push('These still fit this page (its sector, what the brief really has, a section free to carry them):', ''); for (const d of fit) o.push(sceneLine(d)); }
+    if (lightTechniques.length) { o.push('', 'No tested scene fits, but a researched technique that needs no photograph or one does:', ''); for (const d of lightTechniques) o.push(techLine(d)); o.push('', TECH); }
+  }
+  const light = fit.some(lightScene) || lightTechniques.length > 0;
   o.push('', 'Two ways out; say which in your report:');
   o.push(`- Take ${pairs ? 'one, or two that go together,' : 'one'} you can fill honestly: \`node draw.mjs --redraw scenes=<id>\`${pairs ? ', or `--redraw scenes=<id>,<id>`' : ''}.`);
-  o.push('- Build without a scene: `node draw.mjs --redraw scenes=none`. The page\'s motion then comes from the entrance, the replay or moving pictures, and its length budget drops.');
+  o.push(`- Build without a scene: \`node draw.mjs --redraw scenes=none\`${light ? ', only when not even one that needs no photograph or one can be filled' : ''}. The page's motion then comes from the entrance, the replay or moving pictures, and its length budget drops.`);
   return o.join('\n');
+}
+// The researched techniques that fit this page and find a section to carry, alone.
+function fittingTechniques(dir, s) {
+  const reserved = s.replay ? [s.replay.carries] : [];
+  const out = [];
+  for (const t of L.techniques) { try { const [d] = dealScenes(dir, s.input, [], reserved, [t.id]); if (d) out.push(d); } catch { /* does not fit */ } }
+  return out.sort((a, b) => (b.score || 0) - (a.score || 0));
+}
+// The scenes, then the techniques, that need no photograph or one and still fit this page: printed under a page built
+// without a scene, since none should be the way out only when not even these can be filled.
+function lightOptions(dir, s) {
+  const reserved = s.replay ? [s.replay.carries] : [];
+  const scenes = [];
+  for (const sc of L.scenes.filter(lightScene)) { try { const [d] = dealScenes(dir, s.input, [], reserved, [sc.id]); if (d) scenes.push(d.id); } catch { /* does not fit */ } }
+  return [...scenes, ...fittingTechniques(dir, s).filter(lightScene).map((d) => d.id)].slice(0, 6);
 }
 // The product replay (library/replays.json, built with assets/replay.js): on a software page the product's
 // own window, large, acts out what the product does for the visitor. The best software sites (Linear, Stripe,
@@ -824,6 +930,9 @@ function heroPool(dir, input) {
   if (isSoftware(input)) { const shown = pool.filter((h) => meets(h) && heroShowsLarge(h)); if (shown.length) pool = shown; }
   // pictures that carry the colour are never turned grey by the hero's own blueprint
   if (picturesCarryColour(input)) { const coloured = pool.filter((h) => !/gr[ae]yscale/i.test(h.blueprint || '')); if (coloured.length) pool = coloured; }
+  // a client named for a light or a pale colour gets no hero that sits in the dark or darkens its picture for white
+  // type (Hvit was dealt two prints in darkness and a darkened open sky beside its bright line)
+  if (nameColours(input.brief).lean === 'light') { const lit = pool.filter((h) => !/low-key|near-black|in the dark(?! ink)|darken|brightness\(0\.|All type is white/i.test(h.blueprint || '')); if (lit.length) pool = lit; }
   return pool;
 }
 function heroMeets(input) { return (h) => (h.needs || []).every((n) => n === 'photography' || input.have.includes(n)); }
@@ -842,6 +951,18 @@ function heroPictureLarge(h) {
   // the picture and its size in one sentence: "a flat field of one soft colour fills the viewport" is not a picture
   const big = (h.blueprint || '').split(/(?<=\.)\s/).some((x) => /photo|picture|image|film|footage|video/i.test(x) && /full-bleed|100vw|100svh|fills/i.test(x));
   return !SMALL_PICTURE.has(h.archetype) || big;
+}
+// The size a fluid step reaches at a width, in px: lib/type-deal.mjs writes clamp(<a>rem, <b>rem + <c>vw, <d>rem).
+function stepAt(v, width) {
+  const m = String(v || '').match(/clamp\(\s*([\d.]+)rem,\s*(-?[\d.]+)rem\s*\+\s*([\d.]+)vw,\s*([\d.]+)rem\s*\)/);
+  if (!m) return null;
+  const [a, b, c, d] = m.slice(1).map(Number);
+  return Math.min(Math.max(a * 16, b * 16 + (c * width) / 100), d * 16);
+}
+// The display step of a split hero: the same floor for phones, about 76px at 1440, up to 88px or the step's own top.
+function splitDisplay(v) {
+  const m = String(v || '').match(/clamp\(\s*([\d.]+)rem,.*?,\s*([\d.]+)rem\s*\)/);
+  return m ? `clamp(${m[1]}rem, 0.600rem + 4.60vw, ${Math.max(+m[2], 5.5).toFixed(3)}rem)` : v;
 }
 // a hero chosen for its open sky sets the subject low and small under it
 function heroSkyLed(h) { return /\b(?:sky|horizon)\b/i.test(h?.blueprint || ''); }
@@ -884,6 +1005,10 @@ function dealPhotos(dir, input) {
   const words = briefWords(input.brief);
   const mode = imageryMode(input);
   const SOFT_SETS = ['architecture', 'fog-and-quiet', 'sky-and-space', 'texture', 'water'];
+  // where colour is expected, a photograph whose file is black-and-white is never dealt (references/imagery.md §6),
+  // and a set is counted by its photographs in colour
+  const colour = !!picturesCarryColour(input);
+  const usable = (set) => (colour ? set.photos.filter((ph) => !ph.mono) : set.photos);
   // subject first (sector + words of the brief), then the direction's preferred tone
   const scored = Object.entries(L.photos.sets).map(([id, set]) => {
     let score = (set.sectors || []).includes(input.sector) ? 3 : 0;
@@ -895,22 +1020,30 @@ function dealPhotos(dir, input) {
     score += words.filter((w) => (set.keywords || []).some((k) => k === w || (k.length >= 5 && w.startsWith(k)) || (w.length >= 5 && k.startsWith(w)))).length * 4;
     score += set.photos.filter((ph) => words.some((w) => ph.alt.toLowerCase().includes(w))).length;
     if (dir.photoTone) score += set.photos.filter((ph) => ph.tone === dir.photoTone).length / set.photos.length;
+    // a client named for a light or a pale colour leans to the sets with the most bright photographs
+    if (nameColours(input.brief).lean === 'light') score += (2 * set.photos.filter((ph) => ph.tone === 'light').length) / set.photos.length - (2 * set.photos.filter((ph) => ph.tone === 'dark').length) / set.photos.length;
     return { id, set, score };
-  }).filter((x) => x.score > 0 && x.set.photos.length >= 5 && (mode !== 'interface' || SOFT_SETS.includes(x.id))).sort((a, b) => b.score - a.score);
+  }).filter((x) => x.score > 0 && usable(x.set).length >= 5 && (mode !== 'interface' || SOFT_SETS.includes(x.id))).sort((a, b) => b.score - a.score);
   if (!scored.length) return null;
   // one set, so the photographs share a subject and a light; choose among the best-fitting few
   const top = scored.filter((x) => x.score >= scored[0].score * 0.6).slice(0, 4);
   const chosen = pick(top);
-  let pool = chosen.set.photos;
-  // a page whose pictures carry the colour is dealt no black-and-white photographs
-  if (picturesCarryColour(input)) { const coloured = pool.filter((ph) => !ph.mono); if (coloured.length >= 6) pool = coloured; }
+  // a page whose pictures carry the colour is dealt no black-and-white photographs, however few are left
+  let pool = usable(chosen.set);
   if (dir.photoTone) { const toned = pool.filter((ph) => ph.tone === dir.photoTone || ph.tone === 'mid'); if (toned.length >= 6) pool = toned; }
+  // a client named for a light or a pale colour (Hvit, Snow, Linen) gets bright pictures, whatever the direction's tone
+  const bright = nameColours(input.brief).lean === 'light';
+  if (bright) { const b = pool.filter((ph) => ph.tone !== 'dark'); if (b.length >= 6) pool = b; }
   // A picture that matches the brief comes first. Without product photographs, a picture of the same kind of
   // thing is what shows the visitor what the product is (r5-p28 lost a cargo-bike page that never showed a
   // bike): one that matches is marked, so if it shows the kind it is shown in use and never claimed as this model.
-  const things = words.filter((w) => w.length >= 5);
-  const matches = (ph) => things.some((w) => ph.alt.toLowerCase().includes(w));
-  const ranked = shuffle(pool).sort((a, b) => (b.quality + (matches(b) ? 2 : 0)) - (a.quality + (matches(a) ? 2 : 0)))
+  // (on a product page with no photographs, only a picture naming the product's own kind is marked: "front" in
+  // "front-box" marked a woman holding a sparkler "in front of her")
+  const kind = mode === 'no-product-photo' ? briefSubject(input).map((w) => w.toLowerCase().replace(/(?:es|s)$/, '')).filter((w) => w.length >= 3) : [];
+  const things = kind.length ? kind : words.filter((w) => w.length >= 5);
+  const matches = (ph) => things.some((w) => new RegExp(`\\b${w.replace(/[^\p{L}\p{N}]/gu, '')}`, 'iu').test(ph.alt));
+  const rank = (ph) => ph.quality + (matches(ph) ? 2 : 0) + (bright && ph.tone === 'light' ? 1 : 0);
+  const ranked = shuffle(pool).sort((a, b) => rank(b) - rank(a))
     .map((ph) => (mode === 'no-product-photo' && matches(ph) ? { ...ph, sameKind: true } : ph));
   return { set: chosen.id, title: chosen.set.title, note: chosen.set.note, treatment: dir.photoTreatment || null, others: scored.filter((x) => x.id !== chosen.id).slice(0, 4).map((x) => x.id), photos: ranked.slice(0, mode === 'interface' ? 4 : 8) };
 }
@@ -921,25 +1054,33 @@ function briefStop() {
 // client's name decides the ground (SKILL.md step 1): a guesthouse named Hvit, "white", lost a blind test on a
 // navy-black ground. Elsewhere in the brief a word may name what the client replaces or works on ("invoicing
 // that replaces paper"), so there it only lends the palette its colours.
-function briefColours(brief) {
-  const LIGHT = ['white', 'snow', 'chalk', 'linen', 'paper', 'salt', 'milk', 'bone', 'ivory', 'pearl', 'fog', 'foggy', 'mist', 'haze', 'frost', 'ice', 'cotton', 'porcelain', 'birch', 'hvit', 'hvid', 'hvít', 'vit', 'weiss', 'weiß', 'blanc', 'blanche', 'blanco', 'blanca', 'bianco', 'bianca', 'branco', 'branca'];
-  const DARK = ['black', 'night', 'midnight', 'coal', 'charcoal', 'soot', 'ink', 'obsidian', 'ebony', 'raven', 'onyx', 'ember', 'slate', 'iron', 'basalt', 'peat', 'svart', 'schwarz', 'noir', 'noire', 'nero', 'nera', 'zwart', 'preto', 'preta'];
+function briefColours(brief, inName = false) {
+  const LIGHT = ['white', 'snow', 'chalk', 'linen', 'paper', 'salt', 'milk', 'bone', 'ivory', 'pearl', 'fog', 'foggy', 'mist', 'haze', 'frost', 'ice', 'cotton', 'porcelain', 'birch', 'hvit', 'hvid', 'hvít', 'vit', 'weiss', 'weiß', 'blanc', 'blanche', 'blanco', 'blanca', 'bianco', 'bianca', 'branco', 'branca',
+    // snow and light in other languages ("Snø" was dealt a dark room, "Lys" a black ground); never "lin", a surname
+    'snø', 'sne', 'snö', 'schnee', 'neige', 'neve', 'nieve', 'lumi', 'kreide', 'craie', 'alabaster'];
+  // light itself counts only as a name, capitalised ("Lys, a guesthouse"): "light-filled rooms" or "a light lunch" in a
+  // brief names no ground
+  const LIGHT_NAMES = ['light', 'lys', 'ljus', 'licht', 'lumen', 'lux', 'luz', 'luce'];
+  const lit = inName ? [...new Set((String(brief || '').match(/\p{Lu}\p{Ll}+/gu) || []).map((w) => w.toLowerCase()).filter((w) => LIGHT_NAMES.includes(w)))] : [];
+  const DARK =['black', 'night', 'midnight', 'coal', 'charcoal', 'soot', 'ink', 'obsidian', 'ebony', 'raven', 'onyx', 'ember', 'slate', 'iron', 'basalt', 'peat', 'svart', 'schwarz', 'noir', 'noire', 'nero', 'nera', 'zwart', 'preto', 'preta'];
   const OTHER = ['red', 'blue', 'green', 'yellow', 'orange', 'grey', 'gray', 'gold', 'golden', 'silver', 'copper', 'brass', 'bronze', 'rust', 'amber', 'honey', 'moss', 'olive', 'sage', 'sand', 'clay', 'ochre', 'oak', 'walnut', 'cedar', 'stone', 'marble', 'concrete', 'granite', 'wool', 'leather', 'steel', 'ash', 'smoke', 'dusk', 'dawn', 'moon', 'saffron', 'coral'];
   const words = String(brief || '').toLowerCase().split(/[^\p{L}]+/u).filter(Boolean);
   const hit = (list) => [...new Set(words.filter((w) => list.some((k) => w === k || w === k + 's' || w === k + 'y')))];
-  const light = hit(LIGHT), dark = hit(DARK), other = hit(OTHER);
+  const light = [...new Set([...hit(LIGHT), ...lit])], dark = hit(DARK), other = hit(OTHER);
   return { words: [...light, ...dark, ...other], lean: light.length && !dark.length ? 'light' : dark.length && !light.length ? 'dark' : null };
 }
 // The client's name is the brief's first phrase, up to its first comma ("Hvit, a guesthouse in the Westfjords").
-function nameColours(brief) { return briefColours(String(brief || '').split(',')[0]); }
+function nameColours(brief) { return briefColours(String(brief || '').split(',')[0], true); }
 // Why this page's pictures must carry colour, or null: food and drink (a hot sauce, a gin), flowers, fashion, cosmetics
 // and jewellery, the seasons and landscapes
 // through the year, rooms and tables, or a client whose name or brief names a colour or a light. A black-and-white
 // treatment turned Hvit ("white") grey and made its four seasons look alike (r6-p30). Greys, fog and hard materials
 // (stone, steel, oak) are not reasons: black-and-white suits them.
+// Products count too: a product shown grey hides the colour the brief gives it.
 function picturesCarryColour(input) {
   const brief = String(input.brief || '');
-  if (['restaurant', 'hospitality', 'fashion'].includes(input.sector)) return `a ${input.sector} page`;
+  const BY_SECTOR = { restaurant: 'a restaurant page', hospitality: 'a hospitality page', fashion: 'a fashion page', 'physical-product': "the product's own colours", ecommerce: "the products' own colours" };
+  if (BY_SECTOR[input.sector]) return BY_SECTOR[input.sector];
   const NEUTRAL = new Set(['grey', 'gray', 'ash', 'smoke', 'smoky', 'silver', 'slate', 'charcoal', 'iron', 'steel', 'concrete', 'stone', 'granite', 'marble', 'basalt', 'oak', 'walnut', 'cedar', 'wool', 'leather', 'coal', 'soot', 'peat', 'obsidian', 'ebony', 'ink', 'fog', 'foggy', 'mist', 'misty', 'haze', 'hazy']);
   // pale materials count in the client's name (a house called Linen is a white house), elsewhere only colours do
   // ("invoicing that replaces paper" names no colour)
@@ -947,13 +1088,15 @@ function picturesCarryColour(input) {
   const plain = (w) => w.replace(/(?:s|y)$/, '');
   const named = [...new Set([...nameColours(brief).words, ...briefColours(brief).words.filter((w) => !PALE.has(w) && !PALE.has(plain(w)))])].filter((w) => !NEUTRAL.has(w) && !NEUTRAL.has(plain(w)));
   if (named.length) return `the brief names ${named.map((w) => `"${w}"`).join(', ')}`;
-  const SUBJECT = /\b(?:food|foods|drinks?|wines?|winery|vineyards?|coffee|tea|teas|bakery|bakers?|bread|pastry|pastries|patisserie|chocolate|gelato|ice cream|cheese|fruits?|vegetables?|greengrocer|kitchen|chefs?|menus?|dish|dishes|recipes?|restaurants?|bistro|caf[eé]s?|brewery|beers?|cocktails?|sauces?|chil(?:l?i|l?ies|l?is)|spices?|honey|jams?|oils?|gin|whiske?y|whiskies|rum|spirits|distiller(?:y|ies)|ciders?|sake|juices?|smoothies?|kombucha|snacks?|sweets|cand(?:y|ies)|pizzas?|sushi|ramen|tacos?|burgers?|deli|butchers?|grocer(?:y|ies)|farms?|orchards?|harvests?|dining|brunch|breakfasts?|dinners?|cosmetics|make-?up|lipsticks?|perfumes?|jewell?ery|jewelry|flowers?|florists?|floral|gardens?|plants?|blooms?|fashion|clothing|clothes|knitwear|textiles?|dyes?|paints?|seasons?|spring|summer|autumn|winter|all year|year-round|through the year|hotels?|guesthouses?|guest house|inns?|hostels?|lodges?|cabins?|resorts?|campsites?|glamping|sunlight|daylight|sunsets?|sunrises?|aurora|northern lights|colou?rs?|colou?rful)\b/i;
+  const SUBJECT = /\b(?:food|foods|drinks?|wines?|winery|vineyards?|coffee|tea|teas|bakery|bakers?|bread|pastry|pastries|patisserie|chocolate|gelato|ice cream|cheese|fruits?|vegetables?|greengrocer|kitchen|chefs?|menus?|dish|dishes|recipes?|restaurants?|bistro|caf[eé]s?|brewery|beers?|cocktails?|sauces?|chil(?:l?i|l?ies|l?is)|spices?|honey|jams?|oils?|gin|whiske?y|whiskies|rum|spirits|distiller(?:y|ies)|ciders?|sake|juices?|smoothies?|kombucha|snacks?|sweets|cand(?:y|ies)|pizzas?|sushi|ramen|tacos?|burgers?|deli|butchers?|grocer(?:y|ies)|farms?|orchards?|harvests?|dining|brunch|breakfasts?|dinners?|cosmetics|make-?up|lipsticks?|perfumes?|jewell?ery|jewelry|flowers?|florists?|floral|gardens?|plants?|blooms?|fashion|clothing|clothes|knitwear|textiles?|dyes?|paints?|seasons?|spring|summer|autumn|winter|all year|year-round|through the year|hotels?|guesthouses?|guest house|inns?|hostels?|lodges?|cabins?|resorts?|campsites?|glamping|rooms|bedrooms?|interiors?|sunlight|daylight|sunsets?|sunrises?|aurora|northern lights|colou?rs?|colou?rful)\b/i;
   const m = brief.match(SUBJECT);
   return m ? `its pictures show ${m[0].toLowerCase()}` : null;
 }
 // The line under the palette that says so.
 function colourWords(s) {
-  const { words, lean } = briefColours(s.input.brief);
+  const { words: inBrief, lean } = briefColours(s.input.brief);
+  // (a light that counts only as a name, Lys, is among the name's words alone)
+  const words = [...new Set([...nameColours(s.input.brief).words, ...inBrief])];
   if (!words.length) return 'When the client\'s name names a colour, a material or a light (white, black, ember, slate, linen, fog, in any language), the page\'s ground follows it; redraw this palette if it contradicts that (SKILL.md step 1).';
   const name = nameColours(s.input.brief), nameLean = name.lean;
   const tone = groundTone(s.palette);
@@ -962,8 +1105,11 @@ function colourWords(s) {
   const eg = ground === 'dark' ? 'a dark material for the ground' : ground === 'light' ? 'a pale material for the ground' : 'the material for the ground';
   if (nameLean) {
     const named = `**The client's name carries ${list(name.words)}: the page's ground follows it.**`;
-    if (tone !== nameLean) return `${named} It asks for a ${nameLean} ground and the one dealt above is ${tone === 'mid' ? 'a coloured field' : tone}: redraw the palette (\`--redraw palette\` keeps to a ${nameLean} ground) and say so in the report.`;
-    return `${named} The ${nameLean} ground dealt above fits it; take the colours from what it names where the dealt ones do not fit (${eg}, a strong hue for the accent), and say so in the report.`;
+    // a name of light or a pale colour is a promise about the pictures too: Hvit (r7-p35) opened on a grey sky under a
+    // dark overlay
+    const bright = nameLean === 'light' ? ' **Its pictures are bright and high-key too:** daylight, pale grounds, open shadows, bright pictures of its own place or subject (snow, a white house in summer light, a pale fjord), never a sunnier coast standing in for it; no dark overlay, no scrim and no dimmed hero, and never a grey-sky or dusk photograph as the first picture. Text on a picture sits on its calm pale part in the ink, or beside it.' : '';
+    if (tone !== nameLean) return `${named} It asks for a ${nameLean} ground and the one dealt above is ${tone === 'mid' ? 'a coloured field' : tone}: redraw the palette (\`--redraw palette\` keeps to a ${nameLean} ground) and say so in the report.${bright}`;
+    return `${named} The ${nameLean} ground dealt above fits it; take the colours from what it names where the dealt ones do not fit (${eg}, a strong hue for the accent), and say so in the report.${bright}`;
   }
   const many = words.length > 1;
   return `**The brief names ${list(words)}.** Where ${many ? 'they describe' : 'it describes'} the client or what it makes (its name, its material, its light) rather than something it replaces or works on, keep the proportions above and take the colours from what ${many ? 'they name' : 'it names'} where the dealt ones do not fit (${eg}, a strong hue for the accent), and say so in the report.`;
@@ -980,21 +1126,24 @@ function assetQueries(input) {
   const notPlace = /^(?:january|february|march|april|may|june|july|august|september|october|november|december|monday|tuesday|wednesday|thursday|friday|saturday|sunday)s?$/i;
   const placeRe = /(?:^|[\s,(])(?:in|at|near|from|on|above|below|beside|outside|off|over)\s+(\p{Lu}[\p{L}'’-]*(?:\s+(?:\p{Lu}[\p{L}'’-]*|de|da|do|dos|das|di|del|van|von|der|den))*)/gu;
   const place = [...brief.matchAll(placeRe)].map((m) => m[1].trim()).find((p) => !notPlace.test(p.split(/\s+/)[0]));
+  const subject = briefSubject(input).join(' ') || (input.sector !== 'other' ? input.sector.replace(/-/g, ' ') : null);
+  const out = [];
+  if (place) out.push(`${place.toLowerCase()} postcard`, `${place.toLowerCase()} old map`);
+  if (subject) out.push(subject.toLowerCase());
+  return [...new Set(out)];
+}
+// The subject: the last plain words of the first noun phrase ("a 38-seat Italian restaurant in ..." gives "restaurant",
+// "an electric front-box cargo bike for families" gives "cargo bike").
+function briefSubject(input) {
   const stop = briefStop();
   const generic = new Set(['seat', 'seats', 'room', 'rooms', 'minute', 'minutes', 'hour', 'hours', 'night', 'nights', 'year', 'years', 'people', 'family', 'local', 'short', 'best', 'making', 'selling', 'serving', 'offering', 'business', 'company', 'brand', 'shop', 'store', 'studio', 'service', 'services', 'dinner', 'lunch', 'breakfast', 'included', 'online', 'modern']);
-  // the subject: the last plain words of the first noun phrase ("a 38-seat Italian restaurant in ..." gives "restaurant")
-  const words = brief.split(/\s+/).filter(Boolean); const phrase = [];
+  const words = String(input.brief || '').split(/\s+/).filter(Boolean); const phrase = [];
   for (let k = words.findIndex((w) => /^an?$/i.test(w)) + 1; k < words.length; k++) {
     if (/^(?:in|at|on|for|from|with|near|above|below|by|that|which|who|of|and|to)$/i.test(words[k])) break;
     phrase.push(words[k].replace(/[,.;:()!?]+$/, ''));
     if (/[,.;:()!?]$/.test(words[k])) break;
   }
-  const plain = phrase.filter((w) => /^\p{Ll}{3,}$/u.test(w) && !stop.has(w) && !generic.has(w));
-  const subject = plain.slice(-2).join(' ') || (input.sector !== 'other' ? input.sector.replace(/-/g, ' ') : null);
-  const out = [];
-  if (place) out.push(`${place.toLowerCase()} postcard`, `${place.toLowerCase()} old map`);
-  if (subject) out.push(subject.toLowerCase());
-  return [...new Set(out)];
+  return phrase.filter((w) => /^\p{Ll}{3,}$/u.test(w) && !stop.has(w) && !generic.has(w)).slice(-2);
 }
 // Blueprints written for showing software (an interface fragment is their picture).
 function softwareOnly(x) { return (x.directions || [])[0] === 'product-performs' || (x.tags || []).includes('ui-led') || /data-ui|interface fragment/i.test(x.blueprint || ''); }
@@ -1007,9 +1156,14 @@ function adjustments(bp, s) {
   const sizes = (re) => [...new Set([...text.matchAll(re)].map((m) => m[1] + 'px'))];
   const notSpacing = String.raw`(?!\s*(?:gaps?|gutters?|margins?|padding|radius|corners?|apart|from|inset|offset|high|tall|wide|thick|square|borders?|stroke|rules?|line\b|dots?|circles?|bars?|of|between|beneath|below|above|under|down|up|across|deep|left|right|in\b|to\b|and\b|each))`;
   const tiny = sizes(new RegExp(String.raw`(?<!(?:radius|radii|gap|margin|padding|inset|offset)[:\s]{0,3}(?:of\s)?)\b(9|10|11|12)(?:\.\d)?px\b` + notSpacing, 'g'));
-  if (tiny.length) notes.push(`It sets text at ${tiny.join(', ')}: use your small step (13px or more) instead.`);
-  const running = sizes(/\b(14|15)px\s*(?:paragraphs?|body|text|descriptions?|copy|sentences?|answers?)/gi);
-  if (running.length) notes.push(`It sets running text at ${running.join(', ')}: paragraphs use your body step (16px or more).`);
+  if (tiny.length) notes.push(`It sets text at ${tiny.join(', ')}: use your small step (13px or more) for a caption or a label, and your body step for running, list or table text.`);
+  // (round 9: running, list and table text under 14px fails, 14-15px warns on desktop, under 15px fails on a phone)
+  const running = [...new Set([...sizes(/\b(13|14|15)px\s*(?:paragraphs?|body|text|descriptions?|copy|sentences?|answers?)/gi), ...sizes(/(?<!legal )\b(?:paragraphs?|text(?! links?)|descriptions?|copy|sentences?|answers?|notes?)\b[^.;:]{0,24}?\bat\s+(13|14|15)(?:\.\d)?(?:[–-]1[4-6])?px\b/gi)])].sort();
+  if (running.length) notes.push(`It sets running, list or table text at ${running.join(', ')}: use your body step (16px or more, 15px at the least on a phone). The inspector fails it under 14px and warns under 16px (\`small-body\`).`);
+  // (round 9: a wall of six or more tiles in three fills or more fails, r8-p37)
+  if (/\btile colou?rs rotate|\btiles\b[^.]{0,80}\b(?:colou?rs? rotate|rotat\w+ through[^.]{0,20}colou?rs|(?:its|their) own (?:flat )?colou?r|(?:different|alternating) colou?rs|in (?:two|three|four|several)\b[^.]{0,20}colou?rs)|\b(?:tile|fill) is a flat (?:palette )?colou?r\b|\bflat fill, rotating\b/i.test(text)) notes.push('It fills its tiles in several colours: set every tile on one fill (the ground, or one surface) and let the pictures carry the colour. Six tiles or more in three fills read as a wall of boxes (`tile-wall`).');
+  // (round 9: words on a photograph are read against the pixels under them, at every width; r7-p35 failed on the tablet and the phone)
+  if (/(?<!\b(?:no|never|without|not) (?:\w+ ){0,2})\b(?:on|over|across) (?:the |a |its |each )?(?:full-bleed )?(?:photograph|picture|image|photo)(?:'s)?\b(?! (?:of|and|beside|next))|\b(?:photograph|picture|image)'s (?:calm(?:est)?|quiet(?:est)?) (?:area|part|side|corner)|\boverlap\w* (?:the )?(?:photograph|picture|image)/i.test(text)) notes.push('It sets words on a photograph: put them on its calm part, of one tone, and look again at 768 and 390, where the crop moves; the inspector reads the pixels under the letters at every width (`text-on-photo`).');
   if (/\d{1,2}% (?:opacity|black|ink|grey|gray|white)|opacity:? ?0?\.\d|\b(?:rest|others?|remaining)\b[^.;]{0,25}\b(?:at|to) \d{1,2}%(?! (?:of|width|wide))|full (?:ink|white|strength)[^.;]{0,60}\bat \d{1,2}%(?! (?:of|width|wide))/i.test(text)) notes.push('It fades text: anything a visitor reads, inactive items of a list included, is `--ink` or `--muted` at full strength (contrast 4.5:1 or more). The active item is told apart by `--ink` against `--muted`, weight or the accent, not by fading the rest.');
   if (/\d+px (?:corner )?radius|radius (?:of )?\d+px|\brounded\b|\bpill/i.test(text)) notes.push('It names its own corners: use the one radius of this page (square unless the direction says otherwise) and one button shape.');
   if (/\b(?:serif|sans-serif|condensed|grotesk|italic|monospace|mono|all caps|uppercase|capitals|script)\b/i.test(text)) notes.push(s.type ? `It names a kind of typeface: use the dealt faces (display ${s.type.display.family}, text ${s.type.text.family}) and their settings; capitals only where the type system sets them.` : 'It names a kind of typeface: use the brand faces.');
@@ -1018,7 +1172,8 @@ function adjustments(bp, s) {
   if (/(?<!\b(?:no|without|never|not|nor) (?:a |any )?)\b(?:rule|rules|hairline|border|borders|divider|underline|thin line|1px line)\b/i.test(text)) notes.push('It draws lines or borders: keep them only inside a table, a form or a `data-ui` fragment; elsewhere separate with space or a change of ground.');
   if (/shadow|glow/i.test(text)) notes.push('It mentions a shadow: only on something open above the page (a menu, a dialog), never on a resting element.');
   const bigSentence = [...text.matchAll(/\b(?:sentence|statement|paragraph|quotation|quote)\b[^.;]{0,40}?\b(?:at|to)\s+(?:clamp\(\s*\d+(?:\.\d+)?px,\s*)?(\d+(?:\.\d+)?)(px|vw)/gi)].some((m) => (m[2] === 'px' && +m[1] > 36) || (m[2] === 'vw' && +m[1] > 2.6));
-  if (bigSentence) notes.push('It sets a sentence large over several lines: jurors read that as a long headline. Either cut it to a two-line headline at display size, or keep it a statement at 36px or less on three lines (24px, four lines on a phone).');
+  // (a split hero's headline is 5vw or more, so the smaller statement is no way out there: split-hero-title fails it)
+  if (bigSentence) notes.push(bp.split ? 'It sets a sentence large over several lines: jurors read that as a long headline. Cut it to a two-line headline at display size (5vw, 72px at 1440); beside the picture a smaller statement is not a way out (`split-hero-title`).' : 'It sets a sentence large over several lines: jurors read that as a long headline. Either cut it to a two-line headline at display size, or keep it a statement at 36px or less on three lines (24px, four lines on a phone).');
   if (/(?:sticky|pinned|pins?\b|stays? (?:fixed|put|in place))/i.test(text) && /\b(?:three|four|five|six) (?:to (?:four|five|six) )?(?:viewports|screens)\b|\b[3-6]00svh\b/i.test(text)) notes.push('It pins something for three screens or more: hold a pin for two or three screens at most, give every screen under it its own content, and let nothing pass over the pinned words (the inspector checks all three).');
   if (/\b(indented|stepped|staggered)\b[^.]{0,60}\b(line|heading|title)|\b(heading|title)[^.]{0,60}\b(indented|stepped|staggered)/i.test(text)) notes.push('It steps or indents the lines of a heading: set every line of a heading on one left edge. A staggered heading read as a gimmick in round 4.');
   if (/\b(paper|slip|receipt|sheet of paper|card)\b[^.]{0,80}\b(on|over) (a |the )?(contrasting|full-bleed|dark|flat)\b/i.test(text)) notes.push('It puts the content on a panel of another tone: set it on the section\'s own ground. A panel in a colour the palette does not name is a fourth surface (the inspector warns, surface-count).');
@@ -1027,7 +1182,49 @@ function adjustments(bp, s) {
   if (bp.archetype && /single action[^.;]{0,40}?\b(?:text link|underlined (?:text )?link)/i.test(text)) notes.push('Its action is a text link: the primary action on the first screen is a real button (filled or solid-bordered, 44px or taller), placed where the blueprint puts the link. A second action may stay a link.');
   if (['condensed-heavy', 'condensed'].includes(s.type?.class) &&/\d+(?:\.\d+)?vw/.test(text)) notes.push('Its vw sizes assume a face of normal width: with this condensed display face, size the words to fill the measure the blueprint gives them instead of copying the vw value.');
   if (/\b0[1-9]\b(?![:.,]\d)|numbered|index number/i.test(text)) notes.push('It numbers things 01, 02: drop the numbers unless they are real data (a price, a date, a count).');
+  // the rooms of a house and the products of a shop are each shown (r7-p35 listed four rooms and pictured one)
+  const each = { hospitality: 'room', ecommerce: 'product' }[s.input.sector];
+  if (each && bp.role === 'list' && !/photo|picture|image/i.test(bp.blueprint || '')) notes.push(`It lists without pictures: on this page each ${each} it names has its own photograph beside it (section 5), as many photographs as ${each}s. Set each ${each}'s row beside its picture, or take a list that pictures each item (\`--alternatives list\`); with fewer good pictures, list fewer ${each}s.`);
+  const visit = visitNote(s, text);
+  if (visit) notes.push(visit);
+  // a blueprint that turns its pictures grey keeps the page's one treatment: colour where the pictures carry it (a
+  // black-and-white file included), black-and-white only where section 0 deals it
+  if (/(?<!\b(?:no|never|not|without)\s(?:\w+\s)?)\b(?:gr[ae]yscale|black-and-white|desaturat\w*)/i.test(text)) {
+    const colour = s.colourPictures ?? picturesCarryColour(s.input);
+    if (colour) notes.push(`It turns its pictures grey: on this page the pictures carry the colour (${colour}), so keep every picture in colour and leave out any photograph whose file is black-and-white (references/imagery.md §6).`);
+    else if (s.frame?.treatment?.id !== 'mono') notes.push('It turns its pictures grey: give them the treatment section 0 deals instead, the same for every picture on the page.');
+  }
+  // a client named for a light gets bright pictures: a blueprint that darkens one for white type is set the other way
+  if (nameColours(s.input.brief).lean === 'light' && /darken|brightness\(0\.|scrim|low-key|white type|type is white/i.test(text)) notes.push('This client\'s name asks for bright pictures (section 4): keep the photograph untouched, no scrim and no `brightness()` under 1; set the words in the ink on its pale calm part, or beside it.');
+  // a hero written without a navigation bar fails the inspector's no-nav check (r8-p38's mid-screen rail)
+  if (bp.archetype && /\bno navigation\b/i.test(text)) notes.push('It has no navigation bar: the page keeps the navigation section 0 deals, a bar at the top of the first screen apart from the h1, with the real sections as links and the one action.');
   return notes;
+}
+// A street, hours and a phone the brief does not give are left out, not made up (r7-p36 printed Musterstrasse 12 and
+// 030 000 000 00 in its visit and footer block). Asked of every blueprint and of the footer dealt in section 0, which
+// outranks them. A product sold online, an app or a portfolio has no door to print, unless its brief gives a street.
+function visitNote(s, text) {
+  const given = visitGiven(s.input.brief);
+  // ("on a phone" is the phone layout; a delivery or email address is a form field, and the "address, time or price" of
+  // a table row is not where the client is)
+  const asksStreet = /\bpostcode\b|(?<!(?:delivery|billing|shipping|e-?mail|web|ip) )\baddress(?:es)?\b(?!,\s*time)/i.test(text);
+  const asksPhone = /\b(?:tele)?phone numbers?\b|\btelephone\b/i.test(text);
+  const noDoor = (isSoftware(s.input) || ['physical-product', 'ecommerce', 'personal-portfolio'].includes(s.input.sector)) && !given.street;
+  if (noDoor) return asksStreet || asksPhone ? `This page has no door in its brief: no street, hours${given.phone ? '' : ' or phone'}. In their place the email on the brand's own domain${given.phone ? ', the phone the brief gives' : ''} and the city, if the brief names one; the report lists what to fill (references/copy.md §5).` : null;
+  const street = asksStreet && !given.street, phone = asksPhone && !given.phone;
+  if (!street && !phone) return null;
+  const hours = s.input.sector === 'hospitality' ? 'sample opening hours (or the season and check-in times)' : 'sample opening hours';
+  return `It prints ${[street && 'a street address', phone && 'a phone number'].filter(Boolean).join(' and ')}, which the brief does not give: ${[street && `in place of the street, print the town or area the brief names (a neighbourhood only when the brief names one) with ${hours}, never a placeholder street (Musterstrasse 12, 1 Main Street)`, phone && 'leave the phone out, never a zeroed or patterned number'].filter(Boolean).join('; ')}. The email stays on the brand's own domain, and the report lists what to fill${street ? ', the hours among the sample details' : ''} (references/copy.md §5).`;
+}
+// Whether the brief gives a street address (a number beside a street word) and a phone number.
+function visitGiven(brief) {
+  const b = String(brief || '');
+  const STREET = '(?:street|st\\.?|road|rd\\.?|avenue|ave\\.?|lane|row|square|quay|terrace|rue|via|calle|avenida|piazza|plaza|strasse|straße|gasse|weg|platz|allee|ufer|damm)';
+  return {
+    street: new RegExp(`\\b\\d{1,4}[a-z]?,?\\s+(?:[\\p{L}'’.-]+\\s+){0,3}${STREET}(?![\\p{L}])|\\b${STREET}\\s+(?:[\\p{L}'’.-]+\\s+){0,3}\\d{1,4}\\b|\\p{L}+(?:strasse|straße|str\\.|gasse|weg|platz|allee|vej|gata|gade|vegur|vägen|straat|laan)\\s*\\d{1,4}\\b`, 'iu').test(b),
+    // international or national ("+47 ...", "030 ..."), and North American ("(212) 555-0147", "212-555-0147")
+    phone: /(?:\+\d|\b0\d)[\d\s()./-]{6,}\d|\(?\b\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b/.test(b),
+  };
 }
 // Every blueprint of a role that suits this direction and this build's real assets.
 function sectionPool(dir, role, input) {
@@ -1107,13 +1304,14 @@ function entranceBlock(e, s, p) {
 // The dealt product replay, printed as the signature move of a software page.
 function replayBlock(r, s, p) {
   p(`**The product replay: ${r.name}, in the ${r.carries} section.** This is the page's big moment: the product's own window, large, acts out what the product does for the visitor, a beat at a time, while its section holds and the visitor's scroll steps the beats. ${r.sees}`);
-  p(`- **Beats:** ${r.beats}. Three to five states, each one visible change with real labels and figures that add up (the count that ticks is the count of rows that landed). ${r.action === 'agent' ? 'The agent acts; its status line names what it does to the rows in view.' : r.action === 'frame' ? 'An accent frame (2px, no shadow) steps to each region it changes, aimed at it (measured, never fixed offsets).' : r.action === 'cursors' ? 'Each named cursor (data-name; its target data-cursor) makes one change in turn, aimed at the element it changes (measured, never fixed offsets).' : 'One cursor acts, aimed at the element it presses (measured, never fixed offsets).'}`);
-  p('- **Size and hold:** the heading (the promise), the window, one sentence and a Replay button stand in one stage, the last thing in its section: `<section class="replay-hold"><div class="replay-stage">`. The window 70% of the width or more on desktop and 40% of the screen\'s height, nearly the full width on a phone. replay.js holds the stage about half a screen of scroll per beat; scrolling back steps back; Replay plays the beats once in place.');
+  p(`- **Beats:** ${r.beats}. Three to five, each one large change with real labels and figures that add up (a count is right at every beat). ${r.action === 'agent' ? 'The agent acts: its status line names what it does to the rows in view, and the rows it works on take the accent fill.' : r.action === 'zoom' ? 'The view moves in on a whole column or block at each stop (data-zoom-at, never a single row, so the crop falls in a gap), the value there changes as its row takes the accent, and the last beat moves back out.' : r.action === 'names' ? 'Each person changes one whole block in turn; the block takes the accent fill and carries their name inside it, and a comment opens on the ink and closes as its change lands.' : r.action === 'move' ? 'The item at work takes the accent fill (data-focus-at) and travels at full size from column to column (data-flip-at) while the items round it make room; no panel opens.' : 'The item at work takes the accent fill (data-focus-at) and the panel that does the work opens over the window on the ink (data-open-at).'} No drawn cursor: the change itself shows the action (\`replay-cursor\`).`);
+  p('- **Size and hold:** the heading (the promise), the window, one sentence and a Replay button stand in one stage, the last thing in its section: `<section class="replay-hold"><div class="replay-stage">`. The window 70% of the width or more on desktop and 40% of the screen\'s height, nearly the full width on a phone, nothing in it under 14px. replay.js centres the held stage, so the stage is 75% of the screen\'s height or more (about 680px at 1440 by 900). It holds the stage about half a screen of scroll per beat; scrolling back steps back; Replay plays the beats once in place.');
+  p('- **The first state is a full window:** before beat 1 the visitor scrolls the window in and sees its first state for about a screen, so it is the visitor\'s own work before the task: the rows, figures and labels already there, at full size. Beats change it or add to it; they never fill an empty one. Never empty table headers, a count of 0 or a blank list waiting for its rows (round 8: the judge scrolled past an empty box). Mark only what the task adds or changes with `data-at`; a window that shows under half its words at beat 0 is started by replay.js on the first beat that fills it, and the changes up to that beat never play.');
   p('- **The still:** the HTML is the final state, every pane filled. Reduced motion and no script see it, and nothing is held.');
   p('- **Never** a video, a GIF or screenshots in sequence, never a device frame or browser dots.');
   p(`- **Not with the entrance:** this fragment carries \`data-replay\` and no \`data-e\`, \`data-reveal\` or \`data-moment\`; the hero's fragment is the entrance's.${s.entrance?.id === 'product-at-work' ? ' The dealt entrance animates the hero\'s fragment; the replay is a second fragment further down.' : ''}`);
   p(`- **Build it** with \`<skill>/assets/replay.js\` (references/motion.md, "Product replay"); a working example of all six patterns: \`<skill>/assets/replay-demo.html\`. On a phone: ${r.phone || 'one panel of it, the same beats.'}`);
-  p('Around it the page still needs the rest of the motion layer (SKILL.md step 9): the entrance below and feedback on every control. The inspector fails a page without the replay the sheet deals (`replay-missing`), a window too small (`replay-small`), a stage that is not held (`replay-not-held`) and a beat that never shows in the scroll film (`replay-unseen`).');
+  p('Around it the page still needs the rest of the motion layer (SKILL.md step 9): the entrance below and feedback on every control. The inspector fails a page without the replay the sheet deals (`replay-missing`), a window too small (`replay-small`), a stage that is not held (`replay-not-held`), a beat that never shows in the scroll film (`replay-unseen`) or barely changes the screen (`replay-faint`), empty bands round the held stage (`replay-bands`) and a drawn cursor (`replay-cursor`).');
 }
 // A dealt technique in sheet section 9: printed like a scene, but marked as one to build fresh, with the direction to
 // take, what breaks it, its hold and phone, how to build it on the stage and the way out.
@@ -1121,16 +1319,20 @@ function techniqueBlock(sc, s, p) {
   const what = sc.carries === 'hero' ? 'the first screen' : `the ${sc.carries} section`;
   p(`### ${sc.name} (\`${sc.id}\`) — a technique to build fresh, ${sc.position === 'transition' ? `the hand-over into ${what}` : `carries ${what}`}`);
   p(`Not a tested scene: a technique from the research library (\`<skill>/library/techniques.json\`), dealt so pages stop reusing the same few big moments. It has no files and no demo: you build it, and it is checked like any scene. ${sc.principle}`);
+  // what broke the dealt techniques of round 8 comes first: r8-p40's card hand (lib-0109) was one strip on an empty
+  // screen, then a fan that hid three of its four texts, each text 900px from its title; r8-p39's line (lib-0240)
+  // stranded its words with wide gaps between them and ended on the line alone on flat colour
+  p(`- **Avoid, first of all, what breaks it:** ${sc.breaksWhen}`);
+  p('- **Every frame of the hold is a finished, readable composition,** not only the last: never one strip, card or word alone on an empty screen while the rest waits; never a fan, stack or overlap that hides the texts a visitor needs (a covered card shows only what still reads, or nothing); every text beside its own title, never a screen away from it; every word whole and in its place or clearly on its way to it, never stranded with wide gaps between words; no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway. Check the 10% frames of the scenes.mjs sheets one by one: a frame you would not ship as a still is unfinished.');
   p(`- **The direction to take:** ${sc.freshTake} That was written for another client: keep the principle and the manner, and take the subject, the pictures and the words from this page.`);
-  p(`- **What breaks it (avoid all of it):** ${sc.breaksWhen}`);
   const why = sc.hold < sc.defaultHold ? ` (the research held it for ${sc.defaultHold}; ${sc.position === 'closing' ? 'a closing scene holds about one screen' : `on this page a scene holds ${sc.hold} at most`})` : !sc.researchHold ? ' (the research ran it without a pin; on the stage it holds one screen)' : '';
-  p(`- **Hold:** ${sc.hold} screen${sc.hold === 1 ? '' : 's'} of scroll${why}: \`hold: ${sc.hold}\` in \`Stage.scene\`, its section ${sc.hold + 1} screens tall. Every frame of the hold reads as a finished layout: no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway.`);
+  p(`- **Hold:** ${sc.hold} screen${sc.hold === 1 ? '' : 's'} of scroll${why}: \`hold: ${sc.hold}\` in \`Stage.scene\`, its section ${sc.hold + 1} screens tall, each beat about half a screen and something new on screen in every one.`);
   if (sc.trigger === 'scroll-enter') p('- **On the scroll, not on a clock:** in the research it plays once on entry; here spread its timings over the hold so it moves under the scroll, never on a clock inside a held screen.');
   p(`- **Needs:** ${sceneNeedsWords(sc)}.`);
   p(`- **On a phone:** ${sc.phone === 'same' ? "the same move at phone size (`phone: 'same'`)." : "its own version, as the direction above says (`phone: { hold, build }` in `Stage.scene`), or `phone: 'rest'` with a finished composition that reads whole; never the desktop move squeezed."} Check it at phone width like the desktop.`);
   if (s.replay && sc.needs.includes('product-ui')) p("- **Beside the product replay:** the replay keeps the page's one framed window and its task. Build this one from the product's own interface on the page's own ground, cropped, with no window frame, and let it show something the replay does not.");
   p(`- **Build it on the shared stage** as references/scenes.md §8 shows: a file of your own that registers \`Scenes['<a short id>'] = (root, opts = {}) => Stage.scene(root, { hold: opts.hold ?? ${sc.hold}, build(tl, { q, phone }) { … } })\`, the markup \`<section class="scene" data-scene="<that id>">\` holding one \`.scene-stage\`, and its CSS written as the finished composition first, the live layout under \`.scene.is-live\`. Build it with transforms, clip-path and CSS 3D on the stage's pinned GSAP; where the direction mentions WebGL or a 3D library, take its CSS 3D route. Never copy any site: no layout, picture, word or colour from wherever this was seen; set it in this page's own type, colour, pictures and words. Every rule of references/scenes.md §7 holds (native scroll, readable at rest, no drawn shapes, tracks or particles, no dead frames). Check it with \`node <skill>/scripts/scenes.mjs <page>\` like any scene and look at every sheet.`);
-  p(`- **If it cannot be built honestly** within the usual three look-and-fix rounds, take \`--redraw scenes\` and say why in your report; it counts toward the same limit of two scene redraws, and the redraw deals tested scenes.`);
+  p(`- **If it cannot be built honestly** within the usual three look-and-fix rounds, take \`--redraw scenes\` and say why in your report; it counts toward the same limit of two scene redraws, and the redraw deals ${fewPictures(s.input) ? 'another scene or technique that needs no photograph or one' : 'tested scenes'}.`);
 }
 function render(s) {
   const d = s.direction; const o = [];
@@ -1159,7 +1361,8 @@ function render(s) {
     const f = s.frame;
     p('## 0. The frame (dealt; these replace whatever a blueprint below says about them)');
     p(`- **Navigation:** ${f.nav.text} Every page has it, with the real sections as links and the one action.`);
-    p(`- **Footer:** ${f.footer.text} Never a giant name or email; picture credits, if a licence needs them, behind one small "Image credits" link.`);
+    const visit = visitNote(s, f.footer.text);
+    p(`- **Footer:** ${f.footer.text}${visit ? ` ${visit}` : ''} Never a giant name or email; picture credits, if a licence needs them, behind one small "Image credits" link.`);
     p(`- **Corners:** ${f.corners.text} (\`--radius: ${f.corners.radius}\`, buttons \`${f.corners.button === 'square' ? '0' : f.corners.button}\`).`);
     p(`- **Spacing:** ${f.spacing.text}`);
     p(`- **Pictures:** ${f.treatment.text}${f.treatment.notMono ? ` Not black-and-white: on this page the pictures carry the colour (${s.colourPictures}).` : ''}`);
@@ -1172,7 +1375,7 @@ function render(s) {
   p('with a stated brand constraint or needs an asset that does not exist, and say why in your report.');
   p();
   p('The parts of this sheet were written separately and will disagree in small ways. Settle every disagreement in this order:');
-  p('**house rules** (including type no smaller than 13px and body text of 16px or more) → **the direction** (the idea, the composition habits, where the');
+  p('**house rules** (including type no smaller than 13px, and running, list and table text of 16px or more) → **the direction** (the idea, the composition habits, where the');
   p('one accent goes) → **the frame, the type system and the palette** (sections 0, 3 and 4: they win over any colour, face, size, corner or footer');
   p('a direction or blueprint names) → **the hero blueprint** → **the section blueprints**. Under each blueprint, "Adjusted for this page" lists where it disagrees.');
   p('Blueprints are examples of a shape, not drawings to trace: keep the idea of the shape (what is large, what sits beside what) and let the real');
@@ -1191,7 +1394,11 @@ function render(s) {
     p('```html'); for (const l of [...new Set([t.display.css, t.text.css].filter(Boolean))]) p(l); p('```');
     p(`- Display: **${t.display.family}** — ${t.display.settings}`);
     p(`- Text: **${t.text.family}** — ${t.text.settings}`);
-    if (t.scale) { p('```css'); p(':root {'); for (const [k, v] of Object.entries(t.scale)) p(`  --${k}: ${v};`); p('}'); p('```'); }
+    // a split hero takes a large headline (r7-p34: 48px beside a half-screen picture read as a shop template): the display
+    // step is raised to reach 72px (5vw) at 1440 when the type system's own falls short
+    const disp = t.scale?.['step-display']; const at = stepAt(disp, 1440); const raise = s.hero?.split && at !== null && at < 72 ? splitDisplay(disp) : null;
+    if (t.scale) { p('```css'); p(':root {'); for (const [k, v] of Object.entries(t.scale)) p(`  --${k}: ${k === 'step-display' && raise ? raise : v};`); p('}'); p('```'); }
+    if (raise) p(`\`--step-display\` is raised above for this page's split hero (section 6): it reaches ${Math.round(stepAt(raise, 1440))}px at 1440, where the type system's own stops at ${Math.round(at)}px. The other steps stand.`);
     if (d.typography) p(d.typography);
     p('The direction decides sizes and how many of them; the type system decides how this face is set. Where the two give different tracking or leading, use the values of the type system: they are tuned to this face.');
     p('These six steps are the whole scale. Map every size a blueprint names onto the nearest step; the hero headline takes `--step-display`, whatever size the hero blueprint gives.');
@@ -1210,45 +1417,57 @@ function render(s) {
   const find = qs.length
     ? `\`${ASSETS_CMD} "${qs[0]}"\`${qs.length > 1 ? `, then ${qs.slice(1).map((q) => `"${q}"`).join(' and ')}` : ''}, then queries from your inventory (its street, its materials, its trade's tools and history)`
     : `\`${ASSETS_CMD} "<a place, material or object from your inventory>"\``;
-  const SOURCES = 'Order of sources: (1) the project\'s own pictures; (2) pictures you generate, if you have an image tool (the best way to show this exact subject); (3) the dealt photographs below and the rest of the library (`node <skill>/scripts/draw.mjs --photos <words>`): sharp, modern and free of credits; (4) real photographs from the open collections (' + find + '), only sharp modern photographs at 1800px or more, each looked at full size first and cropped or dropped if it shows another maker\'s name or logo, a shop or company sign, a readable house number or licence plate, words that would embarrass the client, or a child who could be recognised (references/imagery.md §2), credited in the Image credits dialog (`--credits` prints it), never in the footer; (5) type and space: never a drawing in place of a picture (SVG only for the logo, real charts, maps and plans with labels, and icons inside product fragments). Logos of known products the page names (Gmail, Figma, Slack, Chrome, ChatGPT, Claude) are the real marks, never drawn: `' + ASSETS_CMD + ' --logo gmail,figma` saves them from Simple Icons at a pinned version, and a brand missing there comes from its own press kit, unchanged; never an initial in a circle in its place. Archive photographs, old maps and engravings only when they are the idea itself (the history this subject continues, shown sharp and large as one family, like the slip boxes behind a notes app), never as filler, never small, never a random old picture of the place.';
+  const SOURCES = 'Order of sources: (1) the project\'s own pictures; (2) pictures you generate, if you have an image tool (the best way to show this exact subject); (3) the dealt photographs below and the rest of the library (`node <skill>/scripts/draw.mjs --photos <words>`): sharp, modern and free of credits; (4) real photographs from the open collections (' + find + '), only sharp modern photographs at 1800px or more, each looked at full size first and cropped or dropped if it shows another maker\'s name or logo, a shop or company sign, a readable house number or licence plate, words that would embarrass the client, or a child who could be recognised (references/imagery.md §2), credited in the Image credits dialog (`--credits` prints it), never in the footer; (5) type and space: never a drawing in place of a picture (inline SVG only for the logo and small icons, and a chart only inside a product fragment, `data-ui`; a drawn diagram, chart or illustration on the page fails, labels or not, so say a process in words: `drawn-illustration`). Logos of known products the page names (Gmail, Figma, Slack, Chrome, ChatGPT, Claude) are the real marks, never drawn: `' + ASSETS_CMD + ' --logo gmail,figma` saves them from Simple Icons at a pinned version, and a brand missing there comes from its own press kit, unchanged; never an initial in a circle in its place. Archive photographs, old maps and engravings only when they are the idea itself (the history this subject continues, shown sharp and large as one family, like the slip boxes behind a notes app), never as filler, never small, never a random old picture of the place.';
   const MODE = {
     interface: '**This subject is software and there are no screenshots, so its pictures are its own interface.** Wherever this sheet says photograph, image or object, build a believable fragment of the product in HTML at real size (real labels, numbers that add up, one item hovered or selected) by the app-screen rules (references/app-screens.md: deal its style once with `node <skill>/scripts/draw.mjs --app --kind <kind> --keep palette,type --out .taste-skill/app`, and build it with assets/app.css and assets/charts.js), put the attribute `data-ui` on its root, and crop or scale it the way the blueprint treats a photograph: a full-bleed close crop, a tile, the fixed half of a split. Where a fragment makes no sense, use a flat colour field with type on it. Never a fake dashboard of grey bars, never a device frame. **The interface sits in the page\'s own ground:** in the page\'s colours (the app style dealt with `--keep palette`), cropped, or bleeding off an edge of the screen or of its section, with at most one framed window on the whole page (the replay\'s, when one is dealt). Never the template every model builds: a black ground with a white interface slab in every section. Never form controls as decoration: a switch, checkbox or slider appears only where it does what the product does, never as a row of greyed toggles. ' + (heroMode(s) !== 'type-only' && heroShowsLarge(s.hero) ? 'The first screen shows the product large (at least half the screen), in the picture slot the hero blueprint sets,' : `The first screen of this sheet is ${heroMode(s) === 'type-only' ? 'set in type' : 'one whose picture is small'} (a direction taken by choice; a dealt one never is), so the product comes large (at least half the screen) in the first section after it, before anything else,`) + ' at a size a visitor can read (labels 12px or more, its main text 14px or more; crop to fewer rows rather than shrink it). Further down, at least one more large picture that is not interface: a photograph or an object that carries the product\'s idea (for a notes app, a card catalogue), or a large figure. Never more than two sections in a row built from interface cards: a page of dark cards on a dark ground reads as one long screenshot. If the product works on something physical (ships, plants, buildings, a city), one real picture of that world can carry a section: find it with `' + ASSETS_CMD + ' "<that world>"`, download it with `--get`, credit it in the Image credits dialog if its licence asks, and never let it pass for the product or its customers.',
-    'no-product-photo': '**There are no photographs of this product, so its kind carries the pictures.** A visitor must see what the thing is: show the product type large, in real photographs of that kind of product in use (a cargo bike loaded at a city kerb, a kettle on a lit hob), ' + (heroMode(s) !== 'type-only' && heroShowsLarge(s.hero) ? 'in the hero, where the product fills about half the hero or more (never a small figure in a landscape), and in one or two sections after it' : `in the first section after the first screen (${heroMode(s) === 'type-only' || heroNoPicture(s.hero) ? 'the first screen dealt here is set in type' : heroSkyLed(s.hero) ? 'the first screen dealt here sets its subject small under open sky' : 'the picture the first screen dealt here holds is too small for it'}), where the product fills about half the screen or more, and in one or two sections after it`) + '. Find them in the open collections (`' + ASSETS_CMD + ' "<the kind of product> in use"`), sharp and of one light, credited in the Image credits dialog when the licence asks, and pick ones where no other maker\'s name or logo shows and that look like the brief\'s description (its shape, material, colour); one that contradicts it is left out. **The kind looks alike in every picture:** the same configuration and build (all long-tail cargo bikes, or all with a box in front; all gooseneck kettles), of a similar colour, never a different maker\'s design in each. Three that match beat six that do not; with one good match, show it large once and let type carry the rest. They show the kind, never this model: no name, price or claim of this product is set on one as if it were the product itself. If you have an image tool, generate the product as it really is (its shape, material and colour from the brief) instead, and say so in the report. A picture of what the name means (the bird or the animal the brand is named after) never stands in for the product: the name lives in the words, the product in the pictures. Never a drawn illustration of the product (references/imagery.md §8). In your report, say that these are not the client\'s photographs, which slots they fill, and that the client\'s own product photography should replace them.',
+    'no-product-photo': '**There are no photographs of this product, so its kind carries the pictures.** A visitor must see what the thing is: show the product type large, in real photographs of that kind of product in use (a cargo bike loaded at a city kerb, a kettle on a lit hob), ' + (heroMode(s) !== 'type-only' && heroShowsLarge(s.hero) ? 'in the hero, where the product fills about half the hero or more (never a small figure in a landscape), and in one or two sections after it' : `in the first section after the first screen (${heroMode(s) === 'type-only' || heroNoPicture(s.hero) ? 'the first screen dealt here is set in type' : heroSkyLed(s.hero) ? 'the first screen dealt here sets its subject small under open sky' : 'the picture the first screen dealt here holds is too small for it'}), where the product fills about half the screen or more, and in one or two sections after it`) + '. Find them in the open collections (`' + ASSETS_CMD + ' "<the kind of product> in use"`), sharp and of one light, credited in the Image credits dialog when the licence asks, and pick ones where no other maker\'s name or logo shows and that look like the brief\'s description (its shape, material, colour); one that contradicts it is left out. **The brief decides what the product is, never the photographs found:** a two-wheeled cargo bike stays two-wheeled, and a photograph of a trike is left out, never a reason to rewrite the product, its specifications or its words (one page turned its bike into a trike to match its stock photographs). **The kind looks alike in every picture:** the same configuration and build (all long-tail cargo bikes, or all with a box in front; all gooseneck kettles), of a similar colour, never a different maker\'s design in each. One good photograph of the right kind, shown large and once more as a close crop of a detail (the loaded box), beats three of three different vehicles. **At least one picture shows it in use with the people it is for** (a parent riding with two children in the box, the children from behind or far off), never only the product parked in an empty street. If no photograph of the right kind exists, show fewer pictures and let type and the product\'s own facts carry the page (the first screen set in type, the specifications large), and say so in the report. They show the kind, never this model: no name, price or claim of this product is set on one as if it were the product itself. If you have an image tool, generate the product as it really is (its shape, material and colour from the brief) instead, and say so in the report. A picture of what the name means (the bird or the animal the brand is named after) never stands in for the product: the name lives in the words, the product in the pictures. Never a drawn illustration of the product (references/imagery.md §8). In your report, say that these are not the client\'s photographs, which slots they fill, and that the client\'s own product photography should replace them.',
     atmosphere: '**The project has no photographs of its own yet.** Plan the set before building: three to six sharp pictures of one family (one light, one treatment) that show the subject\'s world, reused at different crops instead of a new picture for every slot. They show the world around the client and never pass for its people, its team or its customers. Where no honest picture exists, leave the slot to type and space; never a drawn illustration in its place (references/imagery.md §8). List every picture and its source in your report.',
     own: '**Use the images that belong to the project in every picture slot.** For slots they cannot fill, the dealt photographs or sharp photographs of the subject\'s world come next.',
   };
   p(MODE[s.imagery || 'atmosphere']); p();
   // Rooms, dishes and products are shown, not boxed: Hvit (r6-p30) set its five rooms as grey spec panels
   // the library has almost no rooms (one bedroom among its tables), so rooms come from the open collections
+  // N listed, N pictures: Hvit (r7-p35) listed four rooms and pictured one, with a blurred mug and a stock dining set
   const SHOWN = {
-    hospitality: ['room', 'Every room the page lists has its own photograph of that kind of room (the bed under its window, the view out of it), matched to its details', `the open collections (\`${ASSETS_CMD} "<that kind of room>"\`)`, 'a grey spec panel, a tab or a filled box', 'its facts (bed, size, view, rate)', 'the house'],
-    restaurant: ['dish', 'Every dish the page features has its own photograph of that dish as served (the menu itself stays a list of names and prices)', `the library (\`node <skill>/scripts/draw.mjs --photos interior-and-table\`) or the open collections (\`${ASSETS_CMD} "<the dish>"\`)`, 'a filled box or a coloured panel', 'its name and price', 'the restaurant'],
-    ecommerce: ['product', 'Every product the page sells has its own photograph', `the library (\`node <skill>/scripts/draw.mjs --photos object-still\`) or the open collections (\`${ASSETS_CMD} "<the product>"\`)`, 'a filled box or a grey panel', 'its name and price', null],
+    hospitality: ['room', 'Every room the page lists has its own photograph of that kind of room (the bed under its window, the view out of it), matched to its details', `the open collections (\`${ASSETS_CMD} "<that kind of room>"\`)`, 'a grey spec panel, a tab or a filled box', 'its facts (bed, size, view, rate)', 'the house', 'four rooms', 'list the kinds of room the house has, two or three, each with its picture'],
+    restaurant: ['dish', 'Every dish the page features has its own photograph of that dish as served (the menu itself stays a list of names and prices)', `the library (\`node <skill>/scripts/draw.mjs --photos interior-and-table\`) or the open collections (\`${ASSETS_CMD} "<the dish>"\`)`, 'a filled box or a coloured panel', 'its name and price', 'the restaurant', 'three dishes', 'feature the dishes you can show and leave the rest to the menu list'],
+    ecommerce: ['product', 'Every product the page sells has its own photograph', `the library (\`node <skill>/scripts/draw.mjs --photos object-still\`) or the open collections (\`${ASSETS_CMD} "<the product>"\`)`, 'a filled box or a grey panel', 'its name and price', null, 'six products', 'show the products you can picture and name the others in one plain line'],
   }[s.input.sector];
   if (SHOWN) {
-    const [what, each, where, box, facts, place] = SHOWN;
-    p(`**Each ${what} is shown, not boxed.** ${each}: the client's own where they exist; otherwise a real photograph of that kind of ${what}${s.imagery === 'no-product-photo' ? ', as above' : ` from ${where}`}, all in one light, and the report lists each as a stand-in for the client's own. Never ${box} in place of the picture: ${facts} sit beside or under the photograph, on the page's ground.${place ? ` A stand-in sits beside the ${what} it stands for, never as the first picture of ${place}.` : ''}`);
+    const [what, each, where, box, facts, place, eg, fewer] = SHOWN;
+    const whats = what === 'dish' ? 'dishes' : what + 's';
+    p(`**Each ${what} is shown, not boxed: as many pictures as ${whats} listed.** ${each}: the client's own where they exist; otherwise a real photograph of that kind of ${what}${s.imagery === 'no-product-photo' ? ', as above' : ` from ${where}`}, all in one light, and the report lists each as a stand-in for the client's own. A section that lists ${eg} shows ${eg.replace(/ \w+$/, '')} photographs, one beside each, never one picture for the lot or a detail (a mug, a corner) in place of the ${what}; with fewer good pictures, ${fewer}, rather than a ${what} without its picture. Never ${box} in place of the picture: ${facts} sit beside or under the photograph, on the page's ground.${place ? ` A stand-in sits beside the ${what} it stands for, never as the first picture of ${place}.` : ''}`);
     p();
   }
   p(SOURCES); p(); p(d.imagery);
-  p(); p('**Pictures: fewer, better, larger (the inspector checks them).** Three to eight pictures that show this subject, each requested at least 1.5 times the size it is shown (twice for the hero), all with the treatment dealt in section 0. Before placing one, look at it: if it is soft, random, or could belong to any site, leave the slot out instead. No thumbnails inside sentences, no pictures inside headlines, no small pictures filling a gap, no caption under a picture unless it says something the visitor needs. SVG drawings do not count as pictures. Video only as section 0 deals it.');
+  p(); p('**Pictures: fewer, better, larger (the inspector checks them).** Three to eight pictures that show this subject, each requested at least 1.5 times the size it is shown (twice for the hero), all with the treatment dealt in section 0. Before placing one, look at it: if it is soft, random, or could belong to any site, leave the slot out instead. No thumbnails inside sentences, no pictures inside headlines, no small pictures filling a gap, no caption under a picture unless it says something the visitor needs. SVG drawings do not count as pictures. Every file the page asks for exists: a `src`, a `srcset` crop or a CSS background that is not there fails (`missing-image`). Words on a photograph sit on its calm part, of one tone, at 1440, 768 and 390 alike, since the crop moves as the screen narrows (`text-on-photo`). Video only as section 0 deals it.');
   if (s.photos) {
     p();
     p(s.imagery === 'interface' ? `Optional atmosphere, two at most, from the "${s.photos.title || s.photos.set}" set (${s.photos.note}). The page does not need them.` : `Photographs dealt for this build, from the "${s.photos.title || s.photos.set}" set (${s.photos.note})`);
     p('They are real photographs (Unsplash licence, no credit needed, served by picsum.photos) of places, light and texture: atmosphere,');
     p('never a stand-in for a person or an interface, and a room, dish or product only as this section says. List the ones you use in your report so they can be replaced.');
     const colour = s.colourPictures ?? picturesCarryColour(s.input);
-    if (s.photos.treatment) p(colour && /gr[ae]yscale|black-and-white/i.test(s.photos.treatment) ? 'Treatment: every photograph in full colour, never greyscale (on this page the pictures carry the colour).' : `Treatment: ${s.photos.treatment}`);
-    for (const ph of s.photos.photos) p(`- \`https://picsum.photos/id/${ph.id}/1600/1000\` — ${ph.alt} · ${ph.tone} tone · ${(ph.colours || []).join(', ')}${ph.mono ? ' · black-and-white' : ''}${ph.sameKind ? ' · **may show this kind of product: if it does, show it as the kind in use, never named or priced as this model**' : ''}${ph.calm && ph.calm !== 'none' ? ` · calm area: ${ph.calm}` : ''} · native ${ph.ratio >= 1.15 ? 'landscape' : ph.ratio <= 0.87 ? 'portrait' : 'square'} · photo: ${ph.by}`);
+    const brightName = nameColours(s.input.brief).lean === 'light';
+    if (s.photos.treatment) p(brightName && /dark|dim|brightness|scrim|overlay/i.test(s.photos.treatment) ? 'Treatment: bright and untouched, never darkened, dimmed or under a scrim: the client\'s name asks for light (section 4); text goes on a picture\'s calm pale part, or beside it.' : colour && /gr[ae]yscale|black-and-white/i.test(s.photos.treatment) ? 'Treatment: every photograph in full colour, never greyscale (on this page the pictures carry the colour).' : `Treatment: ${s.photos.treatment}`);
+    else if (brightName) p('Treatment: bright and untouched, high-key, never darkened, dimmed or under a scrim (section 4).');
+    // one treatment for every picture (references/imagery.md §6): a black-and-white file is listed only where section 0
+    // deals the black-and-white treatment, so a page in colour never mixes the two (nor does --redraw photos)
+    for (const ph of s.photos.photos.filter((x) => !x.mono || s.frame?.treatment?.id === 'mono')) p(`- \`https://picsum.photos/id/${ph.id}/1600/1000\` — ${ph.alt} · ${ph.tone} tone · ${(ph.colours || []).join(', ')}${ph.mono ? ' · black-and-white' : ''}${ph.sameKind ? ' · **may show this kind of product: if it does, show it as the kind in use, never named or priced as this model**' : ''}${ph.calm && ph.calm !== 'none' ? ` · calm area: ${ph.calm}` : ''} · native ${ph.ratio >= 1.15 ? 'landscape' : ph.ratio <= 0.87 ? 'portrait' : 'square'} · photo: ${ph.by}`);
     p('The last two path numbers are width and height: request the exact crop you render (`/1200/1500` for a 4:5 portrait, `/2400/1350` for a hero) and');
-    p((colour ? 'keep them in colour. ' : 'add `?grayscale` to desaturate. ') + (s.imagery === 'interface' ? 'Use at most two.' : 'Use three to six of them, not all eight.') + ' Always set `width`, `height`, `alt` and `loading="lazy"` (not on the hero image).');
+    // a page with no photographs of its product is not filled with whatever was dealt (Haulet's cargo bikes got a honey
+    // dipper and a teapot): with none of its kind here, these are for the world around it at most
+    const kindShown = s.photos.photos.some((ph) => ph.sameKind);
+    const howMany = s.imagery === 'interface' ? 'Use at most two.' : s.imagery === 'no-product-photo' ? (kindShown ? 'Use the ones marked as this kind of product first, and one or two others for the world around it at most.' : 'None of these shows the product: use one or two for the world around it, or none.') : 'Use three to six of them, not all eight.';
+    p((colour ? 'keep them in colour; a black-and-white file from anywhere else is left out too (references/imagery.md §6). ' : s.frame?.treatment?.id === 'mono' ? 'add `?grayscale` for the black-and-white treatment section 0 deals. ' : 'keep them as shot. ') + howMany + ' Always set `width`, `height`, `alt` and `loading="lazy"` (not on the hero image).');
     if (s.photos.others?.length) p(`Other sets that fit this brief: ${s.photos.others.join(', ')} — \`node draw.mjs --photos <set>\` prints one in full; \`--photos list\` shows all sets. Taking photographs from another set is your call and is not a redraw; keep them to one light and one treatment.`);
   } else if (d.photos === false) {
     p(); p('This direction does not lead with photographs: use the few pictures the content really needs, where the direction allows them.');
   }
   p();
   const adjust = (bp) => { const n = adjustments(bp, s); if (n.length) { p(); p('Adjusted for this page:'); for (const x of n) p(`- ${x}`); } };
-  p(`## 6. Hero — ${s.hero.name}`); p(s.hero.blueprint); p(); p(`On a phone: ${s.hero.mobile}`); if (s.hero.headline) p(`Headline: ${s.hero.headline}`); adjust(s.hero); p();
+  p(`## 6. Hero — ${s.hero.name}`); p(s.hero.blueprint); p(); p(`On a phone: ${s.hero.mobile}`); if (s.hero.headline) p(`Headline: ${s.hero.headline}`);
+  if (s.hero.split) p('**A split hero takes a large headline:** beside a picture that holds half the screen, the `h1` is 72px (5vw) or more at 1440, on two lines at most, so about 26-30 characters. If the words cannot be that large in their part, the picture goes full-bleed behind them instead; never a small headline in a 50/50 split, which reads as a shop template.');
+  adjust(s.hero); p();
   p('## 7. Sections, in order');
   p('**Words: the whole page is about 300-500 words, a section about 20-80.** Award sites carry about 27 words a screen. Say each thing once, as a fact.');
   p('Each is one example of a shape for this section: keep what is large and what sits beside what, and let the real content decide the');
@@ -1256,7 +1475,7 @@ function render(s) {
   p('page needs it (see references/copy.md), never to fall back to a card grid. A section a scene carries (section 9) is that scene.');
   s.sections.forEach((sec, i) => {
     p();
-    if (sec.role === 'footer' && s.frame) { p(`### ${i + 1}. footer — as dealt in section 0`); p(s.frame.footer.text); return; }
+    if (sec.role === 'footer' && s.frame) { const visit = visitNote(s, s.frame.footer.text); p(`### ${i + 1}. footer — as dealt in section 0`); p(`${s.frame.footer.text}${visit ? ` ${visit}` : ''}`); return; }
     // the replay's stage is the last thing in its section and is held (replay-not-held): no second shape around it
     if (s.replay && sec.role === s.replay.carries) { p(`### ${i + 1}. ${sec.role} — the product replay (section 8)`); p('This section is the replay\'s held stage: the heading that states the promise, the window, one sentence and the Replay button, with nothing after them. No other shape is built here.'); return; }
     if (!sec.blueprint) { p(`### ${i + 1}. ${sec.role}`); p('No blueprint in the library for this role. Compose it from the direction above, using a layout shape not used by its neighbours.'); return; }
@@ -1279,17 +1498,21 @@ function render(s) {
     const held = s.scenes.reduce((t, x) => t + (x.hold || 2), 0);
     p(`**The length budget.** ${s.scenes.length === 1 ? 'This scene holds' : 'Together these scenes hold'} about ${+held.toFixed(1)} screens of scroll (a scene's section is its hold plus one screen tall). A scene replaces the content of the section it carries: it is that section, not extra screens in front of it, and it never adds screens of nothing. The whole page still runs about 12-16 screens at 1440 (the inspector's header counts them), so build the other sections to their content and keep each hold to the beats it has.`);
     p(`**The ${tested ? 'demo' : 'example'} is not the content.** ${tested ? "Each scene's demo page is a working example for a made-up client: its town, its photographs, its map, its object and its words are placeholders." : "The direction a technique gives is written for another client: its business, its objects and its words are examples."} Every picture, word and drawn thing in your scene comes from this subject (your inventory, SKILL.md step 1): a route map shows the real route with its real coast, water and relief; a fly-through passes through this client's own work; a quote is the client's own words. A scene that still shows the ${tested ? "demo's" : "example's"} content${tested ? ', or the stand-in a script draws when it is given nothing (the route\'s bare ground with only the road, the plain jet),' : ''} is unfinished.`);
+    if (fewPictures(s.input) && s.scenes.every(lightScene)) p(`**This page is short of pictures of its own subject, so ${one ? 'its scene needs' : 'its scenes need'} no photograph or one.** Fill ${one ? 'it' : 'them'} from the words and the product's own facts; a scene's one picture may be a photograph the page already shows, at another crop. If even that cannot be filled, \`--redraw scenes\` deals another of the same kind before any that needs more.`);
     for (const sc of s.scenes) {
       p();
       if (sc.technique) { techniqueBlock(sc, s, p); continue; }
       const what = sc.carries === 'hero' ? 'the first screen' : `the ${sc.carries} section`;
       p(`### ${sc.name} (\`${sc.id}\`) — ${sc.position === 'transition' ? `the hand-over into ${what}` : `carries ${what}`}`);
-      p(`${sc.summary}${sc.hold ? ` Hold: ${sc.hold} screen${sc.hold === 1 ? '' : 's'}${sc.defaultHold > sc.hold ? ` (set \`data-options\` hold to ${sc.hold}, or the lowest value the scene allows; its default is ${sc.defaultHold})` : ''}. Every frame of the hold must read as a finished layout: no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway.` : ''}`);
+      p(`${sc.summary}${sc.hold ? ` Hold: ${sc.hold} screen${sc.hold === 1 ? '' : 's'}${sc.defaultHold > sc.hold ? ` (set \`data-options\` hold to ${sc.hold}, or the lowest value the scene allows; its default is ${sc.defaultHold})` : ''}. Every frame of the hold must read as a finished layout: no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway; on a phone a heading set in letters is whole wherever the scroll stops (\`letters-mid-reveal\`).` : ''}`);
       if (sc.place) p(`Where: ${sc.place}`);
       if (sc.carries === 'work' && !sc.byRole?.work) p('On the work, the scene is the work: four to six pieces, each stopped flat and large with its own title under it for half a screen, each linking to its piece; the rest go to a plain index under the scene.');
       if (sc.byRole?.[sc.carries]) p(sc.byRole[sc.carries]);
       if (sc.content) p(`Content: ${sc.content}`);
       if (sc.options) p(`Options (data-options): ${sc.options}`);
+      // a scene that shades its picture for white type keeps it bright for a client named for a light
+      const shades = [...String(sc.options || '').matchAll(/\b(shade|dim)\s+0?\.\d+/g)].map((m) => m[1]);
+      if (shades.length && nameColours(s.input.brief).lean === 'light') p(`For this client's bright pictures (section 4): set ${shades.map((x) => `\`${x}\``).join(' and ')} to 0, and put the words in the ink on the picture's pale calm part.`);
       p(`Files: \`<skill>/assets/scenes/${sc.id}.js\` and \`${sc.id}.css\`; a working example (its content is a placeholder): \`<skill>/assets/scenes/demo/${sc.id}.html\`.${sc.phone ? ' On a phone: ' + sc.phone : ''}`);
     }
     p();
@@ -1302,6 +1525,7 @@ function render(s) {
     const and = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}` : xs[0]);
     p(`**None: this page is built without a scroll scene** (\`--redraw scenes=none\`): no scene could be filled honestly. ${moves.length ? `Its motion comes from ${and(moves)}: build ${moves.length > 1 ? 'them' : 'it'} with care, with feedback on every control, and put no pinned stretch in place of a scene.` : 'Nothing else dealt here moves (the entrance is one where nothing arrives): take a moving one with `--redraw entrance`, since the inspector fails a page that barely moves, and put no pinned stretch in place of a scene.'}`);
     p('**The length budget drops:** about 8-12 screens at 1440 (the study\'s median page is 8.7; references/layout.md), every section built to its content, with no stretch held for a scene.');
+    if (s.lightOptions?.length) p(`**A scene that needs no photograph, or one, still fits this page:** ${s.lightOptions.map((id) => `\`${id}\``).join(', ')} (\`node draw.mjs --list scenes\` and \`--list techniques\` say what each is). Before building without one, take one of them with \`node draw.mjs --redraw scenes=<id>\` (taking one by id is not one of the two redraws) and fill it from the words and the one picture you have; none is for a page that cannot fill even these, and the report says why.`);
     p();
   }
   if (d.richness) { p('## 10. Where the richness comes from'); p(d.richness); p(); }
@@ -1317,8 +1541,9 @@ function render(s) {
   p('no cream-and-terracotta, no violet. The frame: one h1 on the first screen that says what this is, equal outer margins, no');
   p('section huddled on one side with the other half empty, no blank stretch over half a screen, a heading on every section. No picture inside a');
   p('headline or a sentence, no headline in a card, no giant name or email anywhere, no credits in the footer, no drag or progress bars or range sliders,');
-  p('no switch or checkbox that changes nothing, no page built from boxes, no bento grid and no list drawn as boxes, no heading alone in its');
-  p('column or on its screen, one accent hue, few words, running text 16px or more.');
+  p('no switch or checkbox that changes nothing and no line with a knob or dots on it, no page built from boxes, no bento grid, no wall of tiles in');
+  p('several fills and no list drawn as boxes, no heading alone in its column or on its screen, no drawn diagram or chart outside a product');
+  p('fragment, one accent hue, few words, running, list and table text 16px or more.');
   p('`inspect.mjs` measures all of it.');
   if (s.allow?.length) p(`This direction is allowed: ${s.allow.join(', ')} (the inspector reads this from the saved sheet).`);
   p();

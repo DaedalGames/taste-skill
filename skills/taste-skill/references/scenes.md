@@ -160,6 +160,17 @@ say how many pictures and words it takes; these hold for all of them:
 - **The phone.** Each scene has a phone plan in its file: the same scene with changed numbers, a
   simpler version, or `phone: 'rest'`, where the phone shows the finished composition. Touch scrolling
   is never smoothed. Look at the phone sheet as carefully as the desktop one.
+- **Letters on the phone land on a clock.** A heading set in letters is never keyed to the scroll on a
+  phone: wherever the reader stops it would stand half-drawn ("B o"), and the inspector fails it
+  (`letters-mid-reveal`). Its letters land in under a second once half of it is on screen (or once the
+  scene's timeline passes their moment, when until then they are out of sight under a mask; faded
+  letters on screen waiting for it fail too), and drop back only when it leaves again. The scenes that set
+  letters already do this; a scene you build on the stage does the same.
+- **Small text on a scene's photograph reads at 4.5:1 at every width.** A sky that looks even still
+  drops under it somewhere under 19px letters, at one width or another, and the inspector reads the
+  pixels under the letters (`text-on-photo`). Where the picture is not calm under the words, set them on
+  a solid strip: the ground, or a band in the ink with the type in the ground's colour. Flat, never a
+  gradient.
 - **Reduced motion and no script.** The section is an ordinary section showing the finished
   composition: the same content, laid out to read without motion. Nothing is hidden waiting for a
   script. The inspector's `reduced-hidden` check and the reduced sheet of `scenes.mjs` show it.
@@ -242,12 +253,22 @@ empty, and that the navigation or the one action is in reach after the hero.
 
 ## 8. When no scene in the library fits
 
-Redraw first (`--redraw scenes`), twice at most. A third `--redraw scenes` prints the scenes that still
+Redraw first (`--redraw scenes`), twice at most. A redraw never deals again a scene or technique
+already dealt on this sheet (one page got the same fly-through from both its redraws), and when nothing
+new fits it prints the list below instead. A third `--redraw scenes` prints the scenes that still
 fit this page, each with what it needs, and the two ways out: take one by id
 (`--redraw scenes=<id>`, or two with `scenes=<id>,<id>`), or build the page without a scene
 (`--redraw scenes=none`), its motion then coming from the entrance, the replay or moving pictures. A
 page with one honest scene, or none, beats a fifth redraw: a cargo bike page lost two and a half
 hours to five.
+
+A page short of pictures of its own subject (no photographs of its product, or a brief that says it
+has few) is dealt scenes and techniques that need no photograph or one first, its redraws deal more of
+those before any that needs several, and the list after two redraws puts them at the top. Such a scene
+is filled from the words and the product's facts; its one picture may be a photograph the page already
+shows, at another crop. `scenes=none` stays possible, but the sheet then names the scenes of that kind
+that still fit: none is for a page that cannot fill even these. A cargo bike page with no photographs
+redrew three scenes that each wanted three to six photographs, and was built with no scene at all.
 
 If the brief really needs a scene the library does not have, build it on the same stage so it
 inherits the guards:
@@ -270,7 +291,7 @@ gives it, and checked with `scenes.mjs` like any scene.
 
 ## 9. The catalogue
 
-Thirty-seven scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
+Thirty-eight scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
 scene's full entry (where it goes, its content, its options, its phone plan);
 `node <skill>/scripts/draw.mjs --list scenes` prints the list, and each scene file's header is the full
 contract. Each entry's `needs` says what the scene really takes, and the draw deals it only when the
@@ -313,9 +334,19 @@ page, a scene on the first screen, which shows the product large.
 - **Dither-field opener** (`dither-field-opener`): the first screen is live print: one huge numeral,
   year or initial in the display face turns inside a one-bit dither field, and a fast scroll sends bands
   of accent dots across it that settle back to ink. One mark of 1-4 characters, a headline on clear
-  ground, no pictures. Hold 0.
+  ground, no pictures. Hold 0. Never on a software page, whose first screen shows its own interface
+  large: no scene that carries the first screen without the product is dealt there.
 - **Light flood** (`light-flood`): one sentence plays out a day: light rises, floods the screen, night
   falls. Two short lines, no pictures; it holds about one screen (1.2).
+- **One line carries the colour swap** (`line-carries-colour-swap`): a square clip crops away the
+  photograph that closes one chapter while one line of the display face, at its final size and the
+  full width, climbs under it showing only its first word; each further word slides in short and lands
+  beside the one before, and on the last word the ground and the ink swap in one jump while the next
+  chapter's first picture, already rising, settles whole under the line. A closing photograph, an
+  opening picture and one line of 3-5 words (*pictures:2*); a line alone on flat colour reads as an
+  empty screen. Between two sections, once; hold 1.2. Never for a client named for a light or a pale
+  colour: its ink chapter ends on a dark photograph. Built from the researched technique `lib-0240`,
+  which is no longer dealt to build fresh.
 - **Shaped edge carries the new ground** (`shaped-edge-ground-change`): the sky's colour rises over its
   photograph as an arch and becomes the next chapter's ground. One photograph with open, even sky over
   a wide subject.
@@ -341,8 +372,9 @@ page, a scene on the first screen, which shows the product large.
 **Horizontal travel**
 - **Arrive and settle on a sideways track** (`arrive-and-settle-track`): the letters of a closing line
   swoop in from the side and settle on a calm end frame with a button; presets for quotes and
-  projects. One line of 3-5 words, no pictures. The end frame shows the whole line, verb included, at
-  every width.
+  projects. One line of 3-5 words, no pictures. The letters on screen when the section arrives swoop
+  within under half the letter size, so the line reads at once; the rest arrive at the whole
+  amplitude. The end frame shows the whole line, verb included, at every width.
 - **Sideways walk through rooms** (`room-walk-track`): a row of coloured rooms walked sideways, each
   with its own moment, ending on the contact. Fourteen of the client's own photographs
   (*product-photo*). It holds about ten screens and is a whole page on its own, so the draw does not
@@ -410,7 +442,9 @@ page, a scene on the first screen, which shows the product large.
 
 **Picture transform**
 - **Picture develops from marks** (`picture-develops`): a pen drawing draws itself, heaviest strokes
-  first, as the camera pulls back. One high-contrast drawing, or a photograph in darkroom mode.
+  first, as the camera pulls back. One high-contrast drawing, or a photograph in darkroom mode. Not
+  dealt: its dithered middle frames read as a corrupted, washed-out JPEG (round 8), and a picture keeps
+  its colour at every frame.
 - **Thumbnail becomes the stage** (`thumbnail-becomes-the-stage`): the middle of three thumbnails
   opens to full bleed and the statement's first line becomes its heading. One strong loop or picture.
 
@@ -439,7 +473,9 @@ page, a scene on the first screen, which shows the product large.
   optional drum of pictures beside it. 8-20 real names of the client's own rooms, dishes, places,
   clients or products (`--have names`, or a sector that has such lists).
 - **Type re-layout** (`type-flip-relayout`): a list in giant capitals spreads, folds into an index and
-  hands its size to the heading. A one-word heading and 3-6 short items, no pictures.
+  hands its size to the heading. A one-word heading and 3-6 short items, no pictures. Not dealt: its
+  mid-hold frames show scrambled half-words and a lone fragment over ghost text, and it ran about eight
+  screens for five words (round 8).
 - **Wordmark under strain** (`wordmark-under-strain`): a closing word is crushed, echoed, and drops
   a letter that becomes the button. A word of 4-8 letters with a straight letter, never the brand's name
   (no giant name anywhere), no pictures. For a loud brand (a band, a launch, a sports brand, a studio that

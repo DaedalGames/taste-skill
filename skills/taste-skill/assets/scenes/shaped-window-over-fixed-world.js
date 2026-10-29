@@ -72,8 +72,10 @@
 // band the windows level to (it rises to meet the title and stops short of it), and the caption under
 // the high window, below that band. Narrow screens get the phone numbers: two slim windows spanning 85%
 // of the width, the title full width on the ground above both, no caption, and the word fitted to 86%
-// of the width. On both the title is stepped down until it fits its ground (two lines at most, 16px
-// clear of the stage's top) and fades as the push begins, before the scale can carry it off the screen.
+// of the width; its letters land on a clock of 0.75s once the push reaches them, not with the scroll, so
+// the word is whole wherever a phone stops. On both the title is stepped down until it fits its ground
+// (two lines at most, 16px clear of the stage's top) and fades as the push begins, before the scale can
+// carry it off the screen.
 //
 // Options (data-options JSON; defaults, ranges):
 //   hold          2.4    1.8-3     screens the stage is held on wide screens
@@ -249,6 +251,10 @@
       const p = { level: 0, merge: 0, push: 0, lift: 0 }; // the phases, each 0-1 (lift: the title and caption's fade)
       const g = {};                               // geometry, re-measured on every refresh
       let dead = false;                           // set once this build is reverted
+      // narrow screens (phones, portrait tablets), chosen at build: the word's letters land on a clock once
+      // the push reaches them, never with the scroll, so the word is whole wherever the reader stops
+      const clock = phone || matchMedia(NARROW).matches;
+      let wordTw = null, wordOn = false;
       const highRight = o.high === 'right';
       const vars = ['--sw-s0', '--sw-x0', '--sw-hole-w', '--sw-span-w', '--sw-low-x', '--sw-high-x', '--sw-low-top', '--sw-high-top', '--sw-high-bottom', '--sw-top', '--sw-bottom', '--sw-gap', '--sw-cap-x', '--sw-cap-w'];
       // the last strings written, so a frame that changes nothing writes nothing
@@ -448,6 +454,8 @@
         // the title and the caption stand on ground the windows never reach; both fade as the push begins
         if (intro) fade(intro, 1 - p.lift);
         if (caption) fade(caption, 1 - p.lift);
+        // the word on its clock: played as the timeline passes 0.62, played back when it returns
+        if (wordTw) { const on = tl.progress() >= 0.62; if (on !== wordOn) { wordOn = on; if (on) wordTw.play(); else wordTw.reverse(); } }
       };
 
       // A nested context: reverted with the stage's matchMedia, and its cleanup clears the inline
@@ -477,7 +485,10 @@
           // a staggered fromTo only pre-renders its first letters, so every letter is set down first
           const down = { yPercent: 110, rotationX: -75, transformOrigin: '50% 100%', transformPerspective: 900 };
           gsap.set(chars, down);
-          tl.fromTo(chars, down, { yPercent: 0, rotationX: 0, duration: 0.08, ease: 'power3.out', immediateRender: false, stagger: { amount: 0.14, from: 'center' } }, 0.62);
+          // narrow: 0.75s on a clock (a word keyed to the scroll stands half-drawn, "·c····l·", where a
+          // phone stops: the inspector's letters-mid-reveal); wide: with the scroll, as before
+          if (clock) wordTw = gsap.fromTo(chars, down, { yPercent: 0, rotationX: 0, duration: 0.45, ease: 'power3.out', paused: true, immediateRender: false, stagger: { amount: 0.3, from: 'center' } });
+          else tl.fromTo(chars, down, { yPercent: 0, rotationX: 0, duration: 0.08, ease: 'power3.out', immediateRender: false, stagger: { amount: 0.14, from: 'center' } }, 0.62);
         }
         // The word and its letters are promoted only while they move: a layer kept for good would hold
         // the raster from the starting state (scale 0.92, letters tipped back) and leave the word soft.

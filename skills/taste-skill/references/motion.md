@@ -848,79 +848,142 @@ On a software page the sheet deals one (section 8): the product's own window act
 does for the visitor, in its own section, held on screen while its beats play. Linear, Stripe, Vercel
 and Attio make this their big moment. A window that played by itself while it scrolled past, at the
 size of a feature card, went unnoticed by the judge (round 6): the replay is the section's whole stage.
+A held window whose beats changed almost nothing went unnoticed too (round 7: one small card among
+eight look-alikes, 15px type, a drawn cursor; its four beats changed 0.6%, 0.0%, 3.8% and 0.4% of the
+screen). Size and hold are not enough: each beat has to change something large.
 
-- **What it acts out:** the page's promise, kept. The section's heading states it ("Every order is
-  packed the day it lands"); the window proves it, in the product's real labels and figures. Never a
-  generic card move or a tour of the interface: for a notes app that promises old notes come back, the
-  beats bring an old note back beside the draft, not a card from Inbox to Named.
-- **Large:** the window 70% of the width or more at 1440 (about 1000px) and 40% of the screen's
-  height, nearly the full width on a phone, its text 14px or more. Crop to the panel that does the task
-  rather than shrinking the whole product.
+- **What it acts out:** the page's promise, kept. The section's heading states it ("Every order ships
+  the day it lands"); the window proves it, in the product's real labels and figures. Never a generic
+  card move or a tour of the interface: for a notes app that promises old notes come back, the beats
+  open the old note at full size beside the draft, not a card from Inbox to Named.
+- **Every beat a large change:** a panel or drawer opens over the window, the item at work takes the
+  accent fill, a full-size item arrives or travels while the rest make room, a figure at display size
+  rolls as its row takes or gives up the accent, or the view moves in on the region at work. What
+  changes is a third of the window wide or more and its text 16px or more at 1440. Never a beat that is
+  a word swapped in a muted line, a count that ticks, a 2px press or frame, a fill one step from its
+  ground, or a cursor moving: the inspector photographs every beat with the stage still and fails a
+  beat that changes under 0.5% of the screen or a replay whose largest beat changes under 5%
+  (`replay-faint`; aim for 2.5% a beat and 8% for the largest). A panel that opens on the window's own
+  fill changes only its letters: open it on the ink, or on a fill clearly unlike the window's.
+- **The accent only on what changes:** the item at work carries the accent while it works and gives it
+  up when the next change takes it; nothing else in the window is in the accent, and the Replay button
+  is a quiet text button in ink (`replay-accent`).
+- **No cursor:** never a drawn pointer or cursor standing in for the visitor; its gliding is the motion
+  the eye follows and the change it makes is lost under it (`replay-cursor`). The change shows the
+  action: the button takes its pressed state, the panel opens from it, the row takes the accent. A
+  teammate is a name inside the block they change, never a name tag flying over the page.
+- **One surface:** the window is the one surface. Inside it, items are set apart by space and type, never
+  by tiles, cards, filled rows, hairline rules or a panel inside the panel; only what a beat changes
+  takes a fill (the item at work, the panel that opens), and fields keep their outline (`replay-nested`
+  fails three boxes in the window). The item that changes is never one of many look-alikes
+  (`replay-lookalike`): fewer, shorter items beside it, set as type, and it alone carries the accent.
+- **Large, filling the held screen:** the window 70% of the width or more at 1440 (about 1000px) and 40%
+  of the screen's height, nearly the full width on a phone; nothing in it under 14px (`replay-type`).
+  The heading, the window, one sentence and the Replay button fill the held screen, and this is the bar
+  that binds: replay.js centres the held stage, so the stage is 75% of the screen's height or more
+  (about 680px at 1440 by 900), and the empty bands above and below it come to a quarter of the
+  screen at most (`replay-bands` fails a third). Crop to the panel that does the task rather than
+  shrinking the whole product, and show fewer rows at a larger size rather than many small ones; fill
+  the height with the window's own content, not with empty space inside it.
 - **Held, stepped by scroll:** the section holds its stage while each beat takes about half a screen
   of scroll; scrolling back steps back. Each beat's change still runs at its own pace (typing, a roll, a
-  card's move), so it reads as the product working, not as a scrubbed video. Scroll, not a clock: a
+  panel opening), so it reads as the product working, not as a scrubbed video. Scroll, not a clock: a
   clock either outruns a slow reader or makes a fast one miss beats, and every beat must be on screen
   long enough to read (the inspector's scroll film looks for each one).
+- **The first state is a full window:** the visitor scrolls the window in and reads its first state
+  (beat 0) for about a screen before beat 1, so it is their own work before the task: the rows, figures
+  and labels already there, at full size. The beats change it or add to it; they never fill an empty one.
+  Mark with `data-at` only what the task adds. Never empty table headers, a count of 0 or a list waiting
+  for its rows (round 8: the judge scrolled past an empty box until the second beat brought the rows).
+  replay.js measures it: a window that shows under half its words at beat 0 starts on the first beat
+  that shows half, the changes up to that beat never play, and the figure carries `data-replay-start`.
 
 The HTML is the final state, every pane filled; `assets/replay.js` takes it back to its first state as
 it comes within half a screen of the view, then shows the beat the scroll has reached. Reduced motion,
 no script and a screenshot that never scrolls see the final state, and nothing is held. A working
-example of all six: `assets/replay-demo.html`.
+example of all six, each beat measured: `assets/replay-demo.html`.
 
 ```html
 <section class="replay-hold" aria-labelledby="r-title">            <!-- replay.js adds the room it holds for -->
-  <div class="replay-stage">                                       <!-- the last thing in it: one screen -->
+  <div class="replay-stage">                                       <!-- the last thing in it: fills the screen -->
     <h2 id="r-title">Bill a client in one line</h2>                <!-- the promise the window acts out -->
-    <figure class="replay" data-replay="900,1300,1100,1600" aria-hidden="true">   <!-- 3-5 beats -->
-      <div data-ui> … the product panel, in its final state …
+    <figure class="replay" data-replay="1700,1300,1300,1400" aria-hidden="true">   <!-- 3-5 beats -->
+      <div data-ui> … the product panel, in its final state, one surface …
         <input value="Invoice Acme for March" data-type-at="1">     typed at beat 1
-        <li data-at="2">Acme · 4,200 €</li>                         appears at beat 2 (its slot is kept)
-        <button data-press-at="3">Send</button>                     the cursor goes here, presses at beat 3
-        <span data-at="4" data-from="Pending">Paid</span>           text swaps at beat 4
-        <b data-roll-at="4" data-from="38">41</b>                   the figure rolls at beat 4
-        <tr data-select-at="4" class="is-selected">…</tr>           selected at beat 4
-        <li data-flip-at="4" data-flip-from="#todo">…</li>          moved here from #todo at beat 4 (FLIP)
+        <div class="row" data-at="1" data-push data-focus-at="1-3">Acme · Draft · 4,200 €</div>
+                                    pushes in at beat 1 (the rows under it make room), the item at work at 1-3
+        <aside data-open-at="2" data-close-at="3" data-open-from="right" hidden>…</aside>
+                                    a drawer open at beat 2 only; hidden, as the final state does not show it
+        <button data-press-at="3">Send invoice</button>             pressed at beat 3
+        <span data-at="3" data-from="Draft">Sent</span>             text swaps at beat 3
+        <b data-roll-at="4" data-from="3,590" data-focus-at="4">7,790</b>   a figure at display size rolls at 4
+        <li data-flip-at="2,3" data-flip-from="#new, #packing">…</li>   in #new, travels to #packing at 2, here at 3
+        <tr data-zoom-at="1">…</tr>                                 the view moves in on this region at beat 1
       </div>
-      <span class="replay__cursor" data-replay-cursor><svg viewBox="0 0 16 16"><path d="M1 1l5 14 2-6 6-2z" fill="currentColor"/></svg></span>
     </figure>
-    <p class="replay__said">One plain sentence of what happens, for everyone (screen readers included).</p>
-    <button type="button" class="button" data-replay-again>Replay</button>
+    <div class="replay__foot">
+      <p class="replay__said">One plain sentence of what happens, for everyone (screen readers included).</p>
+      <button type="button" class="replay__again" data-replay-again>Replay</button>   <!-- quiet: ink, no fill -->
+    </div>
   </div>
 </section>
 ```
 
-Also `data-style-at` with `data-style-from` (a mark that travels to its place), `data-says="2:Reading 412
-entries|3:…"` (an agent's status line), `data-frame-at` (the accent frame steps here), named cursors
-(`data-name` on the cursor, `data-cursor` on its targets) and feature lines beside the window
-(`data-line-at`, buttons that scroll to their beat). `data-replay-step="0.5"` on the figure sets the
-scroll a beat takes, in screens (0.4-0.8). The data-replay list's milliseconds are the clock the Replay
-button uses: it plays the beats once in place for a visitor who scrolled past fast. The six patterns:
+`data-focus-at` and `data-zoom-at` take one beat, a list or a range ("1-3"). The item at work
+(`.is-focus`) takes the accent fill by default (set `--replay-focus`, or write your own `.is-focus` rule;
+a figure can take the accent ink instead), and the window carries `.has-focus` meanwhile. A panel that
+opens (`data-open-at`, `data-open-from="top|bottom|left|right"`) lies over the window or takes a slot the
+beat leaves, so no hole waits for it; one that closes again (`data-close-at`) is written `hidden`, and
+`[data-ui] [hidden] { display: none; }` keeps its own display from showing it in the final state. An item
+that arrives with `data-push` is out of its list until its beat, and the items round it make room;
+give the list a fixed height (it clips what is pushed out of it) or room for one more, so the window keeps
+its height. A view that moves in (`data-zoom-at`) scales the window inside the figure, which clips to it,
+up to 1.75 times (`data-zoom-scale`); move in on a region narrower than the window (a column, a block),
+and back out on the last beat. Also `data-style-at` with `data-style-from` (marks that travel to their
+places), `data-says="1:Reading 412 entries|2:…"` (a status line, or a count that changes more than
+once), `data-select-at` (a lasting selected state) and feature lines beside the window (`data-line-at`,
+buttons that scroll to their beat). `data-replay-step="0.5"` on the figure sets the scroll a beat takes,
+in screens (0.4-0.8). The data-replay list's milliseconds are the clock the Replay button uses: it plays
+the beats once in place for a visitor who scrolled past fast. An older page's drawn cursor is hidden
+and `data-point-at` does nothing; `data-frame-at` still sets `.is-framed` but is not a beat. The six
+patterns:
 
-- **The window does one task:** a field fills → the list answers → the cursor presses the action → the
-  result the visitor wanted lands as a change in the layout (the row moves, the count ticks).
-- **The agent works beside its result:** the request types in → "Reading 412 entries" → "Checking
-  against the bank feed" as a frame lands on one cell → "Fixed: a duplicate refund" as the cell rolls.
-- **The board moves its own card:** a new item drops in → the cursor lifts the item the promise is
-  about → carries it to the column that means the promise kept → both counts tick.
-- **Teammates take turns:** named cursors each make one change in turn, then the object rests finished.
-- **Edit the source, the output rebuilds:** one value retyped → the same marks travel to new places →
-  the read-out re-counts.
-- **A frame tours the live screen:** an accent frame steps to three regions, a value changes at each,
-  the matching feature line beside the region turns full ink.
+- **The window does one task:** the request types in as the new row pushes in and takes the accent →
+  the panel that does the work opens over the list, on the ink → its action is pressed and it closes on
+  the result → the figure that proves it rolls at display size and takes the accent.
+- **The agent works beside its result:** the request types in and the agent's status line takes the
+  accent as a band → "Checking against the bank feed" as the rows it found take the accent fill → "Fixed:
+  a duplicate refund" as the fill leaves them and the total at display size rolls.
+- **The order travels the board:** three columns of type, counts at display size; the new item pushes
+  in filled with the accent, its contents shown → travels to the next column at full size → reaches the
+  column that means the promise kept. Only for a pipeline (orders, tickets, deals); never one card among
+  look-alikes.
+- **Teammates take turns:** each person changes a whole block in turn (a step moved, a figure filled, a
+  comment opened on the ink and its change landing in the block), the block filled with the accent and
+  their name inside it → the comment closes and the object's state changes to agreed.
+- **Edit the source, the output rebuilds:** the value's menu opens over the output → the choice is made
+  and the output re-forms (four bars become thirteen) → the read-out re-counts at display size.
+- **The view moves in on the live screen:** the view moves in on three regions in turn, like a camera,
+  a value changing at each and the matching feature line beside the window turning full ink; the last
+  stop moves back out to the whole screen.
 
-Rules: three to five beats, each one visible change with real labels and figures that add up (a count
-is right at every beat, not only at the end); one action at a time, by one cursor, the agent, or each
-named cursor in turn (teammates taking turns), aimed at the element it changes (measured, never fixed
-offsets). The stage fits one screen and is the last thing in its section (inside a wrapper or on the
-section's grid is fine); no ancestor of it has `overflow: hidden` or `auto` (`overflow: clip` keeps the
-hold working). Keep the window's height steady through the
-beats (give a list that loses a row its slot). Never a video, a GIF or screenshots in sequence; never a
-device frame or browser dots. Never in the hero: the hero's fragment is the entrance's, and the replay's
-fragment carries no `data-e`, `data-reveal` or `data-moment`. Phones: held the same way, one panel of it
-nearly the full width, the same beats. The inspector fails a dealt replay that is missing
+Rules: three to five beats, each one large change with real labels and figures that add up (a count
+is right at every beat, not only at the end); one change at a time, by the product, the agent, or each
+person in turn. The stage fills one screen and is the last thing in its section (inside a wrapper or on
+the section's grid is fine); no ancestor of it has `overflow: hidden` or `auto` (`overflow: clip` keeps
+the hold working). Keep the window's height steady through the beats. Never a video, a GIF or
+screenshots in sequence; never a device frame or browser dots. Never in the hero: the hero's fragment
+is the entrance's, and the replay's fragment carries no `data-e`, `data-reveal` or `data-moment`.
+Phones: held the same way, one panel of it nearly the full width, the same beats (stack a board's
+columns; never three columns of 100px). Where the window's rows are full width, the view has nothing
+to move in on: at each stop the row takes the accent and its value changes. The inspector fails a dealt replay that is missing
 (`replay-missing`), small (`replay-small`), not held (`replay-not-held`), a beat that never shows in its
-scroll film (`replay-unseen`), a replay doubled with the entrance (`replay-clash`), without a Replay
-button (`replay-control`) or a recording (`replay-video`).
+scroll film (`replay-unseen`), beats that barely change the screen (`replay-faint`), empty bands round
+the held stage (`replay-bands`), type under 14px in the window (`replay-type`), a drawn cursor
+(`replay-cursor`), boxes in the window (`replay-nested`), a replay doubled with the entrance
+(`replay-clash`), without a Replay button (`replay-control`) or a recording (`replay-video`). Look at
+`desktop-replay-NN.jpg`: every beat of the window side by side at a size its words can be read, with the
+share of the screen each one changed.
 
 ### Accordion
 

@@ -6,10 +6,10 @@
   "sectors": ["saas", "dev-tool", "ai-product", "consumer-app", "finance"],
   "weight": 1.2,
   "roles": ["showcase", "how-it-works"],
-  "sees": "The product's own window, large and held on screen, acts out the one thing the page promises the visitor (the invoice sent, the booking made, the report shared): a field fills, the list answers, the cursor presses the action, and the result lands as a change in the layout. The task is the promise kept, in the product's real labels and figures, never a tour of the interface for its own sake. The section's heading states that promise; the window proves it.",
-  "beats": "a field fills (typed at 40-60 ms a letter) → the list filters or the panel opens → the cursor presses the action (a 2px press) → the result the visitor wanted lands as a change in the layout (the row moves to Done by FLIP, the count ticks); each beat about half a screen of scroll",
-  "action": "cursor",
-  "phone": "Held as on desktop, the window nearly the full width: the field and the list under it, the same four beats."
+  "sees": "The product's own window, large and held on screen, does the one thing the page promises the visitor (the invoice sent, the booking made, the report shared), and every beat changes something large: the list answers with a full-size row that takes the accent, the panel that does the work opens over it, the action is pressed and the panel closes on the result, the figure that proves it rolls at display size. The task is the promise kept, in the product's real labels and figures, never a tour of the interface for its own sake. The section's heading states that promise; the window proves it.",
+  "beats": "the request types into the field as the new row pushes in at the top of the list, over the visitor's rows already there, and takes the accent fill → the panel that does the work opens over the list (a drawer on a fill unlike the window's: the draft, its lines, its total at display size, its action) → the action is pressed and the panel closes on the result (the row's status changes) → the figure that proves it rolls at display size and takes the accent as the row lets it go; each beat about half a screen of scroll",
+  "action": "focus",
+  "phone": "Held as on desktop, the window nearly the full width: the field, three columns of the list, the panel opening over most of it, the same four beats."
  },
  {
   "id": "agent-run",
@@ -20,23 +20,23 @@
   "weightBy": { "ai-product": 1.5 },
   "brief": "\\b(agent|AI|assistant|copilot|automat\\w*|workflow)\\b",
   "roles": ["showcase", "how-it-works"],
-  "sees": "One line of request, the agent's own status line under it, and the work it changes beside it, held on screen while it works. The request is the job the page promises to take off the visitor's hands, each status names what the agent does to the rows in view, and it ends on the result the visitor wanted (the mistake found, the reply drafted, the books balanced), never on a bare \"Done\".",
-  "beats": "the request types in one line → the agent's line reads \"Reading 412 entries\" as the rows settle → \"Checking against the bank feed\" as an accent frame lands on one cell → \"Fixed: a duplicate refund\" as that cell rolls to the right figure and the total re-counts; each beat about half a screen of scroll",
+  "sees": "One line of request, the agent's own status line under it, and the rows it works on at full size, held on screen while it works. The rows are in the window from its first state, the visitor's own entries before the agent touches them: the agent finds and changes them, it never brings them into an empty table. The request is the job the page promises to take off the visitor's hands; each status names what the agent does to the rows in view, the rows it acts on take the accent fill while it works on them, and it ends on the result the visitor wanted at display size (the mistake found, the reply drafted, the books balanced), never on a bare \"Done\".",
+  "beats": "the request types in and the agent's status line takes the accent as a band across the window: \"Reading 412 entries\" → \"Checking against the bank feed\" as the rows it found take the accent fill (whole rows, never one cell) → \"Fixed: a duplicate refund\" as the fill leaves them, the wrong figure rolls to the right one and the total, at display size, rolls and takes the accent; each beat about half a screen of scroll",
   "action": "agent",
-  "phone": "Held as on desktop: the request and the status line over the table, cropped to the rows that change, nearly the full width."
+  "phone": "Held as on desktop: the request and the status band over the rows, three columns, nearly the full width."
  },
  {
   "id": "board-move",
-  "name": "The board moves its own card",
+  "name": "The order travels the board",
   "sources": ["lib-0145", "lib-0122"],
-  "sectors": ["saas", "consumer-app", "finance"],
+  "sectors": [],
   "weight": 1,
-  "brief": "\\b(pipelines?|tickets?|orders?|ordering|tasks?|deals?|queues?|boards?|bookings?)\\b",
+  "brief": "\\b(pipelines?|tickets?|(?<!\\bin )(?<!\\bout of )orders?(?! to\\b| of\\b)|ordering|deals?|queues?|boards?|kanban|bookings?|shipments?|deliver(y|ies)|hiring|candidates?)\\b",
   "roles": ["showcase", "features", "how-it-works"],
-  "sees": "A board of the visitor's own items in three or four columns, held on screen while one of them moves. The move acts out the page's promise (an order packed the day it lands, a ticket closed before lunch, an old note brought back beside the draft): the card that moves is the one the promise is about, and the column it reaches is the result the visitor wants. Never a card shuffled between columns for show; when the product's promise is not a move from one state to the next, this replay is the wrong one (draw.mjs --redraw replay).",
-  "beats": "a new item drops in at the top of column one (its count ticks) → the cursor lifts the item the promise is about (accent left edge, 2° tilt) → carries it to the column that means the promise kept, which opens a slot while the old one closes → both counts tick and its status word changes; each beat about half a screen of scroll",
-  "action": "cursor",
-  "phone": "Held as on desktop: two columns of the board, the move between them, nearly the full width."
+  "sees": "A board of the visitor's own items in three columns of type, held on screen while one item travels it: the counts at display size, the items as lines of type set apart by space, never cards or column boxes. The item that moves is the one the promise is about and the only one filled (the accent, its contents shown while it works), never one card among look-alikes; the column it reaches is the result the visitor wants (an order shipped the day it lands, a ticket closed before lunch). Only for a product whose promise is a move from one state to the next (orders, tickets, deals, bookings, candidates): for notes, documents or anything that is not a pipeline this replay is the wrong one (draw.mjs --redraw replay).",
+  "beats": "the new item pushes in at the top of the first column, filled with the accent and its contents shown, the count above it rolling at display size → it travels to the next column at full size while the items there make room and both counts change → it reaches the column that means the promise kept and its line changes to the result (\"Shipped 16:40\"); each beat about half a screen of scroll",
+  "action": "move",
+  "phone": "Held as on desktop: the three columns stacked, two items each, the item travelling down between them at full width."
  },
  {
   "id": "turns",
@@ -47,10 +47,10 @@
   "briefWeight": 1,
   "brief": "\\b(teams?|teammates?|collab\\w*|together|shared|reviews?|reviewing|comments?|commenting|docs|documents?|designs?|designing)\\b",
   "roles": ["showcase", "features", "how-it-works"],
-  "sees": "One shared object (a document, a plan, a design) and two or three named cursors, each making one change in turn, held on screen while they work. The object ends finished, which is what the page promises a team (the plan agreed without a meeting, the review done in a day); each change is a real part of that object, never a cursor wandering for show.",
-  "beats": "cursor \"Ines\" moves one block two places down (a note line under her name tag) → cursor \"Agent\" fills a missing figure → cursor \"Tom\" adds one comment → the object rests finished; each beat about half a screen of scroll",
-  "action": "cursors",
-  "phone": "Held as on desktop: the object cropped to the blocks that change, the cursors' name tags kept, nearly the full width."
+  "sees": "One shared object (a plan, a document, a design) and two or three people, each making one large change in turn, held on screen while they work. Each change is a whole block (a step moved, a figure filled with its breakdown, a comment opened beside a step), filled with the accent while it changes and carrying its author's name inside it; never a cursor gliding about or a name tag flying over the page. The object ends agreed, which is what the page promises a team (the plan agreed without a meeting, the review done in a day).",
+  "beats": "\"Ines\" moves a whole step two places down, the step filled with the accent and her name in it → the agent fills the missing figure and its breakdown, the block filled and named → \"Tom\" opens a comment on the ink beside a step and its deadline lands in the step → the comment closes as the object's state at the top changes to agreed and takes the accent; each beat about half a screen of scroll",
+  "action": "names",
+  "phone": "Held as on desktop: the object's blocks one under another, the names inside them, nearly the full width."
  },
  {
   "id": "source-output",
@@ -61,21 +61,21 @@
   "weightBy": { "dev-tool": 1.5, "finance": 0.6, "saas": 0.6 },
   "brief": "\\b(query|queries|code|API|APIs|formulas?|templates?|rules?|config\\w*|schemas?)\\b",
   "roles": ["showcase", "how-it-works", "features"],
-  "sees": "The source (a query, a formula, a config) beside the output it makes, held on screen while one value changes. The page's promise is that one edit is enough, so one value changes in the source and the same marks in the output travel to their new places: the answer the visitor was after, rebuilt in front of them.",
-  "beats": "the source line retypes one value (\"last 30 days\" → \"last 90 days\") → the output's marks travel to their new places (the same elements, FLIP) → the read-out re-counts (\"1,240 rows → 3,912 rows · 0.4 s\"); each beat about half a screen of scroll",
-  "action": "frame",
+  "sees": "The source (a query, a formula, a config) over the output it makes, held on screen while one value changes. The page's promise is that one edit is enough, so the output is the large part of the window (a chart across it, a table, a rendered page) and it re-forms in front of the visitor: the answer they were after, rebuilt.",
+  "beats": "the value in the source takes the accent and its menu of choices opens over the output → the choice is made, the menu closes and the output re-forms (the same marks travel to new places and new ones grow in: four bars become thirteen) → the read-out at display size re-counts (\"1,240 → 3,912 orders\") and takes the accent; each beat about half a screen of scroll",
+  "action": "focus",
   "phone": "Held as on desktop: the source line over the output, stacked, nearly the full width."
  },
  {
   "id": "lens-tour",
-  "name": "A frame tours the live screen",
+  "name": "The view moves in on the live screen",
   "sources": ["lib-0124", "lib-0123"],
   "sectors": ["saas", "dev-tool", "ai-product", "consumer-app", "finance"],
   "weight": 0.8,
   "roles": ["features", "showcase"],
-  "sees": "The whole screen of the product with three feature lines beside it, held on screen while an accent frame steps from region to region. Each stop is one thing the product does for the visitor (counts the stock, reorders what runs low, keeps the total right), a value changes there, and the matching line turns to full ink. The lines stand beside the regions they name, so neither column is left empty.",
-  "beats": "a 2px accent frame steps (not glides) to region one and one value changes (38 → 41) → to region two, a status flips (Low → Ordered) → to region three, the total recalculates; the matching feature line beside the window turns full ink at each stop, and the lines are buttons that scroll to their stop; each stop about half a screen of scroll",
-  "action": "frame",
-  "phone": "Held as on desktop: the three lines in a row above the window, nearly the full width; the frame steps the same way."
+  "sees": "The whole screen of the product with three feature lines beside it, held on screen while the view moves in on one region after another like a camera: at each stop the region fills the window at nearly twice its size, a value changes there and takes the accent, and the matching line turns to full ink. Each stop is one thing the product does for the visitor (counts the stock, reorders what runs low, keeps the total right); the last stop moves back out to the whole screen. The lines stand beside the window, so neither column is left empty.",
+  "beats": "the view moves in on region one and its row takes the accent as the value rolls (38 → 41) → it moves across to region two, where a status changes (Low → Ordered, 500) → it moves back out to the whole screen as the total recalculates at display size; the matching feature line beside the window turns full ink at each stop, and the lines are buttons that scroll to their stop; each stop about half a screen of scroll",
+  "action": "zoom",
+  "phone": "Held as on desktop: the three lines in a row above the window, nearly the full width. The rows are full width there, so the view does not move in: at each stop the row takes the accent and its value changes."
  }
 ]

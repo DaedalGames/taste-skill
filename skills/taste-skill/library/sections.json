@@ -251,7 +251,7 @@
  {
   "id": "features-specimens-on-colour-tiles",
   "role": "features",
-  "name": "Specimens on colour tiles",
+  "name": "Specimens on one ground",
   "shape": "grid",
   "tags": [
    "object-led",
@@ -265,7 +265,7 @@
    "borrowed-category"
   ],
   "needs": [],
-  "blueprint": "Each capability is represented by one object photographed alone and shown on a flat colour tile. Columns 1–3 hold the heading (two to four words at 40–52px), top-aligned, with a 30ch sentence beneath and nothing else down the rest of that column. Columns 4–12 hold a grid of five or six tiles in two rows with 10px gaps: tiles are 4:5 except one, which is double width at 8:5 and placed second in the first row. Tile colours rotate through three palette fields. Each photograph is centred at about 70% of its tile's height; on light tiles use mix-blend-mode: multiply so a white studio background disappears. Under each tile, outside it and aligned to its left edge: the capability name at 20px medium and one fact at 16px in the soft ink. No text on the tiles and no hover lift.",
+  "blueprint": "Each capability is represented by one object photographed alone and shown on a tile of the page's surface. Columns 1–3 hold the heading (two to four words at 40–52px), top-aligned, with a 30ch sentence beneath and nothing else down the rest of that column. Columns 4–12 hold a grid of five or six tiles in two rows with 10px gaps: tiles are 4:5 except one, which is double width at 8:5 and placed second in the first row. Every tile takes that one fill, the surface one step off the ground; the objects carry the colour, never the tiles. Each photograph is centred at about 70% of its tile's height, with mix-blend-mode: multiply so a white studio background disappears. Under each tile, outside it and aligned to its left edge: the capability name at 20px medium and one fact at 16px in the soft ink. No text on the tiles and no hover lift.",
   "mobile": "The heading and its sentence sit on top at full width. Tiles become a two-column grid with 8px gaps; the double tile spans both columns at 8:5 and comes first. Names shrink to 17px and facts to 15px, still under each tile.",
   "seenIn": [
    "aww-noho",
@@ -878,7 +878,7 @@
   "name": "Many into one",
   "shape": "band",
   "tags": [
-   "colour-field",
+   "type-led",
    "dense"
   ],
   "directions": [
@@ -888,8 +888,8 @@
    "borrowed-category"
   ],
   "needs": [],
-  "blueprint": "A diagram drawn with one repeated shape instead of arrows. The heading (two to four words on two lines at clamp(36px, 4vw, 60px)) and a short paragraph at 17px sit in columns 1–4. Beneath, a wide inline SVG spans columns 1–12 at about 4.5:1. It is built from 120–160 small filled squares (or the page's own motif), each 10–14px. In the left third they are scattered loosely in two pale tones. In the middle third they are pulled into a tight horizontal ribbon three squares high. In the right third they fan out again into neat, evenly spaced rows in the accent colour. The eye reads disorder, compression, order, from left to right. Under the diagram, three text columns aligned to its thirds: a bold one-word name at 20px and two lines at 16px each; the words carry the sequence ('Gather', 'Reduce', 'Release'). No connecting marks.",
-  "mobile": "The diagram turns to run top to bottom: a 3:4 SVG with the scatter at the top, the ribbon as a vertical band in the middle and the ordered rows at the bottom. The three names and their text sit to its right in a 38vw column, each level with its zone.",
+  "blueprint": "The sequence is told by real things and by type, never by a drawing. The heading (two to four words on two lines at clamp(36px, 4vw, 60px)) and a short paragraph at 17px sit in columns 1–4. Beneath, one band spans columns 1–12 in three parts of four columns each, on the page's ground, with no boxes, lines or arrows between them. Many, columns 1–4: what comes in, as a plain list of six to nine real names in the text face at 18px, one per line, in the soft ink (the suppliers, the files, the dishes of the long menu, the questions people send). Into, columns 5–8: one real picture at 4:5 of the moment it is sorted or made (hands at the bench, the pass in the kitchen, or the product's own screen with those items in it, built in HTML), filling its part; with no such picture, the same names run together at 24px, joined by commas and wrapping inside their part, the list made one. One, columns 9–12: what goes out, set as one line at the heading step in full ink (the one order, the one report, the one dish), with one fact under it at 17px. Over each part, top-aligned: a bold one-word name at 20px and two lines at 17px; the words carry the order ('Gather', 'Reduce', 'Release'). No numbers, no icons and no drawn shapes: inline SVG is for the logo and small icons only.",
+  "mobile": "The three parts stack in order, each under its name and two lines: the list, then the picture at full width (or the names run together), then the one line at 9vw with its fact. Names at 18px, their lines at 16px, 40px between the parts.",
   "seenIn": [
    "opl-wild-as",
    "opl-shelf"
@@ -2665,7 +2665,7 @@
  {
   "id": "about-team-colour-tiles",
   "role": "about",
-  "name": "Team on colour tiles",
+  "name": "Team on one tint",
   "shape": "grid",
   "tags": [
    "photo-led",
@@ -2680,8 +2680,8 @@
    "loud-flat-poster"
   ],
   "needs": [],
-  "blueprint": "A one-line heading of two or three words at 28–36px sits top-left; nothing sits to its right. 40px below, a grid of portrait tiles: six columns with 12px gaps across the full content width for 12 or more people, four columns for 4–8. Every tile is a 4:5 photograph treated identically so mixed-quality headshots look like one set: `filter: grayscale(1) contrast(1.15)` with `mix-blend-mode: multiply` over a flat tint, the tints rotating through four palette colours in a fixed order. Square corners or one small radius. Under each tile, left-aligned to its edge with 10px of space: the name at 15px in full ink and the role at 13px in the soft ink, up to two lines. Rows are 36px apart. A leftover tile in the last row stays at the left; it is not centred. No hover lift and no social icons.",
-  "mobile": "Two columns with 8px gaps; tiles stay 4:5 with names at 14px beneath. For more than ten people, switch to three columns and show the name only. The heading sits above at 24px. Tints keep their rotation, so the grid reads as a checkerboard of colours.",
+  "blueprint": "A one-line heading of two or three words at 28–36px sits top-left; nothing sits to its right. 40px below, a grid of portrait tiles: six columns with 12px gaps across the full content width for 12 or more people, four columns for 4–8. Every tile is a 4:5 photograph treated identically so mixed-quality headshots look like one set: `filter: grayscale(1) contrast(1.15)` with `mix-blend-mode: multiply` over one flat tint for every tile, the page's surface or one pale palette colour, never several. Square corners or one small radius. Under each tile, left-aligned to its edge with 10px of space: the name at 15px in full ink and the role at 13px in the soft ink, up to two lines. Rows are 36px apart. A leftover tile in the last row stays at the left; it is not centred. No hover lift and no social icons.",
+  "mobile": "Two columns with 8px gaps; tiles stay 4:5 with names at 14px beneath. For more than ten people, switch to three columns and show the name only. The heading sits above at 24px. Every tile keeps the one tint, so the people read as one set.",
   "seenIn": [
    "opl-compile",
    "opl-select26",
@@ -2776,7 +2776,7 @@
    "editorial-report"
   ],
   "needs": [],
-  "blueprint": "Top: a heading of two to four words at clamp(40px, 4vw, 60px) on the left margin, then 24px below it a three-line lead paragraph at 21–22px across columns 1–6. 72px lower, two tiles sit side by side with a 16px gap. The left tile spans columns 1–8: a landscape photograph at 16:10 with one radius (0 or 10px). A short paragraph of up to 35 words at 16px is set in a solid paper-colour block 320px wide with 20px padding, placed over the photograph's top-right corner and flush with both edges. The right tile spans columns 9–12 and is a flat palette colour, 60% of the photograph's height: it holds a simple inline SVG outline of the region or the floor plan as one filled shape, with one solid dot marking the location. Under the colour tile, four label and value pairs at 14px in a two-by-two grid: altitude, distance, season, local time.",
+  "blueprint": "Top: a heading of two to four words at clamp(40px, 4vw, 60px) on the left margin, then 24px below it a three-line lead paragraph at 21–22px across columns 1–6. 72px lower, two tiles sit side by side with a 16px gap. The left tile spans columns 1–8: a landscape photograph at 16:10 with square corners or a 10px radius. A short paragraph of up to 35 words at 16px is set in a solid paper-colour block 320px wide with 20px padding, placed over the photograph's top-right corner and flush with both edges. The right tile spans columns 9–12 and is a flat palette colour, 60% of the photograph's height: it holds the client's own map or plan of the place, photographed or supplied as a file and marked data-plan, or without one the place's name at 28px and its coordinates under it, in type; never an outline drawn for the page. Under the colour tile, four label and value pairs at 14px in a two-by-two grid: altitude, distance, season, local time.",
   "mobile": "Heading at 9vw, lead at 18px. The photograph goes full width at 4:3 and its overlaid paragraph moves beneath it as ordinary text. The colour tile follows at full width and 3:2, and the four label and value pairs sit under it in two columns.",
   "seenIn": [
    "opl-eagles-nest",
@@ -3302,8 +3302,8 @@
    "borrowed-category"
   ],
   "needs": [],
-  "blueprint": "Four columns with 12px gaps; every tile is a photograph with a filled label strip attached directly beneath it, the two forming one object like a print with its swing tag. The photograph is 1:1 or 4:5 with square corners. The strip is the same width, 84–96px tall with 12px padding, and holds two or three rows of text at 12–13px in the text face with tabular figures: row one spreads four short values evenly across the width with `justify-content: space-between`; row two puts a date at the left end and a time or place at the right end; row three names the maker or model. Strip and text colours change per tile through four palette pairs (dark on bright, bright on dark), so a uniform grid looks varied. Rows of tiles are 28px apart. A two- or three-word heading at 32px sits top-left, 40px above the grid. Holds 8–16 tiles.",
-  "mobile": "Two columns with 8px gaps. Strips keep two rows only: the four values wrap to two per row, and the date and place line is dropped. Text stays at 12px. The heading sits above at 24px. Colour pairs keep rotating so adjacent tiles never match.",
+  "blueprint": "Four columns with 12px gaps; every tile is a photograph with a filled label strip attached directly beneath it, the two forming one object like a print with its swing tag. The photograph is 1:1 or 4:5 with square corners. The strip is the same width, 84–96px tall with 12px padding, and holds two or three rows of text at 12–13px in the text face with tabular figures: row one spreads four short values evenly across the width with `justify-content: space-between`; row two puts a date at the left end and a time or place at the right end; row three names the maker or model. Every strip takes one fill, the page's surface with its text in the ink, the same under every tile: the photographs make the grid varied, never the strips. Strips in several colours read as a wall of boxes. Rows of tiles are 28px apart. A two- or three-word heading at 32px sits top-left, 40px above the grid. Holds 8–16 tiles.",
+  "mobile": "Two columns with 8px gaps. Strips keep two rows only: the four values wrap to two per row, and the date and place line is dropped. Text stays at 12px. The heading sits above at 24px. Every strip keeps the one fill.",
   "seenIn": [
    "opl-proooof",
    "opl-compile"

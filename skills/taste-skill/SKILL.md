@@ -94,11 +94,15 @@ products are shown, not boxed:** each room gets a real photograph of that kind o
 dish one of that dish, each product one of that kind of product, from the open collections or the
 library, listed in the report as stand-ins for the client's own; never a grey spec panel or a filled
 box in place of the picture (a guesthouse whose rooms were grey panels read as tabs in a blind test).
-A stand-in sits beside the room or dish it stands for, never as the first picture of the house or the
-restaurant. Never a drawing, and never the place's birds and weather in their place
-(`references/imagery.md` §8). A product with no photographs of its own is shown by real photographs of
-its kind in use, large, of one configuration and build (the sheet says how), never claimed as this
-model and never replaced by a picture of what its name means.
+As many pictures as items listed: four rooms, four photographs; with fewer good pictures, list fewer
+(the kinds of room), never a room without its picture or a mug in its place. A stand-in sits beside
+the room or dish it stands for, never as the first picture of the house or the restaurant. Never a
+drawing, and never the place's birds and weather in their place (`references/imagery.md` §8). A
+product with no photographs of its own is shown by real photographs of its kind in use, large, of one
+configuration and build (the sheet says how), at least one with the people it is for, never claimed
+as this model and never replaced by a picture of what its name means. The brief decides what the
+product is: a two-wheeled cargo bike stays two-wheeled whatever the search returns, and with no
+photograph of the right kind the page uses fewer pictures and type, and the report says so.
 
 If the request is vague, decide and state your reading in one line instead of asking. Ask only when a
 missing fact blocks the work (for example, no product name).
@@ -122,7 +126,11 @@ house called Hvit stands on white. The sheet names such a word in its colour sec
 palette contradicts it (a dark ground for a white name, a pale one for Ember), redraw the palette
 (`--redraw palette`) and say so in the report. Elsewhere in the brief such a word lends its colours
 only when it describes the client, never something it replaces (paper, for an invoicing app). In a
-blind test a guesthouse named Hvit lost on a navy-black ground.
+blind test a guesthouse named Hvit lost on a navy-black ground. A name of light or a pale colour also
+asks for bright, high-key pictures: never a dark overlay, a dimmed hero or a grey sky first
+(`references/imagery.md` §6). Where the pictures carry the colour (food, seasons, rooms, products, a
+name of colour or light), every picture is in colour: a photograph whose file is black-and-white is
+left out, like a grey filter.
 
 ### 2. Write the argument
 
@@ -273,14 +281,24 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
   proof is facts the page can stand behind (what the file format is, how many rooms face the fjord,
   the warranty), never invented customers or quotes.
 - **Nothing on the page talks to the client.** No "drawn until the rooms are photographed", no "sample
-  content", no `.example` addresses: what is missing goes in the report (the inspector fails notes and
-  warns on placeholder contacts).
+  content", no `.example` addresses: what is missing goes in the report (the inspector fails notes,
+  template streets and zeroed or 555 phones, and warns on other placeholder contacts).
 - Sample details are expected where the brief leaves gaps (dish names, room names and rates, project
   titles) so the design is seen at full density; list them in the report for the client to confirm.
   Proof is never invented: no customers, quotes, reviews, press, logos or business statistics.
-- **No facts about real places or organisations that you cannot check.** Distances, travel times,
-  history, populations and awards come from the brief or stay off the page: a guesthouse in the
-  Westfjords set "forty minutes from Reykjavik" (it is hours away) is the error a local sees first.
+- **Name the real, checkable things; leave out only what cannot be checked.** A page about a real place
+  names what a visitor needs to get there and picture it: the region's towns, the road, the ferry, train
+  or airport that serves it, and distances by road only when read from a map or the brief in this
+  session (otherwise the towns and the road without a number). Travel times, populations, history
+  and awards come from the brief or stay off the page: a guesthouse in the Westfjords set "forty
+  minutes from Reykjavik" (it is hours away), and another, naming no town, road or flight at all, read
+  as thin. The report lists the facts to confirm (`references/copy.md` §5).
+- **Visit details the brief does not give are left out, not made up:** with no street address, the
+  town or area the brief names (a neighbourhood only when the brief names one) and sample opening
+  hours (for a house, its season and check-in times), listed in the report; never a placeholder
+  street. No phone number rather than a zeroed or patterned one, the email on the brand's own domain.
+  A page with no door (a product sold online, an app, a portfolio) prints no street, hours or phone.
+  The report lists what to fill.
 
 ### 6. Build it, still
 
@@ -293,7 +311,12 @@ not finished. Order of work:
    its own.
 2. **The hero, in the shape its blueprint describes,** set in the dealt type, colour and frame, at
    desktop and at phone width. The headline takes the dealt display step, not a size the blueprint
-   names. Get the main thing clear before anything else exists.
+   names. Get the main thing clear before anything else exists. **A split hero has a large headline
+   or a full-bleed picture:** beside a picture that holds half the screen, or in a strip between
+   pictures above and below it, the `h1` is about 5vw or more at 1440 (72px; the sheet raises the
+   display step for a split hero), on two lines; words that cannot be that large go over the picture,
+   full-bleed. A 48px headline in a 50/50 split read as a shop template in a blind test, and the
+   inspector fails one under 64px.
 3. **Each section in the shape of its blueprint,** with this project's content. A blueprint is one
    example of a shape (what is large, what sits beside what), not a drawing to trace: let the real
    content decide the details, and leave its props behind (a café blueprint's opening-hours bar stays
@@ -313,16 +336,23 @@ not finished. Order of work:
       name or logo, a shop or company sign, a readable house number or licence plate, words that would
       embarrass the client, or a child who could be recognised (children only from behind, far off or
       unrecognisable);
-   5. never a drawing in place of a picture: SVG is for the logo, real charts, maps and plans that
-      carry labels and numbers, and icons inside product fragments (references/imagery.md §8);
+   5. never a drawing in place of a picture: inline SVG is for the logo and small icons, and a chart
+      only inside a product fragment (`data-ui`); a drawn diagram, chart or illustration on the page
+      fails, labels or not, so say a process in words (references/imagery.md §8);
    6. type and space alone. An empty slot is better than a bad picture.
 
    Rules: every picture shows this subject's world and is requested at least 1.5 times the size it is
    shown (twice for the hero); one treatment for all (section 0); three to eight good pictures beat
-   twelve weak ones. The first picture a visitor sees shows the product or the place itself (the cup
+   twelve weak ones. Every file the page asks for exists: a `src`, a `srcset` crop or a CSS background
+   that is not there fails. Words on a photograph sit on its calm part, of one tone, at 1440, 768 and
+   390 alike: the crop moves as the screen narrows, and the inspector reads the pixels under the
+   letters. Flat colour tiles, one per project or card, are a wall of boxes: one picture leads, on
+   the page's ground. The first picture a visitor sees shows the product or the place itself (the cup
    and the bar, the room, the product working), never a street, a facade or a blurred mood shot; if no
    such picture exists, the hero is set in type (a product with no photographs of its own shows its
-   kind in use instead: step 1). Each photograph appears once on the page. Pictures of
+   kind in use instead: step 1). Each photograph appears once on the page, except the one good
+   stand-in of a product's kind, which may return once as a close crop of a detail, and, on a page
+   short of pictures, a scene's one picture. Pictures of
    one series count as one: at most two from one shoot or archive. A drawing rendered to PNG is still a
    drawing. Archive photographs, old maps and engravings only when they are the idea itself
    (the history this subject continues, like the slip boxes behind a notes app), sharp, large and of
@@ -369,18 +399,23 @@ not finished. Order of work:
    replaces the content of the section it carries, never adds screens of nothing in front of it, and a
    page with scenes still has a length budget: about 12-16 screens at 1440 in all, of which the scenes
    hold about six. `references/scenes.md` says how to put one on a page, fill it, fit it and check it.
+   On a phone a heading set in letters is whole wherever the scroll stops: its letters land on a short
+   clock as it enters, or the scene rests (the inspector fails a word left half-drawn).
    A software page gets one scroll scene at most. A page built without one (`--redraw scenes=none`) is
    about 8-12 screens, with nothing pinned in a scene's place. About one page in two, one of its scenes
    is a researched technique instead (`library/techniques.json`): a principle, a direction to take and
    what breaks it, with no files and no demo. Build it on the shared stage as `references/scenes.md` §8
-   shows, in this page's own type, colour, pictures and words, never as a copy of any site, and check it
+   shows, in this page's own type, colour, pictures and words, never as a copy of any site. Avoid what
+   breaks it first, and make every frame of its hold a finished, readable composition: never one strip
+   on an empty screen, a fan that hides the texts or a text a screen away from its title. Check it
    with `scenes.mjs` like any scene; if it cannot be built honestly within three look-and-fix rounds,
    `--redraw scenes`, which counts toward the same limit of two.
 7. **Fullness.** Look at each desktop screen as a poster: one dominant thing and the content it
    carries. A screen that is mostly empty ground is an underbuilt section, not a rest; one deliberate
    rest per page is the limit, and the inspector fails a page with two or more near-empty screens.
-   Running text is in the full ink at 16px or more (15px on a phone), on dark grounds too; under a
-   display heading 18px or more on desktop. Grey is for secondary notes.
+   Running text, lists and tables are in the full ink at 16px or more (15px on a phone), on dark
+   grounds too; under 14px fails (under 15px on a phone). Only captions and the footer's legal line are smaller. Under a
+   display heading text is 18px or more on desktop. Grey is for secondary notes.
 8. **The frame.** The page has one pair of equal outer margins at every width, and every section uses
    the width the page has set up: when its text sits in the left half, the right half holds its
    picture, its second column, its list or its figure, never nothing. Asymmetry lives inside the grid,
@@ -449,7 +484,8 @@ under sixteen). Any scroll scenes are already built (step 6); around them the la
 1. **The signature move** named on the sheet: one, done well (a dealt scene can be it). On a software
    page it is the product replay: the product's own window, large, acts out what the product does for
    the visitor, its section held while the scroll steps the beats (sheet section 8,
-   `<skill>/assets/replay.js`).
+   `<skill>/assets/replay.js`). Its first state is a full window, the visitor's own work before the
+   task, never an empty table waiting for its first beat.
 2. **The entrance the sheet deals** (section 8): `data-entrance` on the body, its markers on the first
    screen, its CSS already in base.css, and only its own rule below the fold. Nothing else enters: no
    fade-up on every block, and no masked line rise or shutter unless the dealt entrance is `set-type`.
@@ -505,15 +541,15 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **No tiny uppercase letter-spaced labels.** | Sentence case at a readable size. |
 | **No icon-topped feature cards, no rows of identical cards.** | The dealt section blueprint. |
 | **No glass.** No backdrop blur panels, no floating pill navigation. | A plain bar: wordmark, a few links, one action. |
-| **No emoji, no gradient blobs, no decorative shapes, no fake dashboards of grey bars.** | A real picture, a real interface fragment, or nothing. |
+| **No emoji, no gradient blobs, no decorative shapes, no drawn diagrams, charts or illustrations, no fake dashboards of grey bars.** | A real picture, a real interface fragment, the process said in words, or nothing. |
 | **No styled accent word** in a headline (italic, serif, coloured, underlined). | One face, one colour. The words carry the emphasis. |
 | **The dealt type system:** its faces, its weights, its six steps. Two families at most. | Map every other size onto the nearest step. |
 | **No pictures in headlines or sentences.** No photograph between the words of a headline, no picture inside the letters, no thumbnails inside running text. | The picture gets its own place, beside, above or behind the words, at a size that shows what it is. |
 | **No headline in a card.** The hero headline stands on the page ground or on its picture, never in a panel, card or box. | The first screen as one composition: headline, one sentence, the action, the picture. |
 | **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges. | Neutral ground (white, off-white, near-black); colour from the pictures; the accent on the action. |
 | **No giant name or email anywhere, no credit walls.** | The email at the h3 step or smaller, with a Copy button and a mailto link; the dealt footer: links, contact, legal at text sizes; picture credits behind one small "Image credits" link. |
-| **No drag rails or progress bars** outside a working tool, no range sliders, and no switch, checkbox or toggle that changes nothing: a length or a count is a row of stepped buttons; no sideways scrollers on desktop. | A list or grid that fits the width; stepped buttons of real values; features as lines of text at full ink; a control only where it does what it says. |
-| **No page built from boxes,** no bento grids of cards, no list drawn as filled or outlined boxes (questions, loads, specs, plans, options), no staggered folder tabs, no heading alone in its column or on its screen, no empty half-rows (nothing on the left, text on the right). | Text straight on the page, separated by space and size: questions as plain rows, specs as name and figure, options as text buttons with only the chosen one filled; the heading over its content; tabs, if needed, as one working row that opens on click. The one framed surface is the product's own window. |
+| **No drag rails or progress bars** outside a working tool, no range sliders, no line with a knob or dots on it that reads as one, and no switch, checkbox or toggle that changes nothing: a length or a count is a row of stepped buttons; no sideways scrollers on desktop. | A list or grid that fits the width; stepped buttons of real values; features as lines of text at full ink; a control only where it does what it says. |
+| **No page built from boxes,** no bento grids of cards, no wall of tiles in several fills, no list drawn as filled or outlined boxes (questions, loads, specs, plans, options), no staggered folder tabs, no heading alone in its column or on its screen, no empty half-rows (nothing on the left, text on the right). | Text straight on the page, separated by space and size: questions as plain rows, specs as name and figure, options as text buttons with only the chosen one filled; the heading over its content; tabs, if needed, as one working row that opens on click. The one framed surface is the product's own window. |
 | **No labels that carry nothing**, no walls of text. | Facts, few words; see step 5. |
 
 Three places keep their own conventions and are left alone by the inspector: real code in

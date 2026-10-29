@@ -150,7 +150,7 @@
 @media (max-width: 767px) {
   /* a padded block, not a screen-high band: the line follows the section before it closely, and the
      section after it follows the button at an ordinary section gap */
-  .scene[data-scene="arrive-and-settle-track"] .settle { min-height: 0; padding: 14vh 16px 9vh; }
+  .scene[data-scene="arrive-and-settle-track"] .settle { min-height: 0; padding: 10vh 16px 9vh; }
   /* as the first section it keeps the whole first screen, so its line assembles on screen */
   html.js .scene[data-scene="arrive-and-settle-track"].is-live[data-first] .settle { min-height: 100svh; }
   .scene[data-scene="arrive-and-settle-track"] .settle__line { max-width: none; font-size: var(--settle-fit, 13vw); letter-spacing: -0.04em; }

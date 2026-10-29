@@ -13,7 +13,7 @@ how to crop and place them, and what to do when there are none.
 5. Cropping and placing
 6. Treatment
 7. Showing software
-8. Drawing the subject
+8. Drawings: the logo and small icons only
 9. Type and colour alone
 10. Markup and credits
 11. Video
@@ -64,9 +64,9 @@ In order of preference:
    of one family: in the October 2026 review, random archive scans on about half the pages were the most
    common reason a page looked cheap, while sharp archive photographs that carried the idea were what
    blind judges praised most.
-5. **Pictures you draw in code from the subject itself** (section 8), for what no honest picture
-   exists of: the product's own objects, the document a tool produces, the interface of a piece of
-   software. Only when drawn with real care and precision; a rough drawing is worse than none.
+5. **What the subject makes, built in HTML** (section 7), for what no honest picture exists of: the
+   document a tool produces, the interface of a piece of software, at true size with real words and
+   figures. Never a drawing of an object, a product or a place in its stead (section 8).
 6. **Type and space alone,** done on purpose (section 9). An empty slot is better than a bad picture.
 
 **Rooms, dishes and products are shown, not boxed.** On a page for a place to stay, each room the
@@ -81,12 +81,34 @@ stands for, with that one's facts, never as the first picture of the house or th
 grey spec panels, tabs or filled boxes standing in for them: in a blind test five rooms set as grey
 panels read as folder tabs, and the page had no picture of where a guest would sleep.
 
+**As many pictures as items listed.** A section that lists four rooms shows four photographs, one
+beside each room; three featured dishes, three photographs. Never one picture for the lot, and never a
+detail (a mug on a sill, a corner of a table) in place of the room or the dish. With fewer good
+pictures than items, list fewer: the kinds of room the house has, each with its picture, or the dishes
+you can show with the rest of the menu as a plain list of names and prices. A guesthouse that listed
+four rooms and pictured one, beside a blurred mug and a stock dining set, lost its blind test.
+
 **A product shown by its kind looks like one product.** Choose photographs in which the kind looks
 alike: the same configuration and build (all long-tail cargo bikes, or all with a box in front), a
 similar colour, the one the brief describes; never a different maker's design in each picture, which
 reads as a catalogue of competitors. The hero shows the product large, about half the hero or more,
-never a small figure in a landscape. Three that match beat six that do not; with one good match, show
-it large once and let type carry the rest.
+never a small figure in a landscape.
+
+- **The brief decides what the product is, never the photographs found.** A two-wheeled cargo bike
+  stays two-wheeled: a photograph of a trike is left out, and no word, specification or picture slot
+  is changed to match what a search returned. One builder turned its bike into a trike to fit its
+  stock photographs, and its three photographs showed three different vehicles.
+- **One good match, reused, beats several that differ.** Show the one photograph of the right kind
+  large, and again as a close crop of a detail (the loaded box, the hands on the bar); the inspector
+  warns on the repeat (repeated-picture), and the report says it is the one matching photograph,
+  cropped twice.
+- **At least one picture shows it in use with the people it is for:** a parent riding with two
+  children in the box, a cook at the hob with the kettle. An honest stand-in of that kind of product
+  in use, never named as this model; children only from behind, far off or unrecognisable. A product
+  parked in an empty street says nothing about who it is for.
+- **When no photograph of the right kind exists,** use fewer pictures and let the page be led by type
+  or by the product's own facts (the specifications large, a real interface where there is one), and
+  say in the report that no matching photograph was found and which slots wait for the client's own.
 
 **The quality bar, for every picture before it goes on the page.** Open it at full size and look:
 
@@ -162,6 +184,11 @@ two or three queries per idea. If nothing sharp and fitting turns up, do not fil
   recognisable living person who could be taken for the client's staff or customers. Look at it at
   full size for what the quality bar in §2 rules out (another maker's name or logo, a sign, a house
   number or plate, embarrassing words, a recognisable child) and crop or drop it.
+- In colour, where the page's pictures carry the colour (section 6: food and drink, the seasons, rooms
+  and tables, products, a client named for a colour or a light). A file that is black-and-white is
+  left out there however well it fits, since a grey dish, room or season tells the visitor nothing.
+  The one exception is an old photograph that is itself the idea (the history above), shown as a
+  document of that history, never in a slot that shows the food, the room, the product or the season.
 
 **Use it with intent.** One sharp picture of the place, large, beats a row of small ones; a material
 close-up can hold a whole section behind its text; the same picture can return at a different crop
@@ -184,8 +211,8 @@ further down. Treatments stay within section 6 and the treatment the sheet deals
   picture against the picture at full size and against its source title: never a breed, a place, an
   object or a use that neither supports ("a dog in a crate", not "a Labrador, crated", when the source
   says only "a dog in a box behind the bicycle"). A picture placed to prove a claim shows the claim
-  (two children on the bike, not women riding ordinary bikes); when no photograph does, show the
-  page's own drawing of the product in that state.
+  (two children on the bike, not women riding ordinary bikes); when no photograph does, the claim is
+  made in words, never by a drawing of the product (section 8).
 - **Record every picture; credit where the licence asks, out of sight.** `--get` writes the source,
   creator, licence and page of each download to `assets/credits.json`. CC BY and CC BY-SA require a
   credit with the title, the creator, a link to the source and a link to the licence; `--credits`
@@ -217,8 +244,10 @@ real footage with `--video` (section 11).
 - More from the same or another set: `node scripts/draw.mjs --photos list`, `--photos <set>`, or
   `--photos "fog coast"` to search descriptions.
 - URLs have the form `https://picsum.photos/id/<id>/<width>/<height>`. Request the exact pixel size you
-  render at twice the CSS size for sharpness, capped around 2400 wide. Add `?grayscale` for
-  black-and-white.
+  render at twice the CSS size for sharpness, capped around 2400 wide. Add `?grayscale` only when
+  section 0 deals the black-and-white treatment.
+- A line marked black-and-white is a black-and-white file. Where the pictures carry the colour
+  (section 6) the draw leaves those out; leave them out of `--photos` searches there too.
 - These are photographs from Unsplash served by Lorem Picsum under the Unsplash licence. List the ids
   you used in your report; they are meant to be replaced by the project's own pictures.
 
@@ -259,11 +288,17 @@ One treatment for the whole page:
 
 - **Untouched.** The default. Pick images whose light already agrees.
 - **Greyscale.** `filter: grayscale(1) contrast(1.05)`, or `?grayscale` on the URL. Unifies a mixed
-  set instantly and suits editorial and typographic directions. Apply to every image or none. Never
-  where the pictures carry the colour: food and drink, flowers, fashion, rooms and tables, the seasons
-  of a landscape, or a client whose name or brief names a colour or a light. A guesthouse called Hvit,
-  white, turned grey in black-and-white and its four seasons looked alike; the draw does not deal it
-  there.
+  set instantly and suits editorial and typographic directions. Apply to every image or none, and only
+  where section 0 deals it. Never where the pictures carry the colour: food and drink, flowers,
+  fashion, rooms and tables, products, the seasons of a landscape, or a client whose name or brief
+  names a colour or a light. A guesthouse called Hvit, white, turned grey in black-and-white and its
+  four seasons looked alike; the draw does not deal it there.
+- **A black-and-white file is the same treatment.** Where the pictures carry the colour, a photograph
+  whose file is black-and-white (a monochrome photograph from the open collections, a library line
+  marked black-and-white, an old print) is rejected like a grey filter would be, even when every other
+  picture is in colour: check the file, not only the CSS. Section 3 names the one exception, an old
+  photograph that is itself the idea. A blueprint that turns its pictures grey (a mosaic, a wall of
+  portraits) keeps them in colour there.
 - **Multiply on a field.** On a light flat ground, `mix-blend-mode: multiply` makes a white studio
   background vanish so a product sits directly on the colour.
 - **Darkened for a dark page.** `filter: brightness(0.85) contrast(1.05)` so the image edges sink into
@@ -273,7 +308,20 @@ Not treatments: colour washes over photographs, duotone overlays, blur, grain ov
 tilted "polaroid" frames with shadows.
 
 For text on a photograph, a neutral scrim covering only the text area: a solid block at 40–55% black,
-or a fade from 55% black to transparent over the lower third. Never a coloured overlay.
+or a fade from 55% black to transparent over the lower third. Never a coloured overlay. A page named
+for a light (below) takes no scrim at all.
+
+**A client named for a light or a pale colour** (white, snow, chalk, linen, fog, light, in any
+language: Hvit is white, Snø is snow, Lys is light) gets bright, high-key pictures: daylight, pale
+grounds, open shadows, the colours clean. They are bright pictures of this place (snow, a white house
+in summer light, a pale fjord), never a sunnier coast standing in for it. No scrim and no dark
+overlay on any picture, never a dimmed or darkened hero (`filter: brightness()` under 1 included), and
+never a dull grey sky or a dusk shot as the first picture (a pale mist is high-key; an overcast grey
+is not). Text on such a picture sits on its calm pale part in the ink, or beside the picture; a
+blueprint that darkens a picture for white type is set this way instead. The draw deals the brighter
+photographs for such a name, keeps the heroes that sit in the dark away from it, and says so beside
+the ground. A guesthouse named white opened on a grey sky under a dark overlay and lost its blind
+test.
 
 ## 7. Showing software
 
@@ -303,7 +351,7 @@ or a fade from 55% black to transparent over the lower third. Never a coloured o
   "Product replay"); every pane of every fragment is filled: no empty editor, no half-empty sidebar
   above the fold (the inspector warns, `hollow-fragment`).
 
-## 8. Drawings: only when they are information
+## 8. Drawings: the logo and small icons only
 
 Do not illustrate. Drawn objects, products, people, rooms, buildings, food, animals, landscapes,
 mascots and decorative motifs in SVG or CSS were the commonest reason reviewers called a page amateur:
@@ -320,16 +368,24 @@ SVG is right for these, and only these:
   missing there (Slack, Microsoft, OpenAI, xAI) comes from its own press kit, unchanged. No initial in a
   circle in place of a logo; with no official file, set the name in type. Only products this one really
   works with: never invented customers or press.
-- **Information drawn exactly:** a chart of real numbers, a route or a site map with its real geometry,
-  a floor plan or a technical drawing that a buyer needs (dimensions, rooms, parts), labelled, shown
-  whole, in thin lines of one weight, as a draughtsman would draw it. If it carries no labels and no
-  numbers, it is an illustration.
-- **Icons inside a product fragment** (`data-ui`), and an arrow in a button.
+- **Small icons:** an arrow in a button, a chevron on a question, the icons inside a product fragment
+  (`data-ui`), 64px or less.
+
+A chart appears only inside the product's own interface, marked `data-ui`, the way the product draws
+it (app screens: `assets/charts.js`). On the page a figure is set as type: the number large, a short
+table, a list of values. A process is said in words, three short steps as type, or shown by the
+product at work or a real photograph of the hands doing it. A diagram, a chart, a route or a site map
+drawn for the page fails, labelled or not: round 9 explained a process with three SVG diagrams of
+squares and bars, labels and all, and they read as clip art beside the work.
+
+A real plan stays: the architect's floor plan or the client's own map, supplied as a file or
+photographed, shown whole as it is and marked `data-plan` (a map, `data-map`). Never one traced or
+drawn for the page; without the real file, give the rooms, the sizes or the route as type.
 
 Never: hand-built illustrations of the product or the place, drawn people, scenes or skylines, blobs
 and abstract shapes, isometric art, rows of small drawn motifs, a drawn version of the brand idea
-(stones, leaves, waves) repeated as decoration. The inspector fails a large drawn illustration
-(`drawn-illustration`) and warns on scattered small ones (`svg-doodles`).
+(stones, leaves, waves) repeated as decoration. The inspector fails a drawing past icon size, a
+diagram or chart included (`drawn-illustration`), and warns on scattered small ones (`svg-doodles`).
 
 A drawing rendered to PNG or drawn on a canvas is still a drawing: motion is shown with the work's own
 stills or with type that moves, never with drawn shapes (round 4: a bouncing-ball onion skin around the
