@@ -187,3 +187,19 @@ with no metadata kept, shared under the same licence:
   resized to 1600 and 2000px wide and cropped to a 9:16 portrait frame.
 - `arcade-walk-1200.jpg`, `colonnade-1000.jpg`: crops of ["Cloister arcades and memorials - 2026 - 10"](https://commons.wikimedia.org/wiki/File:San_Zeno_Maggiore_-_Verona_-_Cloister_arcades_and_memorials_-_2026_-_10.jpg)
   and ["Cloister gallery and tombs - 2026 - 07"](https://commons.wikimedia.org/wiki/File:San_Zeno_Maggiore_-_Verona_-_Cloister_gallery_and_tombs_-_2026_-_07.jpg).
+
+## closing-line-in-a-field-of-words
+
+Three photographs for the demo's made-up harbour restaurant, from Unsplash via Wikimedia Commons, at
+1920px wide with no metadata kept. The scene itself needs no pictures; these sit in the quiet section
+before it.
+
+- `mussels.jpg`: ["Mussel Appetizer"](https://commons.wikimedia.org/wiki/File:Mussel_Appetizer_(Unsplash).jpg)
+  by Nick Karvounis, [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (published on
+  [Unsplash](https://unsplash.com/photos/AJCN8dyd_7w) before June 2017).
+- `sea-bream.jpg`: ["Fish at the Market"](https://commons.wikimedia.org/wiki/File:Fish_at_the_Market_(Unsplash).jpg)
+  by Jakub Kapusnak (foodiesfeed), on [Unsplash](https://unsplash.com/photos/vLQzopDRSNI) under the
+  [Unsplash licence](https://unsplash.com/license) (tagged CC0 on Commons).
+- `harbour-rowboat.jpg`: ["Stahlbrode, Sundhagen, Germany"](https://commons.wikimedia.org/wiki/File:Stahlbrode,_Sundhagen,_Germany_(Unsplash).jpg)
+  by Taduuda, [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (published on
+  [Unsplash](https://unsplash.com/photos/ivpnAlm5fEY) before June 2017).
