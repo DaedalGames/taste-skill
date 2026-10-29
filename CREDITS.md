@@ -135,17 +135,14 @@ not used on the page. No metadata kept:
 
 ## speed-bent-row
 
-Eight photographs of Lofoten for the demo's made-up print studio, all by Simo Räsänen (Ximonic), via
-Wikimedia Commons, resized to 1280px wide (two cropped to wide strips at 1920px), with their camera data
-removed. [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) unless named otherwise, shared
-under the same licence:
+Seven photographs of Lofoten for the demo's made-up print studio, all by Simo Räsänen (Ximonic), via
+Wikimedia Commons, resized to 1280px wide (one cropped to a wide strip at 1920px), with their camera data
+removed. [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), shared under the same licence:
 
 - `reinefjorden.jpg`: ["Reine at Reinefjorden, 2010 September"](https://commons.wikimedia.org/wiki/File:Reine_at_Reinefjorden,_2010_September.jpg).
 - `reine-harbour.jpg`: ["Boat dock in Reine, Lofoten, Norway, 2015 September"](https://commons.wikimedia.org/wiki/File:Boat_dock_in_Reine,_Lofoten,_Norway,_2015_September.jpg).
 - `nusfjord.jpg`: ["Boats in Nusfjord, Lofoten, Norway, 2015 September"](https://commons.wikimedia.org/wiki/File:Boats_in_Nusfjord,_Lofoten,_Norway,_2015_September.jpg).
 - `tind.jpg`: ["Tind and Å i Lofoten villages and Mannen and Gjerdtindan mountains"](https://commons.wikimedia.org/wiki/File:Tind_and_%C3%85_i_Lofoten_villages_and_Mannen_and_Gjerdtindan_mountains,_Moskenes,_Nordland,_Norway,_2015_September.jpg).
-- `flakstad-road.jpg`: ["Nusfjord road, 2010 09"](https://commons.wikimedia.org/wiki/File:Nusfjord_road,_2010_09.jpg),
-  [GFDL](https://www.gnu.org/licenses/fdl-1.3.html).
 - `a-village-2.jpg`: ["Residential in Å i Lofoten, Moskenesøya, 2015 September - 2"](https://commons.wikimedia.org/wiki/File:Residential_in_%C3%85_i_Lofoten,_Moskenes%C3%B8ya,_Lofoten,_Norway,_2015_September_-_2.jpg).
 - `reine-october.jpg`: ["Reine in Lofoten, Norway, 2012 October"](https://commons.wikimedia.org/wiki/File:Reine_in_Lofoten,_Norway,_2012_October.jpg).
 - `bottelvika.jpg`: ["Nusfjord view towards Bottelvika from Snøsen"](https://commons.wikimedia.org/wiki/File:Nusfjord_view_towards_Bottelvika_from_Sn%C3%B8sen,_Lofoten,_Norway,_2015_September.jpg).
