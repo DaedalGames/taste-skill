@@ -91,3 +91,30 @@ their metadata removed:
   by Thomas Quine, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), via Wikimedia Commons.
 - `composing-stick-960.jpg`, `composing-stick-1600.jpg`: ["Metal movable type"](https://commons.wikimedia.org/wiki/File:Metal_movable_type.jpg)
   by Willi Heidelbach, [CC BY 2.5](https://creativecommons.org/licenses/by/2.5/), via Wikimedia Commons.
+
+## closing-cut-under-the-rise
+
+Two photographs for the demo's made-up pottery, with no metadata kept. Both were dedicated to the public
+domain ([CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)) on Unsplash, via Wikimedia Commons:
+
+- `teapot-room.jpg`, `teapot-room-tablet.jpg`, `teapot-room-portrait.jpg`, `teapot-cutout.webp`:
+  ["Teapot and mug on table (Unsplash)"](https://commons.wikimedia.org/wiki/File:Teapot_and_mug_on_table_(Unsplash).jpg)
+  by Jorge Garcia, cropped to a landscape frame (2000x1148), a tablet frame and a portrait frame, and the
+  teapot masked out of the same photograph onto a transparent ground for the rising cut-out.
+- `herbal-tea.jpg`: ["Herbal Tea (Unsplash)"](https://commons.wikimedia.org/wiki/File:Herbal_Tea_(Unsplash).jpg)
+  by Gaelle Marcel, resized to 960px wide.
+
+## window-relay-with-stamps
+
+Five Raku tea bowls in the Tokyo National Museum for the demo's made-up tea school, published through
+[ColBase](https://colbase.nich.go.jp/) under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), via
+Wikimedia Commons, each resized to 2000px wide:
+
+- `chojiro-amadera.jpg`: [Tea bowl named Amadera (Nunnery)](https://commons.wikimedia.org/wiki/File:Tea_Bowl,_Named_%E2%80%9CAmadera_(Nunnery)%E2%80%9D.jpg),
+  black Raku, Chōjirō and workshop (TNM G-4836).
+- `ichinyu-kanoko-madara.jpg`: [Tea bowl named Kanoko Madara (Fawn Speckles)](https://commons.wikimedia.org/wiki/File:Tea_Bowl,_Named_%22Kanoko_Madara_(Fawn_Speckles)%22.jpg),
+  Ichinyū (TNM G-5340).
+- `chonyu-black-raku.jpg`: ["Tea bowl, Kuroraku type, Raku Ware"](https://commons.wikimedia.org/wiki/File:Tea_bowl,_Kuroraku_type,_Raku_Ware.jpg),
+  Chōnyū (TNM G-5005).
+- `tokunyu-red-raku.jpg`: [Red Raku tea bowl by Tokunyū, the eighth Raku Kichizaemon](https://commons.wikimedia.org/wiki/File:%E5%85%AB%E4%BB%A3%E6%A8%82%E5%90%89%E5%B7%A6%E8%A1%9B%E9%96%80%EF%BC%88%E5%BE%97%E5%85%A5%EF%BC%89%E4%BD%9C_%E8%B5%A4%E6%A8%82%E8%8C%B6%E7%A2%97_%E9%AB%987.8_%E5%8F%A3%E5%BE%8410.5_%E9%AB%98%E5%8F%B0%E5%BE%845.1.jpg).
+- `ryonyu-fuji.jpg`: [Raku tea bowl with a Mount Fuji design in brown glaze by Ryōnyū, the ninth Raku Kichizaemon](https://commons.wikimedia.org/wiki/File:%E4%B9%9D%E4%BB%A3%E6%A8%82%E5%90%89%E5%B7%A6%E8%A1%9B%E9%96%80%E3%83%BB%E4%BA%86%E5%85%A5_%E8%A4%90%E9%87%89%E5%AF%8C%E5%A3%AB%E6%96%87%E6%A5%BD%E8%8C%B6%E7%A2%97_%E6%9D%B1%E4%BA%AC%E5%9B%BD%E7%AB%8B%E5%8D%9A%E7%89%A9%E9%A4%A8%E8%94%B51.jpg).
