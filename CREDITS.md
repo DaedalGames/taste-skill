@@ -100,7 +100,9 @@ domain ([CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)) on Unspla
 - `teapot-room.jpg`, `teapot-room-tablet.jpg`, `teapot-room-portrait.jpg`, `teapot-cutout.webp`:
   ["Teapot and mug on table (Unsplash)"](https://commons.wikimedia.org/wiki/File:Teapot_and_mug_on_table_(Unsplash).jpg)
   by Jorge Garcia, cropped to a landscape frame (2000x1148), a tablet frame and a portrait frame, and the
-  teapot masked out of the same photograph onto a transparent ground for the rising cut-out.
+  teapot masked out of the same photograph onto a transparent ground for the rising cut-out. The
+  cut-out was masked again in October 2026 (1040x669 WebP with alpha): a round closing under the spout
+  and the knob and a smooth edge, with no notch or stair steps.
 - `herbal-tea.jpg`: ["Herbal Tea (Unsplash)"](https://commons.wikimedia.org/wiki/File:Herbal_Tea_(Unsplash).jpg)
   by Gaelle Marcel, resized to 960px wide.
 
