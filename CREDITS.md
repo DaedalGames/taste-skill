@@ -118,3 +118,75 @@ Wikimedia Commons, each resized to 2000px wide:
   Chōnyū (TNM G-5005).
 - `tokunyu-red-raku.jpg`: [Red Raku tea bowl by Tokunyū, the eighth Raku Kichizaemon](https://commons.wikimedia.org/wiki/File:%E5%85%AB%E4%BB%A3%E6%A8%82%E5%90%89%E5%B7%A6%E8%A1%9B%E9%96%80%EF%BC%88%E5%BE%97%E5%85%A5%EF%BC%89%E4%BD%9C_%E8%B5%A4%E6%A8%82%E8%8C%B6%E7%A2%97_%E9%AB%987.8_%E5%8F%A3%E5%BE%8410.5_%E9%AB%98%E5%8F%B0%E5%BE%845.1.jpg).
 - `ryonyu-fuji.jpg`: [Raku tea bowl with a Mount Fuji design in brown glaze by Ryōnyū, the ninth Raku Kichizaemon](https://commons.wikimedia.org/wiki/File:%E4%B9%9D%E4%BB%A3%E6%A8%82%E5%90%89%E5%B7%A6%E8%A1%9B%E9%96%80%E3%83%BB%E4%BA%86%E5%85%A5_%E8%A4%90%E9%87%89%E5%AF%8C%E5%A3%AB%E6%96%87%E6%A5%BD%E8%8C%B6%E7%A2%97_%E6%9D%B1%E4%BA%AC%E5%9B%BD%E7%AB%8B%E5%8D%9A%E7%89%A9%E9%A4%A8%E8%94%B51.jpg).
+
+## seam-pocket-gathers-the-words
+
+Three photographs for the demo's made-up flower farm, from one shoot by the USDA Natural Resources
+Conservation Service ("USDAgov"), public domain as works of the US federal government, via Wikimedia
+Commons. They show a real farm (Singletree Flower Farm, Goshen, Indiana, June 2022); the farm's name is
+not used on the page. No metadata kept:
+
+- `field.jpg`: ["Singletree Flower Farm, Indiana (20220629-NRCS-BJOC-006)"](https://commons.wikimedia.org/wiki/File:Singletree_Flower_Farm,_Indiana_(20220629-NRCS-BJOC-006).jpg),
+  resized to 2000px wide.
+- `rows.jpg`: ["Singletree Flower Farm, Indiana (20220629-NRCS-BJOC-023)"](https://commons.wikimedia.org/wiki/File:Singletree_Flower_Farm,_Indiana_(20220629-NRCS-BJOC-023).jpg),
+  resized to 1100px wide.
+- `bucket.jpg`: ["Singletree Flower Farm, Indiana (20220629-NRCS-BJOC-093)"](https://commons.wikimedia.org/wiki/File:Singletree_Flower_Farm,_Indiana_(20220629-NRCS-BJOC-093).jpg),
+  resized to 1400px wide.
+
+## speed-bent-row
+
+Eight photographs of Lofoten for the demo's made-up print studio, all by Simo Räsänen (Ximonic), via
+Wikimedia Commons, resized to 1280px wide (two cropped to wide strips at 1920px), with their camera data
+removed. [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) unless named otherwise, shared
+under the same licence:
+
+- `reinefjorden.jpg`: ["Reine at Reinefjorden, 2010 September"](https://commons.wikimedia.org/wiki/File:Reine_at_Reinefjorden,_2010_September.jpg).
+- `reine-harbour.jpg`: ["Boat dock in Reine, Lofoten, Norway, 2015 September"](https://commons.wikimedia.org/wiki/File:Boat_dock_in_Reine,_Lofoten,_Norway,_2015_September.jpg).
+- `nusfjord.jpg`: ["Boats in Nusfjord, Lofoten, Norway, 2015 September"](https://commons.wikimedia.org/wiki/File:Boats_in_Nusfjord,_Lofoten,_Norway,_2015_September.jpg).
+- `tind.jpg`: ["Tind and Å i Lofoten villages and Mannen and Gjerdtindan mountains"](https://commons.wikimedia.org/wiki/File:Tind_and_%C3%85_i_Lofoten_villages_and_Mannen_and_Gjerdtindan_mountains,_Moskenes,_Nordland,_Norway,_2015_September.jpg).
+- `flakstad-road.jpg`: ["Nusfjord road, 2010 09"](https://commons.wikimedia.org/wiki/File:Nusfjord_road,_2010_09.jpg),
+  [GFDL](https://www.gnu.org/licenses/fdl-1.3.html).
+- `a-village-2.jpg`: ["Residential in Å i Lofoten, Moskenesøya, 2015 September - 2"](https://commons.wikimedia.org/wiki/File:Residential_in_%C3%85_i_Lofoten,_Moskenes%C3%B8ya,_Lofoten,_Norway,_2015_September_-_2.jpg).
+- `reine-october.jpg`: ["Reine in Lofoten, Norway, 2012 October"](https://commons.wikimedia.org/wiki/File:Reine_in_Lofoten,_Norway,_2012_October.jpg).
+- `bottelvika.jpg`: ["Nusfjord view towards Bottelvika from Snøsen"](https://commons.wikimedia.org/wiki/File:Nusfjord_view_towards_Bottelvika_from_Sn%C3%B8sen,_Lofoten,_Norway,_2015_September.jpg).
+
+## panels-reproportion-on-arrival
+
+Five photographs for the demo's made-up craft school, via Wikimedia Commons, resized and graded as one
+set (one exposure, balance and saturation), shared under the same licences:
+
+- `weaving.jpg`: ["The moving of the hand shuttle"](https://commons.wikimedia.org/wiki/File:The_moving_of_the_hand_shuttle.jpg)
+  by Bright Kwame Ayisi (Kwameghana), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- `clay.jpg`: ["Pottery at the Chokhi Dhani Resort Panchkula 27"](https://commons.wikimedia.org/wiki/File:Pottery_at_the_Chokhi_Dhani_Resort_Panchkula_27.jpg)
+  by Kritzolina, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- `type.jpg`: ["Wood letterpress type"](https://commons.wikimedia.org/wiki/File:Wood_letterpress_type.jpg)
+  by Michellecornelison, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- `glass.jpg`: ["Bongani pulling an elephant trunk from molten glass"](https://commons.wikimedia.org/wiki/File:Bongani_pulling_an_elephant_trunk_from_molten_glass.jpg)
+  by Bentaylor13413, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- `wood.jpg`: ["Nova Scotia DSC01450 - Making a Spoon"](https://commons.wikimedia.org/wiki/File:Nova_Scotia_DSC01450_-_Making_a_Spoon_(7815317126).jpg)
+  by Dennis G. Jarvis, [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/).
+
+## object-lowered-onto-the-last-line
+
+Three photographs for the demo's made-up pottery, via Wikimedia Commons, with no metadata kept:
+
+- `jug-640.png`, `jug-1000.png`, `jug-1400.png`: ["Vase jaune"](https://commons.wikimedia.org/wiki/File:Vase_jaune.jpg)
+  by Lionel Allorge, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), cut out from its
+  white ground onto a transparent one, shared under the same licence.
+- `studio-800.jpg`, `studio-1600.jpg`: ["Okopod - Pottery Studio"](https://commons.wikimedia.org/wiki/File:Okopod_-_Pottery_Studio.jpg)
+  by Lorna Satchell, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), resized.
+- `wheel-640.jpg`, `wheel-1100.jpg`: ["Detail of pottery studio, Old Print Works, Moseley Road, Balsall Heath"](https://commons.wikimedia.org/wiki/File:Detail_of_pottery_studio,_Old_Print_Works,_Moseley_Road,_Balsall_Heath_-_geograph.org.uk_-_6845980.jpg)
+  by A J Paxton, [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/), cropped, shared under the
+  same licence.
+
+## through-the-openings
+
+Three photographs of the cloister of San Zeno Maggiore in Verona for the demo's made-up guesthouse, all by
+Norbert Nagel, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), via Wikimedia Commons,
+with no metadata kept, shared under the same licence:
+
+- `cloister-1600.jpg`, `cloister-2000.jpg`, `cloister-portrait-1080.jpg`: ["San Zeno Maggiore - Verona -
+  Cloister courtyard - 2026 - 11"](https://commons.wikimedia.org/wiki/File:San_Zeno_Maggiore_-_Verona_-_Cloister_courtyard_-_2026_-_11.jpg),
+  resized to 1600 and 2000px wide and cropped to a 9:16 portrait frame.
+- `arcade-walk-1200.jpg`, `colonnade-1000.jpg`: crops of ["Cloister arcades and memorials - 2026 - 10"](https://commons.wikimedia.org/wiki/File:San_Zeno_Maggiore_-_Verona_-_Cloister_arcades_and_memorials_-_2026_-_10.jpg)
+  and ["Cloister gallery and tombs - 2026 - 07"](https://commons.wikimedia.org/wiki/File:San_Zeno_Maggiore_-_Verona_-_Cloister_gallery_and_tombs_-_2026_-_07.jpg).
