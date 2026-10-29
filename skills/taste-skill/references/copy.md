@@ -91,7 +91,8 @@ headline instead.
 All seen repeatedly on the gallery sites. Pick the plainest one that is true.
 
 - **The name.** The brand or the person, set very large, with a one-line description elsewhere.
-  Strongest when the name is short and the subject is visual (studios, restaurants, hotels, people).
+  Strongest when the name is short and the subject is visual (studios, restaurants, hotels, people),
+  and when the page is built on what the name means (Klee is clover; Hvit is white).
 - **What it is.** "A vinyl shelf in your pocket." "Furniture for small rooms." Category, stated with
   one specific word.
 - **The claim.** "Your bank won't do this." One sentence a competitor could not sign.
@@ -108,9 +109,12 @@ Shapes to avoid, because they are the average of every landing page:
 - A headline that needs its colon: "Ledgerly: invoicing for freelancers". Drop the name, it is in the
   navigation.
 - One word of the headline styled differently (italic, serif, coloured, underlined, in a pill).
-- Not the name plus its category ("Kaffee Klee, roastery and bar"): the line says what only this place
-  could say, from the inventory ("Roasted in the courtyard on Tuesdays and Fridays"), and the name
-  stays in the bar and the title.
+- Not the name plus its category ("Kaffee Klee, roastery and bar"), and not a bare category line
+  with nothing of this client in it ("Roasted and poured in Berlin"). For a name whose meaning the
+  page is built on (Klee is clover), the name itself is the headline, the largest type on the screen,
+  and the sentence under it says what the place is and what the name means; otherwise the line says
+  what only this place could say, from the inventory ("Roasted in the courtyard on Tuesdays and
+  Fridays"), and the name stays in the bar and the title.
 
 Sentence case. No full stop unless the direction's voice uses them everywhere.
 
@@ -167,18 +171,26 @@ hours away) is wrong to every reader who knows; a page that names no town, road 
 reads as thin and tells the visitor nothing. List every real-world fact the page states in the report,
 with where it came from, for the client to confirm.
 
-**Visit details the brief does not give are left out, not made up.** With no street address in the
-brief, the page prints the town or area the brief names (a neighbourhood only when the brief names
-one: "Berlin" stays Berlin, never a district picked for it) and sample opening hours, listed in the
-report with the other sample details; a house or a hotel may print its season and its check-in times
-instead of opening hours. Never a placeholder street (Musterstrasse 12, 1 Main Street, Example Road).
-With no phone number, it prints none: never a zeroed or patterned number (030 000 000 00, 555-0123)
-and never a real area code with random digits, which can ring a real line. The email is at the
-brand's own domain, never `.example`. A page with no door in its brief (a product sold online, an
-app, a portfolio) prints no street, hours or phone at all: the email and the city the brief names.
-The report lists the address, the phone, the hours and the email to fill. When the
-brief gives no email address, the sample one is sample content, and no form that sends a visitor's
-details (an order, a booking, a delivery address, a sign-up) is wired to it: for a made-up brand that
+**A place people go to says how to get there.** A café, a bar, a restaurant, a shop, a guesthouse or
+a studio with a door gets a visit block with six things: the street, a real street in the right
+district of the town the brief names (one such a place would stand in, with no house number unless
+the brief gives one), or for a remote place, or a brief that names only a region, the nearest town
+and the road from it, and no street; the district or area; the nearest stop and its line, read from
+a map in this session or one you are sure of, otherwise the district's main station (for a remote
+place, the drive from that town, a distance only as the paragraph above allows); the opening hours
+(a house or a hotel may print its season and its check-in times instead); a "Directions" link to a
+maps service (OpenStreetMap, Google or Apple Maps) searching that street and town, or that road and
+town; and one contact. The street, district, way there and hours the brief does not give are sample
+copy, and the report marks them for the client to confirm. Never a placeholder street (Musterstrasse
+12, 1 Main Street, Example Road), and never the city's name alone: a roastery page that printed
+hours and an email under "Open in Berlin" left the visitor nowhere to go, and the judge marked it
+high. With no phone number in the brief, the page prints none: never a zeroed or patterned number
+(030 000 000 00, 555-0123) and never a real area code with random digits, which can ring a real
+line; the contact is then the email at the brand's own domain, never `.example`. A page with no door
+in its brief (a product sold online, an app, a portfolio) prints no street, hours or phone at all:
+the email and the city the brief names. When the brief gives no email address, the sample one is
+sample content, and no form that sends a visitor's details (an order, a booking, a delivery address,
+a sign-up) is wired to it: for a made-up brand that
 domain belongs to a stranger. Such a form posts to an endpoint the client gives, or stays unwired with
 its handler named in the report; the visible contact line and a mailto link on it stay as the house
 rules ask.

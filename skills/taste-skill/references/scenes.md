@@ -159,7 +159,10 @@ say how many pictures and words it takes; these hold for all of them:
 
 - **The phone.** Each scene has a phone plan in its file: the same scene with changed numbers, a
   simpler version, or `phone: 'rest'`, where the phone shows the finished composition. Touch scrolling
-  is never smoothed. Look at the phone sheet as carefully as the desktop one.
+  is never smoothed. Below 600px a list the scene lays over its picture drops into the normal flow
+  under it, and nothing a visitor reads is clipped by the stage, at the end of the hold as much as at
+  rest (`clipped-text`, `references/layout.md` §9). Look at the phone sheet as carefully as the
+  desktop one.
 - **Letters on the phone land on a clock.** A heading set in letters is never keyed to the scroll on a
   phone: wherever the reader stops it would stand half-drawn ("B o"), and the inspector fails it
   (`letters-mid-reveal`). Its letters land in under a second once half of it is on screen (or once the
@@ -194,6 +197,9 @@ each of which a test page shipped wrong:
 - **The rest frame reads whole.** At 100% the heading, the closing line and the name are whole on
   screen, at 1440 and at 768 as well as on the phone: a closing line that rests on its last two words
   has lost its verb, and a name that rests broken reads as broken.
+- **Nothing is cut off at the end.** `inspect.mjs` fails a list cut short at the scene's end
+  (`clipped-text`); `scenes.mjs` warns at the step. One line of display type cropped at the screen's
+  side or its foot is a crop and passes.
 - **No dead hold.** When the last three frames of a sheet are the same picture, the hold is too long:
   shorten it to its beats.
 - **The demo is gone.** Nothing in any frame is the demo's (its map, its town, its pictures, its words).
@@ -288,6 +294,17 @@ Scenes['my-scene'] = (root, opts = {}) => Stage.scene(root, {
 and write its CSS finished composition first, then the live layout under `.scene.is-live`. Check it
 with `scenes.mjs` like any other. A dealt technique is built the same way, with the hold the sheet
 gives it, and checked with `scenes.mjs` like any scene.
+
+A scene you build that steps (statements, steps or pictures in turn), where its steps carry pictures,
+gives each step its own picture or a clearly different crop of one, never one photograph held under
+every step; where it needs none (its Needs line says so), the statements stand on the ground alone,
+with no photograph added. It sets its statements as short headlines at display size, 40px or more on
+desktop and two lines at most (marked up as h2 or h3: the 36px statement rule is for paragraphs);
+leaves no frame between two steps near empty; and its finished composition (reduced motion, tablet,
+phone) never repeats one picture: with one picture only, show it once and set the steps beside it. A
+roastery added one photograph to a type-only focus pull, set four 30px statements beside it, left an
+empty frame halfway and repeated the photograph three times down the tablet page; the judge called it
+stock (`repeated-picture`).
 
 ## 9. The catalogue
 
@@ -463,8 +480,9 @@ page, a scene on the first screen, which shows the product large.
   first, as the camera pulls back. One high-contrast drawing, or a photograph in darkroom mode. Not
   dealt: its dithered middle frames read as a corrupted, washed-out JPEG (round 8), and a picture keeps
   its colour at every frame.
-- **Thumbnail becomes the stage** (`thumbnail-becomes-the-stage`): the middle of three thumbnails
-  opens to full bleed and the statement's first line becomes its heading. One strong loop or picture.
+- **Thumbnail becomes the stage** (`thumbnail-becomes-the-stage`): the middle of three large thumbnails
+  grows over its neighbours to full bleed, and the statement becomes its heading word for word. One
+  strong loop or picture.
 
 **Section transition**
 - **Peel, tear and drag** (`peel-tear-and-drag`): a plane drags the next page in behind it, a sticker

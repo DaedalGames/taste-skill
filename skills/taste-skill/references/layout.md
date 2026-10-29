@@ -183,7 +183,10 @@ are from the study of 97 Sites of the Day (October 2026).
   the content box, or SVG text with `textLength`), never by a size guessed for one face: a name that
   starts on the margin and runs a few pixels off the other edge reads as a mistake.
 - A centred composition has one axis, equal flanks and one thing on it, not a stack of heading,
-  paragraph and two buttons.
+  paragraph and two buttons. On the first screen that stack with a photograph card with round
+  corners under or beside it, the four together, is the template every model builds whatever hero
+  was dealt; the inspector fails it (`template-hero`). Build the dealt hero's geometry instead, its
+  largest type the page's idea or the name.
 
 **A title that says what this is, on the first screen.**
 
@@ -216,6 +219,11 @@ are from the study of 97 Sites of the Day (October 2026).
   section size ("The rooms", "How it works", "Prices"), set them on the anchor line, and let the first
   sentence carry the rest.
 - A statement can open a section as its heading only when it names what the section holds.
+- **One heading per idea.** A section names its subject once. No second heading that restates the
+  first ("Four coffees on the shelf", then "Four coffees" over the picture), and no label printed over
+  every step of a list or a held scene ("The roastery" above each of four statements): the section's
+  heading names it as it arrives, and each step carries its own words. The inspector warns on both
+  (`restated-heading`, `repeated-label`).
 
 ## 6. Sections: carry the idea, vary the arrangement
 
@@ -318,6 +326,10 @@ lose usability points; weak ones are often just broken.
   crop size in the image URL); keep unevenness with alternating widths rather than making everything
   full width.
 - Margins 16–20px. Body text 16–18px. Touch targets at least 44px high.
+- **Nothing is clipped on the phone.** Below 600px a list laid over a picture (the coffees over a
+  full-bleed panel, the facts over a room) drops into the normal flow under the picture, and no box
+  with a fixed height or `overflow: hidden` cuts the words it holds. A coffee panel that showed two of
+  its four coffees on a phone was marked broken; the inspector fails it (`clipped-text`).
 - Check 390px in the inspector's screenshots for every round: sideways scroll and three-line headlines
   usually appear here first.
 

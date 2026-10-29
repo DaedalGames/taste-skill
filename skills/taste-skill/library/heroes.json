@@ -1129,7 +1129,7 @@
    "sentence-as-layout"
   ],
   "needs": [],
-  "blueprint": "The headline and one sentence sit at the top of the content width, left-aligned or centred (one choice for the whole page), with one or two actions under them. Below, the product fills the width of the content area: a large interface fragment built in HTML (data-ui), the object, or what it produces, starting in the first screen and cropped by its bottom edge so the visitor scrolls into it. Generous space above the headline; the product is the largest thing on the screen.",
+  "blueprint": "The headline and one sentence sit at the top of the content width, left-aligned (centred only above an interface fragment, and then for the whole page), with the action under them and at most a quieter second beside it. Below, the product fills the width of the content area: a large interface fragment built in HTML (data-ui), or the object or what it produces photographed and running to the content edges, starting in the first screen and cropped by its bottom edge so the visitor scrolls into it. Generous space above the headline; the product is the largest thing on the screen.",
   "mobile": "The same order: headline, sentence, action, then the product at full width, cropped by the edge rather than scaled to illegibility.",
   "headline": "What it is or what it does, two to six words, at the dealt display step.",
   "motion": "masked-headline",
@@ -1215,10 +1215,12 @@
    "hero-object",
    "shop-window"
   ],
-  "needs": [],
-  "blueprint": "The name and one line sit above, centred, with two actions (buy and learn more). Below them the object stands large on the plain ground (photographed or generated on that ground, never drawn), filling most of the rest of the screen. Nothing else.",
-  "mobile": "The same, the object at full width.",
-  "headline": "The product's name, then one line that says what is new about it.",
+  "needs": [
+   "product-photo"
+  ],
+  "blueprint": "One object and its name on the page's own plain ground. The name, or the page's idea in one to three words, is the largest type on the screen: the display step, on one line across the top, on the centre axis. Directly under it one sentence says what the thing is (and, for a name that means something, what it means), then one action: one button, not a pair. Under them the object stands large on that same ground, 55-70% of the screen's height, its foot on or near the bottom edge: photographed or generated on a plain backdrop and cut out, or set on a ground sampled from that backdrop, so no edge of the photograph shows. No box, frame, corner, plinth or panel of another tone round it, and nothing drawn. Nothing else, and never the object as a photograph card under a centred stack: when the only picture of it stands in its own room or on its own counter, redraw the hero.",
+  "mobile": "The name across the top at full width, the sentence and the action under it, then the object at about 85% of the width on the same ground, its foot near the bottom of the first screen; no box and no corners round it.",
+  "headline": "The name of the product or the place, or the page's idea in one to three words, as the largest type on the screen; the sentence under it says what it is and what is new about it.",
   "motion": "shutter-image",
   "seenIn": [
    "pro-apple",

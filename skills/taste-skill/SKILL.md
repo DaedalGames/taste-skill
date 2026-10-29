@@ -275,7 +275,10 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
   cards"). If a sentence could be cut without losing a fact, cut it.
 - **No labels that carry nothing.** No timestamps, "connected source", status chips, tags, kickers or
   captions on cards unless the visitor needs that fact. A caption under a picture says what a visitor
-  needs to know about it, or is not there.
+  needs to know about it, or is not there. One heading per idea: no heading that restates the one
+  above it ("Four coffees on the shelf", then "Four coffees"), no label repeated over every step of a
+  list or a scene ("The roastery" over each of four statements); the inspector warns on both
+  (`restated-heading`, `repeated-label`).
 - **The sections that convert are complete.** The price says what it includes and the terms (trial,
   billing, cancelling) as a short list; booking asks for what a booking needs (dates, guests, room);
   proof is facts the page can stand behind (what the file format is, how many rooms face the fjord,
@@ -293,12 +296,18 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
   and awards come from the brief or stay off the page: a guesthouse in the Westfjords set "forty
   minutes from Reykjavik" (it is hours away), and another, naming no town, road or flight at all, read
   as thin. The report lists the facts to confirm (`references/copy.md` §5).
-- **Visit details the brief does not give are left out, not made up:** with no street address, the
-  town or area the brief names (a neighbourhood only when the brief names one) and sample opening
-  hours (for a house, its season and check-in times), listed in the report; never a placeholder
-  street. No phone number rather than a zeroed or patterned one, the email on the brand's own domain.
-  A page with no door (a product sold online, an app, a portfolio) prints no street, hours or phone.
-  The report lists what to fill.
+- **A place people go to says how to get there.** A café, bar, restaurant, shop, guesthouse or studio
+  with a door gets a visit block with the street (a real street in the right district of the town
+  the brief names, no house number unless the brief gives one; for a remote place, or a brief that
+  names only a region, the nearest town and the road from it, and no street), the district, the
+  nearest stop (read from a map or one you are sure of, otherwise the district's main station) or
+  the drive from that town, the opening hours (for a house, its season and check-in times), a
+  "Directions" link to a maps service for that street or road, and one contact. Never a placeholder
+  street, never a zeroed or patterned phone (with no phone in the brief, the contact is the email on
+  the brand's own domain), never the city's name alone: a roastery that printed hours and an email
+  under "Open in Berlin" was marked down for it (the inspector warns `visit-without-directions`). The
+  report marks the street, district, stop and hours as sample copy to confirm. A page with no door
+  (a product sold online, an app, a portfolio) prints no street, hours or phone.
 
 ### 6. Build it, still
 
@@ -310,8 +319,16 @@ not finished. Order of work:
    names, fluid type steps, grid, focus and selection styles, the motion helpers); it has no look of
    its own.
 2. **The hero, in the shape its blueprint describes,** set in the dealt type, colour and frame, at
-   desktop and at phone width. The headline takes the dealt display step, not a size the blueprint
-   names. Get the main thing clear before anything else exists. **A split hero has a large headline
+   desktop and at phone width. Within the house rules its geometry is binding, over the direction's
+   composition too: what is large, where the words sit, how the picture is cut. The headline takes
+   the dealt display step, not a size the blueprint names. Get the main thing clear before anything
+   else exists: the first screen is built round the page's own idea at display scale, and its largest
+   type carries that idea or, for a name whose meaning the page is built on (Klee is clover), the
+   name; never a bare category line with nothing of this client in it ("Roasted and poured in
+   Berlin"). **Never the template stack:** a centred headline, a line under it, two actions side by
+   side and a photograph card with round corners under or beside them, the four together. A roastery
+   page dealt "the object on a plain ground" built exactly that, and the judge called it any café;
+   the inspector fails it (`template-hero`). **A split hero has a large headline
    or a full-bleed picture:** beside a picture that holds half the screen, or in a strip between
    pictures above and below it, the `h1` is about 5vw or more at 1440 (72px; the sheet raises the
    display step for a split hero), on two lines; words that cannot be that large go over the picture,
@@ -341,10 +358,11 @@ not finished. Order of work:
       fails, labels or not, so say a process in words (references/imagery.md §8);
    6. type and space alone. An empty slot is better than a bad picture.
 
-   Rules: every picture shows this subject's world and is requested at least 1.5 times the size it is
-   shown (twice for the hero); one treatment for all (section 0); three to eight good pictures beat
-   twelve weak ones. Every file the page asks for exists: a `src`, a `srcset` crop or a CSS background
-   that is not there fails. Words on a photograph sit on its calm part, of one tone, at 1440, 768 and
+   Rules: every picture shows this subject's world, never the category's stock shot unless it is
+   art-directed (full-frame beans, hands on a laptop: `references/imagery.md` §2), and is requested
+   at least 1.5 times the size it is shown (twice for the hero); one treatment for all (section 0);
+   three to eight good pictures beat twelve weak ones. Every file the page asks for exists: a `src`, a
+   `srcset` crop or a CSS background that is not there fails. Words on a photograph sit on its calm part, of one tone, at 1440, 768 and
    390 alike: the crop moves as the screen narrows, and the inspector reads the pixels under the
    letters. Flat colour tiles, one per project or card, are a wall of boxes: one picture leads, on
    the page's ground. The first picture a visitor sees shows the product or the place itself (the cup
@@ -400,16 +418,28 @@ not finished. Order of work:
    page with scenes still has a length budget: about 12-16 screens at 1440 in all, of which the scenes
    hold about six. `references/scenes.md` says how to put one on a page, fill it, fit it and check it.
    On a phone a heading set in letters is whole wherever the scroll stops: its letters land on a short
-   clock as it enters, or the scene rests (the inspector fails a word left half-drawn).
+   clock as it enters, or the scene rests (the inspector fails a word left half-drawn). Below 600px a
+   list laid over a picture drops into the normal flow under it, and nothing is clipped by its stage:
+   a coffee panel that showed two of its four coffees on a phone was marked broken, and the inspector
+   fails text cut off by its box at rest (`clipped-text`; one line of display type cropped on purpose
+   at the screen's side or foot is a crop and passes).
    A software page gets one scroll scene at most. A page built without one (`--redraw scenes=none`) is
    about 8-12 screens, with nothing pinned in a scene's place. About one page in two, one of its scenes
    is a researched technique instead (`library/techniques.json`): a principle, a direction to take and
    what breaks it, with no files and no demo. Build it on the shared stage as `references/scenes.md` §8
    shows, in this page's own type, colour, pictures and words, never as a copy of any site. Avoid what
    breaks it first, and make every frame of its hold a finished, readable composition: never one strip
-   on an empty screen, a fan that hides the texts or a text a screen away from its title. Check it
-   with `scenes.mjs` like any scene; if it cannot be built honestly within three look-and-fix rounds,
-   `--redraw scenes`, which counts toward the same limit of two.
+   on an empty screen, a fan that hides the texts or a text a screen away from its title. A hold that
+   steps (a technique or a scene of your own), where its steps carry pictures, gives each step its own
+   picture or a clearly different crop, never one photograph held under every step; where it needs
+   none, its statements stand on the ground alone, with no photograph added. It sets its statements as
+   short headlines at display size (40px or more on desktop, marked up as h2 or h3: the 36px statement
+   rule is for paragraphs), leaves no step frame near empty, and without the pin never repeats one
+   picture: with only one, show it once and set the steps beside it. A roastery added one photograph
+   to a type-only focus pull, set four 30px statements beside it and repeated it three times down the
+   tablet page; it read as stock, and the inspector fails a picture shown three times
+   (`repeated-picture`). Check it with `scenes.mjs` like any scene; if it cannot be built honestly
+   within three look-and-fix rounds, `--redraw scenes`, which counts toward the same limit of two.
 7. **Fullness.** Look at each desktop screen as a poster: one dominant thing and the content it
    carries. A screen that is mostly empty ground is an underbuilt section, not a rest; one deliberate
    rest per page is the limit, and the inspector fails a page with two or more near-empty screens.
@@ -527,7 +557,7 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | Rule | Instead |
 | --- | --- |
 | **Headlines: two lines or fewer, at every width.** Every `h1`–`h6`, and the main line of the first screen whatever its tag. | Cut words. Then widen the measure. Size last. |
-| **A clear title on the first screen**, in the page's one `h1`, and a heading on every section. | Say what this is: the name with what it does, the product with what it is for, the event with its date and place. |
+| **A clear title on the first screen**, in the page's one `h1`, and a heading on every section, one per idea. | Say what this is: the name with what it does, the product with what it is for, the event with its date and place. |
 | **Equal outer margins; no section huddled on one side** with the other half of the screen empty. | Close every void with something on its far side: the section's picture, a second column, a list, a figure. |
 | **No blank stretches** taller than about half a screen. | The normal section gap. A deliberate rest is a placed picture or a field of colour, once per page. |
 | **Statements are paragraphs.** An intro sentence or a quotation set large is marked up as `<p>` or `<blockquote>`, stays at statement size (36px or less on desktop, 24px on a phone) and runs to about 25 words, three lines. | Larger than that it is a headline and the two-line rule applies. In blind tests jurors read a 42px sentence over four lines as a four-line headline. |
@@ -545,7 +575,7 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **No styled accent word** in a headline (italic, serif, coloured, underlined). | One face, one colour. The words carry the emphasis. |
 | **The dealt type system:** its faces, its weights, its six steps. Two families at most. | Map every other size onto the nearest step. |
 | **No pictures in headlines or sentences.** No photograph between the words of a headline, no picture inside the letters, no thumbnails inside running text. | The picture gets its own place, beside, above or behind the words, at a size that shows what it is. |
-| **No headline in a card.** The hero headline stands on the page ground or on its picture, never in a panel, card or box. | The first screen as one composition: headline, one sentence, the action, the picture. |
+| **No headline in a card, no template stack.** The hero headline stands on the page ground or on its picture, never in a panel, card or box; and never a centred headline, a line, two actions and a round-cornered photograph card together. | The first screen as one composition in the dealt hero's geometry, built round the page's idea: headline, one sentence, the action, the picture. |
 | **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges. | Neutral ground (white, off-white, near-black); colour from the pictures; the accent on the action. |
 | **No giant name or email anywhere, no credit walls.** | The email at the h3 step or smaller, with a Copy button and a mailto link; the dealt footer: links, contact, legal at text sizes; picture credits behind one small "Image credits" link. |
 | **No drag rails or progress bars** outside a working tool, no range sliders, no line with a knob or dots on it that reads as one, and no switch, checkbox or toggle that changes nothing: a length or a count is a row of stepped buttons; no sideways scrollers on desktop. | A list or grid that fits the width; stepped buttons of real values; features as lines of text at full ink; a control only where it does what it says. |

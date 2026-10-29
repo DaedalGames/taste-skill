@@ -26,6 +26,14 @@
 //   piece-unseen         a piece of work in a scene (.fly__card, [data-piece]) is never shown whole, flat-on
 //                        (turned 10° or less) and at 60% of the width or more at any settled step, on
 //                        desktop. A problem.
+//   clipped-text         words of the scene cut off by a box that clips them (overflow hidden or clip, a
+//                        clip-path, or an item of a list shrunk to a screen-reader-only box while the others
+//                        show) at 100% and at each step where the scene rests (nothing visible changes from
+//                        the step before or the one after), at every width; a scene shown as its finished
+//                        composition is looked at all through. Only words still cut the same way a short
+//                        scroll after the step count, so a wipe or a roll on its way is not counted; one
+//                        line of display type cropped at the screen's side or its foot is a crop. A
+//                        warning (inspect.mjs fails it on the page at rest).
 // --steps defaults to one step every quarter screen of hold (10 at least), so a half-screen stop always
 // falls on a step.
 // A scene file may document a deliberate pass over words in its header, with the moving parts in
@@ -41,6 +49,7 @@ import { resolve, join, dirname, extname, sep, relative } from 'node:path';
 import { createServer } from 'node:http';
 import { Browser, sleep } from './lib/cdp.mjs';
 import { groundShare } from './lib/probe.mjs';
+import { restLook } from './lib/probe-rest.mjs';
 
 const args = process.argv.slice(2);
 const flag = (k, d) => { const i = args.indexOf('--' + k); if (i === -1) return d; const v = args[i + 1]; args.splice(i, 2); return v; };
@@ -453,6 +462,7 @@ async function run(label, vp) {
     const pieces = new Map();
     const passes = held ? await page.eval(PASSES(sc.kind)).catch(() => []) : [];
     const evidence = new Map();
+    const clipAt = new Map(); // clipped-text: what each settled step cuts off
     let n = 0;
     for (const p of points) {
       await page.eval(go(Math.round(p.y))).catch(() => {});
@@ -477,13 +487,30 @@ async function run(label, vp) {
       }
       frames.push(await page.screenshot({ quality: 72 }));
       labels.push(`${sc.id} ${p.l}`);
+      // clipped-text, once the step is photographed: words cut off here that are still cut, the same way, a short
+      // scroll later (a wipe or a roll still running is not at rest)
+      if (p.k !== undefined) {
+        const c0 = await page.eval(restLook, { clipOnly: true, inScene: true, root: [SEL, sc.index], phase: 0 }).catch(() => null);
+        if (c0 && c0.n) {
+          await page.eval(go(Math.round(p.y) + Math.max(16, Math.round(H * 0.02)))).catch(() => {});
+          await sleep(450);
+          const c1 = await page.eval(restLook, { clipOnly: true, inScene: true, root: [SEL, sc.index], phase: 1 }).catch(() => null);
+          if (c1 && c1.clipped.length) clipAt.set(p.k, c1.clipped);
+        }
+      }
     }
     const cw = vp.width >= 1000 ? 480 : 240, ch = Math.round((cw * H) / vp.width);
     const path = join(outDir, `${sc.id}-${label}.jpg`);
     await sheet(frames, labels, cw, ch, vp.width >= 1000 ? 4 : 7, path);
     console.log(`${label.padEnd(8)} ${sc.id}: ${(sc.height / H).toFixed(1)} screens tall, ${sc.live ? 'running' : sc.rest ? 'finished composition' : 'not started'} → ${rel(path)}`);
-    if (!held) continue;
     const where = `${label} ${sc.id}`;
+    // clipped-text: words cut off at the steps where the scene rests (a finished composition rests all through)
+    const clipWarn = (restSteps) => {
+      const byText = new Map();
+      for (const k of restSteps) for (const c of clipAt.get(k) || []) { const v = byText.get(c.text) || { ...c, at: [] }; v.at.push(pct(k)); byText.set(c.text, v); }
+      for (const c of [...byText.values()].slice(0, 3)) warnings.push(`${where}: clipped-text at ${c.at.length > 4 ? `${c.at.slice(0, 4).join(', ')} …` : c.at.join(', ')}: "${c.text.slice(0, 48)}" ${c.short ? `is shrunk to a screen-reader-only ${c.by} while the items beside it show` : `${c.whole ? 'lies wholly' : `runs ${c.past}px`} past the ${c.side} of ${c.by}`}`);
+    };
+    if (!held) { clipWarn([...clipAt.keys()]); continue; }
     // scene-crosses-words: anything moving lying on the words, at a step or while it settles
     const v = await page.eval(verdict, { passes }).catch((e) => ({ crossings: [], cut: [], error: e.message }));
     // one entry per moving part, naming the words it lies on and when
@@ -523,6 +550,8 @@ async function run(label, vp) {
     let best = [0, 0];
     for (let i = 0, run = 0; i < diff.length; i++) { run = diff[i] < STILL ? run + 1 : 0; if (run > best[1]) best = [i + 1 - run, run]; }
     if (best[1] / STEPS >= 0.3) warnings.push(`${where}: dead-hold from ${pct(best[0])} to ${pct(best[0] + best[1])}: nothing visible changes for ${Math.round((best[1] / STEPS) * 100)}% of the hold`);
+    // (a step rests when nothing visible changes from the step before it or to the one after; 100% is the last frame)
+    clipWarn([...clipAt.keys()].filter((k) => k === STEPS || (k > 0 && diff[k - 1] != null && diff[k - 1] < STILL) || (diff[k] != null && diff[k] < STILL)).sort((a, b) => a - b));
     // SCENES_DEBUG=1 prints the change between steps; =2 also keeps the raw frames
     if (process.env.SCENES_DEBUG) { console.log(`         changes ${diff.map((d) => (d * 100).toFixed(1)).join(' ')}${v.error ? '  verdict error: ' + v.error : ''}`); if (process.env.SCENES_DEBUG === '2') frames.forEach((f, i) => writeFileSync(join(outDir, `raw-${sc.id}-${label}-${i}.jpg`), Buffer.from(f, 'base64'))); }
   }
@@ -566,6 +595,7 @@ if (problems.length || warnings.length) {
   if (ids('dead-hold')) console.log('  → dead-hold: a hold with nothing new to show is cut, not padded (rule 2). Shorten the hold so the last beat lands near 90%, or give the still stretch a beat.');
   if (ids('end-frame')) console.log('  → end-frame: the rest frame shows the line whole (rule 4). Fit it to the screen, set it on two lines, or end the move where the whole line reads.');
   if (ids('empty-steps')) console.log('  → empty-steps: every frame of a hold shows something to read or see (rule 9). Shorten the hold to its beats, make the held picture large, or bring the next content in sooner.');
+  if (ids('clipped-text')) console.log('  → clipped-text: words that have arrived are whole. Let the box grow with them, set a list that lies over a picture into the flow under it on a phone or tablet, or cut what does not fit; never shrink the items that do not fit into screen-reader-only boxes while the rest of the list shows.');
   if (ids('piece-unseen')) console.log('  → piece-unseen: each piece of work stops on screen flat-on, at 60% of the width or more, with its title on it, for half a screen (references/scenes.md §3; the fly-through takes {"stop": 0.5}).');
 }
 console.log(problems.length ? `\nRESULT: ${problems.length} problem(s)${warnings.length ? `, ${warnings.length} warning(s)` : ''}. Fix them, then look at every sheet.` : warnings.length ? `\nRESULT: every scene ran, ${warnings.length} warning(s): fix them or be able to defend them. Then look at every sheet.` : '\nRESULT: every scene ran. Now look at every sheet: does each frame read, and is the scene as bold as it should be?');

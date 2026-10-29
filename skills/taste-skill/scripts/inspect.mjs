@@ -34,6 +34,16 @@
 // phones (placeholder-contact), small list and table text (small-body), drawn diagrams (drawn-illustration) and
 // lines with dots or a knob that read as sliders (decorative-control).
 //
+// Round 10 (r9-p44, a roastery page that won and still read as a template): after the film, the page is walked again
+// and each screen is looked at once it rests, with a short scroll after it to keep only what held still (so a mask on
+// its way in, a picture flying in or a ticker is not at rest), and each running scene at its end. Text cut off by a box
+// that clips it fails (clipped-text; display type on one line cropped at the screen's side or its foot is a crop, as the
+// library deals it), and so does one picture shown three times or more (repeated-picture: copies, or
+// one held while the steps change); a heading followed in its section by one that restates it (restated-heading) and
+// one short label shown three times (repeated-label) warn. From the page: the first screen as the generic stack of a
+// centred headline, a line, two actions and a rounded picture card fails (template-hero), and a visit block with
+// no street, district or map link warns (visit-without-directions).
+//
 // --app judges an app screen (dashboard, admin, settings) by the rules in references/app-screens.md; a
 // direction dealt with draw.mjs --app switches it on by itself.
 //
@@ -48,6 +58,7 @@ import { probe, frame, reach, layout, app, colourShare, groundShare, cellDiff } 
 import { judge, judgeLayout, judgeApp, APP_SKIP } from './lib/rules.mjs';
 import { extra, controls, replayState, photoText, photoTextDone, photoContrast, splitLetters, tileFills } from './lib/probe-extra.mjs';
 import { judgeExtra } from './lib/rules-extra.mjs';
+import { restLook, restStops, restGo, heroStack, visitBlocks } from './lib/probe-rest.mjs';
 import { viewportClass as name, screenshotLabel, isInspectionScreenshot } from './lib/inspection-files.mjs';
 
 const args = process.argv.slice(2);
@@ -148,6 +159,21 @@ const ENTRANCE_SEEN = `(() => {
   }).map((el) => el.textContent.trim().replace(/\\s+/g, ' ').slice(0, 48));
   return { id, wrapped };
 })()`;
+
+// How many times one element is shown, from its sightings at rest in scroll order ({ y, t, seen }: the scroll, its top
+// on the screen, and what else the screen showed): a sighting is a new showing when the element stands more than half
+// a screen from where the page last showed it, so it was held while the page moved on under it, and something new
+// arrived beside it (r9-p44's roaster photograph under each of the four steps). An element that simply scrolls past,
+// or a held one with nothing new beside it, is shown once.
+function showings(list, h) {
+  let n = 0, last = null; const at = [];
+  for (const x of [...list].sort((a, b) => a.y - b.y)) {
+    const doc = x.y + x.t;
+    if (last == null || (Math.abs(doc - last.doc) > h * 0.5 && (!x.seen || !last.seen || x.seen.some((s) => !last.seen.includes(s))))) { n++; at.push(Math.round(x.y / h) + 1); last = { doc, seen: x.seen }; }
+  }
+  return { n, at };
+}
+const wordSet = (t) => new Set(String(t).toLowerCase().normalize('NFKD').replace(/\p{M}/gu, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean));
 
 async function sheet(frames, cols, cellW, cellH, path) {
   const rows = Math.ceil(frames.length / cols);
@@ -356,6 +382,9 @@ try {
     const m = after.headings.length >= metrics.headings.length ? after : metrics;
     const lay = await page.eval(layout).catch(() => null);
     const ex = await page.eval(extra).catch((e) => { frameErrors.push('extra: ' + String(e.message).slice(0, 160)); return null; });
+    // round 10, at the top of the page: the first screen as the generic stack (desktop), and visit blocks
+    const hero = w >= 1100 && !appMode ? await page.eval(heroStack).catch((e) => { frameErrors.push('hero: ' + String(e.message).slice(0, 160)); return null; }) : null;
+    const visits = !appMode ? await page.eval(visitBlocks).catch((e) => { frameErrors.push('visit: ' + String(e.message).slice(0, 160)); return null; }) : null;
     const appM = appMode ? await page.eval(app).catch(() => null) : null;
     if (appM) appM.colourShare = await helper.eval(colourShare, 'data:image/jpeg;base64,' + frames[0]).catch(() => null);
 
@@ -429,6 +458,29 @@ try {
         const png = rects.length ? await page.screenshot({ format: 'png' }).catch(() => null) : null;
         const fills = png ? await helper.eval(tileFills, ['data:image/png;base64,' + png, rects, ex.ground]).catch(() => null) : null;
         if (fills) wallRuns.push({ ...wall, ...fills });
+      }
+    }
+
+    // round 10: the page at rest, after the film. At each screen of the walk and at the end of each running scene, the
+    // page is put on the spot, its animations waited out, looked at, scrolled on a little and looked at again; only what
+    // held still between the two looks counts (clipped-text, repeated-picture, restated-heading, repeated-label)
+    const restRuns = [];
+    if (!appMode) {
+      const stops = await page.eval(restStops, stride).catch((e) => { frameErrors.push('rest: ' + String(e.message).slice(0, 160)); return null; });
+      if (stops) {
+        const list = [...stops.ys.map((y) => ({ y })), ...stops.ends.map((e) => ({ y: e.y, end: e.id }))].sort((a, b) => a.y - b.y);
+        const looks = [];
+        for (const s of list) { const prev = looks[looks.length - 1]; if (prev && Math.abs(prev.y - s.y) < h / 8) { if (s.end) { prev.end = s.end; prev.y = s.y; } continue; } looks.push({ ...s }); }
+        const maxY = Math.max(0, (await page.eval('document.scrollingElement.scrollHeight - innerHeight').catch(() => 0)) || 0);
+        const nudge = Math.max(24, Math.round(h * 0.03));
+        for (const s of looks.slice(0, MAX_SCREENS + 12)) {
+          const y0 = await page.eval(restGo, s.y).catch(() => null); if (y0 == null) continue;
+          const a = await page.eval(restLook, { phase: 0 }).catch((e) => { if (frameErrors.length < 8) frameErrors.push('rest look: ' + String(e.message).slice(0, 160)); return null; });
+          if (!a) continue;
+          await page.eval(restGo, y0 + nudge <= maxY ? y0 + nudge : Math.max(0, y0 - nudge)).catch(() => null);
+          const r = await page.eval(restLook, { phase: 1 }).catch((e) => { if (frameErrors.length < 8) frameErrors.push('rest look: ' + String(e.message).slice(0, 160)); return null; });
+          if (r) restRuns.push({ ...r, end: s.end || null });
+        }
       }
     }
 
@@ -510,6 +562,78 @@ try {
       if (allow.includes('tile-wall') || wr.filled < 6 || wr.fills.length < 3) continue;
       findings.push({ level: 'FAIL', id: 'tile-wall', width: w, message: `${wr.hero ? 'The first screen' : `"${wr.head}"`} is a wall of ${wr.n} tiles, ${wr.filled} of them filled in ${wr.fills.length} colours (${wr.fills.slice(0, 6).map((f) => `${f.hex} ×${f.n}`).join(', ')}).`, fix: 'One picture leads a section: the strongest frame large, two or three more beside it at most, each on the page\'s ground. Fields of flat colour, one per project or card, read as a wall of boxes and spread the palette; keep a project\'s colours inside its one frame and set the rest of the work as a list of type (references/layout.md).' });
     }
+    // ---------- round 10 ----------
+    // the first screen as the generic stack (r9-p44: "Roasted and poured in Berlin" centred, a subline, a green pill and a
+    // text link, a rounded photo card under them; the judge: it could be any café)
+    if (hero && hero.stack && !allow.includes('template-hero')) findings.push({ level: 'FAIL', id: 'template-hero', width: w, message: `The first screen is the generic stack: a centred headline ("${hero.h1}"), a line under it, two actions side by side (${hero.actions.join(', ')}) and a rounded picture card ${hero.card.where} (${hero.card.src}, ${hero.card.radius}px corners, ${Math.round(hero.card.w * 100)}% of the width).`, fix: 'Build the first screen round the page\'s one idea, not the default stack. The name or the subject is the dominant type at real scale, set in the dealt display face; the picture is cropped hard or runs to the edges, set beside or behind the words rather than parked as a card under them; one action. Change at least two of the four: the centring, the subline, the pair of actions, the rounded card.' });
+    // text cut off by a box that clips it once the page rests (r9-p44 on a phone: the coffee panel cut its list after
+    // Huila and Guji, so Cerrado and Decaf were never shown)
+    const restClip = new Map();
+    for (const r of restRuns) for (const c of r.clipped || []) { const o = restClip.get(c.text); if (!o || c.past > o.past) restClip.set(c.text, { ...c, screen: Math.round(r.y / h) + 1, end: r.end }); }
+    if (restClip.size && !allow.includes('clipped-text')) findings.push({ level: 'FAIL', id: 'clipped-text', width: w, message: `${restClip.size} block(s) of text are cut off by a box that clips them once the page rests: ` + [...restClip.values()].slice(0, 4).map((c) => `"${c.text.slice(0, 40)}" ${c.short ? `is shrunk to a screen-reader-only ${c.by} while the items beside it show` : `${c.whole ? 'lies wholly' : `runs ${c.past}px`} past the ${c.side} of ${c.by}`}${c.end ? ` (the end of ${c.end})` : ` (screen ${c.screen})`}`).join('; ') + '.', fix: 'Nothing a visitor should read is cut off once the page rests. Let the box grow with its words (no fixed height with overflow: hidden round text), set a list that lies over a picture into the flow under the picture on a phone or tablet, or cut what does not fit; never shrink the items that do not fit into screen-reader-only boxes while the rest of the list shows. A mask may hide words on their way in, never once they have arrived; look at the end of each scene at 390 and 768.' });
+    // one picture shown three times or more: copies of one file (the query and size suffixes taken off), or one held while
+    // the steps change (r9-p44's roastery: one photograph under all four steps, three or four times down the tablet
+    // page). A copy shown at under 40% of the size it reaches elsewhere is a stamp or a chip of it, and inside one scene a
+    // copy under 40% of the largest is the stamp of a hand-over: neither counts again.
+    const picEls = new Map();
+    for (const r of restRuns) for (const p of r.pics || []) { const e = picEls.get(p.id) || { key: p.key, file: p.file, scene: p.scene, s: [] }; e.s.push({ y: r.y, t: p.t, area: p.area, seen: (r.seen || []).filter((x) => x !== 'pic:' + p.id) }); picEls.set(p.id, e); }
+    const byFile = new Map();
+    for (const e of picEls.values()) { const max = Math.max(...e.s.map((x) => x.area)); const sh = showings(e.s.filter((x) => x.area >= max * 0.4), h); const k = byFile.get(e.key) || { file: e.file, els: [] }; k.els.push({ scene: e.scene, max, n: sh.n, at: sh.at }); byFile.set(e.key, k); }
+    const repeatedPics = [];
+    for (const k of byFile.values()) {
+      const big = new Map(); for (const x of k.els) if (x.scene) big.set(x.scene, Math.max(big.get(x.scene) || 0, x.max));
+      const counted = k.els.filter((x) => !x.scene || x.max >= big.get(x.scene) * 0.4);
+      const n = counted.reduce((a, x) => a + x.n, 0);
+      if (n >= 3) repeatedPics.push({ file: k.file, n, copies: counted.length, at: [...new Set(counted.flatMap((x) => x.at))].sort((a, b) => a - b) });
+    }
+    if (repeatedPics.length && !allow.includes('repeated-picture')) {
+      findings = findings.filter((f) => !(f.id === 'repeated-picture' && f.level === 'WARN' && f.message.startsWith('The same large picture'))); // (the page-top count of copies says less; the picture-series WARN stays)
+      findings.push({ level: 'FAIL', id: 'repeated-picture', width: w, message: `${repeatedPics.length} picture(s) are shown three times or more at rest: ` + repeatedPics.slice(0, 3).map((p) => `${p.file} ${p.n} times (${p.copies > 1 ? `${p.copies} copies` : 'one picture held while the page moves on'}, screens ${p.at.slice(0, 6).join(', ')})`).join('; ') + '.', fix: 'Show each photograph once. Each step of a pinned or stepped sequence gets its own picture, or at least its own crop or detail; a layout for narrower screens never repeats one picture down the page. With one picture only, show it once and set the steps beside or under it as text.' });
+    }
+    // headings at rest, in the order a visitor meets them, within each section: one that restates the one before it
+    // ("Four coffees on the shelf", then "Four coffees" over the picture), and one short label shown three times or more
+    // ("The roastery" over every step of a held sequence)
+    // (each heading wholly on the screen, by the words it shows: one heading whose second line has gone behind its mask
+    // reads as a second, shorter heading)
+    const headFirst = new Map();
+    for (const r of restRuns) for (const x of [...(r.heads || [])].sort((a, b) => a.t - b.t || a.l - b.l)) { const k = x.id + '|' + x.text.toLowerCase(); if (x.kind !== 'l' && x.whole && !headFirst.has(k)) headFirst.set(k, { ...x, y: r.y }); }
+    const bySection = new Map();
+    for (const x of headFirst.values()) { if (!x.section) continue; if (!bySection.has(x.section)) bySection.set(x.section, []); bySection.get(x.section).push(x); }
+    const restated = [];
+    for (const list of bySection.values()) for (let i = 1; i < list.length; i++) {
+      const a = list[i - 1], b = list[i], A = wordSet(a.text), B = wordSet(b.text);
+      const [s, l] = A.size <= B.size ? [A, B] : [B, A];
+      if (s.size < 2 || ![...s].every((x) => l.has(x))) continue;
+      // (a figure and its unit, "km/h" then "20 km/h": the longer one adds only numbers)
+      if ([...l].filter((x) => !s.has(x)).every((x) => /^\d+$/.test(x))) continue;
+      // (one heading whose lines arrive one by one adds words: that is the heading being set, not restated; and one set in
+      // letters that come apart, "STA I RS", is not a shorter heading)
+      if (a.id === b.id) { const F = wordSet(a.full || ''); if (B.size >= A.size || ![...A, ...B].every((x) => F.has(x))) continue; }
+      // (one heading drawn twice in layers, as a scene does, is one heading: in the same place, or carried through one
+      // scene's layers word for word)
+      if (A.size === B.size && ((Math.abs(a.y + a.t - (b.y + b.t)) < 8 && Math.abs(a.l - b.l) < 8) || (a.scene && a.scene === b.scene))) continue;
+      restated.push({ a: a.text, b: b.text, screen: Math.round(b.y / h) + 1 });
+    }
+    if (restated.length && !allow.includes('restated-heading')) findings.push({ level: 'WARN', id: 'restated-heading', width: w, message: `${restated.length} heading(s) restate the one before them in the same section: ` + restated.slice(0, 3).map((x) => `"${x.a.slice(0, 40)}" then "${x.b.slice(0, 40)}" (screen ${x.screen})`).join('; ') + '.', fix: 'One heading per idea. Cut the second, or let it say what the first does not (a name, a figure, the next point). A scene\'s statement and the heading of the section it leads into are one heading, set once.' });
+    // (one element held over several steps is a label when larger words show beside it in its section: "The roastery"
+    // over each step's statement; a held statement that is itself the largest text there is the scene's subject)
+    const labelEls = new Map();
+    for (const r of restRuns) for (const x of r.heads || []) {
+      if (x.text.split(' ').length > 4 || /\d/.test(x.text)) continue;
+      // (beside it: on its scene's stage when it is held on one, its chapters in their own <article>s; else in its section.
+      // The larger words are a statement of two words or more, each step with a heading of its own: a held title over one
+      // changing word or figure names what changes and is read once, "One climb, four heights" over "Valley", "The ride"
+      // over "30 km/h")
+      const over = (r.heads || []).some((o) => o.id !== x.id && o.kind !== 'l' && (x.stage ? o.stage === x.stage : o.section === x.section) && o.size > x.size * 1.2 && [...wordSet(o.text)].filter((t) => /^\p{L}{3,}$/u.test(t)).length >= 2);
+      const e = labelEls.get(x.id) || { text: x.text, s: [] }; e.s.push({ y: r.y, t: x.t, over, seen: (r.seen || []).filter((s) => s !== x.text) }); labelEls.set(x.id, e);
+    }
+    const byLabel = new Map();
+    for (const e of labelEls.values()) { let sh = showings(e.s, h); if (sh.n > 1 && !e.s.some((x) => x.over)) sh = { n: 1, at: sh.at.slice(0, 1) }; const k = e.text.toLowerCase(); const v = byLabel.get(k) || { text: e.text, n: 0, els: 0, at: [] }; v.n += sh.n; v.els++; v.at.push(...sh.at); byLabel.set(k, v); }
+    const labelsAgain = [...byLabel.values()].filter((v) => v.n >= 3);
+    if (labelsAgain.length && !allow.includes('repeated-label')) findings.push({ level: 'WARN', id: 'repeated-label', width: w, message: `${labelsAgain.length} short heading(s) or label(s) are shown three times or more at rest: ` + labelsAgain.slice(0, 3).map((v) => `"${v.text}" ${v.n} times (${v.els > 1 ? `${v.els} copies` : 'held while the steps change'}, screens ${[...new Set(v.at)].sort((a, b) => a - b).slice(0, 6).join(', ')})`).join('; ') + '.', fix: 'A label is read once. Over a held sequence, name the section once as it arrives and let each step carry its own heading; never print the same label over every step or card.' });
+    // a visit block with no way to get there (r9-p44: opening hours and an email under "Visit the bar", the city in a
+    // label, no street, district or map; the judge marked it high)
+    if (visits && visits.length && !allow.includes('visit-without-directions')) findings.push({ level: 'WARN', id: 'visit-without-directions', width: w, message: `${visits.length} block(s) read as a visit (${visits.slice(0, 2).map((v) => `"${v.head}", by ${v.why}`).join('; ')}) but give no street or district and no link to a map.`, fix: 'A visit block says where to go: a real street in the right district (no house number unless the brief gives one; for a remote place, the nearest town and the road from it), the district, the nearest stop and its line, and a "Directions" link to a map (OpenStreetMap, Google or Apple Maps) beside the opening hours and one contact. The city alone is not an address; never a placeholder street.' });
     if (appMode) {
       findings = findings.filter((f) => !APP_SKIP.has(f.id) && f.id !== 'no-title' && f.id !== 'small-title');
       if (appM) findings.push(...judgeApp(appM, m, { width: w, allow }));
@@ -691,7 +815,7 @@ try {
     // the product replay the sheet dealt (draw.mjs section 8)
     if (dealtReplay && w >= 1100 && ex && !(ex.replays || []).length && !allow.includes('replay-missing')) findings.push({ level: 'FAIL', id: 'replay-missing', width: w, message: `The sheet dealt the product replay "${dealtReplay.name || dealtReplay.id}" in the ${dealtReplay.carries || ''} section, but the page has no [data-replay].`, fix: 'Build the product replay the sheet deals (section 8): the product\'s window in its final state with data-replay and its marked beats, assets/replay.js, and a Replay button under it.' });
     if (w >= 1100 && empty.length >= 2 && !allow.includes('empty-screens')) findings.push({ level: 'FAIL', id: 'empty-screens', width: w, message: `${empty.length} of ${frameChecks.length} desktop screens are almost empty ground (under 20% of the screen holds text, a picture or a colour field): screens ${empty.map(({ f, i }) => screenOf(f, i)).join(', ')}.`, fix: 'An empty screen is a rest only once per page. Elsewhere it means the section is underbuilt: set its content larger, give it the full information, put it on a colour field, or cut it.' });
-    report.viewports.push({ width: w, height: h, load: how, screens: frames.length, pageScreens, stride, extra: ex, reached: reached.map((r) => (r ? r.found : null)), upReach: upReach ? upReach.found : null, unread, overText, frameErrors, filled: frameChecks.map((f) => f?.filled ?? null), content: frameChecks.map((f) => f?.content ?? null), filmContent: filmChecks.map((f) => (f ? [Math.round(f.y / h * 10) / 10, f.content] : null)), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5), missingImages: [...missingPics.keys()].slice(0, 12), photoText: [...onPhoto.values()].slice(0, 24), letters: [...letterSeen.values()].map((v) => ({ text: v.text, size: v.size, shows: v.at.map((s) => s.shows) })), tileWalls: wallRuns });
+    report.viewports.push({ width: w, height: h, load: how, screens: frames.length, pageScreens, stride, extra: ex, reached: reached.map((r) => (r ? r.found : null)), upReach: upReach ? upReach.found : null, unread, overText, frameErrors, filled: frameChecks.map((f) => f?.filled ?? null), content: frameChecks.map((f) => f?.content ?? null), filmContent: filmChecks.map((f) => (f ? [Math.round(f.y / h * 10) / 10, f.content] : null)), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5), missingImages: [...missingPics.keys()].slice(0, 12), photoText: [...onPhoto.values()].slice(0, 24), letters: [...letterSeen.values()].map((v) => ({ text: v.text, size: v.size, shows: v.at.map((s) => s.shows) })), tileWalls: wallRuns, hero, visits, rest: restRuns.map((r) => ({ y: r.y, dy: r.dy, end: r.end, clipped: r.clipped, pics: (r.pics || []).map((p) => `${p.file} ${p.area} @${p.t}`), heads: (r.heads || []).map((x) => `${x.kind} ${x.text.slice(0, 40)} @${x.t}`) })) });
     report.findings.push(...(appMode ? findings.filter((f) => !APP_SKIP.has(f.id)) : findings));
     report.images.push({ viewport: label, width: w, fold, pages: sheets, film: filmSheets, replay: replaySheets, walked: frames.length, stride, pageScreens, atFoot });
     if (replayRuns.length) report.viewports[report.viewports.length - 1].replayBeats = replayRuns.map((rb) => (rb ? { clock: rb.clock, beats: rb.diffs, states: rb.states.map((s) => ({ k: s.k, win: s.win, top: s.top, foot: s.foot, bar: s.bar, bare: s.bare, stuck: s.stuck })) } : null));
@@ -743,6 +867,18 @@ for (const f of report.findings) {
     const more = String(f.fix || '').split(/(?<=\.)\s+/).filter((s) => s && !String(same.fix || '').includes(s)).join(' ');
     if (more) same.fix = same.fix ? same.fix + ' ' + more : more;
     continue;
+  }
+  // (text cut off at another width names other words: a wordmark cut at its top on desktop must not hide a list cut
+  // short on a phone, so those words are kept with their width)
+  if (same && f.id === 'clipped-text' && f.width !== same.width) {
+    const quoted = (m) => (m.match(/"[^"]+"/g) || []), k = (joined.get(same) || 0) + 1;
+    if (k <= 3 && quoted(f.message).some((q) => !same.message.includes(q))) {
+      joined.set(same, k); same.message += ` At ${f.width}px: ` + f.message;
+      if (!(same.alsoAt || []).includes(f.width)) same.alsoAt = [...(same.alsoAt || []), f.width];
+      const more = String(f.fix || '').split(/(?<=\.)\s+/).filter((s) => s && !String(same.fix || '').includes(s)).join(' ');
+      if (more) same.fix = same.fix ? same.fix + ' ' + more : more;
+      continue;
+    }
   }
   if (same && f.id !== 'headline-lines' && f.id !== 'overflow') { if (f.width !== same.width && !(same.alsoAt || []).includes(f.width)) same.alsoAt = [...(same.alsoAt || []), f.width]; continue; }
   merged.push(f);

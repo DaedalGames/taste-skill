@@ -93,6 +93,35 @@ const NOT_PLACE = /^(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june
 const routeInBrief = (brief) => ROUTE_WORDS.test(brief) || [...String(brief || '').matchAll(/\bfrom (\p{Lu}\p{L}+) to (\p{Lu}\p{L}+)/gu)].some((m) => !NOT_PLACE.test(m[1]) && !NOT_PLACE.test(m[2]));
 // sectors whose pages really list eight or more names of their own (rooms, dishes, places, clients, products)
 const NAME_SECTORS = ['hospitality', 'restaurant', 'event', 'culture', 'music', 'agency', 'studio-portfolio', 'personal-portfolio', 'architecture', 'real-estate', 'education', 'nonprofit'];
+// A place people go to: a café, a bar, a restaurant, a shop, a guesthouse, a studio with a door. The restaurant and
+// hospitality sectors, or a word for one in the brief's own subject ("a design studio" has no door to visit; "a pottery
+// studio" has; "a studio designing for restaurants" has none: briefHead stops before the clients).
+// Its visit block names the street and the way there (visitBlock).
+const DOOR_WORDS = /\b(?:caf[eé]s?|coffee (?:bar|shop|house)s?|bars?|pubs?|restaurants?|bistros?|trattorias?|osterias?|bakery|bakeries|roaster(?:y|ies)|brewer(?:y|ies)|taprooms?|delis?|shops?|stores?|boutiques?|bookshops?|florists?|market halls?|guest ?houses?|hotels?|inns?|hostels?|b&bs?|lodges?|cabins?|huts?|campsites?|salons?|barbers?|galler(?:y|ies)|museums?|saunas?|spas?|gyms?|clinics?|(?:dental|medical|physio\w*|vet\w*|doctors?'?|family) practices?|dentists?|theat(?:re|er)s?|cinemas?|venues?|librar(?:y|ies)|winer(?:y|ies)|distiller(?:y|ies)|kiosks?|(?:yoga|pilates|dance|pottery|ceramics?|tattoo|hair|nail|fitness|climbing|print) studios?)\b/i;
+const briefHead = (b) => String(b || '').split(/\s(?:that|which|who|for|with|whose|making|selling|serving|shooting|designing|building)\s|[:;(]/i)[0];
+// The category's stock shots, named on the sheet so they stay off the page unless art-directed (r9-p44 filled a
+// roastery page with full-frame beans and burlap sacks, and the judge read them as generic). The brief's trade first,
+// then the sector's; references/imagery.md §2 keeps the list. The third part finds them among the dealt photographs.
+const CLICHES = [
+  [/\b(?:coffee|espresso|roaster(?:y|ies)?)\b/i, 'full-frame beans, burlap sacks, top-down latte art', /\bbeans filling\b|\bcoffee beans\b|\bburlap\b|\bhessian\b|\bjute sacks?\b|\blatte art\b|\b(?:cup|mug) of coffee\b[^.]*\bfrom above\b/i],
+  [/\b(?:bakery|bakeries|bakers?|bread|patisserie|pastr(?:y|ies))\b/i, 'flour dusted over a board, a loaf on a cloth from above', /\bflour\b[^.]*\bboard\b|\bloaf\b[^.]*\bfrom above\b/i],
+  [/\b(?:wines?|winery|vineyards?)\b/i, 'a glass swirled against the light, vines at sunset', /\bwine ?glass\b|\bvines?\b[^.]*\b(?:sunset|dusk)\b/i],
+  [/\b(?:teas?)\b/i, 'leaves spilled from a spoon, steam over a cup', /\bsteam\b[^.]*\b(?:cup|mug)\b|\btea leaves\b/i],
+  [/\b(?:beers?|brewer(?:y|ies)|taprooms?)\b/i, 'a row of taps, a pint held to the light', /\b(?:beer )?taps\b|\bpint\b/i],
+  [/\b(?:yoga|pilates|fitness|gyms?)\b/i, 'a silhouette at sunrise, a row of dumbbells', /\bdumbbells?\b|\bsilhouett\w*\b[^.]*\bsunrise\b/i],
+];
+const SECTOR_CLICHES = {
+  saas: 'hands on a laptop, a team round a screen', 'dev-tool': 'hands on a laptop, code on a dark screen', 'ai-product': 'a glowing brain, hands on a laptop', 'consumer-app': 'a hand holding up a phone', finance: 'stacked coins, a handshake, a chart on a screen',
+  hospitality: 'a made bed shot straight on, a folded towel, a pool at sunset', restaurant: 'a flat lay of ingredients, a chef plating with tweezers', 'real-estate': 'keys handed over, a drone shot of roofs', architecture: 'a drone shot of roofs, a hard hat on drawings',
+  agency: 'sticky notes on a glass wall, a team laughing at a laptop', 'studio-portfolio': 'a desk with a laptop and a plant', education: 'a raised hand in a lecture hall, books with an apple', health: 'a stethoscope on a desk, a silhouette at sunrise', nonprofit: 'hands joined in a circle, a child looking into the lens',
+  ecommerce: 'smiling models in a studio, the product floating in mid-air on a bright colour', 'physical-product': 'the product floating in mid-air on a bright colour, a smiling model holding it', event: 'confetti over a crowd, a microphone in close-up',
+};
+const SECTOR_CLICHE_PHOTOS = {
+  restaurant: /\b(?:bowls?|salad|plates?|ingredients|cutting board|pastry|nuts)\b[^.]*\b(?:from above|overhead)\b|\boverhead (?:view|arrangement)\b[^.]*\b(?:board|bowls?|pan|kitchen)\b|\bflat ?lay\b/i,
+  hospitality: /\bmade bed\b|\bfolded towels?\b|\bpool at (?:sunset|dusk)\b/i,
+  saas: /\blaptop\b/i, 'dev-tool': /\blaptop\b/i, 'ai-product': /\blaptop\b/i, finance: /\bcoins?\b(?!-operated)|\bhandshake\b/i,
+  'real-estate': /\bkeys\b|\bdrone\b/i, health: /\bstethoscope\b/i, event: /\bconfetti\b/i,
+};
 const NEED_WORDS = { 'product-photo': 'photographs of this very product, building or work', mark: "the brand's own solid mark", route: 'a real route with stops', 'product-ui': "the product's own interface", plan: 'a real plan or exploded drawing', video: 'footage or a frame sequence of this very product' };
 function needWords(need) {
   const parts = need.split('|').map((n) => {
@@ -1145,6 +1174,10 @@ function briefSubject(input) {
   }
   return phrase.filter((w) => /^\p{Ll}{3,}$/u.test(w) && !stop.has(w) && !generic.has(w)).slice(-2);
 }
+// The category's stock shots for this brief, its trade's and its sector's (CLICHES at the top), or none.
+function clicheFor(input) { const b = String(input.brief || ''); const hit = CLICHES.find(([re]) => re.test(b)); return [hit?.[1], SECTOR_CLICHES[input.sector]].filter(Boolean).join('; ') || null; }
+// Whether a dealt photograph is one of those stock shots.
+function clichePhoto(input, alt) { const b = String(input.brief || ''); const hit = CLICHES.find(([re]) => re.test(b)); return [hit?.[2], SECTOR_CLICHE_PHOTOS[input.sector]].some((re) => re && re.test(alt || '')); }
 // Blueprints written for showing software (an interface fragment is their picture).
 function softwareOnly(x) { return (x.directions || [])[0] === 'product-performs' || (x.tags || []).includes('ui-led') || /data-ui|interface fragment/i.test(x.blueprint || ''); }
 // Blueprints were measured on real sites and carry that site's sizes, greys, faces, colours and corners.
@@ -1198,23 +1231,46 @@ function adjustments(bp, s) {
   if (nameColours(s.input.brief).lean === 'light' && /darken|brightness\(0\.|scrim|low-key|white type|type is white/i.test(text)) notes.push('This client\'s name asks for bright pictures (section 4): keep the photograph untouched, no scrim and no `brightness()` under 1; set the words in the ink on its pale calm part, or beside it.');
   // a hero written without a navigation bar fails the inspector's no-nav check (r8-p38's mid-screen rail)
   if (bp.archetype && /\bno navigation\b/i.test(text)) notes.push('It has no navigation bar: the page keeps the navigation section 0 deals, a bar at the top of the first screen apart from the h1, with the real sections as links and the one action.');
+  // the hero's geometry is binding, within the house rules: a drawn shape and a headline on a card are not (round 10)
+  if (bp.archetype && /drawn in CSS|inline SVG path|flat shape at enormous scale/i.test(text)) notes.push('It draws a shape: no drawn or decorative shapes on this page. Cut a photograph of the subject to that outline at the same size and place, or leave the ground plain; the button keeps the page\'s one shape.');
+  if (bp.archetype && /\b(?:printed|menu) card\b/i.test(text)) notes.push('It sets the headline on a card: no headline in a card, panel or box (`hero-in-card`). That half is the page\'s own ground, the same colour, running to the edges with no inset and no corners; the words keep their place and size on it, and the photograph keeps its half.');
+  if (bp.archetype && /\bportrait card\b/i.test(text)) notes.push('It sets the title on a card: no headline in a card, panel or box (`hero-in-card`). The page\'s ground is the paper: the names and the date, time and place sit straight on it where the card held them, with no card, no scalloped corners and no diamond between the lines.');
   return notes;
 }
-// A street, hours and a phone the brief does not give are left out, not made up (r7-p36 printed Musterstrasse 12 and
-// 030 000 000 00 in its visit and footer block). Asked of every blueprint and of the footer dealt in section 0, which
-// outranks them. A product sold online, an app or a portfolio has no door to print, unless its brief gives a street.
+// A street, hours and a phone the brief does not give are never made up as placeholders (r7-p36 printed Musterstrasse
+// 12 and 030 000 000 00 in its visit and footer block). Asked of every blueprint and of the footer dealt in section 0,
+// which outranks them. A product sold online, an app or a portfolio has no door to print, unless its brief gives a
+// street; a place people go to prints a real street without a number and the way there (visitBlock, section 7).
 function visitNote(s, text) {
   const given = visitGiven(s.input.brief);
   // ("on a phone" is the phone layout; a delivery or email address is a form field, and the "address, time or price" of
   // a table row is not where the client is)
   const asksStreet = /\bpostcode\b|(?<!(?:delivery|billing|shipping|e-?mail|web|ip) )\baddress(?:es)?\b(?!,\s*time)/i.test(text);
   const asksPhone = /\b(?:tele)?phone numbers?\b|\btelephone\b/i.test(text);
-  const noDoor = (isSoftware(s.input) || ['physical-product', 'ecommerce', 'personal-portfolio'].includes(s.input.sector)) && !given.street;
-  if (noDoor) return asksStreet || asksPhone ? `This page has no door in its brief: no street, hours${given.phone ? '' : ' or phone'}. In their place the email on the brand's own domain${given.phone ? ', the phone the brief gives' : ''} and the city, if the brief names one; the report lists what to fill (references/copy.md §5).` : null;
+  if (noDoor(s.input)) return asksStreet || asksPhone ? `This page has no door in its brief: no street, hours${given.phone ? '' : ' or phone'}. In their place the email on the brand's own domain${given.phone ? ', the phone the brief gives' : ''} and the city, if the brief names one; the report lists what to fill (references/copy.md §5).` : null;
   const street = asksStreet && !given.street, phone = asksPhone && !given.phone;
   if (!street && !phone) return null;
-  const hours = s.input.sector === 'hospitality' ? 'sample opening hours (or the season and check-in times)' : 'sample opening hours';
-  return `It prints ${[street && 'a street address', phone && 'a phone number'].filter(Boolean).join(' and ')}, which the brief does not give: ${[street && `in place of the street, print the town or area the brief names (a neighbourhood only when the brief names one) with ${hours}, never a placeholder street (Musterstrasse 12, 1 Main Street)`, phone && 'leave the phone out, never a zeroed or patterned number'].filter(Boolean).join('; ')}. The email stays on the brand's own domain, and the report lists what to fill${street ? ', the hours among the sample details' : ''} (references/copy.md §5).`;
+  const where = hasDoor(s.input)
+    ? 'in place of the street address, a real street in the right district of the town, with no house number, and the way there, as "The visit" in section 7 says'
+    : 'in place of the street, the town the brief names';
+  return `It prints ${[street && 'a street address', phone && 'a phone number'].filter(Boolean).join(' and ')}, which the brief does not give: ${[street && `${where}; never a placeholder street (Musterstrasse 12, 1 Main Street)`, phone && 'leave the phone out, never a zeroed or patterned number'].filter(Boolean).join('; ')}. The email stays on the brand's own domain, and the report lists what to fill (references/copy.md §5).`;
+}
+function noDoor(input) { return (isSoftware(input) || ['physical-product', 'ecommerce', 'personal-portfolio'].includes(input.sector)) && !visitGiven(input.brief).street; }
+// A place people go to (DOOR_WORDS at the top): its sector, or a word for one in the brief's own subject (never its
+// clients: "designs for restaurants, bars and hotels" is a studio with no door; an event is dated, never open daily).
+function hasDoor(input) { return !noDoor(input) && (['hospitality', 'restaurant'].includes(input.sector) || (input.sector !== 'event' && DOOR_WORDS.test(briefHead(input.brief)))); }
+// The visit block of a place people go to (r9-p44 gave hours and an email under "Open in Berlin": no street, district,
+// stop or map, and the judge marked it high). Printed once in section 7; the inspector warns visit-without-directions.
+function visitBlock(s) {
+  if (!hasDoor(s.input)) return null;
+  const given = visitGiven(s.input.brief);
+  const house = s.input.sector === 'hospitality';
+  const where = s.input.sections.includes('contact') ? 'the contact section' : 'a short visit section before the footer, which a place people go to always has';
+  // a district the brief names ("Berlin-Neukoelln", "the Kiez") is the client's, not sample copy
+  const district = /\b\p{Lu}\p{L}+-\p{Lu}\p{L}+\b|\b(?:district|quarter|neighbou?rhood|borough|arrondissement|Kiez)\b/u.test(String(s.input.brief || ''));
+  const sample = [!given.street && 'the street', !district && 'the district', 'the way there', house ? 'the season' : 'the hours', !given.phone && 'the email'].filter(Boolean);
+  const remote = (x) => (given.street ? '' : x);
+  return `**The visit: this is a place people go to, so the page says how to get there** (in ${where}): ${given.street ? 'the address the brief gives' : 'the street, a real street in the right district of the town the brief names, with no house number (the brief gives none), or for a remote place or a brief that names only a region, the nearest town and the road from it'}; the district or area${district ? ' the brief names' : ''}; the nearest stop and its line (read from a map in this session or one you are sure of, otherwise the district\'s main station)${remote(', or for a remote place the drive from that town, with no travel time')}; ${house ? 'the season and the check-in times' : 'the opening hours'}; a "Directions" link to a maps service searching that ${given.street ? 'street' : 'street or road'} and town; and one contact (${given.phone ? 'the phone the brief gives, or ' : ''}the email on the brand's own domain${given.phone ? '' : ', since the brief gives no phone'}). Never a placeholder street, never a zeroed phone, never the city's name alone (\`visit-without-directions\`). The report marks ${sample.slice(0, -1).join(', ')} and ${sample.at(-1)} as sample copy for the client to confirm.`;
 }
 // Whether the brief gives a street address (a number beside a street word) and a phone number.
 function visitGiven(brief) {
@@ -1323,13 +1379,13 @@ function techniqueBlock(sc, s, p) {
   // screen, then a fan that hid three of its four texts, each text 900px from its title; r8-p39's line (lib-0240)
   // stranded its words with wide gaps between them and ended on the line alone on flat colour
   p(`- **Avoid, first of all, what breaks it:** ${sc.breaksWhen}`);
-  p('- **Every frame of the hold is a finished, readable composition,** not only the last: never one strip, card or word alone on an empty screen while the rest waits; never a fan, stack or overlap that hides the texts a visitor needs (a covered card shows only what still reads, or nothing); every text beside its own title, never a screen away from it; every word whole and in its place or clearly on its way to it, never stranded with wide gaps between words; no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway. Check the 10% frames of the scenes.mjs sheets one by one: a frame you would not ship as a still is unfinished.');
+  p('- **Every frame of the hold is a finished, readable composition,** not only the last: never one strip, card or word alone on an empty screen while the rest waits; never a fan, stack or overlap that hides the texts a visitor needs (a covered card shows only what still reads, or nothing); every text beside its own title, never a screen away from it; every word whole and in its place or clearly on its way to it, never stranded with wide gaps between words; no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway. **A hold that steps** (statements or pictures in turn): where its steps carry pictures, each step its own picture or a clearly different crop, never one photograph held under every step; where it needs none (see Needs below), the statements stand on the ground alone, with no photograph added; statements as short headlines at display size (40px or more on desktop, two lines at most, marked up as h2 or h3: the 36px statement rule is for paragraphs), never 30px lines beside a picture; no frame between two steps near empty; and without the pin (reduced motion, tablet, phone) no picture repeats: with one picture, show it once and set the steps beside it (`repeated-picture`). Check the 10% frames of the scenes.mjs sheets one by one: a frame you would not ship as a still is unfinished.');
   p(`- **The direction to take:** ${sc.freshTake} That was written for another client: keep the principle and the manner, and take the subject, the pictures and the words from this page.`);
   const why = sc.hold < sc.defaultHold ? ` (the research held it for ${sc.defaultHold}; ${sc.position === 'closing' ? 'a closing scene holds about one screen' : `on this page a scene holds ${sc.hold} at most`})` : !sc.researchHold ? ' (the research ran it without a pin; on the stage it holds one screen)' : '';
   p(`- **Hold:** ${sc.hold} screen${sc.hold === 1 ? '' : 's'} of scroll${why}: \`hold: ${sc.hold}\` in \`Stage.scene\`, its section ${sc.hold + 1} screens tall, each beat about half a screen and something new on screen in every one.`);
   if (sc.trigger === 'scroll-enter') p('- **On the scroll, not on a clock:** in the research it plays once on entry; here spread its timings over the hold so it moves under the scroll, never on a clock inside a held screen.');
   p(`- **Needs:** ${sceneNeedsWords(sc)}.`);
-  p(`- **On a phone:** ${sc.phone === 'same' ? "the same move at phone size (`phone: 'same'`)." : "its own version, as the direction above says (`phone: { hold, build }` in `Stage.scene`), or `phone: 'rest'` with a finished composition that reads whole; never the desktop move squeezed."} Check it at phone width like the desktop.`);
+  p(`- **On a phone:** ${sc.phone === 'same' ? "the same move at phone size (`phone: 'same'`)." : "its own version, as the direction above says (`phone: { hold, build }` in `Stage.scene`), or `phone: 'rest'` with a finished composition that reads whole; never the desktop move squeezed."} Below 600px a list laid over a picture drops into the flow under it, and nothing a visitor reads is clipped by the stage (\`clipped-text\`). Check it at phone width like the desktop.`);
   if (s.replay && sc.needs.includes('product-ui')) p("- **Beside the product replay:** the replay keeps the page's one framed window and its task. Build this one from the product's own interface on the page's own ground, cropped, with no window frame, and let it show something the replay does not.");
   p(`- **Build it on the shared stage** as references/scenes.md §8 shows: a file of your own that registers \`Scenes['<a short id>'] = (root, opts = {}) => Stage.scene(root, { hold: opts.hold ?? ${sc.hold}, build(tl, { q, phone }) { … } })\`, the markup \`<section class="scene" data-scene="<that id>">\` holding one \`.scene-stage\`, and its CSS written as the finished composition first, the live layout under \`.scene.is-live\`. Build it with transforms, clip-path and CSS 3D on the stage's pinned GSAP; where the direction mentions WebGL or a 3D library, take its CSS 3D route. Never copy any site: no layout, picture, word or colour from wherever this was seen; set it in this page's own type, colour, pictures and words. Every rule of references/scenes.md §7 holds (native scroll, readable at rest, no drawn shapes, tracks or particles, no dead frames). Check it with \`node <skill>/scripts/scenes.mjs <page>\` like any scene and look at every sheet.`);
   p(`- **If it cannot be built honestly** within the usual three look-and-fix rounds, take \`--redraw scenes\` and say why in your report; it counts toward the same limit of two scene redraws, and the redraw deals ${fewPictures(s.input) ? 'another scene or technique that needs no photograph or one' : 'tested scenes'}.`);
@@ -1378,7 +1434,7 @@ function render(s) {
   p('**house rules** (including type no smaller than 13px, and running, list and table text of 16px or more) → **the direction** (the idea, the composition habits, where the');
   p('one accent goes) → **the frame, the type system and the palette** (sections 0, 3 and 4: they win over any colour, face, size, corner or footer');
   p('a direction or blueprint names) → **the hero blueprint** → **the section blueprints**. Under each blueprint, "Adjusted for this page" lists where it disagrees.');
-  p('Blueprints are examples of a shape, not drawings to trace: keep the idea of the shape (what is large, what sits beside what) and let the real');
+  p('The hero\'s geometry is binding (section 6): on the first screen it outranks the direction\'s composition, never the house rules, the frame, the type or the palette. Section blueprints are examples of a shape, not drawings to trace: keep the idea of the shape (what is large, what sits beside what) and let the real');
   p('content decide the details. Map every size onto the six type steps. One button shape, one corner radius and one pair of page margins on the');
   p('whole page. If a direction or blueprint asks for a loud colour, a heavy face or a giant size the dealt system does not have, the dealt system wins.');
   p();
@@ -1440,7 +1496,8 @@ function render(s) {
     p();
   }
   p(SOURCES); p(); p(d.imagery);
-  p(); p('**Pictures: fewer, better, larger (the inspector checks them).** Three to eight pictures that show this subject, each requested at least 1.5 times the size it is shown (twice for the hero), all with the treatment dealt in section 0. Before placing one, look at it: if it is soft, random, or could belong to any site, leave the slot out instead. No thumbnails inside sentences, no pictures inside headlines, no small pictures filling a gap, no caption under a picture unless it says something the visitor needs. SVG drawings do not count as pictures. Every file the page asks for exists: a `src`, a `srcset` crop or a CSS background that is not there fails (`missing-image`). Words on a photograph sit on its calm part, of one tone, at 1440, 768 and 390 alike, since the crop moves as the screen narrows (`text-on-photo`). Video only as section 0 deals it.');
+  const cliche = clicheFor(s.input);
+  p(); p(`**Pictures: fewer, better, larger (the inspector checks them).** Three to eight pictures that show this subject, each requested at least 1.5 times the size it is shown (twice for the hero), all with the treatment dealt in section 0. Before placing one, look at it: if it is soft, random, or could belong to any site, leave the slot out instead.${cliche ? ` Not the category's stock shot (${cliche}) unless it is art-directed for this page; ${isSoftware(s.input) ? 'the product\'s own interface and the customer\'s world come first' : 'the client\'s own place, people at work and the product in use come first, and without the client\'s own, the work in close-up'} (references/imagery.md §2).` : ''}` + ' No thumbnails inside sentences, no pictures inside headlines, no small pictures filling a gap, no caption under a picture unless it says something the visitor needs. SVG drawings do not count as pictures. Every file the page asks for exists: a `src`, a `srcset` crop or a CSS background that is not there fails (`missing-image`). Words on a photograph sit on its calm part, of one tone, at 1440, 768 and 390 alike, since the crop moves as the screen narrows (`text-on-photo`). Video only as section 0 deals it.');
   if (s.photos) {
     p();
     p(s.imagery === 'interface' ? `Optional atmosphere, two at most, from the "${s.photos.title || s.photos.set}" set (${s.photos.note}). The page does not need them.` : `Photographs dealt for this build, from the "${s.photos.title || s.photos.set}" set (${s.photos.note})`);
@@ -1452,7 +1509,7 @@ function render(s) {
     else if (brightName) p('Treatment: bright and untouched, high-key, never darkened, dimmed or under a scrim (section 4).');
     // one treatment for every picture (references/imagery.md §6): a black-and-white file is listed only where section 0
     // deals the black-and-white treatment, so a page in colour never mixes the two (nor does --redraw photos)
-    for (const ph of s.photos.photos.filter((x) => !x.mono || s.frame?.treatment?.id === 'mono')) p(`- \`https://picsum.photos/id/${ph.id}/1600/1000\` — ${ph.alt} · ${ph.tone} tone · ${(ph.colours || []).join(', ')}${ph.mono ? ' · black-and-white' : ''}${ph.sameKind ? ' · **may show this kind of product: if it does, show it as the kind in use, never named or priced as this model**' : ''}${ph.calm && ph.calm !== 'none' ? ` · calm area: ${ph.calm}` : ''} · native ${ph.ratio >= 1.15 ? 'landscape' : ph.ratio <= 0.87 ? 'portrait' : 'square'} · photo: ${ph.by}`);
+    for (const ph of s.photos.photos.filter((x) => !x.mono || s.frame?.treatment?.id === 'mono')) p(`- \`https://picsum.photos/id/${ph.id}/1600/1000\` — ${ph.alt} · ${ph.tone} tone · ${(ph.colours || []).join(', ')}${ph.mono ? ' · black-and-white' : ''}${ph.sameKind ? ' · **may show this kind of product: if it does, show it as the kind in use, never named or priced as this model**' : ''}${ph.calm && ph.calm !== 'none' ? ` · calm area: ${ph.calm}` : ''} · native ${ph.ratio >= 1.15 ? 'landscape' : ph.ratio <= 0.87 ? 'portrait' : 'square'} · photo: ${ph.by}${clichePhoto(s.input, ph.alt) ? ' · **the stock shot named above: leave it out unless art-directed**' : ''}`);
     p('The last two path numbers are width and height: request the exact crop you render (`/1200/1500` for a 4:5 portrait, `/2400/1350` for a hero) and');
     // a page with no photographs of its product is not filled with whatever was dealt (Haulet's cargo bikes got a honey
     // dipper and a teapot): with none of its kind here, these are for the world around it at most
@@ -1466,13 +1523,17 @@ function render(s) {
   p();
   const adjust = (bp) => { const n = adjustments(bp, s); if (n.length) { p(); p('Adjusted for this page:'); for (const x of n) p(`- ${x}`); } };
   p(`## 6. Hero — ${s.hero.name}`); p(s.hero.blueprint); p(); p(`On a phone: ${s.hero.mobile}`); if (s.hero.headline) p(`Headline: ${s.hero.headline}`);
+  // r9-p44 was dealt the object on a plain ground and built the stack every model builds (the judge: any café)
+  const sceneHero = (s.scenes || []).some((x) => x.carries === 'hero');
+  p(`**Within the house rules and the adjustments under it, this geometry is binding:** what is large, where the words sit and how the picture is cut, in the dealt type and colour; where section 2 describes the first screen otherwise, this is it${sceneHero ? '. The scene in section 9 sets the first screen\'s picture and its motion; the words keep their places here' : ''}. Its largest type carries the page's own idea (the Headline above says how) or, for a name whose meaning the page is built on (Klee is clover), the name; never a bare category line with nothing of this client in it. Never the template stack of a centred headline, a line under it, two actions and a photograph card with round corners under or beside them (\`template-hero\`).`);
   if (s.hero.split) p('**A split hero takes a large headline:** beside a picture that holds half the screen, the `h1` is 72px (5vw) or more at 1440, on two lines at most, so about 26-30 characters. If the words cannot be that large in their part, the picture goes full-bleed behind them instead; never a small headline in a 50/50 split, which reads as a shop template.');
   adjust(s.hero); p();
   p('## 7. Sections, in order');
-  p('**Words: the whole page is about 300-500 words, a section about 20-80.** Award sites carry about 27 words a screen. Say each thing once, as a fact.');
+  p('**Words: the whole page is about 300-500 words, a section about 20-80.** Award sites carry about 27 words a screen. Say each thing once, as a fact: one heading per idea, never a heading that restates the one above it or a label repeated over every step (`restated-heading`, `repeated-label`).');
   p('Each is one example of a shape for this section: keep what is large and what sits beside what, and let the real content decide the');
   p('details (sizes from the six steps, colours from section 4, corners from section 0). Re-order or drop a section when the argument of the');
   p('page needs it (see references/copy.md), never to fall back to a card grid. A section a scene carries (section 9) is that scene.');
+  const visitText = visitBlock(s); if (visitText) { p(); p(visitText); }
   s.sections.forEach((sec, i) => {
     p();
     if (sec.role === 'footer' && s.frame) { const visit = visitNote(s, s.frame.footer.text); p(`### ${i + 1}. footer — as dealt in section 0`); p(`${s.frame.footer.text}${visit ? ` ${visit}` : ''}`); return; }
@@ -1504,7 +1565,7 @@ function render(s) {
       if (sc.technique) { techniqueBlock(sc, s, p); continue; }
       const what = sc.carries === 'hero' ? 'the first screen' : `the ${sc.carries} section`;
       p(`### ${sc.name} (\`${sc.id}\`) — ${sc.position === 'transition' ? `the hand-over into ${what}` : `carries ${what}`}`);
-      p(`${sc.summary}${sc.hold ? ` Hold: ${sc.hold} screen${sc.hold === 1 ? '' : 's'}${sc.defaultHold > sc.hold ? ` (set \`data-options\` hold to ${sc.hold}, or the lowest value the scene allows; its default is ${sc.defaultHold})` : ''}. Every frame of the hold must read as a finished layout: no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway; on a phone a heading set in letters is whole wherever the scroll stops (\`letters-mid-reveal\`).` : ''}`);
+      p(`${sc.summary}${sc.hold ? ` Hold: ${sc.hold} screen${sc.hold === 1 ? '' : 's'}${sc.defaultHold > sc.hold ? ` (set \`data-options\` hold to ${sc.hold}, or the lowest value the scene allows; its default is ${sc.defaultHold})` : ''}. Every frame of the hold must read as a finished layout: no word split into flying letters, no title sliced by a mask, nothing that looks broken halfway; on a phone a heading set in letters is whole wherever the scroll stops (\`letters-mid-reveal\`), and below 600px a list laid over the picture drops into the flow under it, never clipped by the stage (\`clipped-text\`).` : ''}`);
       if (sc.place) p(`Where: ${sc.place}`);
       if (sc.carries === 'work' && !sc.byRole?.work) p('On the work, the scene is the work: four to six pieces, each stopped flat and large with its own title under it for half a screen, each linking to its piece; the rest go to a plain index under the scene.');
       if (sc.byRole?.[sc.carries]) p(sc.byRole[sc.carries]);
@@ -1540,10 +1601,11 @@ function render(s) {
   p('Headlines two lines or fewer at every width. No eyebrow labels, no monospace, no 01/02/03, no thin rules, no gradients, no shadows at rest,');
   p('no cream-and-terracotta, no violet. The frame: one h1 on the first screen that says what this is, equal outer margins, no');
   p('section huddled on one side with the other half empty, no blank stretch over half a screen, a heading on every section. No picture inside a');
-  p('headline or a sentence, no headline in a card, no giant name or email anywhere, no credits in the footer, no drag or progress bars or range sliders,');
-  p('no switch or checkbox that changes nothing and no line with a knob or dots on it, no page built from boxes, no bento grid, no wall of tiles in');
-  p('several fills and no list drawn as boxes, no heading alone in its column or on its screen, no drawn diagram or chart outside a product');
-  p('fragment, one accent hue, few words, running, list and table text 16px or more.');
+  p('headline or a sentence, no headline in a card, no centred stack of headline, line, two actions and photograph card, no giant name or');
+  p('email anywhere, no credits in the footer, no drag or progress bars or range sliders, no switch or checkbox that changes nothing and no');
+  p('line with a knob or dots on it, no page built from boxes, no bento grid, no wall of tiles in several fills and no list drawn as boxes, no');
+  p('heading alone in its column or on its screen, no drawn diagram or chart outside a product fragment, one accent hue, few words, running,');
+  p('list and table text 16px or more.');
   p('`inspect.mjs` measures all of it.');
   if (s.allow?.length) p(`This direction is allowed: ${s.allow.join(', ')} (the inspector reads this from the saved sheet).`);
   p();

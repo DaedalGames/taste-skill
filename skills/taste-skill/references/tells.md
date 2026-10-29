@@ -100,6 +100,8 @@ against 57% of weak ones.
 | A scene drawing wheels, waves or a scrubber rail (October 2026) | failed (`scene-drawing`, `scene-track`) | Real pictures, the product's interface, or type |
 | A link-column footer on a one-page site (October 2026) | not dealt | One quiet line: name, city, legal, Image credits |
 | A short line held for two screens or more (October 2026) | failed over 1.2 screens (`line-holds`) | One screen a line, or a second beat with new content |
+| The template stack: a centred headline, a line, two actions and a round-cornered photograph card (October 2026) | failed (`template-hero`) | The dealt hero's geometry, its largest type the page's idea or the name |
+| One photograph held under every step of a stepped scene, repeated down the page without the pin (October 2026) | failed at three showings on tablet and phone (`repeated-picture`) | A picture or a crop per step; one picture shown once, the steps beside it |
 
 ## 6. Copy tells
 

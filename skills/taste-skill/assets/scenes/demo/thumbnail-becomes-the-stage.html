@@ -33,11 +33,17 @@
   a { color: inherit; }
   h1, h2, h3, p, figure { margin: 0; }
 
-  .bar { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px var(--margin); }
+  /* the bar hides on the way down and comes back on the way up, on its own solid ground, so the links and the
+     film's pause stay in reach while the scene runs */
+  .bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px var(--margin); background: var(--ground); transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .bar.is-away:not(:focus-within) { transform: translateY(-100%); }
+  @media (prefers-reduced-motion: reduce) { .bar { transition: none; } }
   .bar .mark { font-weight: 600; font-size: 18px; text-decoration: none; letter-spacing: -0.01em; }
   .bar nav { display: flex; gap: 28px; font-size: 16px; }
-  .bar nav a { text-decoration: none; }
-  .bar nav a:hover { text-decoration: underline; text-underline-offset: 0.2em; }
+  .bar nav a, .bar nav button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: none; cursor: pointer; }
+  .bar nav a:hover, .bar nav button:hover { text-decoration: underline; text-underline-offset: 0.2em; }
+  /* the night loop only plays without reduced motion, so its pause only shows then */
+  @media (prefers-reduced-motion: reduce) { .bar nav [data-pause] { display: none; } }
   .button { display: inline-flex; align-items: center; min-height: 46px; padding: 0 22px; background: var(--ink); color: var(--ground); font-size: 16px; font-weight: 500; text-decoration: none; border-radius: 999px; white-space: nowrap; transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1); }
   .button:active { transform: scale(0.97); }
   .button--paper { background: var(--paper); color: var(--night); }
@@ -72,13 +78,13 @@
   .visit .facts dd { margin: 0; font-size: var(--size-lead); line-height: 1.25; letter-spacing: -0.01em; }
   .visit figure img { width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; background: #1a1d20; }
   .visit figcaption { margin-top: 12px; color: var(--muted-paper); font-size: 16px; }
-  .name { margin-top: clamp(96px, 12vw, 180px); font: 500 var(--size-name)/0.84 var(--font-display); letter-spacing: -0.05em; white-space: nowrap; }
-  .credits { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 8px 24px; margin-top: 32px; color: var(--muted-paper); font-size: 16px; }
+  .credits { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 8px 24px; padding: clamp(72px, 9vw, 128px) var(--margin) 40px; background: var(--night); color: var(--muted-paper); font-size: 16px; }
   .credits p { max-width: 62ch; }
 
   @media (max-width: 767px) {
-    .bar { padding-block: 16px; }
-    .bar nav { display: none; }
+    /* the links take a second row under the name and the action */
+    .bar { flex-wrap: wrap; row-gap: 12px; padding-block: 16px; }
+    .bar nav { order: 3; width: 100%; gap: 24px; font-size: 15px; }
     .bar .button { min-height: 40px; padding: 0 16px; }
     .intro { gap: 28px; padding-top: 10svh; }
     .intro .foot { grid-template-columns: 1fr; }
@@ -91,7 +97,7 @@
 <body>
 <header class="bar">
   <a class="mark" href="#top">Orrin Point Baths</a>
-  <nav aria-label="Main"><a href="#night">Night swims</a><a href="#visit">Visit</a></nav>
+  <nav aria-label="Main"><a href="#night">Night swims</a><a href="#visit">Visit</a><button type="button" data-pause>Pause film</button></nav>
   <a class="button" href="#visit">Book a swim</a>
 </header>
 
@@ -117,9 +123,9 @@
         </h2>
       </div>
       <div class="kh-row" aria-hidden="true">
-        <div class="kh-sat"><img src="https://picsum.photos/id/614/480/270" width="480" height="270" alt=""></div>
-        <div class="kh-slot"><img class="kh-slot-poster" src="https://picsum.photos/id/536/480/270" width="480" height="270" alt=""></div>
-        <div class="kh-sat"><img src="https://picsum.photos/id/594/480/270" width="480" height="270" alt=""></div>
+        <div class="kh-sat"><img src="https://picsum.photos/id/614/960/720" width="960" height="720" alt=""></div>
+        <div class="kh-slot"><img class="kh-slot-poster" src="https://picsum.photos/id/536/960/720" width="960" height="720" alt=""></div>
+        <div class="kh-sat"><img src="https://picsum.photos/id/594/960/720" width="960" height="720" alt=""></div>
       </div>
       <div class="kh-window">
         <div class="kh-media">
@@ -164,16 +170,41 @@
         <figcaption>The north ladder, an hour before the lamps come on.</figcaption>
       </figure>
     </div>
-    <p class="name" aria-hidden="true">Orrin Point</p>
-    <div class="credits"><p>Photographs by David Di Veroli, Josefa Holland-Merten, Aurélien Bellanger and Griffin Keller, via Unsplash. The night loop is a slow camera drift over David Di Veroli's photograph.</p><p>An invented place, made for a scene demo.</p></div>
   </section>
 </main>
+
+<footer class="credits"><p>Photographs by David Di Veroli, Josefa Holland-Merten, Aurélien Bellanger and Griffin Keller, via Unsplash. The night loop is a slow camera drift over David Di Veroli's photograph.</p><p>An invented place, made for a scene demo.</p></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
 <script src="../stage.js"></script>
 <script src="../thumbnail-becomes-the-stage.js"></script>
-<script>Stage.smooth(); Stage.init();</script>
+<script>
+  Stage.smooth(); Stage.init();
+  // the bar: away once the page moves down past it, back as soon as it moves up (a few pixels of jitter ignored)
+  (() => {
+    const bar = document.querySelector('.bar');
+    let last = Math.max(0, scrollY);
+    addEventListener('scroll', () => {
+      const y = Math.max(0, scrollY), d = y - last;
+      if (d > 0) { bar.classList.toggle('is-away', y > bar.offsetHeight); last = y; }
+      else if (d < -8 || y === 0) { bar.classList.remove('is-away'); last = y; }
+    }, { passive: true });
+  })();
+  // the night loop's pause: data-paused tells the scene to leave it paused when it comes back on screen. The
+  // label says what a press does, so it carries no pressed state as well
+  (() => {
+    const scene = document.getElementById('night'), film = scene.querySelector('video'), button = document.querySelector('[data-pause]');
+    button.addEventListener('click', () => {
+      const held = !film.hasAttribute('data-paused');
+      film.toggleAttribute('data-paused', held);
+      button.textContent = held ? 'Play film' : 'Pause film';
+      const r = scene.getBoundingClientRect();
+      if (held) film.pause();
+      else if (scene.classList.contains('is-live') && r.bottom > 0 && r.top < innerHeight) film.play().catch(() => {});
+    });
+  })();
+</script>
 </body>
 </html>

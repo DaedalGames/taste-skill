@@ -1,11 +1,13 @@
 // tasteskill / scenes / thumbnail-becomes-the-stage.js
 //
-// A two-line statement sits over a row of small 16:9 thumbnails. The middle one is really a keyhole onto
-// a full-stage chapter picture or loop. As the page scrolls, the side thumbnails tuck in behind it, the
-// keyhole rises and opens to full bleed, and the statement's first line passes through the keyhole's edge
-// (ink outside, paper inside) and settles top-left as the chapter's heading, with an optional note under
-// it. Feature notes then come in over a flat band at the foot of the picture. Use it to open a product,
-// place or film chapter from one strong muted video loop or one strong picture.
+// A statement of one or two lines at display size over a row of large thumbnails set on the layout's columns.
+// The middle one is really a keyhole onto a full-stage chapter picture or loop. As the page scrolls, the keyhole
+// grows over its neighbours while they slide in under it, rises and opens to full bleed; the statement passes
+// through the keyhole's edge (ink outside, paper inside) and slides from centred to flush left, so the same words
+// become the chapter's heading on the picture, with an optional note under it. Feature notes then rise on a flat
+// band at the foot of the picture. Every frame of the hold is a whole composition: the statement and the row
+// fill the first frame, and the picture covers more of the stage at every step after it. Use it to open a
+// product, place or film chapter from one strong muted video loop or one strong picture.
 //
 // Requires stage.js (and stage.css), GSAP 3.15.0 + ScrollTrigger 3.15.0. Load thumbnail-becomes-the-stage.css.
 // Call Stage.smooth() before Stage.init(), so the scene knows whether Lenis is running.
@@ -29,7 +31,8 @@
 //     <div class="kh-window">
 //       <div class="kh-media"><video muted loop playsinline preload="metadata" poster="chapter.jpg"><source src="chapter.mp4" type="video/mp4"></video></div>
 //                                        or <img src="chapter.jpg" alt="…">, or a <picture>. No autoplay attribute:
-//                                        the scene plays the loop while it is on screen and never under reduced motion
+//                                        the scene plays the loop while it is on screen and never under reduced motion,
+//                                        nor while the video has data-paused (set by the page's pause control)
 //       <div class="kh-shade" aria-hidden="true"></div>
 //       <div class="kh-statement-box kh-statement-box--paper" aria-hidden="true">(the same h2 as a div, same spans)</div>
 //       <div class="kh-chapter">
@@ -41,56 +44,69 @@
 // </section>
 //
 // Content:
-//   Line 1 is the chapter's name and becomes its heading; a second line is optional (house rule: two lines at
-//   most). Keep lines to 20 characters or fewer. The type is one size in both roles and is never scaled while it
-//   moves, but a line that would not fit is set smaller before the scene starts: line 1 is held to 62% of the
-//   stage width on desktop and tablet and 82% on phones (wider, and the ink/paper split would last past two
-//   thirds of the scene, because the window must grow past the line before it is wholly inside), and every
-//   other line to the width between the gutters. The finished composition gets the same size when script
+//   The statement is the chapter's heading, word for word, from the first frame to the last (a heading that
+//   loses a line on the way reads as a second, shorter heading). Line 1 names the chapter; a second line is
+//   optional (house rule: two lines at most). Keep lines to 20 characters or fewer. The type is one size in both
+//   roles and is never scaled while it moves, but a line that would not fit is set smaller before the scene
+//   starts: each line is held to 78% of the stage width on desktop and tablet and 88% on phones (the window
+//   must grow past a line before it is wholly inside). The finished composition gets the same size when script
 //   runs, so its heading is the live end frame's; without script a too-long line wraps instead, and the note
 //   below it moves down with it.
-//   The chapter picture keeps its subject in the central 75% x 70% (that crop is the thumbnail) and its upper
-//   left calm and dark (the heading sits there in white). No text burned into pictures.
-//   Feature items: a 2-3 word label and a body of 16 words or fewer. Up to 4 are shown (one row on desktop, two
-//   by two on tablets and in the phone's finished composition, the first 2 while the scene runs on a phone);
-//   any further items stay in the list for screen readers only, so 3 to 12 all work but only 4 are seen.
+//   The chapter picture keeps its subject in the centre: the keyhole opens on about the central half of its
+//   width and three quarters of its height on desktop (that crop is the thumbnail). Its upper left stays calm
+//   and dark (the heading sits there in white). The thumbnails are cropped to the row's shape (close
+//   to square on desktop, 3:4 on portrait tablets, 3:5 on phones), so keep each still's subject in its centre.
+//   No text burned into pictures.
+//   Feature items: a 2-3 word label and a body of 16 words or fewer; give it 3 or 4. While the scene runs on
+//   desktop and tablet the band shows the first 4 (one row on desktop, two by two on tablets and phones from
+//   600px); below 600px wide, or under 540px tall, the list leaves the stage and follows the picture in the
+//   page's flow, every item shown. Items past the fourth stay in the band's list for screen readers only, and
+//   the inspector warns about a list cut short, so do not give it more than 4.
 //
 // Options (data-options JSON), defaults and ranges:
 //   hold       2      screens the stage is held for on desktop and tablet (1.4-2.6)
 //   phoneHold  1.6    screens held on phones under 768px (1.4-2.6)
 //   phone      'same' 'same' runs the scene on phones with phone numbers; 'rest' shows the finished composition
 //   scrub      auto   true (locked to the scrollbar) when Lenis smoothing runs, else 0.5 s of catch-up (0-0.8)
-//   thumb      0.17   thumbnail width as a fraction of the row on desktop and tablet (0.12-0.24). On phones the keyhole
-//                     starts at half the width with its neighbours running off the edges (CSS --kh-thumb-phone: 50%)
+//   thumb      cols   thumbnail width as a share of the row on desktop and tablet (0.12-0.5). By default the
+//                     thumbnails are set on the layout's columns: three (or as many as there are) share the width
+//                     between the gutters; on a portrait screen the keyhole starts at half the width. A share
+//                     smaller than that is lifted to it (small thumbnails leave the opening frames mostly empty
+//                     ground); a larger one runs the neighbours off the edges. On phones the keyhole starts at
+//                     64% of the width with its neighbours running off the edges (CSS --kh-thumb-phone: 64%)
 //   radius     page   keyhole and thumbnail corner radius in px (0-16); defaults to the page's --radius, else 0.
 //                     It always decays to exactly 0 as the window reaches full bleed.
 //   shade      0.3    alpha of the flat scrim laid over the picture once the heading is on it (0-0.6). Lower it for a
 //                     picture whose upper left is already dark (0.1-0.15), so the opened stage lands bright
-//   band       auto   alpha of the flat band behind the feature notes (0-0.85). By default it follows shade, so the
-//                     notes keep the same ground whatever the shade: 0.64 at shade 0.3 (the default), 0.72 at 0.12
-//   heading    0.15   where the heading settles, as a fraction of the stage height from the top (0.1-0.25)
+//   band       1      alpha of the flat band the feature notes sit on, across the foot of the picture (0-1). Solid by
+//                     default, so the notes are on the band and not on the picture; under 0.9 the inspector reads them
+//                     as captions set on the picture (caption-on-media)
+//   heading    0.15   where the heading settles, as a fraction of the stage height from the top (0.1-0.25). The
+//                     statement starts at the same height, so it only slides across to become the heading
 //   nav        ''     selector of a fixed nav; it gets the class is-on-dark while the opened picture lies under it,
 //                     until the stage has scrolled past it (style .is-on-dark in the page)
 //
 // Page tokens it follows when they exist: --ground (or --bg), --ink, --paper, --font-display, --font-text,
-// --margin (side gutter), --radius.
+// --margin (side gutter), --gutter (the gap between the thumbnails), --radius.
 //
 // Everything the scrubbed timeline moves is a plain proxy object turned into custom properties by render()
-// (--kh-t transform, --kh-o opacity, --kh-clip, --kh-win-o, --kh-band), each written on the element that uses
-// it. The CSS gives every one its p = 0 value as the live default, so a fresh load or a ScrollTrigger refresh at
-// any point of the scene shows the right frame.
+// (--kh-t transform, --kh-o opacity, --kh-clip, --kh-win-o, --kh-band, --kh-veil), each written on the element
+// that uses it. The CSS gives every one its p = 0 value as the live default, so a fresh load or a ScrollTrigger
+// refresh at any point of the scene shows the right frame.
 //
-// crosses words: `.kh-window` the keyhole opens behind line 1, never over it: the statement stays above the
-// window, and line 1 carries its own paper copy (.kh-paper-ink, made by the script), clipped to the window, so
-// where the edge passes the line it recolours each glyph whole (ink outside, paper inside). The second line
-// has faded before the window reaches it.
+// crosses words: `.kh-window` the keyhole opens behind the statement, never over it: the statement stays above
+// the window, and each line carries its own paper copy (drawn by its .kh-in::after from data-paper, which the
+// script sets), clipped to the window, so where the edge passes a line it recolours the letters it passes
+// (ink outside, paper inside). The neighbours never rise above the window's top edge.
 (() => {
   const ID = 'thumbnail-becomes-the-stage';
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const num = (v, d) => (typeof v === 'number' && isFinite(v) ? v : d);
   const px = (v) => Math.round(v * 100) / 100;
-  // line 1 at most this share of the stage width, so it is wholly inside the opening window by about p 0.6
-  const LEAD_SHARE = 0.62, LEAD_SHARE_PHONE = 0.82;
+  // a line at most this share of the stage width, so it is wholly inside the opening window by about p 0.35
+  const LEAD_SHARE = 0.78, LEAD_SHARE_PHONE = 0.88;
+  // where the feature notes leave the stage and follow the picture in the page's flow
+  const LIST_OUT = '(max-width: 599px), (max-height: 539px)';
 
   let measureCtx = null;
   const ctx2d = () => (measureCtx = measureCtx || document.createElement('canvas').getContext('2d'));
@@ -120,14 +136,8 @@
   // a style property written only when its string changes
   const writer = (el, prop) => { let last = ''; return (v) => { if (v !== last) { last = v; el.style.setProperty(prop, v); } }; };
 
-  // a line's own words, without the paper copy the script nests in line 1
-  const PAPER = 'kh-paper-ink';
-  const textOf = (el) => {
-    let s = '';
-    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-    for (let n = w.nextNode(); n; n = w.nextNode()) if (!n.parentElement.closest('.' + PAPER)) s += n.nodeValue;
-    return s;
-  };
+  // a line's own words (its paper copy is generated content, so it is never in the text)
+  const textOf = (el) => el.textContent || '';
 
   function make(root, opts = {}) {
     const o = {
@@ -138,10 +148,23 @@
       heading: clamp(num(opts.heading, 0.15), 0.1, 0.25),
       nav: typeof opts.nav === 'string' ? opts.nav : '',
     };
-    if (opts.thumb != null) root.style.setProperty('--kh-thumb', clamp(num(+opts.thumb, 0.17), 0.12, 0.24) * 100 + '%');
+    // a share under the columns is lifted to them by the CSS (max()), so old pages' 0.12-0.24 still work
+    if (opts.thumb != null) root.style.setProperty('--kh-thumb', clamp(num(+opts.thumb, 0.3), 0.12, 0.5) * 100 + '%');
     if (opts.radius != null) root.style.setProperty('--kh-radius', clamp(num(+opts.radius, 0), 0, 16) + 'px');
     if (opts.shade != null) root.style.setProperty('--kh-shade', clamp(num(+opts.shade, 0.3), 0, 0.6));
-    if (opts.band != null) root.style.setProperty('--kh-band-alpha', clamp(num(+opts.band, 0.6), 0, 0.85));
+    // the band is the scene's night, solid; a band option under 1 lets the picture show through it. The night is
+    // written as rgb() with the band's alpha, which the inspector reads (it does not read color-mix())
+    const band = opts.band != null ? clamp(num(+opts.band, 1), 0, 1) : 1;
+    if (band < 1) {
+      const t = document.createElement('i');
+      t.style.color = 'var(--kh-night)';
+      root.appendChild(t);
+      const c = getComputedStyle(t).color;
+      t.remove();
+      const q = /^rgba?\(/.test(c) ? (c.match(/[\d.]+/g) || []).slice(0, 3) : [];
+      const a = Math.round(band * 100) / 100;
+      root.style.setProperty('--kh-band-ground', q.length === 3 ? `rgb(${q.join(' ')} / ${a})` : `color-mix(in srgb, var(--kh-night) ${Math.round(band * 100)}%, transparent)`);
+    }
     if (opts.heading != null) root.style.setProperty('--kh-head', o.heading * 100 + 'svh'); // the finished composition puts it there too
 
     const stageEl = root.querySelector(':scope > .scene-stage');
@@ -168,22 +191,19 @@
     // live and finished). Natural widths come from the font itself, so wrapping in the finished composition
     // does not hide them. Returns the factor in use.
     const inkLines = [...inkBox.querySelectorAll('.kh-line')];
-    const inkLead = inkBox.querySelector('.kh-line--lead') || inkLines[0];
     const statementEl = inkBox.querySelector('.kh-statement') || inkBox;
-    // line 1's paper copy, nested in the ink line itself (after the window's copy was cloned, so that one
-    // has none): while the scene runs it is clipped to the window, so the line is recoloured in place
-    const leadIn = inkLead ? inkLead.querySelector('.kh-in') || inkLead : null;
-    let veil = leadIn ? leadIn.querySelector(':scope > .' + PAPER) : null;
-    if (leadIn && !veil) {
-      veil = document.createElement('span');
-      veil.className = PAPER;
-      veil.setAttribute('aria-hidden', 'true');
-      veil.textContent = textOf(leadIn).trim();
-      leadIn.appendChild(veil);
-    }
+    root.style.setProperty('--kh-lines', Math.max(1, inkLines.length));
+    // each line's paper copy: the line's own words in data-paper, drawn by the CSS as .kh-in::after (generated
+    // content, so the heading's text, find-in-page and screen readers have each line once). While the scene runs
+    // it is clipped to the window (--kh-veil), so the line is recoloured in place
+    const lines = inkLines.map((line) => {
+      const inn = line.querySelector('.kh-in') || line;
+      inn.dataset.paper = textOf(inn).replace(/\s+/g, ' ').trim();
+      return { line, inn };
+    });
     const fit = (phone) => {
       const W = stageEl.clientWidth || root.clientWidth;
-      if (!W || !inkLead) return 1;
+      if (!W || !inkLines.length) return 1;
       const now = parseFloat(root.style.getPropertyValue('--kh-fit')) || 1;
       let f = 1;
       try {
@@ -193,7 +213,7 @@
         const room = W - 2 * gutter - 2; // a little under, so the finished composition never wraps on a rounding
         for (const l of inkLines) {
           const natural = c.measureText(textOf(l).replace(/\s+/g, ' ').trim()).width / now; // at the CSS size
-          const cap = l === inkLead ? Math.min(room, (phone ? LEAD_SHARE_PHONE : LEAD_SHARE) * W) : room;
+          const cap = Math.min(room, (phone ? LEAD_SHARE_PHONE : LEAD_SHARE) * W);
           if (natural > 0) f = Math.min(f, cap / natural);
         }
       } catch { return now; }
@@ -211,15 +231,62 @@
     try { window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', later); } catch {}
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(restFit);
 
+    // ---- the feature notes on a narrow or short screen ----
+    // While the scene runs below 600px wide (or under 540px tall) the notes leave the stage, where four would not
+    // fit at the picture's foot, and follow the picture in the page's flow: the script moves the list into
+    // .kh-after at the foot of the section, the section grows by its height (--kh-after) and the stage lets go
+    // that much earlier, so the list comes up under the picture as the stage scrolls on. Nothing is cut off.
+    const features = win.querySelector('.kh-features');
+    const listOut = window.matchMedia(LIST_OUT);
+    let after = null, home = null, homeNext = null, sizer = null, running = false, queued = false;
+    const refresh = () => {
+      if (queued || !window.ScrollTrigger) return;
+      queued = true;
+      requestAnimationFrame(() => { queued = false; ScrollTrigger.refresh(); });
+    };
+    // the list's own height and the box's padding, never the box itself: the box's min-height is this number, so
+    // measuring the box would hold it at its last height when the list gets shorter
+    const sizeAfter = () => {
+      let h = 0;
+      if (after && after.isConnected && features.parentNode === after) {
+        const cs = getComputedStyle(after);
+        h = Math.ceil(features.getBoundingClientRect().height + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0));
+      }
+      const v = h ? h + 'px' : '';
+      if (v !== root.style.getPropertyValue('--kh-after')) {
+        if (v) root.style.setProperty('--kh-after', v); else root.style.removeProperty('--kh-after');
+        refresh();
+      }
+    };
+    const place = () => {
+      if (!features) return;
+      const out = running && root.classList.contains('is-live') && listOut.matches;
+      if (out && features.parentNode !== after) {
+        if (!after) { after = document.createElement('div'); after.className = 'kh-after'; }
+        home = features.parentNode; homeNext = features.nextSibling;
+        after.appendChild(features);
+        root.appendChild(after);
+        root.classList.add('kh-list-after');
+        if (window.ResizeObserver) { sizer = sizer || new ResizeObserver(sizeAfter); sizer.observe(features); }
+      } else if (!out && after && features.parentNode === after) {
+        home.insertBefore(features, homeNext && homeNext.parentNode === home ? homeNext : null);
+        after.remove();
+        root.classList.remove('kh-list-after');
+        if (sizer) sizer.disconnect();
+      }
+      sizeAfter();
+    };
+    try { listOut.addEventListener('change', place); } catch {}
+
     const Stage = window.Stage;
     if (window.ScrollTrigger) ScrollTrigger.config({ ignoreMobileResize: true });
     const scrub = o.scrub === true || typeof o.scrub === 'number' ? (o.scrub === true ? true : clamp(o.scrub, 0, 0.8)) : Stage.lenis ? true : 0.5;
 
     const build = (tl, ctx) => {
       const { stage } = ctx;
-      const lineOf = (box) => { const ls = [...box.querySelectorAll('.kh-line')]; const lead = box.querySelector('.kh-line--lead') || ls[0]; return { lead, rest: ls.filter((l) => l !== lead) }; };
-      const ink = lineOf(inkBox), paper = lineOf(paperBox);
-      if (!ink.lead || !paper.lead) return;
+      if (!lines.length) return;
+      running = true;
+      place();
       const slotAt = thumbs.indexOf(slot);
       const sats = thumbs.filter((t) => t !== slot).map((el) => {
         const i = thumbs.indexOf(el);
@@ -227,23 +294,22 @@
       });
       const media = win.querySelector('.kh-media');
       const shade = win.querySelector('.kh-shade');
-      const features = win.querySelector('.kh-features');
       const items = features ? [...features.children] : [];
       const note = win.querySelector('.kh-note');
       const video = media && media.querySelector('video');
+      const hold = ctx.phone ? o.phoneHold : o.hold;
 
       const w = {
         clip: writer(win, '--kh-clip'), winO: writer(win, '--kh-win-o'), // its own name: --kh-o would be inherited by the notes
         media: media ? writer(media, '--kh-t') : () => {},
         row: writer(row, '--kh-t'),
-        inkLead: writer(ink.lead, '--kh-t'),
-        inkColour: leadIn ? writer(leadIn, 'color') : () => {}, veil: veil ? writer(veil, 'clip-path') : () => {},
-        paperLead: writer(paper.lead, '--kh-t'),
-        rest: ink.rest.map((l) => ({ t: writer(l, '--kh-t'), o: writer(l, '--kh-o'), v: writer(l, '--kh-vis') })),
+        // each line of the statement: its place, its ink (clear once the line lies wholly on the picture) and
+        // its paper copy's clip
+        lines: lines.map((l) => ({ t: writer(l.line, '--kh-t'), ink: writer(l.inn, 'color'), veil: writer(l.inn, '--kh-veil') })),
         shade: shade ? writer(shade, '--kh-o') : () => {},
         band: features ? writer(features, '--kh-band') : () => {},
         items: items.map((li) => ({ t: writer(li, '--kh-t'), o: writer(li, '--kh-o') })),
-        note: note ? { t: writer(note, '--kh-t'), o: writer(note, '--kh-o') } : null,
+        note: note ? { t: writer(note, '--kh-t'), o: writer(note, '--kh-o'), top: writer(note, '--kh-note-top') } : null,
       };
 
       // proxies: normalised values the timeline drives; render() turns them into geometry and styles
@@ -251,6 +317,7 @@
       const A = { v: 0 }, K = { v: 0 }, E = { v: 0 }, R = { v: radius0() }, M = { v: 0 }, F = { v: 1 }, S = { v: 0 }, B = { v: 0 }, N = { v: 0 };
       const I = items.map(() => ({ v: 0 }));
       const V = thumbs.map(() => ({ v: 0 })); // entry reveal, one per thumbnail
+      const D = { v: 0 }; // the scroll's own progress; the scene's timeline is played from it (see render)
 
       // geometry, measured on every refresh (offsets ignore transforms)
       let g = null;
@@ -263,21 +330,33 @@
         const so = offset(slot);
         const next = thumbs[slotAt + 1] || thumbs[slotAt - 1];
         const gap = next ? Math.abs(next.offsetLeft - slot.offsetLeft) - tw : 12;
-        const lo = offset(ink.lead);
-        const ib = inkBounds(ink.lead);
         const gutter = parseFloat(getComputedStyle(paperBox).paddingLeft) || Math.round(W * 0.03);
-        const vo = veil ? offset(veil) : lo;
-        // the lowest edge of the other lines, which must have faded before the window reaches them
-        const restBottom = ink.rest.reduce((b, l) => Math.max(b, offset(l).y + l.offsetHeight), -Infinity);
+        // each line: where it is at rest and where it settles (flush left at the gutter, the statement's top at
+        // the heading's height, so the centred lines only slide across into a heading set flush left)
+        const top0 = offset(lines[0].line).y;
+        const L = lines.map((l) => {
+          const lo = offset(l.line), ib = inkBounds(l.line), vo = offset(l.inn);
+          return {
+            dx: gutter - lo.x, dy: o.heading * H - top0,
+            // the inked box at rest (where its glyphs actually paint), in stage pixels
+            lx: lo.x + ib.x, ly: lo.y + ib.y, lw: ib.w, lh: ib.h,
+            // its paper copy's box at rest (the ::after fills .kh-in)
+            vx: vo.x, vy: vo.y, vw: l.inn.offsetWidth, vh: l.inn.offsetHeight,
+          };
+        });
+        const noteGap = parseFloat(getComputedStyle(root).getPropertyValue('--kh-note-gap')) || 24;
+        // with the notes in the page's flow the section is longer than the hold by their height: the scene is
+        // played out by the time the stage lets go (fin), its last beats (the notes) being in the flow instead
+        const extra = after && features && features.parentNode === after ? parseFloat(root.style.getPropertyValue('--kh-after')) || 0 : 0;
+        const fin = extra > 0 ? (hold * H) / (hold * H + extra) : 1;
         return {
           W, H, tw, th, gap, cx0: so.x + tw / 2, cy0: so.y + th / 2,
           s0: Math.min(1, 1.3 * Math.max(tw / W, th / H)),
-          dx: gutter - lo.x, dy: o.heading * H - lo.y,
-          // line 1's inked box at rest (where its glyphs actually paint), in stage pixels
-          lx: lo.x + ib.x, ly: lo.y + ib.y, lw: ib.w, lh: ib.h,
-          // its paper copy's box at rest
-          vx: vo.x, vy: vo.y, vw: veil ? veil.offsetWidth : 0, vh: veil ? veil.offsetHeight : 0,
-          restBottom,
+          L,
+          // the note sits under the settled heading, whatever its line height
+          noteTop: o.heading * H + statementEl.offsetHeight + noteGap,
+          sx: sats.map((n) => offset(n.el).x), // each neighbour's left edge at rest
+          fin, span: extra > 0 ? 0.8 : 1,
           navY: nav ? navLine() : 0,
         };
       };
@@ -287,85 +366,95 @@
       const navLine = () => { const r = nav.getBoundingClientRect(); return Math.max(0, r.top + r.height / 2); };
       const setNav = (d) => { if (nav && d !== navDark) { navDark = d; nav.classList.toggle('is-on-dark', d); } };
 
+      // ---- the scene's timeline (positions and durations are fractions of the hold) ----
+      // It is paused and played from the scroll's progress D in render(), so that with the notes in the page's
+      // flow it can end as the stage lets go. Shaped curves inside the scrub (power1 = quadratic, power2 = cubic
+      // in GSAP's names). Only proxies are tweened, never the page's elements, so a refresh cannot leave a
+      // half-applied style behind.
+      const scene = gsap.timeline({ paused: true, defaults: { ease: 'none' } });
+      const ft = (target, from, to, at, dur, ease = 'none') => scene.fromTo(target, { v: from }, { v: to, duration: dur, ease, immediateRender: false }, at);
+      // the close starts at once: the keyhole grows over its neighbours as they slide in under it, fast at first,
+      // so the picture covers more of the stage at every step; it rises (the row rides on it) and reaches full
+      // bleed at 0.66
+      ft(A, 0, 1, 0.02, 0.4, 'power1.inOut');       // the neighbours slide in under the keyhole
+      ft(E, 0, 1, 0.02, 0.64, 'power1.out');        // window growth and media scale
+      ft(K, 0, 1, 0.02, 0.56, 'power1.inOut');      // window rise (the row rides on it)
+      scene.fromTo(R, { v: () => radius0() }, { v: 0, duration: 0.16, ease: 'power1.in', immediateRender: false }, 0.5); // radius and inset reach 0 together at 0.66
+      ft(M, 0, 1, 0.12, 0.54, 'power2.inOut');      // the statement slides across into the heading, flush left
+      ft(F, 1, 0, 0.36, 0.06);                      // guard: the neighbours are already covered by the window
+      ft(S, 0, 1, 0.05, 0.12);                      // flat scrim on before the statement reaches the picture
+      ft(B, 0, 1, 0.74, 0.1, 'power2.out');         // the band rises from the foot of the picture
+      // the notes that are shown (CSS keeps any past the fourth for screen readers) rise one after another by 0.94
+      const shown = Math.max(1, items.filter((li) => li.offsetWidth > 2).length);
+      const each = shown > 1 ? Math.min(0.025, 0.075 / (shown - 1)) : 0;
+      I.forEach((P, i) => ft(P, 0, 1, 0.76 + Math.min(i, shown - 1) * each, 0.11, 'power2.out'));
+      if (note) ft(N, 0, 1, 0.71, 0.08, 'power2.out');
+      if (scene.duration() < 1) scene.to({}, { duration: 1 - scene.duration() }, scene.duration());
+
       let reveal = null;
       const render = () => {
         if (!g) g = measure();
         if (!g) return;
-        if (reveal && reveal.progress() < 1 && tl.progress() > 0) reveal.progress(1);
-        const { W, H, tw, th, gap, cx0, cy0, s0, dx, dy, lx, ly, lw, lh } = g;
-        const alt = A.v, k = K.v, e = E.v, m = M.v;
+        scene.progress(clamp((D.v * g.span) / g.fin, 0, 1));
+        if (reveal && reveal.progress() < 1 && D.v > 0) reveal.progress(1);
+        const { W, H, tw, th, gap, cx0, cy0, s0 } = g;
+        const k = K.v, e = E.v, m = M.v;
         const vSlot = V[slotAt].v;
 
-        // neighbours slide in under the keyhole and shrink about their inner edge; the row rides up with the
-        // keyhole (same lift, same centre), so the window always stays seated on it and no ground shows below
-        const slide = Math.min(1, 3 * alt), sc = 1 - alt / 2;
-        for (const s of sats) {
-          const v = V[thumbs.indexOf(s.el)].v;
-          s.t(`translate3d(${px(s.side * s.k * (tw + gap) * slide)}px,${px(16 * (1 - v))}px,0) scale(${px(sc * 1000) / 1000})`);
-          s.o(String(px(F.v * v)));
-        }
-        w.row(`translate3d(0,${px((H / 2 - cy0) * k)}px,0)`);
-
-        // the window: rises (k), grows (e), loses its radius last (R); the media is centred on it and zooms with it
+        // the window: grows (e), rises (k), loses its radius last (R); the media is centred on it and zooms with it.
+        // It grows faster than it rises, so for a while its foot runs past the bottom of the stage.
         const cy = cy0 + (H / 2 - cy0) * k + 16 * (1 - vSlot);
         const cx = cx0 + (W / 2 - cx0) * k;
         const ww = tw + (W - tw) * e, hh = th + (H - th) * e;
         const s = s0 + (1 - s0) * e;
         const top = Math.max(0, cy - hh / 2), bottom = Math.max(0, H - cy - hh / 2);
         const left = Math.max(0, cx - ww / 2), right = Math.max(0, W - cx - ww / 2);
+
+        // neighbours slide in under the keyhole and shrink a little about their inner edge, while the growing
+        // window covers them; the row rides up with the keyhole (same lift, same centre), so the window always
+        // stays seated on it and the neighbours never rise above its top edge. The last strip of a neighbour the
+        // window has nearly covered fades as it narrows, so no frame shows a sliver beside the window.
+        const slide = A.v, sc = 1 - 0.12 * A.v;
+        sats.forEach((n, j) => {
+          const v = V[thumbs.indexOf(n.el)].v;
+          const shift = n.side * n.k * (tw + gap) * slide;
+          const inner = n.side > 0 ? g.sx[j] + tw + shift : g.sx[j] + shift; // the edge the scale keeps in place
+          const lo = n.side > 0 ? inner - tw * sc : inner, hi = n.side > 0 ? inner : inner + tw * sc;
+          const seen = n.side > 0 ? Math.min(hi, left) - Math.max(lo, 0) : Math.min(hi, W) - Math.max(lo, W - right);
+          n.t(`translate3d(${px(shift)}px,${px(16 * (1 - v))}px,0) scale(${px(sc * 1000) / 1000})`);
+          n.o(String(px(F.v * v * clamp((seen - 12) / 48, 0, 1))));
+        });
+        w.row(`translate3d(0,${px((H / 2 - cy0) * k)}px,0)`);
         const r = top + bottom + left + right < 0.5 ? 0 : R.v;
         w.clip(`inset(${px(top)}px ${px(right)}px ${px(bottom)}px ${px(left)}px round ${px(r)}px)`);
         w.winO(String(px(vSlot)));
         w.media(`translate3d(${px(cx - W / 2)}px,${px(cy - H / 2)}px,0) scale(${Math.round(s * 10000) / 10000})`);
         w.shade(String(px(S.v)));
 
-        // the other lines leave as the neighbours tuck in, and in any case 12px before the rising window
-        // would reach them: the statement lies above the window, so nothing may be left of them there
-        const lift = -24 * alt;
-        const room = vSlot > 0 ? (top - (g.restBottom + lift) - 12) / 48 : 1;
-        const restO = clamp(Math.min(1 - 1.6 * alt, room), 0, 1);
-        for (const rl of w.rest) { rl.o(String(px(restO))); rl.v(restO > 0 ? 'visible' : 'hidden'); rl.t(`translate3d(0,${px(lift)}px,0)`); }
+        // the statement becomes the heading whole, word for word: each line slides from centred to flush left
+        // at the gutter. Its paper copy shows exactly where the window lies behind it (the same rectangle and
+        // corners, in its own coordinates), so the window's edge recolours the line instead of passing over it
+        g.L.forEach((q, i) => {
+          const lw_ = w.lines[i];
+          lw_.t(`translate3d(${px(q.dx * m)}px,${px(q.dy * m)}px,0)`);
+          const vx = q.vx + q.dx * m, vy = q.vy + q.dy * m;
+          // a line wholly on the window is set in paper itself and its copy is put away, so no ink fringe lines
+          // the paper letters; it goes back to ink and copy if the line ever leaves the window
+          const gx = q.lx + q.dx * m, gy = q.ly + q.dy * m;
+          const within = vSlot >= 1 && gx >= left && gx + q.lw <= W - right && gy >= top && gy + q.lh <= H - bottom;
+          lw_.veil(vSlot > 0 && !within ? `inset(${px(top - vy)}px ${px(vx + q.vw - (W - right))}px ${px(vy + q.vh - (H - bottom))}px ${px(left - vx)}px round ${px(r)}px)` : 'inset(100%)');
+          lw_.ink(within ? 'var(--kh-paper)' : '');
+        });
 
-        // line 1 travels to the heading spot; the ink copy and the paper copy move as one
-        const lt = `translate3d(${px(dx * m)}px,${px(dy * m)}px,0)`;
-        w.inkLead(lt); w.paperLead(lt);
-        // line 1's nested paper copy shows exactly where the window lies behind it (the same rectangle and
-        // corners, in its own coordinates), so the edge recolours the line instead of passing over it
-        if (veil) {
-          const vx = g.vx + dx * m, vy = g.vy + dy * m;
-          w.veil(vSlot > 0 ? `inset(${px(top - vy)}px ${px(vx + g.vw - (W - right))}px ${px(vy + g.vh - (H - bottom))}px ${px(left - vx)}px round ${px(r)}px)` : 'inset(100%)');
-        }
-        // under a wholly covered line the ink has nothing left to show: it goes clear, so no ink fringe
-        // lines the paper letters, and comes back if the line ever leaves the window
-        const gx = lx + dx * m, gy = ly + dy * m;
-        const within = vSlot >= 1 && gx >= left && gx + lw <= W - right && gy >= top && gy + lh <= H - bottom;
-        w.inkColour(within && veil ? 'transparent' : '');
-
-        // the chapter: the band draws in from the left, the note and the feature notes rise into place
+        // the chapter: the band rises from the foot, the note and the feature notes rise into place
         w.band(String(px(B.v)));
         items.forEach((li, i) => { const v = I[i].v; w.items[i].o(String(px(v))); w.items[i].t(`translate3d(0,${px(24 * (1 - v))}px,0)`); });
-        if (w.note) { w.note.o(String(px(N.v))); w.note.t(`translate3d(0,${px(8 * (1 - N.v))}px,0)`); }
+        if (w.note) { w.note.top(px(g.noteTop) + 'px'); w.note.o(String(px(N.v))); w.note.t(`translate3d(0,${px(8 * (1 - N.v))}px,0)`); }
         if (nav) setNav(!pastNav && vSlot >= 1 && top <= g.navY);
       };
 
-      // ---- the scrubbed timeline (positions and durations are fractions of the scene) ----
-      // shaped curves inside the scrub (power1 = quadratic, power2 = cubic in GSAP's names). Only proxies are
-      // tweened, never the page's elements, so a refresh cannot leave a half-applied style behind.
-      const ft = (target, from, to, at, dur, ease = 'none') => tl.fromTo(target, { v: from }, { v: to, duration: dur, ease, immediateRender: false }, at);
-      ft(A, 0, 0.25, 0.08, 0.14, 'power1.in');      // the neighbours lead
-      ft(A, 0.25, 1, 0.22, 0.34, 'power1.out');
-      ft(K, 0, 1, 0.12, 0.58, 'power1.out');        // window rise (the row rides on it)
-      ft(E, 0, 1, 0.14, 0.72, 'power1.inOut');      // window growth and media scale
-      tl.fromTo(R, { v: () => radius0() }, { v: 0, duration: 0.16, ease: 'power1.in', immediateRender: false }, 0.7); // radius and inset reach 0 together at 0.86
-      ft(M, 0, 1, 0.36, 0.5, 'power2.inOut');       // line 1 hand-off
-      ft(F, 1, 0, 0.3, 0.1);                        // guard: the neighbours are already hidden behind the window
-      ft(S, 0, 1, 0.26, 0.16);                      // flat scrim on before line 1 reaches the picture
-      ft(B, 0, 1, 0.78, 0.12, 'power2.out');        // the band under the notes
-      // the notes that are shown (CSS keeps the rest for screen readers) arrive one after another by 0.945
-      const shown = Math.max(1, items.filter((li) => li.offsetWidth > 2).length);
-      const each = shown > 1 ? Math.min(0.015, 0.045 / (shown - 1)) : 0;
-      I.forEach((P, i) => ft(P, 0, 1, 0.83 + Math.min(i, shown - 1) * each, 0.07, 'power2.out'));
-      if (note) ft(N, 0, 1, 0.86, 0.06, 'power2.out');
+      // the scrubbed timeline itself only carries the scroll's progress
+      tl.fromTo(D, { v: 0 }, { v: 1, duration: 1, ease: 'none', immediateRender: false }, 0);
       tl.eventCallback('onUpdate', render);
 
       // ---- entry reveal, time-based, before the hold: the statement rises out of its masks, the row settles ----
@@ -382,13 +471,15 @@
       let alive = true;
       ScrollTrigger.create({
         trigger: root, start: 'top bottom', end: 'bottom top',
-        onRefresh: () => { g = null; render(); },
+        onRefresh: () => { g = null; scene.invalidate(); render(); },
         onToggle: (self) => {
           if (!video) return;
-          if (self.isActive) { const p = video.play(); if (p && p.catch) p.catch(() => {}); } else video.pause(); // never rewound
+          // never rewound, and left alone once the visitor has paused it (the page's control sets data-paused)
+          if (self.isActive && !video.hasAttribute('data-paused')) { const p = video.play(); if (p && p.catch) p.catch(() => {}); } else video.pause();
         },
       });
-      // a fixed nav turns light while the window lies under it, and back once the stage has gone past it
+      // a fixed nav turns light while the window lies under it (and the notes' dark ground after it, when they
+      // follow in the flow), and back once the section has gone past it
       if (nav) {
         ScrollTrigger.create({
           trigger: root, start: () => 'bottom top+=' + Math.round(navLine()),
@@ -398,10 +489,12 @@
       }
       // what the timeline does not own is put back by hand when the scene stops (reduced motion turned on, a resize to 'rest')
       gsap.context(() => () => {
-        alive = false; setNav(false); if (video) video.pause();
-        // the finished composition shows line 1 in ink again (the paper copy is not drawn there)
-        if (leadIn) leadIn.style.removeProperty('color');
-        if (veil) veil.style.removeProperty('clip-path');
+        alive = false; running = false; setNav(false); if (video) video.pause();
+        scene.kill();
+        // the finished composition shows the statement in ink again (the paper copies are not drawn there), and
+        // the notes go back into the picture
+        for (const l of lines) { l.inn.style.removeProperty('color'); l.inn.style.removeProperty('--kh-veil'); }
+        place();
       });
       const again = () => { if (alive) { g = null; render(); } };
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(again);

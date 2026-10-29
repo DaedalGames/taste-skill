@@ -100,8 +100,8 @@ never a small figure in a landscape.
   stock photographs, and its three photographs showed three different vehicles.
 - **One good match, reused, beats several that differ.** Show the one photograph of the right kind
   large, and again as a close crop of a detail (the loaded box, the hands on the bar); the inspector
-  warns on the repeat (repeated-picture), and the report says it is the one matching photograph,
-  cropped twice.
+  warns on the repeat and fails a third showing (repeated-picture), and the report says it is the one
+  matching photograph, cropped twice.
 - **At least one picture shows it in use with the people it is for:** a parent riding with two
   children in the box, a cook at the hob with the kettle. An honest stand-in of that kind of product
   in use, never named as this model; children only from behind, far off or unrecognisable. A product
@@ -115,6 +115,17 @@ never a small figure in a landscape.
 - Sharp at the size it is shown: the source is at least 1.5 times the shown width (twice for the
   hero). The inspector fails pictures shown more than 1.25 times their own size.
 - It shows this subject's world, and would not fit the nearest competitor's page or any page at all.
+- **It is not the category's stock shot,** unless it is art-directed for this page (its own light, a
+  crop chosen for the slot, a detail only this client has). Coffee: full-frame beans, burlap sacks,
+  top-down latte art. Bakeries: flour dusted over a board. Wine: a glass swirled against the light.
+  Software: hands on a laptop, a team round a screen. Hotels and guesthouses: a made bed shot straight
+  on, a folded towel. Food: a flat lay of ingredients, a chef plating with tweezers. Property: keys
+  handed over. Health: a stethoscope on a desk. Products: the product floating in mid-air on a
+  bright colour with no ground under it. A roastery page with full-frame beans and burlap sacks read
+  as generic to its judge. The client's own place, its people at work and the product in use come
+  first; without the client's own, the work in close-up (hands at the roaster's drum, a cup being
+  poured), never passed off as its staff. For software, the product's own interface and the
+  customer's world come first.
 - It belongs to one family with the others: one light, one era, one treatment.
 - No watermark, burned-in text, frame, scanner edge, noise or heavy compression.
 - Nothing in it that is not the client's to show, stand-ins and open-collection finds above all: no
