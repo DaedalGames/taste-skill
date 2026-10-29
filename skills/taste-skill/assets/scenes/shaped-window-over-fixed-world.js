@@ -1,14 +1,18 @@
 // tasteskill / scenes / shaped-window-over-fixed-world.js — a shape-shifting window over a fixed world.
 //
 // One full-bleed photograph of a place stays still behind a shutter painted in the page's own ground.
-// Two tall windows are cut into the shutter, one high and one low, with a narrow bar of ground between
-// them. Scroll slides the windows level (the low one rises to meet the title above it, the high one comes
-// down to the caption under it), closes the bar into one window, holds a beat, then scales the shutter
-// past the screen edges so the reader pushes through into the place while one chapter word rises in,
-// centre letters first. The lede settles last. No window edge ever passes over a word: the title and the
-// caption sit on ground the windows never reach, and they fade as the push begins. Before the hold the
-// photo is counter-moved so it stays fixed to the viewport while the ground and its windows rise over
-// it; after the hold it sinks at 0.8x.
+// Two tall windows are cut into the shutter side by side, level, with a narrow bar of ground between
+// them: the first frame is one picture seen through a mullion, under the title. Scroll widens the windows
+// outward (their inner edges and the bar stay put, so the title and the caption keep their places),
+// closes the bar into one window, holds a beat, then scales the shutter past the screen edges so the
+// reader pushes through into the place while one chapter word rises in, centre letters first. The lede
+// settles last. No window edge ever passes over a word: the title and the caption sit on ground the
+// windows never reach, and they fade as the push begins. Before the hold the photo is counter-moved so
+// it stays fixed to the viewport while the ground and its windows rise over it; after the hold it sinks
+// at 0.8x. (The windows used to start one high and one low; on a first screen that read as two
+// mismatched crops of two pictures, r9-p43. They always start level now.) On a page with a fixed or
+// sticky bar at the top, the title and the word stay clear of it, and on wide screens the windows are
+// laid out in the screen under it.
 //
 // Needs gsap + ScrollTrigger (SplitText optional: without it the word rises whole), stage.js, and
 // shaped-window-over-fixed-world.css. Use it for one strong, wide picture of a place that has to carry
@@ -50,11 +54,11 @@
 //
 // Props: two things that belong in the place (foliage, a lamp, a chair), standing in front of the
 // shutter in the bottom corners and thrown outward during the push. They are the scene's foreground
-// plane: without them the first half is two pictures on a flat ground. The prop on the high window's
-// side is the tall one (62% of the stage height), the other 46%; both bleed off the bottom and outer
-// edges. Neither may reach the title or the caption: when the page's sizes would put one over them
-// (a narrower screen, a longer title), the scene slides that prop outward until its solid parts clear
-// both by 16px. Either
+// plane: without them the first half is one picture on a flat ground. The prop on the caption's side
+// (the `high` option) is the tall one (62% of the stage height), the other 46%; both bleed off the
+// bottom and outer edges. Neither may reach the title or the caption: when the page's sizes would put
+// one over them (a narrower screen, a longer title), the scene slides that prop outward until its
+// solid parts clear both by 16px. Either
 //   - a transparent cut-out (WebP or PNG with alpha, about 1000px tall), used as it is, or
 //   - a photograph of something dark against a bright, plain sky (a fir against fog), keyed into a
 //     cut-out by the script: add data-key="lo hi" (luminance 0-1: at or below lo a pixel is kept, at or
@@ -68,9 +72,9 @@
 // Props are live-only: the finished composition hides them.
 //
 // Two geometries: "wide" (the default) and "narrow" (any width under 768px, or any screen narrower than
-// 1.1:1, such as a portrait tablet). Wide: the title stands over the low window, in the ground above the
-// band the windows level to (it rises to meet the title and stops short of it), and the caption under
-// the high window, below that band. Narrow screens get the phone numbers: two slim windows spanning 85%
+// 1.1:1, such as a portrait tablet). Wide: the title stands over one window, in the ground above the
+// band the windows fill, and the caption under the other, below it; the windows only widen outward.
+// Narrow screens get the phone numbers: two slim windows spanning 85%
 // of the width, the title full width on the ground above both, no caption, and the word fitted to 86%
 // of the width; its letters land on a clock of 0.75s once the push reaches them, not with the scroll, so
 // the word is whole wherever a phone stops. On both the title is stepped down until it fits its ground
@@ -82,20 +86,22 @@
 //   phoneHold     2.0    1.6-2.6   screens on narrow screens (phones, portrait tablets). The hold is
 //                                  chosen when the page loads: a tablet turned across the 1.1:1 line
 //                                  later keeps its first hold (the geometry still switches)
-//   stagger       0.16   0.08-0.165  how far each window starts off the shared band, as a share of the
-//                                  stage height (0.08 reads as a calm diptych, 0.16 as a facade puzzle);
-//                                  capped so both windows start inside 2-98% of the screen
-//   phoneStagger  0.08   0.05-0.12  the same on narrow screens
+//   open          0.38   0-0.5     how far each window widens outward before the bar closes, as a share
+//                                  of its width in the first frame (never past 2% from the screen's edge;
+//                                  0 keeps the first frame's width)
+//   phoneOpen     0.22   0-0.4     the same on narrow screens (little room there: about 20px a side)
+//   (stagger and phoneStagger belonged to the offset start and are ignored: the scene only opens a page,
+//   where two offset windows read as two crops of two pictures.)
 //   bar           "auto" 8-24      px of ground between the windows (auto: 1.1% of the width, 10-20px; 10 when narrow)
-//   high          "right"          "right" | "left": which window starts high. The title sits above the
-//                                  low window and the caption under the high one, so pick the side that
-//                                  suits the picture's diagonal of interest.
+//   high          "right"          "right" | "left": the title sits above the other window and the caption
+//                                  under this one, so pick the side that suits the picture's calm areas.
 //   overscan      1.08   1.04-1.15  how far past the screen edges the push carries the shutter
 //   phoneOverscan 1.16   1.04-1.2   the same on narrow screens (the top edge binds there, so it needs more
 //                                  to have left the screen by 75%)
 //   worldScale    0.8    0.75-1    the world's start scale (its box is 1/worldScale of the stage, so it
 //                                  always covers); it grows to 1 during the push. 1 = a flat push.
-//   wordTop       80     px        cap-top of the word: keep it 16px below any fixed nav (phone: phoneWordTop 72)
+//   wordTop       80     px        cap-top of the word (phone: phoneWordTop 72); never less than 16px under
+//                                  a fixed or sticky bar at the top of the screen
 //   wordWidth     0.92   0.6-0.96  share of the width the word is fitted to (phone: phoneWordWidth 0.86);
 //                                  its cap height is held to 30% of the stage height (14% on a phone)
 //   parallax      0.2    0-0.3     how far the world sinks while the stage leaves (0.2 = it leaves at 0.8x)
@@ -107,8 +113,9 @@
 // --sw-focus on the section moves the photo's focal point (object-position, default 50% 50%).
 //
 // Pictures: one landscape place photograph, 3:2 or 16:10, about 3600px wide (the world is shown in a
-// 125% box), with a calm top third for the word and nothing important on the vertical centre line;
-// a 9:16 crop for phones. The high window frames its upper part, the low window its lower part.
+// 125% box), with a calm top third for the word and nothing important on the vertical centre line
+// (the bar stands on it in the first frame); a 9:16 crop for phones. The first frame shows about its
+// middle half: put the place's subject there, not at the edges.
 (() => {
   const ID = 'shaped-window-over-fixed-world';
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -198,6 +205,26 @@
       .catch(() => { img.dataset.keyed = 'failed'; img.classList.add('is-off'); });
   };
 
+  // The bottom edge of a fixed or sticky bar held at the top of the window (a site header), 0 if none;
+  // the same reading as orbit-to-formation's. The first frame is laid out in the screen under it.
+  const barBottom = (root) => {
+    let b = 0;
+    const seen = new Set();
+    const list = [...document.querySelectorAll('header, nav, [role="banner"], [role="navigation"]'), ...(document.body ? document.body.children : [])];
+    for (const el of list) {
+      if (seen.has(el) || root.contains(el) || el.contains(root)) continue;
+      seen.add(el);
+      const cs = getComputedStyle(el);
+      if ((cs.position !== 'fixed' && cs.position !== 'sticky') || cs.display === 'none' || cs.visibility === 'hidden') continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 0.5 * window.innerWidth || r.height <= 0 || r.height >= 0.2 * window.innerHeight) continue;
+      const top = cs.position === 'sticky' ? parseFloat(cs.top) : r.top;
+      if (isNaN(top) || top > 1 || top + r.height <= 0) continue;
+      b = Math.max(b, Math.max(0, top) + r.height);
+    }
+    return b;
+  };
+
   // relative luminance of a computed rgb() colour, or -1
   const lum = (c) => {
     const m = String(c).match(/[\d.]+/g);
@@ -211,8 +238,8 @@
     const o = {
       hold: num(opts.hold, 2.4, 1.8, 3),
       phoneHold: num(opts.phoneHold, 2, 1.6, 2.6),
-      stagger: num(opts.stagger, 0.16, 0.08, 0.165),
-      phoneStagger: num(opts.phoneStagger, 0.08, 0.05, 0.12),
+      open: num(opts.open, 0.38, 0, 0.5),
+      phoneOpen: num(opts.phoneOpen, 0.22, 0, 0.4),
       bar: opts.bar == null || opts.bar === 'auto' ? null : num(opts.bar, 16, 8, 24),
       high: opts.high === 'left' ? 'left' : 'right',
       overscan: num(opts.overscan, 1.08, 1.04, 1.15),
@@ -370,33 +397,43 @@
         const n = g.narrow;
         const size = Math.min((100 * g.W * (n ? o.phoneWordWidth : o.wordWidth)) / w100, (100 * g.H * (n ? 0.14 : 0.3)) / capH);
         word.style.fontSize = px(size);
-        word.style.top = px((n ? o.phoneWordTop : o.wordTop) - (capTop * size) / 100);
+        word.style.top = px(Math.max(n ? o.phoneWordTop : o.wordTop, (g.T || 0) + MARGIN) - (capTop * size) / 100);
       };
 
       const measure = () => {
         if (dead) return;
         const W = stage.clientWidth || innerWidth, H = stage.clientHeight || innerHeight;
         const n = phone || matchMedia(NARROW).matches;
+        // A page's sticky bar covers the top T px of the held stage. The title is fitted between it and
+        // the windows, and the word starts 16px under it. Wide screens, where the ground over the windows
+        // is short, also lay the windows out in the screen under the bar; narrow ones have the room (and
+        // moving their windows down would leave the push's top edge on the word longer).
+        const T = Math.min(barBottom(root), 0.2 * H), yT = n ? 0 : T;
         const cx = W / 2;
         const m = n ? (o.bar ?? 10) : (o.bar ?? clamp(0.011 * W, 10, 20));
-        const x0 = (n ? 0.074 : 0.2222) * W, x3 = W - x0;
-        const y0 = (n ? 0.3 : 0.185) * H, y1 = (n ? 0.8 : 0.815) * H;
-        // both windows start inside 2-98% of the stage, so the world's edge is never seen
-        const D = Math.max(0, Math.min((n ? o.phoneStagger : o.stagger) * H, y0 - 0.02 * H, 0.98 * H - y1));
+        // xs: the windows' outer edges in the first frame; x0-x3: the band they widen to (each outer
+        // edge moves out by O, never closer than 2% to the screen's edge), which the bar then closes over
+        const xs = (n ? 0.074 : 0.2222) * W;
+        const holeW = cx - m / 2 - xs;   // one window's width in the first frame
+        const O = Math.max(0, Math.min((n ? o.phoneOpen : o.open) * holeW, xs - 0.02 * W));
+        const x0 = xs - O, x3 = W - x0;
+        const y0 = yT + (n ? 0.3 : 0.185) * (H - yT), y1 = yT + (n ? 0.8 : 0.815) * (H - yT);
         const ox = cx, oy = (y0 + y1) / 2;
         // the push scale that carries the window's edges past the screen's, times the overscan
         const S = (n ? o.phoneOverscan : o.overscan) * Math.max(ox / (ox - x0), (W - ox) / (x3 - ox), oy / (oy - y0), (H - oy) / (y1 - oy));
-        Object.assign(g, { W, H, cx, C: cx + 2, m, x0, x3, y0, y1, D, S, narrow: n });
+        Object.assign(g, { W, H, T, cx, C: cx + 2, m, x0, x3, O, y0, y1, S, narrow: n });
         root.classList.toggle('sw--narrow', n);
         shutter.style.transformOrigin = `${px(ox)} ${px(oy)}`;
-        const holeW = cx - m / 2 - x0;
         const set = (k, v) => root.style.setProperty(k, v);
         set('--sw-s0', String(o.worldScale));
-        set('--sw-x0', px(x0)); set('--sw-hole-w', px(holeW)); set('--sw-span-w', px(x3 - x0));
-        set('--sw-low-x', px(highRight ? x0 : cx + m / 2)); set('--sw-high-x', px(highRight ? cx + m / 2 : x0));
-        set('--sw-low-top', px(y0 + D)); set('--sw-high-top', px(y0 - D)); set('--sw-high-bottom', px(y1 - D));
-        // the band the windows level to (y0-y1): wide, the title stands above it and the caption below
-        // it, on ground no window edge ever reaches; narrow, the title stands above the high window
+        // the title and the caption are measured on the first frame's windows (xs to the bar), which
+        // they never pass as the windows widen
+        set('--sw-x0', px(xs)); set('--sw-hole-w', px(holeW)); set('--sw-span-w', px(W - 2 * xs));
+        set('--sw-low-x', px(highRight ? xs : cx + m / 2)); set('--sw-high-x', px(highRight ? cx + m / 2 : xs));
+        // (the low/high names are kept for pages that read them: both windows are level now)
+        set('--sw-low-top', px(y0)); set('--sw-high-top', px(y0)); set('--sw-high-bottom', px(y1));
+        // the band the windows fill (y0-y1): wide, the title stands above it and the caption below it,
+        // on ground no window edge ever reaches; narrow, the title stands above both windows
         const gap = n ? 28 : clamp(0.032 * H, 20, 34);
         set('--sw-top', px(y0)); set('--sw-bottom', px(y1)); set('--sw-gap', px(gap));
         // the caption hangs under the high window against the bar (its outer side is the prop's)
@@ -416,7 +453,7 @@
           if (hs.backgroundImage !== 'none') Object.assign(b.style, { backgroundImage: hs.backgroundImage, backgroundSize: hs.backgroundSize, backgroundRepeat: hs.backgroundRepeat, backgroundAttachment: hs.backgroundAttachment });
         }
         last.clear();
-        fitTitle((n ? y0 - D : y0) - gap - MARGIN);
+        fitTitle(y0 - T - gap - MARGIN);
         // a caption too tall for the ground under the band takes the window's full width, and is left
         // out when even that does not fit (its key fact is repeated in the lede)
         root.classList.remove('sw--no-caption');
@@ -436,9 +473,10 @@
       const X = (v) => px(v + EDGE);
       const render = () => {
         if (!g.W || dead) return;
-        const { H, W, cx, C, m, x0, x3, y0, y1, D } = g;
-        const sh = (highRight ? 1 : -1) * D * (1 - p.level);
-        const lT = y0 + sh, lB = y1 + sh, rT = y0 - sh, rB = y1 - sh;
+        const { H, W, cx, C, m, x0, x3, y0, y1, O } = g;
+        const lT = y0, lB = y1, rT = y0, rB = y1;
+        // the outer edges: the first frame's (x0 + O), out to the band as the windows widen
+        const xL = x0 + O * (1 - p.level), xR = x3 - O * (1 - p.level);
         const mg = Math.min(1, p.merge / BAR_CLOSE);
         const lR = cx - m / 2 + (m / 2 + 2) * mg, rL = cx + m / 2 - (m / 2) * mg;
         const R = px(W + 2 * EDGE), B = px(H + 2 * EDGE);
@@ -447,8 +485,8 @@
         write(frame, 'visibility', one ? 'visible' : '');
         write(halfL, 'visibility', one ? 'hidden' : '');
         write(halfR, 'visibility', one ? 'hidden' : '');
-        write(halfL, 'clipPath', `polygon(evenodd, 0 0, ${X(C)} 0, ${X(C)} ${X(lT)}, ${X(lR)} ${X(lT)}, ${X(x0)} ${X(lT)}, ${X(x0)} ${X(lB)}, ${X(lR)} ${X(lB)}, ${X(lR)} ${X(lT)}, ${X(C)} ${X(lT)}, ${X(C)} ${B}, 0 ${B})`);
-        write(halfR, 'clipPath', `polygon(evenodd, ${R} 0, ${X(cx)} 0, ${X(cx)} ${X(rT)}, ${X(rL)} ${X(rT)}, ${X(x3)} ${X(rT)}, ${X(x3)} ${X(rB)}, ${X(rL)} ${X(rB)}, ${X(rL)} ${X(rT)}, ${X(cx)} ${X(rT)}, ${X(cx)} ${B}, ${R} ${B})`);
+        write(halfL, 'clipPath', `polygon(evenodd, 0 0, ${X(C)} 0, ${X(C)} ${X(lT)}, ${X(lR)} ${X(lT)}, ${X(xL)} ${X(lT)}, ${X(xL)} ${X(lB)}, ${X(lR)} ${X(lB)}, ${X(lR)} ${X(lT)}, ${X(C)} ${X(lT)}, ${X(C)} ${B}, 0 ${B})`);
+        write(halfR, 'clipPath', `polygon(evenodd, ${R} 0, ${X(cx)} 0, ${X(cx)} ${X(rT)}, ${X(rL)} ${X(rT)}, ${X(xR)} ${X(rT)}, ${X(xR)} ${X(rB)}, ${X(rL)} ${X(rB)}, ${X(rL)} ${X(rT)}, ${X(cx)} ${X(rT)}, ${X(cx)} ${B}, ${R} ${B})`);
         const s = 1 + (g.S - 1) * p.push;
         write(shutter, 'transform', s > 1.0001 ? `scale(${s.toFixed(5)})` : 'none');
         // the title and the caption stand on ground the windows never reach; both fade as the push begins
@@ -467,7 +505,7 @@
 
         measure();
 
-        // 1-3. level, merge, still beat
+        // 1-3. widen (p.level), merge, still beat
         tl.to(p, { level: 1, duration: 0.3, ease: 'sine.inOut' }, 0.04)
           .to(p, { merge: 1, duration: 0.1, ease: 'power2.inOut' }, 0.34)
         // 4-7. the push: the frame grows S times, the world 1/worldScale times, so the push has depth

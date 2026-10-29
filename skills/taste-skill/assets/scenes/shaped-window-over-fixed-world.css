@@ -2,7 +2,7 @@
    By default (no script, reduced motion, a failed CDN, a phone set to 'rest') the section is one screen:
    the title and caption on the page ground, one wide window cut into it, and the chapter word and the
    lede inside the window over flat scrims. Under .is-live the stage is held and the script draws the
-   two offset windows, the merge and the push (see the .js file for the DOM and the options).
+   two level windows widening, the merge and the push (see the .js file for the DOM and the options).
    Page tokens: --ground (shutter and section), --ink (title, caption), --font-display (title, word),
    --sw-light (type on the photo; the script picks the lighter of ground and ink when it is unset),
    --sw-focus (object-position of the photo, default 50% 50%).
@@ -215,11 +215,10 @@ html.js .scene[data-scene="shaped-window-over-fixed-world"].is-live > .scene-sta
 }
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-world-media { will-change: transform; }
 
-/* The title stands over the low window and the caption under the high one, each on ground no window
-   edge ever reaches: the title above the band the windows level to (--sw-top), the caption below it
-   (--sw-bottom). The low window rises to meet the title and the high one comes down to the caption. Both
-   lie above the props (whose solid parts the script keeps 16px clear of them) and fade as the push
-   begins. */
+/* The title stands over one window and the caption under the other, each on ground no window edge ever
+   reaches: the title above the band the windows fill (--sw-top), the caption below it (--sw-bottom),
+   both within the first frame's windows, whose outer edges only move outward. Both lie above the props
+   (whose solid parts the script keeps 16px clear of them) and fade as the push begins. */
 [data-scene="shaped-window-over-fixed-world"].is-live .sw-intro {
   left: var(--sw-low-x, 22.22%);
   width: var(--sw-hole-w, 27%);

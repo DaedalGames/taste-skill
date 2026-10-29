@@ -856,15 +856,22 @@ screen). Size and hold are not enough: each beat has to change something large.
   the day it lands"); the window proves it, in the product's real labels and figures. Never a generic
   card move or a tour of the interface: for a notes app that promises old notes come back, the beats
   open the old note at full size beside the draft, not a card from Inbox to Named.
-- **Every beat a large change:** a panel or drawer opens over the window, the item at work takes the
-  accent fill, a full-size item arrives or travels while the rest make room, a figure at display size
-  rolls as its row takes or gives up the accent, or the view moves in on the region at work. What
-  changes is a third of the window wide or more and its text 16px or more at 1440. Never a beat that is
+- **Every beat a large change, about a third of the window:** a panel or drawer opens over whole rows,
+  the item at work takes the accent fill, a full-size item arrives or travels while the rest make room,
+  a figure at display size rolls as its row takes or gives up the accent, or the view moves in on the
+  region at work. The decisive change, the result, is large and in the accent: the figure that proves
+  it rolls at display size in a band across the window that takes the accent fill. Never a beat that is
   a word swapped in a muted line, a count that ticks, a 2px press or frame, a fill one step from its
-  ground, or a cursor moving: the inspector photographs every beat with the stage still and fails a
-  beat that changes under 0.5% of the screen or a replay whose largest beat changes under 5%
-  (`replay-faint`; aim for 2.5% a beat and 8% for the largest). A panel that opens on the window's own
-  fill changes only its letters: open it on the ink, or on a fill clearly unlike the window's.
+  ground, or a cursor moving: the inspector photographs every beat with the stage still and measures
+  what changed as a share of the window; a beat under about 15% is faint, one faint beat or a largest
+  beat under 30% warns, and most beats faint fails (`replay-faint`). Round 9: a notes app's beats
+  changed 4-24% of its window, its last beat one line and one number, and the judge found the replay
+  quiet.
+- **Panels in the page's own tokens:** a panel, menu or comment that opens is on the ink of a light
+  page or the accent of a dark one (the one place the accent grounds text: the panel is the decisive
+  change). Never the window's own fill (it changes only its letters) and never a second white ground
+  on a dark page; it covers whole rows or a whole column, never half a row (round 9: a white preview
+  over half a dark list cut its rows and read as a second page).
 - **The accent only on what changes:** the item at work carries the accent while it works and gives it
   up when the next change takes it; nothing else in the window is in the accent, and the Replay button
   is a quiet text button in ink (`replay-accent`).
@@ -878,13 +885,18 @@ screen). Size and hold are not enough: each beat has to change something large.
   fails three boxes in the window). The item that changes is never one of many look-alikes
   (`replay-lookalike`): fewer, shorter items beside it, set as type, and it alone carries the accent.
 - **Large, filling the held screen:** the window 70% of the width or more at 1440 (about 1000px) and 40%
-  of the screen's height, nearly the full width on a phone; nothing in it under 14px (`replay-type`).
+  of the screen's height, nearly the full width on a phone; its text 18px or more (16px on a phone; the
+  inspector fails under 14px, `replay-type`); its content fills 70% of it or more in every frame, with
+  no empty corner or band inside it (a notes app's window left its lower left empty in every frame):
+  fill its columns to the same depth, or crop the window to its content.
   The heading, the window, one sentence and the Replay button fill the held screen, and this is the bar
   that binds: replay.js centres the held stage, so the stage is 75% of the screen's height or more
   (about 680px at 1440 by 900), and the empty bands above and below it come to a quarter of the
   screen at most (`replay-bands` fails a third). Crop to the panel that does the task rather than
-  shrinking the whole product, and show fewer rows at a larger size rather than many small ones; fill
-  the height with the window's own content, not with empty space inside it.
+  shrinking the whole product, and show fewer rows at a larger size rather than many small ones. On a
+  phone the heading and the window fit the screen together: replay.js holds a taller stage from its
+  heading, so the promise stays in view below a fixed bar, and the inspector fails a held heading cut
+  off on a tablet or a phone (`held-heading-cut`).
 - **Held, stepped by scroll:** the section holds its stage while each beat takes about half a screen
   of scroll; scrolling back steps back. Each beat's change still runs at its own pace (typing, a roll, a
   panel opening), so it reads as the product working, not as a scrubbed video. Scroll, not a clock: a
@@ -913,10 +925,11 @@ example of all six, each beat measured: `assets/replay-demo.html`.
         <div class="row" data-at="1" data-push data-focus-at="1-3">Acme · Draft · 4,200 €</div>
                                     pushes in at beat 1 (the rows under it make room), the item at work at 1-3
         <aside data-open-at="2" data-close-at="3" data-open-from="right" hidden>…</aside>
-                                    a drawer open at beat 2 only; hidden, as the final state does not show it
+                                    a drawer over the whole list at beat 2 only; hidden, as the final state does not show it
         <button data-press-at="3">Send invoice</button>             pressed at beat 3
         <span data-at="3" data-from="Draft">Sent</span>             text swaps at beat 3
-        <b data-roll-at="4" data-from="3,590" data-focus-at="4">7,790</b>   a figure at display size rolls at 4
+        <p class="band" data-focus-at="4">March <b data-roll-at="4" data-from="3,590">7,790</b></p>
+                                    a band whose figure at display size rolls at 4 as it takes the accent
         <li data-flip-at="2,3" data-flip-from="#new, #packing">…</li>   in #new, travels to #packing at 2, here at 3
         <tr data-zoom-at="1">…</tr>                                 the view moves in on this region at beat 1
       </div>
@@ -932,8 +945,8 @@ example of all six, each beat measured: `assets/replay-demo.html`.
 `data-focus-at` and `data-zoom-at` take one beat, a list or a range ("1-3"). The item at work
 (`.is-focus`) takes the accent fill by default (set `--replay-focus`, or write your own `.is-focus` rule;
 a figure can take the accent ink instead), and the window carries `.has-focus` meanwhile. A panel that
-opens (`data-open-at`, `data-open-from="top|bottom|left|right"`) lies over the window or takes a slot the
-beat leaves, so no hole waits for it; one that closes again (`data-close-at`) is written `hidden`, and
+opens (`data-open-at`, `data-open-from="top|bottom|left|right"`) lies over a whole list or column of the
+window, edge to edge, or takes a slot the beat leaves, so no hole waits for it and no row is cut; one that closes again (`data-close-at`) is written `hidden`, and
 `[data-ui] [hidden] { display: none; }` keeps its own display from showing it in the final state. An item
 that arrives with `data-push` is out of its list until its beat, and the items round it make room;
 give the list a fixed height (it clips what is pushed out of it) or room for one more, so the window keeps
@@ -949,20 +962,23 @@ and `data-point-at` does nothing; `data-frame-at` still sets `.is-framed` but is
 patterns:
 
 - **The window does one task:** the request types in as the new row pushes in and takes the accent →
-  the panel that does the work opens over the list, on the ink → its action is pressed and it closes on
-  the result → the figure that proves it rolls at display size and takes the accent.
-- **The agent works beside its result:** the request types in and the agent's status line takes the
-  accent as a band → "Checking against the bank feed" as the rows it found take the accent fill → "Fixed:
-  a duplicate refund" as the fill leaves them and the total at display size rolls.
+  the panel that does the work opens over the whole list → its action is pressed and it closes on the
+  result → the figure that proves it rolls at display size in a band across the window's foot, which
+  takes the accent.
+- **The agent works beside its result:** the request types in, the agent's status line takes the
+  accent as a band and every row it reads takes the accent fill → "Checking against the bank feed" as
+  the fill stays only on the rows it found → "Fixed: a duplicate refund" as the fill leaves them and the
+  total at display size rolls in a band that takes the accent.
 - **The order travels the board:** three columns of type, counts at display size; the new item pushes
   in filled with the accent, its contents shown → travels to the next column at full size → reaches the
   column that means the promise kept. Only for a pipeline (orders, tickets, deals); never one card among
   look-alikes.
 - **Teammates take turns:** each person changes a whole block in turn (a step moved, a figure filled, a
   comment opened on the ink and its change landing in the block), the block filled with the accent and
-  their name inside it → the comment closes and the object's state changes to agreed.
-- **Edit the source, the output rebuilds:** the value's menu opens over the output → the choice is made
-  and the output re-forms (four bars become thirteen) → the read-out re-counts at display size.
+  their name inside it → the comment closes and the object's head changes to agreed and takes the accent.
+- **Edit the source, the output rebuilds:** the value's menu opens over a third of the output → the
+  choice is made and the output re-forms (four bars become thirteen) → the read-out re-counts at display
+  size in a band that takes the accent.
 - **The view moves in on the live screen:** the view moves in on three regions in turn, like a camera,
   a value changing at each and the matching feature line beside the window turning full ink; the last
   stop moves back out to the whole screen.
@@ -974,16 +990,18 @@ the section's grid is fine); no ancestor of it has `overflow: hidden` or `auto` 
 the hold working). Keep the window's height steady through the beats. Never a video, a GIF or
 screenshots in sequence; never a device frame or browser dots. Never in the hero: the hero's fragment
 is the entrance's, and the replay's fragment carries no `data-e`, `data-reveal` or `data-moment`.
-Phones: held the same way, one panel of it nearly the full width, the same beats (stack a board's
-columns; never three columns of 100px). Where the window's rows are full width, the view has nothing
-to move in on: at each stop the row takes the accent and its value changes. The inspector fails a dealt replay that is missing
+Phones: held the same way with the heading in view, one panel of it nearly the full width, the same
+beats (stack a board's columns; never three columns of 100px). Where the window's rows are full width,
+the view has nothing to move in on: at each stop the row takes the accent and its value changes. The
+inspector fails a dealt replay that is missing
 (`replay-missing`), small (`replay-small`), not held (`replay-not-held`), a beat that never shows in its
-scroll film (`replay-unseen`), beats that barely change the screen (`replay-faint`), empty bands round
-the held stage (`replay-bands`), type under 14px in the window (`replay-type`), a drawn cursor
+scroll film (`replay-unseen`), most beats faint (`replay-faint`; one faint beat warns), empty bands round
+the held stage (`replay-bands`), a held heading cut off on a tablet or phone (`held-heading-cut`), type under 14px in the window
+(`replay-type`), a drawn cursor
 (`replay-cursor`), boxes in the window (`replay-nested`), a replay doubled with the entrance
 (`replay-clash`), without a Replay button (`replay-control`) or a recording (`replay-video`). Look at
-`desktop-replay-NN.jpg`: every beat of the window side by side at a size its words can be read, with the
-share of the screen each one changed.
+`desktop-replay-NN.jpg`: every beat of the window side by side at a size its words can be read, with how
+much each one changed.
 
 ### Accordion
 

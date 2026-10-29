@@ -825,7 +825,7 @@
       "dark brown",
       "pale gold"
      ],
-     "mono": false,
+     "mono": true,
      "calm": "bottom",
      "quality": 4,
      "ratio": 1.5,
@@ -841,7 +841,7 @@
       "tan",
       "dark brown"
      ],
-     "mono": false,
+     "mono": true,
      "calm": "top",
      "quality": 4,
      "ratio": 1.5,

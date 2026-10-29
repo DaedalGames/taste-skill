@@ -30,7 +30,7 @@ export function judgeExtra(x, { width, allow = [], screens = 1, app = false } = 
     if (x.colour.hues >= 4) add('FAIL', 'colour-sprawl', `${x.colour.hues} different hues on grounds, type and buttons (${x.colour.how.join(', ')}).`, 'One ground, one ink, one accent. Professional sites use one hue (often none beyond the action). Take every other colour out of grounds, cards, chips and type; colour comes from the pictures.');
     else if (x.colour.hues === 3) add('WARN', 'colour-sprawl', `Three hues on grounds, type and buttons (${x.colour.how.join(', ')}).`, 'One accent hue, used for the action and at most one other thing. Remove the third.');
     // a page on a coloured ground with a second hue on it (pink ground, lime button) is the loudest tell of all
-    if (x.colour.colouredShare > 0.6 && x.colour.hues >= 2) add('FAIL', 'colour-ground', `% of the page stands on coloured grounds, with  hues on it.`, 'Put the page on a neutral ground (white, off-white, near-black) and keep one accent. A whole page on colour works only with that colour alone and the ink.');
+    if (x.colour.colouredShare > 0.6 && x.colour.hues >= 2) add('FAIL', 'colour-ground', `${Math.round(x.colour.colouredShare * 100)}% of the page stands on coloured grounds, with ${x.colour.hues} hues on it.`, 'Put the page on a neutral ground (white, off-white, near-black) and keep one accent. A whole page on colour works only with that colour alone and the ink.');
     else if (x.colour.colouredShare > 0.35) add('WARN', 'colour-ground', `${Math.round(x.colour.colouredShare * 100)}% of the page stands on coloured grounds.`, 'Most of the page belongs on the neutral ground (white, off-white, near-black). One coloured field for one section at most.');
   }
   const bars = (x.rails || []).filter((r) => r.what !== 'a sideways scroller'), scrollers = (x.rails || []).filter((r) => r.what === 'a sideways scroller');
@@ -81,7 +81,7 @@ export function judgeExtra(x, { width, allow = [], screens = 1, app = false } = 
   // (round 9: under 14px fails on desktop and tablet, under 15px on a phone; 14-15px warns; tables and lists count)
   const smallText = (x.smallBody || []).map((s) => ({ level: 'FAIL', what: 'text', ...s }));
   const smallFail = smallText.filter((s) => s.level === 'FAIL'), smallWarn = smallText.filter((s) => s.level !== 'FAIL');
-  const smallList = (a) => list(a, (s) => `"${s.text}" ${s.size}px${s.what !== 'text' ? ` (${s.what === 'footer' ? 'in the footer' : `a ${s.what}`})` : ''}`, 4);
+  const smallList = (a) => list(a, (s) => `"${s.text}" ${s.size}px${s.what !== 'text' ? ` (${s.what === 'footer' ? 'in the footer' : s.what === 'labels' ? 'the labels of a list' : `a ${s.what}`})` : ''}`, 4);
   if (smallFail.length) add('FAIL', 'small-body', `${smallFail.length} block(s) of running, list or table text under ${width < 600 ? 15 : 14}px at ${width}px: ${smallList(smallFail)}.`, SMALL_FIX);
   if (smallWarn.length) add('WARN', 'small-body', `${smallWarn.length} block(s) of running, list or table text at ${width >= 1100 ? '14-15' : '14'}px: ${smallList(smallWarn)}.`, SMALL_FIX);
   if (!smallText.length && desktop && x.smallUnderHead?.length) add('WARN', 'small-body', `Small text under a display heading: ${list(x.smallUnderHead, (s) => `"${s.text}" ${s.size}px under a ${s.head}px heading`)}.`, SMALL_FIX);
@@ -137,7 +137,45 @@ export function judgeExtra(x, { width, allow = [], screens = 1, app = false } = 
   if (ctl.greyed?.length) add('FAIL', 'contrast', `Greyed rows beside controls are unreadable: ${list(ctl.greyed, (g) => `"${g.text}" ${g.ratio}:1 needs ${g.need || 4.5}:1`, 4)}.`, 'Raise contrast to at least 4.5:1 for text, 3:1 for large display. Every state of a row is read: show the state with the control itself, never by greying the words.');
   return out;
 }
-const BENTO_FIX = 'No card grid for features. Use an editorial list (full-width rows on the ground: the claim at the left in large sentence case, one sentence, the product\'s miniature beside it) or one large product view with three or four short annotations. At most one framed surface per section, and nothing empty inside a frame.';
+// ---------- round 10, part B: the page as built (probe-page.mjs), from r9-p41, r9-p42 and r9-p43 ----------
+// b: pageBuild() at this width; scenes: pageBuild({ scenes: true }) on the reduced-motion page (desktop only);
+// boxed: the boxed-list findings' headings, so one row of boxes is not reported twice; dead: deadControls().
+export function judgeBuild(b, { width, allow = [], boxed = [], scenes = null, dead = null } = {}) {
+  const out = [];
+  const add = (level, id, message, fix) => { if (!allow.includes(id)) out.push({ level, id, width, message, fix }); };
+  const desktop = width >= 1100;
+  const list = (a, f, n = 3) => a.slice(0, n).map(f).join('; ');
+  if (!b) return out;
+  // three framed elements in one section fail, two warn: the product's window alone, or one picture, is the section's
+  // one frame (r9-p41's "What it does": three slabs of the product beside a photograph; r9-p43's "Where the house
+  // stands": a white box on the photograph and a green tile beside it). A row of boxes the boxed-list check names is
+  // not reported again.
+  const framed = [...(b.framed || []), ...((scenes && scenes.framed) || [])].filter((f, i, a) => a.findIndex((g) => g.head === f.head) === i && !boxed.some((h) => h && f.head.startsWith(h)));
+  for (const level of ['FAIL', 'WARN']) {
+    const fs = framed.filter((f) => (level === 'FAIL' ? f.n >= 3 : f.n === 2));
+    if (fs.length) add(level, 'framed-elements', `${fs.length} section(s) hold ${level === 'FAIL' ? 'three framed elements or more' : 'two framed elements'}: ${list(fs, (f) => `"${f.head}" (${f.n}: ${f.items.slice(0, 3).join(', ')})`)}.`, FRAMED_FIX);
+  }
+  if (b.stats?.length) add('WARN', 'stats-band', `${b.stats.length} row(s) of big figures or words over short labels: ${list(b.stats, (s) => `${s.items.slice(0, 4).join(', ')}${s.head ? ` in "${s.head}"` : ''}`, 2)}.`, 'Cut the band. A figure that matters goes into the sentence that argues it ("80 kg in the box, two children on the bench") or beside the picture it proves; a row of numbers or one-word claims over labels is the template\'s proof strip.');
+  if ((b.emailFields || []).length >= 2) add('WARN', 'duplicate-form', `${b.emailFields.length} email fields on one page: ${list(b.emailFields, (f) => `"${f.label || 'email'}"${f.button ? ` with "${f.button}"` : ''} in "${f.where.slice(0, 30)}"`)}.`, 'One sign-up per page, at the size of a field, where the page ends. The footer does not ask a second time; a second offer (a newsletter beside a download) is one field with one sentence that says both.');
+  // three sections in a row with the same split: a picture beside the text at about the same width, on either side
+  // (r9-p42: the hero, the bike and the loads beside one sticky photograph, then the ride beside its own)
+  if (desktop) {
+    const sp = b.splits || []; let run = [];
+    const flush = () => { if (run.length >= 3) add('WARN', 'repeated-split', `${run.length} sections in a row are the same split, a picture beside the text at about ${Math.round((run.reduce((t, s) => t + s.share, 0) / run.length) * 100)}% of the width: ${run.slice(0, 5).map((s) => `"${s.head.slice(0, 32)}" (picture ${s.side})`).join(', ')}.`, 'Change the arrangement from one section to the next: a picture across the full width with the words under or on it, a headline over the whole grid, a list set as type with no picture, an 8/4 split. Never two sections in a row with the same arrangement, and at least one that breaks the split grid.'); run = []; };
+    for (const s of sp) { if (s.kind === 'split' && (!run.length || Math.abs(s.share - run[0].share) <= 0.15)) run.push(s); else { flush(); if (s.kind === 'split') run.push(s); } }
+    flush();
+  }
+  if (desktop && b.runOn?.length) add('WARN', 'empty-left', `${b.runOn.length} column(s) run out while the column beside them runs on, leaving the left side empty: ${list(b.runOn, (r) => `"${r.head}" ends ${r.gap}px above the foot of its neighbour`)}.`, 'When a column runs out, let the other one take the full width below it (the rest of the list in two or three columns across the grid), or set the heading over the list in one column. A row empty on the left reads as broken.');
+  // the page's credits list against the pictures it shows (r9-p43: nine pictures, eight credits; room-attic.jpg had none)
+  const c = b.credits;
+  if (c && (c.ledgerMiss.length || (c.pictures > (c.capacity || c.entries) && c.unmatched.length))) add('WARN', 'uncredited-picture', c.ledgerMiss.length ? `${c.ledgerMiss.length} picture(s) fetched with a credit are shown with no entry in the page's credits: ${c.ledgerMiss.slice(0, 4).join(', ')}.` : `The page shows ${c.pictures} pictures and its credits list ${c.entries}; no entry names ${c.unmatched.slice(0, 4).join(', ')} by its file.`, 'Every photograph that is not the client\'s own has its entry in the credits (title, author, licence, a link to the source), and a stand-in that names another business (a hotel\'s room, another maker\'s product) is marked as a placeholder in the credits and the report. A picture cropped from another is credited as that picture.');
+  // controls on the first screen that change nothing (r9-p41's hero: a search box and a New note button drawn in the
+  // product's window, clickable to the eye, dead to the hand)
+  if (desktop && dead && dead.dead?.length) add('WARN', 'dead-control', `${dead.dead.length} control(s) on the first screen change nothing when used: ${list(dead.dead, (d) => `${d.what.startsWith('drawn') ? `a ${d.what.slice(6)} drawn in the product's window` : `the ${d.what}`} "${d.text}"`, 4)}.`, 'A control on the first screen works (the search finds, the button opens what it names) or reads as part of a still picture: in a product window drawn as an image, draw fields and buttons as the product draws them at rest, with no hover, no pointer and no focus ring, and never a lone call to type into.');
+  return out;
+}
+const FRAMED_FIX = 'One framed element per section: the product\'s window, or one picture. Set the rest on the section\'s ground as type, apart by space and size: facts as a list of name and figure, a note beside the photograph instead of a box on it, a statement in the heading face instead of a coloured tile.';
+const BENTO_FIX = 'No card grid for features. Use an editorial list (full-width rows on the ground: the claim at the left in large sentence case, one sentence, the product\'s crop beside it on the section\'s ground, with no panel round it) or one large product view with three or four short annotations. At most one framed surface per section, and nothing empty inside a frame.';
 const SMALL_FIX = 'Running text, lists and tables 16px or more on desktop and 15px on a phone, on dark grounds as well; under a display heading 18px or more; set it beside the picture it describes, never pushed to the far edge. Only captions and the footer\'s legal line may be smaller.';
 const BROKEN = (x) => `${x.brokenAddress.length} email, URL or phone number(s) break over two lines: ${x.brokenAddress.slice(0, 3).map((b) => `"${b.text}"`).join('; ')}.`;
 const BROKEN_FIX = 'white-space: nowrap on emails, URLs and phone numbers (a class on their link); where one is wider than its column, give it its own line or a smaller step, never a break at its hyphen or dot.';

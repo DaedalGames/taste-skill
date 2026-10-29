@@ -5,10 +5,12 @@
 // screen while each beat takes about half a screen of scroll, so every beat is in view long enough to read, none
 // plays while the window is half out of view, and scrolling back steps back. Each beat's change still runs at its
 // own pace (typing, a roll, a panel opening), so it reads as the product working, not as a scrubbed video.
-// Each beat is one large change: a panel opens, the item at work takes the accent, a full-size item arrives or
-// moves, a figure at display size rolls, or the view moves in on the region at work. A word swapped in a muted
-// line, a 2px frame or a cursor gliding about is not a beat (the inspector measures each one, replay-faint), and
-// no drawn cursor stands in for the visitor: the change shows the action.
+// Each beat is one large change, about a third of the window: a panel opens over whole rows, the item at work takes
+// the accent, a full-size item arrives or moves while the rest make room, a figure at display size rolls, or the
+// view moves in on the region at work; the decisive one, the result, is large and in the accent. A word swapped in
+// a muted line, a 2px frame or a cursor gliding about is not a beat (the inspector measures each one, replay-faint),
+// and no drawn cursor stands in for the visitor: the change shows the action. A panel that opens is in the page's
+// own tokens (the ink of a light page, the accent of a dark one), never a second white ground on a dark page.
 // The HTML is the final state, every pane filled: reduced motion, no script, the inspector's page sheets and a
 // screenshot that never scrolls see it as written. Under reduced motion nothing is held. Load it at the end of
 // <body>, after base.js. Zero dependencies.
@@ -53,8 +55,12 @@
 // data-at item takes it out of its list until its beat, and the items round it make room as it arrives. A view
 // that moves in (data-zoom-at) scales the window inside the figure, which clips to it; data-zoom-scale caps it.
 // The stage is the last thing in its section (or in a wrapper inside it, or on the section's grid) and fills one
-// screen: the window 70% of the width or more on desktop, nearly the full width on a phone, and no empty band
-// above or below it. Its parent must not clip (overflow: hidden or auto breaks the hold; overflow: clip keeps it).
+// screen: the window 70% of the width or more on desktop, nearly the full width on a phone, its content filling 70%
+// of it in every frame, its text 18px or more (16px on a phone), and no empty band above or below it. It is held
+// below a bar fixed at the top of the screen (a header, nav or [data-bar]). A stage taller than the screen (a phone)
+// is held from its heading, so the promise stays in view: keep the heading and the window within the screen's height
+// there, under the bar; the console says when they are not. Its parent must not clip (overflow:
+// hidden or auto breaks the hold; overflow: clip keeps it).
 // data-replay-step="0.5" on the figure sets the scroll each beat takes, in screens (0.4-0.8). The window shows its
 // beat as data-beat (0 = the first state), which the inspector's scroll film and beat pass read. Feature lines
 // beside the window ([data-line-at="2"], buttons) turn full ink at their beat (.is-current) and, pressed, scroll to
@@ -316,13 +322,37 @@
       stage.after(run);
       const stepOf = () => Math.max(260, innerHeight * Math.min(0.8, Math.max(0.4, +(root.dataset.replayStep || 0.5))));
       let top = 0, step = stepOf();
+      // the foot of a bar held at the top of the screen while the stage holds (the site's navigation): fixed, or sticky
+      // in a box that holds the replay too, at top 0 (a rail that starts mid-screen and sticks later counts: r8-p38)
+      const barFoot = () => {
+        let foot = 0;
+        for (const el of document.querySelectorAll('header, nav, [data-bar]')) {
+          const cs = getComputedStyle(el), at = parseFloat(cs.top);
+          if (hold.contains(el) || !(at >= 0 && at <= 1)) continue;
+          if (!(cs.position === 'fixed' || (cs.position === 'sticky' && el.parentElement?.contains(hold)))) continue;
+          const r = el.getBoundingClientRect();
+          if (r.height > 0 && r.height < innerHeight * 0.25 && r.width > innerWidth * 0.5) foot = Math.max(foot, at + r.height);
+        }
+        return Math.round(foot);
+      };
       // measured on the final state and when the screen changes, never while it plays: a window that grows or
       // shrinks by a row keeps its top where it is
+      let warned = false;
       const measure = () => {
         step = stepOf();
         const h = stage.offsetHeight;
-        // centred while held; a stage taller than the screen holds with its foot on the screen's foot
-        top = Math.round(h <= innerHeight ? (innerHeight - h) / 2 : innerHeight - h);
+        // centred while held. A stage taller than the screen (a phone) holds from its heading, the sentence and the
+        // Replay button under the window passing below; when the heading and the window together are taller than
+        // the screen, the window's foot sits on the screen's foot and the heading is cut (r9-p41 at 390: the held
+        // heading was cut off at the top while the beats played)
+        // (below a bar fixed at the top of the screen, so the bar never covers the held heading: r8-p38 at 768)
+        const bar = barFoot(), room = innerHeight - bar;
+        if (h <= room) top = bar + Math.round((room - h) / 2);
+        else {
+          const foot = root.getBoundingClientRect().bottom - stage.getBoundingClientRect().top;
+          top = Math.round(foot <= room ? bar + Math.min(24, (room - foot) / 2) : innerHeight - foot);
+          if (foot > room && !warned) { warned = true; console.warn(`replay.js: at ${innerWidth}px the heading and the window are ${Math.round(foot)}px tall, more than the screen holds${bar ? ' under its bar' : ''} (${room}px), so the held heading is cut off: show fewer rows or columns there (references/motion.md, "Product replay").`); }
+        }
         stage.style.setProperty('--replay-top', top + 'px');
         run.style.height = Math.round((n - start) * step) + 'px';
       };

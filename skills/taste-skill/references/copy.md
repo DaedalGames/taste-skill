@@ -216,7 +216,9 @@ trademarks, and is to be replaced by the client's own.
 - Explainer captions that narrate the design: "A clean, minimal layout for…".
 - Step labels that duplicate numbers: "Step 1", "Phase 02".
 - Three parallel items everywhere: three features, three stats, three steps. Use the number the
-  content has.
+  content has. And the stats band itself, big figures each over a one- or two-word label: a figure
+  stands in the line that says what it counts ("Notes from 2019 still come back: 1,284 of them").
+- Two sign-up forms on one page (the closing section and the footer). One email form a page.
 
 ## 7. Micro-typography
 

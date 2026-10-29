@@ -29,12 +29,19 @@ const SPACING = [
   [{ id: 'standard', section: '112-144px', margin: '32-48px' }, 4, 'Standard: 112-144px between sections, 32-48px page margins at 1440.'],
   [{ id: 'compact', section: '80-104px', margin: '24-32px' }, 2, 'Compact: 80-104px between sections, 24-32px margins; for pages with a lot of real content (shops, product lines).'],
 ];
+// Black-and-white is never dealt at random (weight 0): it greyed a notes app's one photograph (r9-p41) and a house
+// named white (r6-p30). It is the treatment only where the brief itself asks for black and white.
 const TREATMENT = [
   ['natural', 5, 'Pictures in natural colour, as shot, with matching light; no filters, no tints, no grain.'],
   ['one-grade', 1.5, 'One grade over every picture (slightly warm or slightly cool, a little lifted shadows), the same on all of them.'],
-  ['mono', 0.8, 'Black-and-white pictures, all of them, with the page\'s one accent as the only colour.'],
+  ['mono', 0, 'Black-and-white pictures, all of them, as the brief asks, with the page\'s one accent as the only colour.'],
   ['cut-out', 0.6, 'Objects cut out on the page ground (product shots with no background), people and places in natural colour.'],
 ];
+// ("black-and-white photographs", "pictures in black and white", "shoots in black and white", "prints are all in
+// monochrome", "pictures should be black and white"; never a black-and-white logo). draw.mjs vetoes it where the
+// pictures carry colour (a café whose walls are hung with black-and-white photographs keeps its food in colour)
+const BW = '(?:black[- ](?:and|&)[- ]white|b ?& ?w|monochrome|gr[ae]yscale)';
+export const BW_BRIEF = new RegExp(`\\b${BW}\\s+(?:photo\\w*|pictures?|images?|imagery|film|portraits?|prints?)\\b|\\b(?:photo\\w*|pictures?|images?|imagery|portraits?|prints?|works?|shot|shoots?|shooting|printed)\\s+(?:(?:are|is|all|only|always|entirely|should|must|will|be|stay)\\s+){0,2}(?:in\\s+)?${BW}(?![- ](?:logo|sign|tiles?|floor))`, 'i');
 const INTERACTION = [
   ['none', 5, 'No interactive widget. The page is read: its content, pictures and motion carry it. Controls are the navigation, the links, the action and any real form.'],
   ['tool', 2.5, 'One working tool the visitor would really use, built from the subject\'s content (a price or size calculator, a booking with real dates, a filter over the real list, a configurator). Not a toy, not a demo of the page\'s own design. It works on a phone with a thumb and has a plain fallback.'],
@@ -46,7 +53,8 @@ const CLIP = [
   ['slow-picture', 1.5, 'One photograph that moves slowly as the page scrolls (a scale or drift of a few percent), once.'],
 ];
 
-export function dealFrame({ rnd, input, imagery, recent = {} }) {
+// bw: whether the brief asks for black-and-white pictures (draw.mjs decides, with its colour veto)
+export function dealFrame({ rnd, input, imagery, recent = {}, bw = BW_BRIEF.test(input.brief || '') }) {
   const wpick = (pairs) => { const t = pairs.reduce((s, x) => s + x[1], 0); let r = rnd() * t; for (const x of pairs) { r -= x[1]; if (r <= 0) return x; } return pairs.at(-1); };
   const not = (pairs, last) => pairs.map((x) => [x[0], x[1] * (last && (x[0] === last || x[0]?.id === last) ? 0.35 : 1), x[2]]);
   const tone = input.tone;
@@ -58,7 +66,7 @@ export function dealFrame({ rnd, input, imagery, recent = {} }) {
   const footer = wpick(not(FOOTER.filter((x) => multiPage || x[0] !== 'columns'), recent.footer));
   const corners = wpick(not(CORNERS.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'large' ? 0.2 : tone === 'playful' && x[0].id === 'square' ? 0.5 : 1), x[2]]), recent.corners));
   const spacing = wpick(not(SPACING.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'airy' ? 2 : input.sector === 'ecommerce' && x[0].id === 'compact' ? 2 : 1), x[2]]), recent.spacing));
-  const treatment = wpick(not(TREATMENT.map((x) => [x[0], x[1] * (software && x[0] === 'cut-out' ? 0.3 : 1), x[2]]), recent.treatment));
+  const treatment = bw ? TREATMENT.find((x) => x[0] === 'mono') : wpick(not(TREATMENT.filter((x) => x[1] > 0).map((x) => [x[0], x[1] * (software && x[0] === 'cut-out' ? 0.3 : 1), x[2]]), recent.treatment));
   const interaction = wpick(not(INTERACTION.map((x) => [x[0], x[1] * (x[0] === 'product' && !(software || ['physical-product', 'ecommerce'].includes(input.sector)) ? 0 : 1), x[2]]), recent.interaction));
   const clip = wpick(not(CLIP.map((x) => [x[0], x[1] * (software && x[0] === 'one-clip' ? 0.5 : 1), x[2]]), recent.clip));
   return {

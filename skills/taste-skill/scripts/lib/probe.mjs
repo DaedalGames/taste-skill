@@ -301,6 +301,13 @@ export function probe() {
     const v = rgba(b.cs.backgroundColor); if (v.a < 0.9) continue;
     const hx = hex(v); if (!sectionBgs.some((s) => s.color === hx)) sectionBgs.push({ color: hx, top: Math.round(b.top), hsl: hsl(v) });
   }
+  // (round 10, part B: every fill of 1.5% of the screen or more, a panel, a band, a button row, for the violet check)
+  const largeFills = [];
+  for (const b of big) {
+    if (b.area < W * H * 0.015) continue;
+    const v = rgba(b.cs.backgroundColor); if (v.a < 0.9) continue;
+    const hx = hex(v); if (!largeFills.some((s) => s.color === hx)) largeFills.push({ color: hx, hsl: hsl(v), top: Math.round(b.top) });
+  }
   const textColorChars = new Map();
   for (const t of texts) { const v = rgba(t.color); if (v.a < 0.3) continue; const hx = hex(v); textColorChars.set(hx, (textColorChars.get(hx) || 0) + t.chars); }
   const textColors = [...textColorChars.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([color, c]) => ({ color, share: round(c / totalChars) }));
@@ -330,14 +337,30 @@ export function probe() {
   for (const t of texts) {
     if (t.chars < 4) continue;
     const fg = rgba(t.color); if (fg.a < 0.99) continue;
-    if (overMedia(t)) continue; // cannot know the pixels behind it; judge that from the screenshot
+    // (round 10, part B: words in a box of their own over a picture stand on the box: r9-p43's note in a white box on
+    // the fjord photograph)
+    // (the box is their ground when it lies on the picture: it holds none of the media under the words and is under half
+    // the size of the smallest of them; a section or a window round a picture is not a box on it)
+    const ownGround = (() => {
+      const under = mediaRects.filter((m) => { const ox = Math.min(t.right, m.r) - Math.max(t.left, m.l), oy = Math.min(t.bottom, m.b) - Math.max(t.top, m.t); return ox > 0 && oy > 0; });
+      if (!under.length) return null;
+      for (let p = t.el, i = 0; p && p !== document.body && i < 4; p = p.parentElement, i++) {
+        const cs = getComputedStyle(p); if (cs.backgroundImage !== 'none') return null;
+        const v = rgba(cs.backgroundColor); if (v.a < 0.9) continue;
+        const pr = p.getBoundingClientRect();
+        return under.some((m) => p.contains(m.el) || pr.width * pr.height >= (m.r - m.l) * (m.b - m.t) * 0.5) ? null : v;
+      }
+      return null;
+    })();
+    if (!ownGround && overMedia(t)) continue; // cannot know the pixels behind it; judge that from the screenshot
     // text blended with difference or exclusion inverts whatever lies under it; its colour alone says nothing
     let blended = false;
     for (let p = t.el, i = 0; p && p !== document.body && i < 6; p = p.parentElement, i++) if (/difference|exclusion/.test(getComputedStyle(p).mixBlendMode)) { blended = true; break; }
     if (blended) continue;
-    const bg = bgBehind(t.el); if (!bg) continue;
+    const bg = ownGround || bgBehind(t.el); if (!bg) continue;
     const c = contrast(fg, bg); const need = t.size >= 24 || (t.size >= 18.5 && t.weight >= 700) ? 3 : 4.5;
-    if (c < need) lowContrast.push({ text: t.text.slice(0, 40), ratio: c, need, size: t.size, fg: hex(fg), bg: hex(bg) });
+    // (running text: a sentence of eight words or more set at body size)
+    if (c < need) lowContrast.push({ text: t.text.slice(0, 40), ratio: c, need, size: t.size, fg: hex(fg), bg: hex(bg), body: need === 4.5 && t.text.split(' ').length >= 8 });
   }
   lowContrast.sort((a, b) => a.ratio - b.ratio);
 
@@ -377,16 +400,9 @@ export function probe() {
       const outer = sh.split(/,(?![^(]*\))/).some((part) => !/inset/.test(part) && !/ 0px 0px 0px 0px/.test(part) && !/rgba\(\d+, \d+, \d+, 0\)/.test(part));
       if (outer) { if (isOverlay(el) || el.closest('[data-ui]')) shadowOverlay++; else { shadowStatic++; if (shadowSamples.length < 4) shadowSamples.push(label(el) + ' → ' + sh.slice(0, 80)); } }
     }
-    if (cs.backgroundImage.includes('gradient(')) {
-      if ((cs.webkitBackgroundClip || cs.backgroundClip || '').includes('text')) gradientText++;
-      else if (b.area >= W * H * 0.02) {
-        // neutral stops with changing alpha = a legibility scrim over media, not decoration
-        const stops = [...cs.backgroundImage.matchAll(/rgba?\(([^)]+)\)/g)].map((mm) => mm[1].split(/[,\s/]+/).filter(Boolean).map(Number));
-        const exotic = /oklch|oklab|color\(|lab\(|lch\(|hsl/.test(cs.backgroundImage);
-        const scrim = !exotic && stops.length > 0 && stops.every((c) => Math.max(c[0], c[1], c[2]) - Math.min(c[0], c[1], c[2]) <= 14) && stops.some((c) => c.length > 3 && c[3] < 1);
-        if (scrim) scrims++; else { gradients++; if (gradientSamples.length < 4) gradientSamples.push(label(el) + ' → ' + cs.backgroundImage.slice(0, 110)); }
-      }
-    }
+    if (cs.backgroundImage.includes('gradient(') && (cs.webkitBackgroundClip || cs.backgroundClip || '').includes('text')) gradientText++;
+    // (round 10, part B: any gradient fails, a scrim of neutral stops too; r9-p43's milky band over the full-bleed fjord.
+    // It is counted after this loop on every visible element, its ::before and ::after, and its mask)
     if ((cs.backdropFilter && cs.backdropFilter !== 'none') || (cs.webkitBackdropFilter && cs.webkitBackdropFilter !== 'none')) blurred++;
     const bt = parseFloat(cs.borderTopWidth) || 0, bb = parseFloat(cs.borderBottomWidth) || 0, bl = parseFloat(cs.borderLeftWidth) || 0, br = parseFloat(cs.borderRightWidth) || 0;
     const thin = (w, c, style) => w > 0 && w <= 1.5 && style !== 'none' && rgba(c).a > 0.02;
@@ -405,6 +421,36 @@ export function probe() {
       for (let i = 0; i < 3 && p && effective === 0; i++, p = p.parentElement) { const pcs = getComputedStyle(p); if (pcs.overflow !== 'visible') effective = parseFloat(pcs.borderTopLeftRadius) || 0; }
       if (effective > 1) { roundedMedia++; mediaRadii.push(Math.round(effective)); } else squareMedia++;
     } else if (rad >= 6 && r.width >= 150 && r.height >= 80 && (rgba(cs.backgroundColor).a > 0.04 || bt > 0)) { roundedBoxes++; boxRadii.push(Math.round(Math.min(rad, 99))); }
+  }
+  // gradients: a linear, radial or conic gradient in the computed background of any element 16px or more, or of its
+  // ::before or ::after, or in its mask (a faded edge). None of the skill's scenes uses one: their masks are SVG
+  // pictures (hinged-sheets' perforation, raster-cut's halftone, twin-image-scanner's cut-out), and their soft edges
+  // are blurred flat fills.
+  {
+    const seenGrad = new Set();
+    for (const el of all) {
+      if (el.closest('svg')) continue;
+      const r = el.getBoundingClientRect(); if (r.width < 16 || r.height < 16) continue;
+      for (const ps of [null, '::before', '::after']) {
+        const cs = ps ? getComputedStyle(el, ps) : getComputedStyle(el);
+        if (ps && (cs.content === 'none' || cs.content === 'normal')) continue;
+        if (cs.display === 'none' || cs.visibility === 'hidden') { if (!ps) break; continue; }
+        const how = cs.backgroundImage.includes('gradient(') && !(cs.webkitBackgroundClip || cs.backgroundClip || '').includes('text') ? 'background' : /gradient\(/.test(cs.maskImage || cs.webkitMaskImage || '') ? 'mask' : null;
+        if (!how) continue;
+        // (one colour from stop to stop is a flat fill drawn with gradient syntax, not a gradient: the link underline
+        // linear-gradient(currentColor, currentColor) on r8-p39. Nor does an element held invisible count)
+        const g = how === 'mask' ? cs.maskImage || cs.webkitMaskImage : cs.backgroundImage;
+        const cols = (g.match(/(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\([^)]*\)|currentcolor|transparent/gi) || []).map((c) => c.replace(/\s+/g, '').toLowerCase());
+        if (!/url\(/.test(g) && cols.length && cols.every((c) => c === cols[0])) continue;
+        if (+cs.opacity < 0.05 || +getComputedStyle(el).opacity < 0.05) continue;
+        const key = label(el) + (ps || '') + how; if (seenGrad.has(key)) continue; seenGrad.add(key);
+        // (neutral stops with changing alpha: a scrim; it is named as one, and it fails like any gradient)
+        const stops = [...g.matchAll(/rgba?\(([^)]+)\)/g)].map((mm) => mm[1].split(/[,\s/]+/).filter(Boolean).map(Number));
+        const scrim = how === 'background' && stops.length > 0 && stops.every((c) => Math.max(c[0], c[1], c[2]) - Math.min(c[0], c[1], c[2]) <= 14) && stops.some((c) => c.length > 3 && c[3] < 1);
+        if (scrim) scrims++;
+        gradients++; if (gradientSamples.length < 4) gradientSamples.push(label(el) + (ps || '') + (how === 'mask' ? ' (a fading mask)' : scrim ? ' (a scrim)' : '') + ' → ' + g.slice(0, 90));
+      }
+    }
   }
   // elements that are themselves a thin rule (1px tall or 1px wide)
   for (const el of all) {
@@ -547,9 +593,9 @@ export function probe() {
     },
     eyebrows, numbered: numbered.slice(0, 12).map((t) => ({ text: t.text.slice(0, 30), size: t.size, top: Math.round(t.top) })),
     color: {
-      bodyBg: hex(bodyBg), bodyBgHsl: hsl(bodyBg), dark: lum(bodyBg) < 0.18, sectionBgs: sectionBgs.slice(0, 10), textColors,
+      bodyBg: hex(bodyBg), bodyBgHsl: hsl(bodyBg), dark: lum(bodyBg) < 0.18, sectionBgs: sectionBgs.slice(0, 10), textColors, fills: largeFills.slice(0, 12),
       button: filledBtns.length ? { bg: mode(filledBtns.map((b) => b.bg)), hsl: mode(filledBtns.map((b) => b.bgHsl)), fg: mode(filledBtns.map((b) => b.fg)) } : null,
-      lowContrast: lowContrast.slice(0, 6),
+      lowContrast: [...lowContrast.slice(0, 6), ...lowContrast.slice(6).filter((c) => c.body).slice(0, 3)],
     },
     buttons: { count: buttons.length, inHero: buttons.filter((b) => b.top < H).length, radius: mode(buttons.map((b) => b.radius)), height: mode(buttons.map((b) => b.h)), withShadow: buttons.filter((b) => b.shadow).length, withGradient: buttons.filter((b) => b.gradient).length, mono: buttons.filter((b) => b.mono).length, upper: buttons.filter((b) => b.upper).length, heroLabels: buttons.filter((b) => b.top < H).map((b) => b.text).filter(Boolean).slice(0, 5) },
     surfaces: { shadowStatic, shadowOverlay, shadowSamples, gradients, scrims, gradientSamples, gradientText, hairlines, hairlineSamples, outlinedBoxes, dashed, blurred, roundedBoxes, boxRadius: mode(boxRadii) ?? 0, squareMedia, roundedMedia, mediaRadius: mode(mediaRadii) ?? 0, textShadow: texts.filter((t) => t.textShadow).length, cardRows: cardRows.slice(0, 8) },
@@ -740,6 +786,17 @@ export function frame(opts = {}) {
   let lone = null;
   if (scrollY > H * 0.5) {
     const seenAt = (el, pts) => pts.some(([x, y]) => { if (!(x >= 0 && x < W && y >= 0 && y < H)) return false; const hit = document.elementFromPoint(x, y); return !!hit && (hit === el || el.contains(hit) || hit.contains(el)); });
+    // (a picture under a clear layer, a scene's stage or the words set on it, is still in view: round 10, part B)
+    const mediaAt = (el, pts) => pts.some(([x, y]) => {
+      if (!(x >= 0 && x < W && y >= 0 && y < H)) return false;
+      for (const e of document.elementsFromPoint(x, y)) {
+        if (e === el || el.contains(e) || e.contains(el)) return true;
+        const cs = getComputedStyle(e); if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME)$/.test(e.tagName) || cs.backgroundImage !== 'none') return false;
+        const c = cs.backgroundColor.match(/rgba?\(([^)]+)\)/); const p = c ? c[1].split(/[,\s/]+/).filter(Boolean) : [];
+        if (p.length >= 3 && (p.length < 4 || +p[3] >= 0.5)) return false;
+      }
+      return false;
+    });
     const shown = [];
     for (const u of units.values()) {
       if (u.op < 0.5 || pinnedTop(u.el) || u.el.closest('header, nav, [role=banner]')) continue;
@@ -763,10 +820,18 @@ export function frame(opts = {}) {
           if (m.parentElement?.closest('svg, [data-ui]') || (m.tagName === 'CANVAS' && ATMOSPHERE.has(m.closest('[data-scene]')?.dataset.scene)) || pinnedTop(m) || opacityOf(m) < 0.3) return false;
           const r = m.getBoundingClientRect(), l = Math.max(r.left, 0), rt = Math.min(r.right, W), t = Math.max(r.top, 0), b = Math.min(r.bottom, H);
           if (!((rt - l) * (b - t) >= W * H * 0.02)) return false;
-          return seenAt(m, [[(l + rt) / 2, (t + b) / 2], [l + (rt - l) * 0.25, t + (b - t) * 0.25], [l + (rt - l) * 0.75, t + (b - t) * 0.75]]);
+          return mediaAt(m, [[(l + rt) / 2, (t + b) / 2], [l + (rt - l) * 0.25, t + (b - t) * 0.25], [l + (rt - l) * 0.75, t + (b - t) * 0.75]]);
         });
       };
-      if (rest.length <= 2 && restWords <= 16 && n <= 4 && !action && area < W * H * 0.06 && mid > H * 0.1 && mid < H * 0.78 && !hd.el.closest('h1, [data-hero]') && !picture()) lone = { text: txt.slice(0, 50), size: Math.round(hd.size) };
+      // (round 10, part B: a statement is the section's whole subject only when its section holds little else; a heading
+      // over a list, cards, tickets or pictures still to come is a heading at any size: r9-p43's "The light decides the
+      // season" alone on a screen, four season tickets under it)
+      const sec = hd.el.closest('section, article, [data-scene]');
+      // (a figure set large, a year or a price, is a display element, not a heading)
+      const leads = !!sec && !hd.el.contains(sec) && !/^[\d\s.,:%€$£-]+$/.test(txt) && ((sec.innerText || '').trim().split(/\s+/).length - (hd.el.innerText || '').trim().split(/\s+/).length >= 30 || sec.querySelectorAll('li, article, figure, img').length >= 3);
+      const small = n <= 4 && area < W * H * 0.06;
+      // (big: alone only by the round-10 reading; the inspector keeps it when it holds about a screen, not for one frame)
+      if (rest.length <= 2 && restWords <= 16 && (leads || small) && !action && mid > H * 0.1 && mid < H * 0.78 && !hd.el.closest('h1, [data-hero]') && !picture()) lone = { text: txt.slice(0, 50), size: Math.round(hd.size), big: !small };
     }
   }
   if (opts.film) {
@@ -839,7 +904,7 @@ export function frame(opts = {}) {
   for (const el of document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote, li, a, button, span, div')) {
     let direct = ''; for (const n of el.childNodes) if (n.nodeType === 3) direct += n.nodeValue;
     if (direct.trim().length < 3) continue;
-    const cs = getComputedStyle(el); const size = parseFloat(cs.fontSize); if (size < 24 || cs.visibility === 'hidden' || +cs.opacity < 0.3) continue;
+    const cs = getComputedStyle(el); const size = parseFloat(cs.fontSize); if (size < 24 || cs.visibility === 'hidden' || opacityOf(el) < 0.3) continue;
     let srOnly = false;
     for (let p = el, i = 0; p && p !== document.body && i < 4; p = p.parentElement, i++) { const pcs = getComputedStyle(p); const pr = p.getBoundingClientRect(); if (pcs.clip === 'rect(0px, 0px, 0px, 0px)' || /inset\(50%\)/.test(pcs.clipPath) || (pr.width <= 2 && pr.height <= 2 && pcs.overflow !== 'visible')) { srOnly = true; break; } }
     if (srOnly) continue;

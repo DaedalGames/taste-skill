@@ -55,9 +55,16 @@
   //   hold   screens of scroll the stage is held for (1-4); the section is (hold + 1) screens tall
   //   scrub  true = locked to the scrollbar; a number = seconds of catch-up (0.3-0.8 reads as weight)
   //   build(tl, ctx)  add the tweens to tl; the timeline runs 0 → 1 over the hold. ctx: { root, stage, phone, q }
+  //                   Return Stage.REST when this screen gets the finished composition instead (a tablet
+  //                   the scene does not fit); the scene builds again when the screen crosses the phone
+  //                   width or reduced motion changes, and a scene that decides by its own size starts
+  //                   again on resize itself.
   //   phone  'same' (default) | 'rest' (the phone gets the finished composition) | { hold, build }
-  //   rest(ctx)  optional: anything extra the finished composition needs (most scenes need nothing)
+  //   rest(ctx)  optional: anything extra the finished composition needs (most scenes need nothing).
+  //              Called whenever the scene shows its finished composition: reduced motion at any width,
+  //              a phone set to 'rest', a build that returns Stage.REST, and no GSAP.
   // Sets --p (0-1) and data-beat on root, so CSS and captions can follow the scene too.
+  Stage.REST = Object.freeze({ rest: true });
   Stage.scene = (root, opts = {}) => {
     if (!root) return null;
     const { hold = 2, scrub = true, build, phone = 'same', rest, beats = 0 } = opts;
@@ -66,7 +73,9 @@
     const toRest = (ctx) => { root.classList.remove('is-live'); root.classList.add('is-rest'); root.style.removeProperty('--hold'); if (rest) rest(ctx); };
     if (!live) { toRest({ root, stage, phone: Stage.phone, q }); return null; }
     const mm = gsap.matchMedia();
-    mm.add({ motion: '(prefers-reduced-motion: no-preference)', phone: '(max-width: 767px)' }, (c) => {
+    // gsap.matchMedia runs the callback only while one of its conditions matches: `reduce` is there so
+    // a wide screen with reduced motion (which matches neither of the others) still gets its rest().
+    mm.add({ motion: '(prefers-reduced-motion: no-preference)', reduce: '(prefers-reduced-motion: reduce)', phone: '(max-width: 767px)' }, (c) => {
       const isPhone = c.conditions.phone;
       const ctx = { root, stage, phone: isPhone, q };
       const plan = isPhone ? (phone === 'rest' ? null : phone === 'same' ? { hold, build } : { hold: phone.hold ?? hold, build: phone.build ?? build }) : { hold, build };
@@ -84,7 +93,13 @@
           },
         },
       });
-      plan.build(tl, ctx);
+      if (plan.build(tl, ctx) === Stage.REST) {
+        if (tl.scrollTrigger) tl.scrollTrigger.kill();
+        tl.kill();
+        root.style.removeProperty('--p');
+        toRest(ctx);
+        return () => root.classList.remove('is-rest');
+      }
       // pad the timeline to exactly 1 so positions in build() read as fractions of the hold
       if (tl.duration() < 1) tl.to({}, { duration: 1 - tl.duration() }, tl.duration());
       return () => { root.classList.remove('is-live'); root.style.removeProperty('--hold'); root.style.removeProperty('--p'); };

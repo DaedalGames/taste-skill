@@ -101,7 +101,22 @@ against 57% of weak ones.
 | A link-column footer on a one-page site (October 2026) | not dealt | One quiet line: name, city, legal, Image credits |
 | A short line held for two screens or more (October 2026) | failed over 1.2 screens (`line-holds`) | One screen a line, or a second beat with new content |
 | The template stack: a centred headline, a line, two actions and a round-cornered photograph card (October 2026) | failed (`template-hero`) | The dealt hero's geometry, its largest type the page's idea or the name |
-| One photograph held under every step of a stepped scene, repeated down the page without the pin (October 2026) | failed at three showings on tablet and phone (`repeated-picture`) | A picture or a crop per step; one picture shown once, the steps beside it |
+| One photograph held under every step of a stepped scene, repeated down the page without the pin (October 2026) | failed at three showings on tablet and phone (`repeated-picture`) | Its own picture per step; one picture shown once, the steps beside it |
+| A band of big figures, each over a one- or two-word label (October 2026) | warned (`stats-band`) | A figure in the line that says what it counts |
+| Two email forms on one page, the closing section and the footer (October 2026) | warned (`duplicate-form`) | One form |
+| Three framed things in one section: mini-interface slabs, a boxed photograph, a box repeating a label (October 2026) | failed at three, warned at two (`framed-elements`) | One framed window a section; the rest on the ground |
+| Picture beside text in every section, 50/50 all the way down (October 2026) | warned at three in a row (`repeated-split`) | One section breaks the split: a full-bleed picture, a headline across the width, an 8/4 asymmetry |
+| A milky or dark fade over a full-bleed photograph (October 2026) | failed (`gradient`) | Words on its calm part, or beside it; at most a flat dark scrim |
+| A blue lightened for a dark ground into periwinkle (October 2026) | failed (`palette-purple`); the draw turns it | Lighten toward the cyan side, or another accent |
+| A held replay or scene whose heading is cut off above the screen or under the bar on a tablet or phone (October 2026) | failed (`held-heading-cut`) | Fewer rows in the window there; replay.js holds the stage below the bar |
+| A search box or button in a product fragment that does nothing when used (October 2026) | warned (`dead-control`) | It works, or it reads as static: no pointer, hover or focus |
+| A photograph with no line in the Image credits (October 2026) | warned (`uncredited-picture`) | One credit for every photograph that is not the client's own |
+| A product replay whose beats change a few percent of its window (October 2026) | warned at one faint beat (under 15% of the window) or a largest beat under 30%, failed when most are faint (`replay-faint`) | Each beat changes about a third of the window; the result large and in the accent |
+| A scene that rests on a row of tickets, date cards or filled panes (October 2026) | failed (`boxed-list`, in the scene's finished composition too) | The items as type on the ground, or another scene |
+| A display statement alone on its screen while its section's content waits below (October 2026) | failed when it holds alone for two screens (`lone-heading`) | The heading over its content from the first frame |
+| Running text in a pale grey (October 2026) | failed under 4.5:1 (`contrast`) | The full ink; grey only for notes |
+| A left column that ends while the text beside it runs on (October 2026) | warned (`empty-left`) | Balance the columns, or let the text run full width below |
+| A scene frame with a heading's letters turned or off their line, or a picture cut to a sliver by the screen edge mid-hold (October 2026) | warned on the contact sheets (`tilted-letters`, `edge-sliver`) | Every settled step finished and level |
 
 ## 6. Copy tells
 

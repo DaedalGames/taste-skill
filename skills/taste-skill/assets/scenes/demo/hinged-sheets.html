@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Selkie Sea Baths · hinged sheets</title>
-<meta name="description" content="Demo of the hinged-sheets scroll scene: three paper tickets rise from a face-down deck, turn over and land in a row while the headline tips back behind them.">
+<meta name="description" content="Demo of the hinged-sheets scroll scene: three paper tickets lie face-down under the headline and turn over one by one as the page scrolls.">
 <script>document.documentElement.classList.add('js')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -92,9 +92,9 @@
   .hours dd { margin: 0; font-variant-numeric: tabular-nums; }
   .visit figure { grid-column: 4; margin: 0; }
   .visit figure img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius); }
-  .foot { background: var(--accent); color: var(--paper); padding: 12svh 4vw 40px; }
-  .foot__name { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(48px, 11.6vw, 200px); line-height: 0.88; letter-spacing: -0.055em; white-space: nowrap; }
-  .foot__small { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 40px; margin-top: 64px; font-size: 16px; line-height: 1.5; }
+  .foot { background: var(--accent); color: var(--paper); padding: 64px 4vw 40px; }
+  .foot__name { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); font-size: 28px; line-height: 1.1; letter-spacing: -0.03em; }
+  .foot__small { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 40px; margin-top: 24px; font-size: 16px; line-height: 1.5; }
   .foot__small p { margin: 0; }
 
   @media (max-width: 767px) {
@@ -105,8 +105,7 @@
     .hero__lead p + p { margin-top: 16px; text-align: left; }
     .visit { grid-template-columns: 16px minmax(0, 1fr) 16px; padding: 96px 0; row-gap: 48px; }
     .visit figure { grid-column: 2; }
-    .foot { padding: 80px 16px 32px; }
-    .foot__name { font-size: 15.4vw; white-space: normal; }
+    .foot { padding: 56px 16px 32px; }
   }
 </style>
 </head>
@@ -135,7 +134,6 @@
     <div class="scene-stage">
       <div class="hs-head">
         <h2 class="hs-title" id="hs-title">The sea is open all winter</h2>
-        <p class="hs-sub">Three tickets for the bath house at the end of the north pier, printed on card and punched at the door.</p>
       </div>
       <p class="hs-lead">Prices for October 2026 to April 2027</p>
       <ol class="hs-row" role="list">
@@ -144,7 +142,7 @@
             <article class="hs-face hs-face--front">
               <div class="hs-body">
                 <h3 class="hs-name">One swim</h3>
-                <p class="hs-pitch">The sea, the wood-fired sauna and the hot tub on the deck, for one visit on any day of the season.</p>
+                <p class="hs-pitch">The sea, the wood-fired sauna and the hot tub on the deck, on any day of the season.</p>
                 <ul class="hs-points">
                   <li>Towel and locker</li>
                   <li>Sauna until nine</li>
@@ -168,7 +166,7 @@
             <article class="hs-face hs-face--front">
               <div class="hs-body">
                 <h3 class="hs-name">Ten swims</h3>
-                <p class="hs-pitch">A card we punch at the door. Use it on any ten days within the year, alone or with a friend.</p>
+                <p class="hs-pitch">A card we punch at the door, good for any ten days in the year.</p>
                 <ul class="hs-points">
                   <li>Share it with a friend</li>
                   <li>Towel and locker</li>
@@ -192,7 +190,7 @@
             <article class="hs-face hs-face--front">
               <div class="hs-body">
                 <h3 class="hs-name">Winter season</h3>
-                <p class="hs-pitch">Every day from October to April, when the sea is coldest, the sauna hottest and the pier is yours at dawn.</p>
+                <p class="hs-pitch">Every day from October to April, when the sea is coldest and the pier is yours at dawn.</p>
                 <ul class="hs-points">
                   <li>As many swims as you like</li>
                   <li>Full moon night swims</li>
@@ -212,7 +210,7 @@
           </div>
         </li>
       </ol>
-      <p class="hs-note">Children under twelve swim free with an adult. Ten-swim cards can be shared, and run twelve months from the first punch.</p>
+      <p class="hs-note">Children under twelve swim free with an adult. Tickets are not refunded, but they can be given away.</p>
     </div>
   </section>
 

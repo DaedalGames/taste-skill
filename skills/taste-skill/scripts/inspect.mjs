@@ -44,6 +44,18 @@
 // centred headline, a line, two actions and a rounded picture card fails (template-hero), and a visit block with
 // no street, district or map link warns (visit-without-directions).
 //
+// Round 10, part B (r9-p41 a notes app, r9-p42 Haulet, r9-p43 Hvít; each won and read as a template): from the page
+// as built, three framed elements in one section fail and two warn (framed-elements: the product's window alone is the
+// section's one frame); a row of big figures over short labels (stats-band), two email fields (duplicate-form), three
+// sections in a row with the same picture/text split (repeated-split), a column that runs out beside one that runs on
+// (empty-left), a picture with no entry in the page's credits (uncredited-picture) and a control on the first screen
+// that changes nothing when used (dead-control) warn. Any gradient fails, a scrim or a faded mask too, and so does a
+// pale or coloured veil on a photograph at rest (gradient); violet, lavender and periwinkle fail on the accent and on
+// any large fill (palette-purple); running text under 4.5:1 fails (contrast); a list's labels count as list text
+// (small-body). A replay beat that changes under 15% of its window is faint (replay-faint), and a held stage's heading
+// cut off above a tablet or phone screen fails (held-heading-cut). Lists drawn as boxes and framed elements inside
+// scenes are looked for in the scenes' finished compositions, on the reduced-motion page.
+//
 // --app judges an app screen (dashboard, admin, settings) by the rules in references/app-screens.md; a
 // direction dealt with draw.mjs --app switches it on by itself.
 //
@@ -57,8 +69,9 @@ import { Browser, sleep } from './lib/cdp.mjs';
 import { probe, frame, reach, layout, app, colourShare, groundShare, cellDiff } from './lib/probe.mjs';
 import { judge, judgeLayout, judgeApp, APP_SKIP } from './lib/rules.mjs';
 import { extra, controls, replayState, photoText, photoTextDone, photoContrast, splitLetters, tileFills } from './lib/probe-extra.mjs';
-import { judgeExtra } from './lib/rules-extra.mjs';
+import { judgeExtra, judgeBuild } from './lib/rules-extra.mjs';
 import { restLook, restStops, restGo, heroStack, visitBlocks } from './lib/probe-rest.mjs';
+import { pageBuild, deadControls } from './lib/probe-page.mjs';
 import { viewportClass as name, screenshotLabel, isInspectionScreenshot } from './lib/inspection-files.mjs';
 
 const args = process.argv.slice(2);
@@ -190,7 +203,7 @@ async function sheet(frames, cols, cellW, cellH, path) {
 // beat's stretch of its hold; one on its own clock is put in the middle of the screen and played from its Replay
 // button, each new state taken once it rests. Every state is photographed twice, the second time with any drawn
 // cursor hidden, after its change has run (2s); a beat is then the part of the window that changed since the beat
-// before, as a share of the whole screen (cellDiff).
+// before, as a share of the window's part on the screen (cellDiff measures it against the screen).
 const HIDE_CURSOR = `(() => { if (!document.getElementById('ts-hide-cursor')) { const s = document.createElement('style'); s.id = 'ts-hide-cursor'; s.textContent = '[data-replay-cursor], .replay__cursor { visibility: hidden !important; }'; document.head.appendChild(s); } return 1; })()`;
 const SHOW_CURSOR = `(() => { const s = document.getElementById('ts-hide-cursor'); if (s) s.remove(); return 1; })()`;
 async function replayBeats(page, i, w, h) {
@@ -266,7 +279,7 @@ async function replaySheet(rb, w, h, path) {
   if (!tiles.length) return null;
   const tileW = 720, cols = tiles.length > 1 ? 2 : 1, sc = tileW / Math.max(...tiles.map((s) => s.win.w));
   const tileH = Math.round(Math.max(...tiles.map((s) => s.win.h)) * sc);
-  const label = (s) => { const d = rb.diffs.find((x) => x.k === s.k); return `${rb.clock ? 'Change' : 'Beat'} ${s.k}` + (d && d.cells != null ? ` · ${(d.cells * 100).toFixed(1)}% of the screen changed` : s.k === 0 ? (rb.clock ? ' · as Replay was pressed' : ' · the first state') : ' · not measured: the stage moved'); };
+  const label = (s) => { const d = rb.diffs.find((x) => x.k === s.k); return `${rb.clock ? 'Change' : 'Beat'} ${s.k}` + (d && d.cells != null ? ` · ${Math.round(Math.min(1, (d.cells * w * h) / Math.max(1, s.win.w * s.win.h)) * 100)}% of the window changed` : s.k === 0 ? (rb.clock ? ' · as Replay was pressed' : ' · the first state') : ' · not measured: the stage moved'); };
   await helper.setViewport({ width: cols * tileW + (cols + 1) * 16, height: Math.ceil(tiles.length / cols) * (tileH + 40) + 16, dsf: 1 });
   await helper.eval((a) => {
     document.body.style.cssText = `margin:0;padding:16px;background:#777;display:grid;grid-template-columns:repeat(${a.cols},${a.tileW}px);gap:16px;font:600 16px/24px system-ui,sans-serif;color:#fff`;
@@ -385,6 +398,8 @@ try {
     // round 10, at the top of the page: the first screen as the generic stack (desktop), and visit blocks
     const hero = w >= 1100 && !appMode ? await page.eval(heroStack).catch((e) => { frameErrors.push('hero: ' + String(e.message).slice(0, 160)); return null; }) : null;
     const visits = !appMode ? await page.eval(visitBlocks).catch((e) => { frameErrors.push('visit: ' + String(e.message).slice(0, 160)); return null; }) : null;
+    // round 10, part B: what the sections are built from, the forms, the splits and the credits
+    const build = !appMode ? await page.eval(pageBuild, {}).catch((e) => { frameErrors.push('build: ' + String(e.message).slice(0, 160)); return null; }) : null;
     const appM = appMode ? await page.eval(app).catch(() => null) : null;
     if (appM) appM.colourShare = await helper.eval(colourShare, 'data:image/jpeg;base64,' + frames[0]).catch(() => null);
 
@@ -486,9 +501,17 @@ try {
 
     // decorative controls: each switch, checkbox or slider is used once and put back (it touches the page, so it runs last)
     if (ex) ex.controls = await page.eval(controls).catch((e) => { frameErrors.push('controls: ' + String(e.message).slice(0, 160)); return null; });
+    // the first screen's controls, each clicked once (dead-control); last, since it may leave a menu open
+    const dead = w >= 1100 && !appMode ? await page.eval(deadControls).catch((e) => { frameErrors.push('dead controls: ' + String(e.message).slice(0, 160)); return null; }) : null;
     // a heading alone on a screen of the walk (any width) or of the film
     const screenAt = (f, i) => (f && f.y != null ? Math.round(f.y / h) + 1 : i * stride + 1);
-    if (ex) ex.loneScreens = [...new Map([...frameChecks, ...filmChecks].map((f, i) => (f && f.lone ? [f.lone.text, { ...f.lone, screen: screenAt(f, i) }] : null)).filter(Boolean)).values()];
+    // (round 10, part B: a display heading over content still to come counts when it holds alone for more than a moment:
+    // two screens of the walk, or two steps of the film, a third of a screen apart; r9-p43's "The light decides the
+    // season". One frame of a scene's change is not a heading left alone)
+    const loneHeld = new Map();
+    for (const f of [...frameChecks, ...filmChecks]) if (f && f.lone) { const s = loneHeld.get(f.lone.text) || { walk: 0, steps: new Set() }; if (f.step != null) s.steps.add(f.step); else s.walk++; loneHeld.set(f.lone.text, s); }
+    if (ex) ex.loneScreens = [...new Map([...frameChecks, ...filmChecks].map((f, i) => (f && f.lone && (!f.lone.big || loneHeld.get(f.lone.text).walk >= 2 || loneHeld.get(f.lone.text).steps.size >= 2) ? [f.lone.text, { ...f.lone, screen: screenAt(f, i) }] : null)).filter(Boolean)).values()];
+    if (ex) ex.loneHeld = [...loneHeld.entries()].slice(0, 8).map(([t, s]) => ({ text: t.slice(0, 40), walk: s.walk, film: s.steps.size }));
     // each replay's window at its smallest (replay-small): extra() saw it at the page top after the walk, where
     // replay.js has put it back to its first beat; it is also measured at load (its final state) and in the film at
     // every beat it showed (the largest frame of each beat, so a window still growing in is not taken for its size)
@@ -524,6 +547,7 @@ try {
     if (ent && ['line-blocks', 'set-type'].includes(ent.id) && ent.wrapped.length && !allow.includes('entrance-line-wraps')) findings.push({ level: ent.id === 'line-blocks' ? 'FAIL' : 'WARN', id: 'entrance-line-wraps', width: w, message: `${ent.wrapped.length} headline line(s) wrap at this width, so ${ent.id === 'line-blocks' ? 'one block covers the whole column and leaves a bar beside the shorter line' : 'two lines rise as one'}: ` + ent.wrapped.slice(0, 3).map((t) => `"${t}"`).join(', '), fix: 'Each [data-line] must fit on one line at every width: break the headline into shorter lines (three at most), or set a smaller display step on phones.' });
     if (lay) findings.push(...judgeLayout(lay, { width: w, allow }));
     if (ex) findings.push(...judgeExtra(ex, { width: w, allow, screens: total, app: !!appMode }));
+    if (build) findings.push(...judgeBuild(build, { width: w, allow, boxed: (ex?.boxedLists || []).map((b) => b.head), dead }));
     // ---------- round 9 ----------
     // pictures the page asks for that are not there (r8-p37 asked for four)
     netOff.forEach((off) => off());
@@ -634,6 +658,16 @@ try {
     // a visit block with no way to get there (r9-p44: opening hours and an email under "Visit the bar", the city in a
     // label, no street, district or map; the judge marked it high)
     if (visits && visits.length && !allow.includes('visit-without-directions')) findings.push({ level: 'WARN', id: 'visit-without-directions', width: w, message: `${visits.length} block(s) read as a visit (${visits.slice(0, 2).map((v) => `"${v.head}", by ${v.why}`).join('; ')}) but give no street or district and no link to a map.`, fix: 'A visit block says where to go: a real street in the right district (no house number unless the brief gives one; for a remote place, the nearest town and the road from it), the district, the nearest stop and its line, and a "Directions" link to a map (OpenStreetMap, Google or Apple Maps) beside the opening hours and one contact. The city alone is not an address; never a placeholder street.' });
+    // round 10, part B: a pale or coloured veil on a photograph at rest, blurred or flat (r9-p43: white at 50% and 80%
+    // over the lower left of the full-bleed fjord); it fails with the gradients
+    const veils = new Map();
+    for (const r of restRuns) for (const v of r.veils || []) { const k = v.media + '|' + v.what; const o = veils.get(k); if (!o || v.share > o.share) veils.set(k, { ...v, screen: Math.round(r.y / h) + 1 }); }
+    if (veils.size && !allow.includes('gradient')) findings.push({ level: 'FAIL', id: 'gradient', width: w, message: `${veils.size} photograph(s) lie under a veil at rest: ` + [...veils.values()].slice(0, 3).map((v) => `${v.media} under ${v.how}${v.blur ? ', blurred,' : ''} (${v.what}, ${v.colour}) over ${Math.round(v.share * 100)}% of it, screen ${v.screen}`).join('; ') + '.', fix: 'Take the veil off: a photograph shows at full colour and contrast. Set the words on a calm part of the picture (move the crop) or beside it on the ground; where words must sit on a busy part, a flat dark band under them at most, never a pale fog, a tint or a blurred patch.' });
+    // a held stage's heading cut off above the screen on a tablet or a phone (r9-p41 at 390: "Find the note you" above
+    // the screen while the replay held, "half remember" on it)
+    const cutHeads = new Map();
+    for (const r of restRuns) for (const c of r.cutHeads || []) { const o = cutHeads.get(c.text); if (!o || c.past > o.past) cutHeads.set(c.text, { ...c, screen: Math.round(r.y / h) + 1 }); }
+    if (cutHeads.size && !allow.includes('held-heading-cut')) findings.push({ level: 'FAIL', id: 'held-heading-cut', width: w, message: `${cutHeads.size} heading(s) of a held stage are cut off above the screen while it holds: ` + [...cutHeads.values()].slice(0, 3).map((c) => `"${c.text.slice(0, 48)}" ${c.whole ? 'wholly above the screen' : `${c.past}px above its top`} (${c.stage}, screen ${c.screen})`).join('; ') + '.', fix: 'A held stage fits the screen with its heading in view: on a tablet or phone, set the window shorter (fewer rows, the panel that does the task), put the heading over the stage outside the hold, or release the hold and let the replay play on its own clock in the flow (references/motion.md, "Product replay").' });
     if (appMode) {
       findings = findings.filter((f) => !APP_SKIP.has(f.id) && f.id !== 'no-title' && f.id !== 'small-title');
       if (appM) findings.push(...judgeApp(appM, m, { width: w, allow }));
@@ -791,17 +825,21 @@ try {
     // registers changes about 2.5% of the screen or more (a row 650px by 50px at 1440); the largest, 8% or more.
     // Round 9: a faint beat (under 2.5%) is a warning, and so is a largest beat under 8%; most beats faint (more than
     // half) fails. r8-p38's replay, whose first beat measured 0.4% to 0.7%, was seen and named by its judge.
+    // Round 10, part B: measured against the window, not the screen. Each beat changes about a third of the window; one
+    // that changes under 15% of it is faint (r9-p41's beats changed 4% to 24% of the screen, 7% to 40% of its window, and
+    // the judge found the replay quiet): one faint beat, or a largest beat under 30%, warns; most beats faint fails.
     replayRuns.forEach((rb, i) => {
       if (!rb) return;
       const r = ex?.replays?.[i] || {}, which = ex?.replays?.length > 1 ? ` ${i + 1}` : '';
-      const pct = (v) => `${(Math.round(v * 1000) / 10).toFixed(1)}%`;
-      const ds = rb.diffs.filter((d) => d.cells != null);
+      const pct = (v) => `${Math.round(v * 100)}%`;
+      const winOf = (k) => (rb.states.find((s) => s.k === k) || rb.states[rb.states.length - 1] || {}).win || null;
+      const ds = rb.diffs.filter((d) => d.cells != null).map((d) => { const wn = winOf(d.k); const share = wn && wn.w * wn.h > 0 ? Math.min(1, (d.cells * w * h) / (wn.w * wn.h)) : d.cells; return { ...d, share }; });
       if (ds.length && !allow.includes('replay-faint')) {
-        const max = Math.max(...ds.map((d) => d.cells));
-        const faint = ds.filter((d) => d.cells < 0.025);
+        const max = Math.max(...ds.map((d) => d.share));
+        const faint = ds.filter((d) => d.share < 0.15);
         const cursorOnly = ds.filter((d) => d.withCursor != null && d.cells < 0.005 && d.withCursor >= d.cells + 0.0004);
-        const level = faint.length > ds.length / 2 ? 'FAIL' : faint.length || max < 0.08 ? 'WARN' : null;
-        if (level) findings.push({ level, id: 'replay-faint', width: w, message: `The product replay${which} ${level === 'FAIL' ? 'barely changes the screen from beat to beat' : faint.length ? `has ${faint.length === 1 ? 'a faint beat' : `${faint.length} faint beats`}` : 'has no large beat'}${rb.clock ? ' (played on its own clock from its Replay button, each change taken once it rested)' : ''}: ${ds.map((d) => `${rb.clock ? 'change' : 'beat'} ${d.k} ${pct(d.cells)}${faint.includes(d) ? ' (faint)' : ''}${cursorOnly.includes(d) ? ' (only the cursor moved)' : ''}`).join(', ')} of the screen, the largest ${pct(max)}. A beat that registers changes 2.5% of the screen or more, and the largest one 8% or more; most beats faint fails.${r.boxes?.length >= 3 ? ' Its items are boxes a step from the window\'s fill, so a change among them hardly shows.' : ''}`, fix: 'Make each beat one large change: a panel or drawer opens (data-open-at), the item at work takes the accent fill (data-focus-at), a full-size item arrives or moves while the rest make room (data-push, data-flip-at), a figure at display size rolls, or the view moves in on the region at work (data-zoom-at). The item that changes is a third of the window wide or more, its text 16px or more. A word swapped in a muted line, a 2px press or frame, a fill a step from its ground or a cursor moving is not a beat (references/motion.md, "Product replay"); look at the beats side by side in the replay sheet.' });
+        const level = faint.length > ds.length / 2 ? 'FAIL' : faint.length || max < 0.3 ? 'WARN' : null;
+        if (level) findings.push({ level, id: 'replay-faint', width: w, message: `The product replay${which} ${level === 'FAIL' ? 'barely changes its window from beat to beat' : faint.length ? `has ${faint.length === 1 ? 'a faint beat' : `${faint.length} faint beats`}` : 'has no large beat'}${rb.clock ? ' (played on its own clock from its Replay button, each change taken once it rested)' : ''}: ${ds.map((d) => `${rb.clock ? 'change' : 'beat'} ${d.k} ${pct(d.share)}${faint.includes(d) ? ' (faint)' : ''}${cursorOnly.includes(d) ? ' (only the cursor moved)' : ''}`).join(', ')} of the window, the largest ${pct(max)}. A beat changes about a third of the window; under 15% is faint, and most beats faint fails.${r.boxes?.length >= 3 ? ' Its items are boxes a step from the window\'s fill, so a change among them hardly shows.' : ''}`, fix: 'Make each beat one large change, about a third of the window: a panel or drawer opens (data-open-at), the item at work takes the accent fill (data-focus-at), a full-size item arrives or moves while the rest make room (data-push, data-flip-at), a figure at display size rolls, or the view moves in on the region at work (data-zoom-at). The decisive change is the largest, in the accent; the window\'s text is 18px or more. A word swapped in a muted line, one figure, a 2px press or frame, a fill a step from its ground or a cursor moving is not a beat (references/motion.md, "Product replay"); look at the beats side by side in the replay sheet.' });
       }
       // the held stage fills the screen: the empty bands above and below it (a bar fixed to the top is not empty)
       const held = rb.states.filter((s) => s.stuck);
@@ -815,7 +853,7 @@ try {
     // the product replay the sheet dealt (draw.mjs section 8)
     if (dealtReplay && w >= 1100 && ex && !(ex.replays || []).length && !allow.includes('replay-missing')) findings.push({ level: 'FAIL', id: 'replay-missing', width: w, message: `The sheet dealt the product replay "${dealtReplay.name || dealtReplay.id}" in the ${dealtReplay.carries || ''} section, but the page has no [data-replay].`, fix: 'Build the product replay the sheet deals (section 8): the product\'s window in its final state with data-replay and its marked beats, assets/replay.js, and a Replay button under it.' });
     if (w >= 1100 && empty.length >= 2 && !allow.includes('empty-screens')) findings.push({ level: 'FAIL', id: 'empty-screens', width: w, message: `${empty.length} of ${frameChecks.length} desktop screens are almost empty ground (under 20% of the screen holds text, a picture or a colour field): screens ${empty.map(({ f, i }) => screenOf(f, i)).join(', ')}.`, fix: 'An empty screen is a rest only once per page. Elsewhere it means the section is underbuilt: set its content larger, give it the full information, put it on a colour field, or cut it.' });
-    report.viewports.push({ width: w, height: h, load: how, screens: frames.length, pageScreens, stride, extra: ex, reached: reached.map((r) => (r ? r.found : null)), upReach: upReach ? upReach.found : null, unread, overText, frameErrors, filled: frameChecks.map((f) => f?.filled ?? null), content: frameChecks.map((f) => f?.content ?? null), filmContent: filmChecks.map((f) => (f ? [Math.round(f.y / h * 10) / 10, f.content] : null)), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5), missingImages: [...missingPics.keys()].slice(0, 12), photoText: [...onPhoto.values()].slice(0, 24), letters: [...letterSeen.values()].map((v) => ({ text: v.text, size: v.size, shows: v.at.map((s) => s.shows) })), tileWalls: wallRuns, hero, visits, rest: restRuns.map((r) => ({ y: r.y, dy: r.dy, end: r.end, clipped: r.clipped, pics: (r.pics || []).map((p) => `${p.file} ${p.area} @${p.t}`), heads: (r.heads || []).map((x) => `${x.kind} ${x.text.slice(0, 40)} @${x.t}`) })) });
+    report.viewports.push({ width: w, height: h, load: how, screens: frames.length, pageScreens, stride, extra: ex, reached: reached.map((r) => (r ? r.found : null)), upReach: upReach ? upReach.found : null, unread, overText, frameErrors, filled: frameChecks.map((f) => f?.filled ?? null), content: frameChecks.map((f) => f?.content ?? null), filmContent: filmChecks.map((f) => (f ? [Math.round(f.y / h * 10) / 10, f.content] : null)), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5), missingImages: [...missingPics.keys()].slice(0, 12), photoText: [...onPhoto.values()].slice(0, 24), letters: [...letterSeen.values()].map((v) => ({ text: v.text, size: v.size, shows: v.at.map((s) => s.shows) })), tileWalls: wallRuns, hero, visits, build, dead, rest: restRuns.map((r) => ({ y: r.y, dy: r.dy, end: r.end, clipped: r.clipped, pics: (r.pics || []).map((p) => `${p.file} ${p.area} @${p.t}`), heads: (r.heads || []).map((x) => `${x.kind} ${x.text.slice(0, 40)} @${x.t}`), veils: r.veils, cutHeads: r.cutHeads })) });
     report.findings.push(...(appMode ? findings.filter((f) => !APP_SKIP.has(f.id)) : findings));
     report.images.push({ viewport: label, width: w, fold, pages: sheets, film: filmSheets, replay: replaySheets, walked: frames.length, stride, pageScreens, atFoot });
     if (replayRuns.length) report.viewports[report.viewports.length - 1].replayBeats = replayRuns.map((rb) => (rb ? { clock: rb.clock, beats: rb.diffs, states: rb.states.map((s) => ({ k: s.k, win: s.win, top: s.top, foot: s.foot, bar: s.bar, bare: s.bare, stuck: s.stuck })) } : null));
@@ -849,6 +887,22 @@ try {
       })()`).catch(() => []);
       if (replayHidden.length) report.findings.push({ level: 'FAIL', id: 'reduced-hidden', width: 1440, message: `With reduced motion requested, ${replayHidden.length} part(s) of the product replay stay hidden: ` + replayHidden.slice(0, 4).map((t) => `"${t}"`).join(', '), fix: 'The replay\'s HTML is its final state: hide a beat\'s part only under .is-armed inside @media (prefers-reduced-motion: no-preference), as base.css does, and let replay.js do nothing under reduced motion.' });
     } finally { await rp.close(); }
+  }
+  // round 10, part B: the scenes in their finished compositions, on the reduced-motion page: lists drawn as boxes and
+  // framed elements inside them (r9-p43's seasons: four perforated ticket boxes, which the live scene shows in flight)
+  if (!appMode && widths.some((x) => x >= 1100)) {
+    const sp = await browser.newPage({ width: 1440, height: 900, dsf: 1, reducedMotion: true });
+    try {
+      await sp.goto(url, { timeoutMs: 30000, settleMs: 1500 });
+      if (await sp.eval(`document.querySelectorAll('.scene, [data-scene]').length`).catch(() => 0)) {
+        const sx = await sp.eval(extra, { scenes: true }).catch(() => null);
+        const sb = await sp.eval(pageBuild, { scenes: true }).catch(() => null);
+        const lists = sx?.boxedLists || [];
+        report.findings.push(...judgeExtra({ boxedLists: lists }, { width: 1440, allow, screens: 1 }).map((f) => ({ ...f, message: f.message.replace(/^(\d+ list\(s\) drawn as boxes)/, '$1 in a scene\'s finished composition') })));
+        if (sb) report.findings.push(...judgeBuild({ framed: sb.framed }, { width: 1440, allow, boxed: lists.map((b) => b.head) }));
+        if (report.viewports[0]) report.viewports[0].scenesAtRest = { boxedLists: lists, framed: sb?.framed || [] };
+      }
+    } finally { await sp.close(); }
   }
 } finally {
   await browser.close();
@@ -918,7 +972,7 @@ for (const im of report.images) {
   line(`  ${(im.viewport + ' ' + im.width + 'px').padEnd(15)} ${rel(im.fold)}   (${im.walked} screens photographed and checked${im.stride > 1 ? `, one in every ${im.stride}` : ''}; ${im.atFoot ? 'the walk reached the foot of the page' : `the walk stopped before the foot of a ${im.pageScreens}-screen page`})`);
   for (const p of im.pages) line(`  ${''.padEnd(15)} ${rel(p)}`);
   for (const p of im.film || []) line(`  ${'scroll film'.padEnd(15)} ${rel(p)}  (6 frames a row, a third of a screen apart)`);
-  for (const p of im.replay || []) line(`  ${'replay beats'.padEnd(15)} ${rel(p)}  (each beat of the product replay, its window held still, with the share of the screen it changed)`);
+  for (const p of im.replay || []) line(`  ${'replay beats'.padEnd(15)} ${rel(p)}  (each beat of the product replay, its window held still, with the share of the window it changed)`);
 }
 line('');
 line(`report: ${rel(join(outDir, 'report.json'))}`);

@@ -6,7 +6,7 @@
 // (references/scenes.md); one render function, sin/cos maths, the cards are never tweened themselves.
 //
 // DOM (the classes are the contract, the tags are free):
-//   <section class="scene" data-scene="orbit-to-formation" style="--n:14" data-options='{"hold":5}'>
+//   <section class="scene" data-scene="orbit-to-formation" style="--n:14" data-options='{"hold":4}'>
 //     <div class="scene-stage">
 //       <h2 class="orbit-lede">The statement, 4-9 words (about 48 characters or fewer)</h2>
 //                     it is the title at progress 0 and a headline, so it is set on two lines at most:
@@ -41,7 +41,7 @@
 //   </section>
 //
 // Options (data-options JSON on the section, or the second argument); default, range:
-//   hold        5        screens the stage is held on desktop (4-7)
+//   hold        4        screens the stage is held on desktop (4-7)
 //   phoneHold   4        screens the stage is held on phones (3-6)
 //   scrub       auto     true when Lenis smooths the wheel, else 0.6 (seconds of catch-up)
 //   radius      1        arch radius as a share of the stage width: 0.7 (steep, 5 cards) - 1.6 (flat, 8 cards).
@@ -796,7 +796,7 @@
   window.Scenes = window.Scenes || {};
   window.Scenes['orbit-to-formation'] = (root, opts = {}) => {
     const o = {
-      hold: clamp(num(opts.hold, 5), 4, 7),
+      hold: clamp(num(opts.hold, 4), 4, 7),
       phoneHold: clamp(num(opts.phoneHold, 4), 3, 6),
       radius: clamp(num(opts.radius, 1), 0.7, 1.6),
       crest: clamp(num(opts.crest, 0.24), 0.18, 0.3),

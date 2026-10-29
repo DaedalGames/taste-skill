@@ -1,7 +1,7 @@
 # Scroll scenes
 
 The big moments of a page: stretches of scroll where the page stops being a column of sections and
-becomes a scene. A camera flies through a field of pictures, a picture grows from a window to the whole
+becomes a scene. A camera rushes through a run of doorways, a picture grows from a window to the whole
 screen, a word buckles under the scroll, a set of photographs orbits and lands in a grid. These are what
 visitors remember from award sites, and what a page built from tidy sections alone never has.
 
@@ -42,8 +42,9 @@ end. About one page in two, one of them is a researched technique from `library/
 principle, a direction to take and what breaks it, built fresh.
 
 A scene replaces the content of the section it carries. It is that section, told as a scene, not extra
-screens in front of it: the orbit is the about, the route is how it works, the settling line is the
-contact. A page with scenes keeps its length budget (section 7, rule 2).
+screens in front of it: the orbit is the about, the words gathered into the cup are the list of what
+the farm grows, the lowered jug is the order. A page with scenes keeps its length budget (section 7,
+rule 2).
 
 ## 2. Putting a scene on a page
 
@@ -87,22 +88,22 @@ A scene is only as strong as what goes in it. The scene file's header and the sh
 say how many pictures and words it takes; these hold for all of them:
 
 - **The demo is a placeholder.** Each demo page in `assets/scenes/demo/` is a working example for a
-  made-up client: its town, its photographs, its map, its object, its quote and its words are there to
-  show the scene running, and none of them belongs on your page. Every picture, word and drawn thing in
-  your scene comes from this subject (the inventory, SKILL.md step 1). A route map shows the real route,
-  with the real coast, water and relief it passes; a fly-through passes through this client's own work;
-  a quote is the client's own words. The same goes for the stand-in a script draws when it is given
-  nothing, such as the route's bare ground with only the road on it or the drag's plain jet: it shows
-  the scene works, never the place. A scene whose pictures or drawings are still the demo's, or the
-  script's stand-in, is unfinished.
+  made-up client: its town, its photographs, its object, its quote and its words are there to show the
+  scene running, and none of them belongs on your page. Every picture, word and drawn thing in your
+  scene comes from this subject (the inventory, SKILL.md step 1). A row of the work shows this client's
+  own pieces; the cut-out lowered onto the last line is this client's own product; the words gathered
+  into the cup are what this farm really grows; a quote is the client's own words. The same goes for
+  the stand-in a script draws when it is given nothing: it shows the scene works, never the place. A
+  scene whose pictures or drawings are still the demo's, or the script's stand-in, is unfinished.
 - **On the work, the scene is the work.** A scene that carries the work shows the pieces themselves:
   each card, chapter or picture is one piece (its title card, its building, its product), shown once,
   linking to the piece. Pictures of the world around the work (the city, the archive, the materials)
   go on the intro or the about. However the work is told, each piece stops on screen flat-on (turned
   10° or less), at 60% of the width or more, with its title on the same element, for half a screen of
   scroll, and the stage lets go within half a screen of the last piece; the first piece is on screen by
-  about the third screen. The fly-through does this with `{"stop": 0.5}` (scenes.mjs fails a piece
-  that never stops flat and large, `piece-unseen`).
+  about the third screen. Sheets that tip in and away do this with `{"rest": 0.5}`: each piece lies
+  flat on a full-screen sheet with its name on it for half a screen, three pieces in 2.5 screens
+  (scenes.mjs fails a piece that never stops flat and large, `piece-unseen`).
 - **Each picture once.** A scene's card count is the number of distinct pictures it has. Never repeat a
   picture to fill a ring or a deck, take at most two from one source (one film, one shoot, one
   building) and never put those two side by side; with too few, take fewer cards or redraw.
@@ -116,8 +117,8 @@ say how many pictures and words it takes; these hold for all of them:
 - **Captions say what is shown.** A caption, a name or a number names what its picture really shows
   (references/imagery.md §3), and at every frame the name, the picture and the number on screen
   belong to the same item.
-- **The scene says something about the subject.** A fly-through of the studio's work, the route a
-  shipment really takes, the four rooms of the house, the product's change of state. A scene filled
+- **The scene says something about the subject.** The studio's own pieces, the four rooms of the
+  house, the product's change of state. A scene filled
   with unrelated pictures is a gimmick and reads as one.
 - **Real content only.** If the scene needs eight pictures of the subject and there are three, take the
   `--redraw scenes`, never pad it with stand-ins (twice at most: section 8).
@@ -127,14 +128,14 @@ say how many pictures and words it takes; these hold for all of them:
 - The scene files read the page's tokens: `--ground`, `--ink`, `--muted`, `--accent`,
   `--font-display`, `--font-text`, and the weights `--display-weight`, `--strong-weight` and
   `--text-weight` (with fallbacks). Set them on `:root` from the sheet and the scene takes the page's
-  colour and type. Colours a page does not otherwise have (the night of a light
-  flood, the two grounds of a raster cut) are the scene's own tokens, named in its file's header.
+  colour and type. Colours a page does not otherwise have (the deeper tone of the openings' sheets,
+  the two grounds of a raster cut) are the scene's own tokens, named in its file's header.
   Check the demo against your page, not the other way round.
 - Display type in a scene uses the dealt display face and the two-line headline rule; statements stay
   at statement size.
 - **The weights the scene sets.** Every scene stylesheet sets its weights through
   `--display-weight`, `--strong-weight` and `--text-weight`, falling back to its own default (the
-  settling line 600, the flythrough statements 500; the file says which). Set the three tokens on
+  letter bar's statement 800, the openings' headline 500; the file says which). Set the three tokens on
   `:root` to weights the page loads, or load the scene's default weight of the face. The scenes switch
   the browser's fake bold off, so a weight the page never loaded is drawn at the nearest loaded weight
   instead (lighter than the scene was drawn for); on the page's own type a missing weight is still
@@ -176,7 +177,10 @@ say how many pictures and words it takes; these hold for all of them:
   gradient.
 - **Reduced motion and no script.** The section is an ordinary section showing the finished
   composition: the same content, laid out to read without motion. Nothing is hidden waiting for a
-  script. The inspector's `reduced-hidden` check and the reduced sheet of `scenes.mjs` show it.
+  script. The inspector's `reduced-hidden` check and the reduced sheet of `scenes.mjs` show it. Under
+  reduced motion the stage adds `.is-rest` and calls the scene's `rest` hook at every width, so a
+  scene needs no crossfade of its own there; a build may return `Stage.REST` to give a screen the
+  finished composition.
 - **A failed CDN** falls back to the finished composition too (the stage adds `.is-rest`). The
   inspector fails a scene that rests on desktop (`scene-not-live`), so a broken script cannot pass.
 
@@ -216,8 +220,8 @@ empty, and that the navigation or the one action is in reach after the hero.
 2. **A page with scenes still has a length budget:** about 12-16 screens at 1440 in all (the study's
    median page is 8.7 screens and 575 words, its middle half up to 14.4; references/research.md), and
    about 45 words or more a screen. The scenes hold about six screens of scroll between them, and at
-   most one scene holds more than three: the orbit, the route, the dial, the chapter switcher, the
-   warp jump, the scrubbed transformation and the fixed hero object are each a page's one long scene.
+   most one scene holds more than three: the orbit, the chapter switcher and the scrubbed
+   transformation are each a page's one long scene.
    A scene replaces its section's content and never adds screens of nothing: in testing, pages of
    19-28 screens for 700-1,500 words read as long and thin, whatever the scenes did. About one screen
    per beat of the story; a hold with nothing new to show is cut, not padded. A hand-over between two
@@ -233,7 +237,7 @@ empty, and that the navigation or the one action is in reach after the hero.
 4. **Readable at its rest points.** The statement on screen reads whole; nothing passes over text while
    it is being read; text on a picture has a flat scrim or a calm area under it. This holds for the
    library's scenes too: when a scene's default sends an edge or a card across its own copy, set the
-   option that avoids it (the stepped columns' `ghost` stays `false`, for one) or change the copy's place, and
+   option that avoids it or change the copy's place, and
    say so in the report. A scene that crosses its words is a bug, not a licence.
 5. **Inside a scene the scene's numbers apply** (motion rule 7): a picture may grow from a window to the
    whole screen, type may cross the stage, a camera may fly through pictures. Outside scenes, the quiet
@@ -271,8 +275,8 @@ hours to five.
 A page short of pictures of its own subject (no photographs of its product, or a brief that says it
 has few) is dealt scenes and techniques that need no photograph or one first, its redraws deal more of
 those before any that needs several, and the list after two redraws puts them at the top. Such a scene
-is filled from the words and the product's facts; its one picture may be a photograph the page already
-shows, at another crop. `scenes=none` stays possible, but the sheet then names the scenes of that kind
+is filled from the words and the product's facts; its one picture is one the page shows nowhere else,
+never the same photograph again at another crop. `scenes=none` stays possible, but the sheet then names the scenes of that kind
 that still fit: none is for a page that cannot fill even these. A cargo bike page with no photographs
 redrew three scenes that each wanted three to six photographs, and was built with no scene at all.
 
@@ -296,8 +300,8 @@ with `scenes.mjs` like any other. A dealt technique is built the same way, with 
 gives it, and checked with `scenes.mjs` like any scene.
 
 A scene you build that steps (statements, steps or pictures in turn), where its steps carry pictures,
-gives each step its own picture or a clearly different crop of one, never one photograph held under
-every step; where it needs none (its Needs line says so), the statements stand on the ground alone,
+gives each step its own picture, never one photograph held under every step or cropped again for the
+next; where it needs none (its Needs line says so), the statements stand on the ground alone,
 with no photograph added. It sets its statements as short headlines at display size, 40px or more on
 desktop and two lines at most (marked up as h2 or h3: the 36px statement rule is for paragraphs);
 leaves no frame between two steps near empty; and its finished composition (reduced motion, tablet,
@@ -308,7 +312,7 @@ stock (`repeated-picture`).
 
 ## 9. The catalogue
 
-Forty scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
+Forty-six scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
 scene's full entry (where it goes, its content, its options, its phone plan);
 `node <skill>/scripts/draw.mjs --list scenes` prints the list, and each scene file's header is the full
 contract. Each entry's `needs` says what the scene really takes, and the draw deals it only when the
@@ -321,7 +325,9 @@ stops), *product-ui* (the product's interface), *plan* (a real plan or exploded 
 honestly show about three photographs of its subject and no series, and a page with no photographs of
 its own at all about six, so the scenes dealt there need no more between them; nor, on such a product
 page, a scene on the first screen, which shows the product large.
-`--list scenes` prints each scene's needs.
+`--list scenes` prints each scene's needs. A scene marked *not dealt* stays in the library as a
+reference and is never dealt, nor taken by id; its entry says why. The round 10 audit retired seven,
+and hinged sheets followed (weight 0 in `scenes.json`).
 
 **Camera through space**
 - **Closing cut under the rise** (`closing-cut-under-the-rise`): the one thing the page is about,
@@ -342,7 +348,9 @@ page, a scene on the first screen, which shows the product large.
   5-12 photographs in one grade, set apart from the backdrop (the backdrop dimmed or softened, or the
   cards matted in the ground colour) so they never melt into it. On the work, the cards are the work,
   in stop mode (`{"stop": 0.5}`): each piece rests centred and flat at about 62% of the width with its
-  title under it for half a screen; phones get the pieces stacked full width.
+  title under it for half a screen; phones get the pieces stacked full width. Not dealt (round 10
+  audit): a counter, skewed cards and slivers at the screen's edges, and the pass along the edges is the
+  design.
 - **Powers-of-ten pull-back** (`powers-of-ten-pullback`): a film becomes a screen on a wall, then the
   place becomes a framed print. The product's own film, still or interface (never a stock picture of
   another maker's), and a place photographed straight on with an opening that can be measured.
@@ -353,9 +361,19 @@ page, a scene on the first screen, which shows the product large.
   the water, the shop front) as `#route-dest`, never a grid of tiles. Without `.route-art` the script
   rides a bare ground with only the road, a stand-in, never the place. The demo's town, lakes, fields
   and tile plot are placeholders; a coast, a fjord or a mountain road drawn as an inland town is the
-  demo showing.
+  demo showing. Not dealt (round 10 audit): a drawn map, a toy vehicle, a distance gauge, "Stop n of
+  4" and drawn rings, which judges marked down in rounds 7 and 9.
+- **Through the openings** (`through-the-openings`): the camera rushes through five to eight flat
+  sheets of the page's ground, each with one arch, doorway or pointed arch cut in it, two or three
+  openings on screen at a time, faster and faster, into the next section's photograph of a place; by
+  65% the photograph fills the page and its headline sets in. One photograph of the place, landscape
+  with a 9:16 crop for phones and a calm area for the headline, the openings' shape taken from the
+  place itself (*pictures:1*), on a page whose ground is one flat colour. Between two sections, into
+  a section that opens on that photograph; once; hold 1.5.
 - **Warp jump** (`warp-jump`): a manifesto in timed beats over a field of streaks that speeds up, then a
-  jump into the accent. 35-60 words, no pictures; three beats hold three screens, one a beat.
+  jump into the accent. 35-60 words, no pictures; three beats hold three screens, one a beat. Not dealt
+  (round 10 audit): a drawn field of speed streaks (the hyperspace cliché), an n-of-4 counter and
+  boxed captions.
 
 **Colour and ground**
 - **Dither-field opener** (`dither-field-opener`): the first screen is live print: one huge numeral,
@@ -363,8 +381,18 @@ page, a scene on the first screen, which shows the product large.
   of accent dots across it that settle back to ink. One mark of 1-4 characters, a headline on clear
   ground, no pictures. Hold 0. Never on a software page, whose first screen shows its own interface
   large: no scene that carries the first screen without the product is dealt there.
+- **Letter bar floods the ground** (`letter-bar-floods-the-ground`): one short statement holds on one
+  line with a straight letter (I, l, i, 1 or a T's stem) on the centre of the screen, and the camera
+  zooms on that letter until only its stem is left: a column of ink that widens to full bleed and
+  becomes the next section's ground, the next statement arriving inside it while the outgoing words'
+  edges are still in frame. A statement of 2-4 words with a straight-stemmed letter near its middle,
+  the next section's opening statement, one ground and one ink, no accent (*pictures:0*): a hand-over
+  for pages without pictures, in any sector. Between two sections, from the ground to the ink, once;
+  hold 1.1. scenes.mjs warns `empty-steps` where the line stands alone on the ground and where the new
+  statement stands on the ink: the header defends it.
 - **Light flood** (`light-flood`): one sentence plays out a day: light rises, floods the screen, night
-  falls. Two short lines, no pictures; it holds about one screen (1.2).
+  falls. Two short lines, no pictures; it holds about one screen (1.2). Not dealt (round 10 audit): the
+  whole look is a blurred dome and blurred text.
 - **One line carries the colour swap** (`line-carries-colour-swap`): a square clip crops away the
   photograph that closes one chapter while one line of the display face, at its final size and the
   full width, climbs under it showing only its first word; each further word slides in short and lands
@@ -380,7 +408,8 @@ page, a scene on the first screen, which shows the product large.
 - **Stepped columns raise a stage** (`stepped-columns-raise-a-stage`): ink fills 3-5 columns like a
   falling bar chart and levels into one block. Short copy, no pictures, no drawing. No ink edge crosses
   copy being read: keep the default `ghost: false`, where each column opens as an ink stub that
-  already holds its copy. Not dealt: built as hollow ink boxes twice.
+  already holds its copy. Not dealt: built as hollow ink boxes twice, and in the round 10 audit red
+  slabs rising like a bar chart, a page built from boxes.
 
 **Grid reassembly**
 - **Parts lock into the whole** (`parts-lock-into-the-whole`): one huge word or number steps back while
@@ -397,11 +426,28 @@ page, a scene on the first screen, which shows the product large.
   a stock trope twice.
 
 **Horizontal travel**
+- **A row the scroll speed bends** (`speed-bent-row`): the stage holds while the scroll carries one
+  row of six to eight pictures sideways along a gentle curve, each with its name set large under it;
+  only the visitor's pace bends it (a fast scroll deepens the curve, leans the leading pictures back and
+  lifts the far end), and it eases back to its tidy rest over half a second when the scroll stops. Six
+  to eight of the client's own photographs of one series, collection or line-up, one grade, a name of
+  1-2 words each (*product-photo*, *pictures:6*). In the middle, on a gallery, a showcase or a list;
+  not as the page's work section, where each piece stops at 60% of the width (section 3), since a card
+  here is about a quarter of it. Phones get the pictures stacked, the stack bowing with the speed. Hold 2.
 - **Arrive and settle on a sideways track** (`arrive-and-settle-track`): the letters of a closing line
   swoop in from the side and settle on a calm end frame with a button; presets for quotes and
   projects. One line of 3-5 words, no pictures. The letters on screen when the section arrives swoop
   within under half the letter size, so the line reads at once; the rest arrive at the whole
-  amplitude. The end frame shows the whole line, verb included, at every width.
+  amplitude. The end frame shows the whole line, verb included, at every width. Not dealt (round 10
+  audit): every frame from 0 to 60% shows tumbling, half-arrived letters, and the last frames are dead.
+- **Panels re-proportion as they arrive** (`panels-reproportion-on-arrival`): a short statement holds
+  at display size in a column of the page's ground while four to six large panels arrive beside it one
+  at a time; as each settles its picture grows from half the panel to 70% and its name re-sets onto two
+  lines in large type, then it steps aside into a narrower slot as the next comes, so two panels at most
+  are on screen. One photograph a panel, graded as one set, and a name of two or three words each
+  (*pictures:4*, *names:4*): a school's programmes, a developer's buildings, a studio's services. The
+  first screen, the statement as its headline; hold 2.2 for five. Built from the researched technique
+  `lib-0023`, which is no longer dealt to build fresh.
 - **Sideways walk through rooms** (`room-walk-track`): a row of coloured rooms walked sideways, each
   with its own moment, ending on the contact. Fourteen of the client's own photographs
   (*product-photo*). It holds about ten screens and is a whole page on its own, so the draw does not
@@ -409,27 +455,32 @@ page, a scene on the first screen, which shows the product large.
   as the work, the about and the contact in one, with no other scene.
 
 **Layer stack**
-- **Hinged sheets** (`hinged-sheets`): tickets rise from a face-down deck, turn over and land one by
-  one. A real paper or ticket idea and two to four tickets with equal copy. At rest they read as
-  printed tickets (type set to the stub, the copy filling the sheet, the page's own corners), not as
-  rounded pricing cards with a photograph on top, and the section's heading stays readable.
+- **Hinged sheets** (`hinged-sheets`): tickets lie face-down in a row under the headline and turn over
+  one by one, each on a short clock, so every stop shows a level row. A real paper or ticket idea and
+  two to four tickets with equal copy. At rest they read as printed tickets (type set to the stub, the
+  copy filling the sheet, the page's own corners), not as rounded pricing cards with a photograph on
+  top, and the paper stands off the ground. Not dealt (round 10): its finished row is still a list
+  drawn as filled boxes (`boxed-list`), the fault of a guesthouse's seasons set as four tickets.
 - **Sheets tip in and away** (`sheets-tip-in-and-away`): three to five pieces lie as full-screen sheets
   of the page's ground, each with its name very large on the top edge over one photograph; a sheet comes
   up turned out of a lower corner, lands flat for a third of a screen, and tips away as the next one
   arrives. One photograph a piece of the client's own work, one family with a clear change of colour
-  between neighbours (*product-photo*). Three hold about two screens.
+  between neighbours (*product-photo*). Three hold about two screens; on the work set `{"rest": 0.5}`,
+  half a screen flat each, and three hold 2.5.
 
 **Mask and reveal**
 - **Fly into the shape** (`fly-into-the-shape`): the brand's mark, a clean mask of its true shape with
   the next chapter's photograph already inside it, rises with the title on its face, and the camera
   flies into it. Never extruded or bevelled. An ownable solid mark and one dark photograph of the
   chapter's world.
-- **Shape-shifting window over a fixed world** (`shaped-window-over-fixed-world`): two windows in a
-  shutter slide level, merge and push through into a photograph of a place. One wide photograph of
-  the place. First screen.
+- **Shape-shifting window over a fixed world** (`shaped-window-over-fixed-world`): two level windows in
+  a shutter, one picture through a mullion, widen, merge and push through into a photograph of a place.
+  One wide photograph of the place. First screen. Its scrims stay dark: recoloured to a pale ground
+  they are a veil over the photograph (`gradient`).
 - **Twin-image scanner** (`twin-image-scanner`): a scan line rewrites a photograph of a thing into the
   drawing of its structure. The subject's own photograph or render and a registered line drawing
-  (*product-photo*).
+  (*product-photo*). Not dealt (round 10 audit): its signature devices, a scan line and a drawn line
+  drawing of the machine, are banned (rule 7).
 
 **Media sequence**
 - **Instrument dial stage** (`instrument-dial-stage`): a dial reads off 3-6 items, each name huge on
@@ -447,8 +498,9 @@ page, a scene on the first screen, which shows the product large.
   along the caption band. Four to six photographs of one family in one light and ground, each subject
   whole in the middle with the top left corner plain, and a name of one or two words and one line each
   (*pictures:4*). In the middle, after a quiet section that introduces the set; not the page's main
-  showcase of the work, where the chip would lie on the piece. Five hold 2.4 screens. Built from the
-  researched technique `lib-0237`, which is no longer dealt to build fresh.
+  showcase of the work, where the chip would lie on the piece (take sheets that tip in and away
+  there). Five hold 2.4 screens. Built from the researched technique `lib-0237`, which is no longer
+  dealt to build fresh.
 
 **Object scrub**
 - **Fixed hero object** (`fixed-hero-object`): one product turns on its own layer while the chapters
@@ -474,6 +526,15 @@ page, a scene on the first screen, which shows the product large.
   accent type for a beat (never a tinted ground), then every part folds into its one action, which
   stands alone, live, at the end. Four to six steps a user would really take (*product-ui*). In the
   middle, never beside the product replay; hold 2.4.
+- **Object lowered onto the last line** (`object-lowered-onto-the-last-line`): the closing line runs
+  across the screen at display size with the action and the price under it, and the product, a
+  cut-out, is lowered over the hold with uneven pacing (a slow creep, then most of the travel at the
+  end) until its foot rests on the top of one lowercase letter of the last word, like a jug on a shelf,
+  every letter whole. One cut-out photograph of the client's own product, never another maker's
+  (*product-photo*), and a closing line of 2-5 words. The end of the page, for one physical thing,
+  once; hold 0.8; dealt less often than most (weight 0.7). scenes.mjs warns `empty-steps` over the
+  ground the object is lowered through and, on a phone, `dead-hold` over the slow creep: the header
+  defends both.
 
 **Picture transform**
 - **Picture develops from marks** (`picture-develops`): a pen drawing draws itself, heaviest strokes
@@ -487,7 +548,7 @@ page, a scene on the first screen, which shows the product large.
 **Section transition**
 - **Peel, tear and drag** (`peel-tear-and-drag`): a plane drags the next page in behind it, a sticker
   peels off, or the ground tears away. A top-down cut-out of a plane for the drag; nothing for the
-  tear.
+  tear. Not dealt: judged cheap twice (a page curl, a torn-paper seam).
 - **Raster cut between chapters** (`raster-cut`): the next chapter prints over the current one through
   slats while the title changes ink line by line. A full-bleed picture for the next chapter (a title
   alone on two flat grounds reads as an empty screen) and a title of 2-4 words.
@@ -497,6 +558,15 @@ page, a scene on the first screen, which shows the product large.
   picture's own top-edge colour carries the closing line and the contact. One photograph with an even
   top edge (fog, sky, a plain wall), or a full-bleed crop of the product's interface (`data-ui`). The
   end of the page, once; hold 1.
+- **Section seam bends into a cup that gathers the scattered words**
+  (`seam-pocket-gathers-the-words`): eight to twelve short words lie scattered, small and tilted, under
+  a section's heading; the scroll carries them one by one into two short columns while the next
+  section's dark ground rises into the page as a wide, shallow cup, and each word straightens, grows to
+  display size and turns to the light ink where it crosses the edge. Eight to twelve real names that
+  sum the section up, one or two words each (*names:8*): what a farm grows, what a studio makes, the
+  rooms; no pictures; never on a software page. On the list, into an order, an offer or the contact
+  on the ink; once; hold 1.4. Built from the researched technique `lib-0301`, which is no longer dealt
+  to build fresh.
 
 **Type choreography**
 - **Letter physics** (`letter-physics`): a claim bursts apart in 3D and an answer lands in a disc of

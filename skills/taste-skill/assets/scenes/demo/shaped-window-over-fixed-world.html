@@ -77,14 +77,14 @@
 
   .scene-sw .sw-title { font-stretch: 87.5%; }
   /* the reader is still among the trees at the treeline: a whole fir stands a little way off on the
-     left, and the boughs of a nearer one hang in from the right edge over the low window's corner;
+     left, and the boughs of a nearer one hang in from the right edge over the right window's corner;
      the push carries both away */
   .scene-sw {
     --sw-prop-l-h: 92%; --sw-prop-l-x: -24lvh; --sw-prop-l-y: -2%;
     --sw-prop-r-h: 130%; --sw-prop-r-x: -64lvh; --sw-prop-r-y: -5%;
   }
-  /* narrow screens: the fir fills the empty ground under the high window and only its top crosses that
-     window's corner; the boughs only brush the low window's lower corner */
+  /* narrow screens: the fir fills the empty ground under the left window and only its top crosses that
+     window's corner; the boughs only brush the right window's lower corner */
   @media (max-width: 767px), (max-aspect-ratio: 11/10) {
     .scene-sw {
       --sw-prop-l-h: 52%; --sw-prop-l-x: -15.5lvh; --sw-prop-l-y: -2%;
@@ -121,14 +121,14 @@
     font-weight: 600;
   }
   .close .credit { font-size: 15px; margin-top: 40px; }
+  /* a sign-off, not a second wordmark */
   .close .name {
-    margin: clamp(80px, 14svh, 160px) 0 0;
-    font-weight: 800;
-    font-stretch: 62%;
-    text-transform: uppercase;
-    font-size: clamp(44px, 14.85cqi, 240px);
-    line-height: 0.84;
-    letter-spacing: -0.01em;
+    margin: 48px 0 0;
+    font-weight: 700;
+    font-stretch: 87.5%;
+    font-size: 28px;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
   }
 
   @media (max-width: 1000px) {
@@ -162,8 +162,8 @@
     </div>
   </section>
 
-  <!-- high: left, because the picture's diagonal runs from the peak at upper left down to the ridges at
-       lower right; the high window frames the summit, the low one the icefall and the ridges -->
+  <!-- high: left puts the caption under the left window and the title over the right one; in the first
+       frame the left window shows the summit, the right one the ridges under the dark sky -->
   <section class="scene sw scene-sw" data-scene="shaped-window-over-fixed-world" data-options='{"hold": 2.4, "high": "left"}' aria-labelledby="sw-title">
     <div class="scene-stage sw-stage">
       <div class="sw-world" data-move>

@@ -70,6 +70,7 @@
    "pictures:6"
   ],
   "hold": 3,
+  "weight": 0,
   "byRole": {
    "work": "Set data-options {\"stop\": 0.5}: 4-6 pieces, each stopped centred and flat at about 62% of the width with its title under it for half a screen; hold 0.7 a piece plus 0.3 (3.1 for four, 4.5 for six); the backdrop shaded toward the ground; phones get the pieces stacked full width. More pieces go to a plain index under the scene."
   }
@@ -131,7 +132,8 @@
   "needs": [
    "route"
   ],
-  "hold": 4
+  "hold": 4,
+  "weight": 0
  },
  {
   "id": "warp-jump",
@@ -165,7 +167,8 @@
   "needs": [
    "pictures:0"
   ],
-  "hold": 3
+  "hold": 3,
+  "weight": 0
  },
  {
   "id": "light-flood",
@@ -190,6 +193,7 @@
    "pictures:0"
   ],
   "hold": 1.2,
+  "weight": 0,
   "lines": 2
  },
  {
@@ -247,16 +251,16 @@
    "pictures:0"
   ],
   "hold": 1.8,
-  "weight": 0.6
+  "weight": 0
  },
  {
   "id": "orbit-to-formation",
   "name": "Orbit to formation",
   "family": "grid-reassembly",
   "summary": "One set of square photographs rides a single invisible wheel that changes shape as the page scrolls: a huge arch turning over the opening statement, then a ring closing round one big figure, then a half-wheel at the edge of the screen beside a column of figures that light one by one. It is one continuous set piece for a team, a culture, a gallery or an archive, in place of three separate galleries.",
-  "place": "In the middle, on the about, the gallery or the figures: the stretch that says who the people are or how long the place has been there. Set {\"hold\":4} (the file's own default of 5 is for a page with no other scene); it is still the page's one long scene. Not on the work: its cards are small, so the work is shown at size elsewhere.",
+  "place": "In the middle, on the about, the gallery or the figures: the stretch that says who the people are or how long the place has been there. Hold 4, the lowest the scene file allows (it raises a lower hold to 4 and still defaults to 5): where the sheet gives less, set {\"hold\":4}. Not on the work: its cards are small, so the work is shown at size elsewhere.",
   "content": "Twelve to sixteen distinct square photographs (14 by default; phones use the first ten), 560px or more, in one grade, the subject inside the central 60% so a tilted or upside-down card still reads. Never the same picture twice, at most two from one source (one film, one shoot, one building) and never side by side; with fewer than twelve distinct pictures, redraw rather than repeat them (the script repeats a short set whole, which reads as padding). People, hands and studio moments only when they are the client's own; otherwise real pictures of its world (archive photographs, the place, its materials), never stand-ins for its team. A statement of 6-10 words that holds two lines (about 45 characters keeps the full size). One figure of 4 glyphs or fewer (a year, a count) with an optional second line of 3 words or fewer, and a caption of 12 words or fewer. Four rows of figures (2-6 work), each of 4 glyphs or fewer with a label of 4 words or fewer: real facts about the subject from the brief (a year, a height, a number of rooms or days), never invented business numbers, never a constant of the medium (25 frames a second) or a figure worked out from another on the list; count true only with such real figures.",
-  "options": "hold 5 (4-7); phoneHold 4 (3-6); scrub 0.6, locked with Lenis; radius 1 (0.7-1.6) the arch's radius as a share of the width, 0.7 steep, 1.6 flat; crest 0.24 (0.18-0.30) height of the arch's top card; phoneCrest 'auto' or 0.14-0.44; ring 0.46 (0.36-0.48) the ring's width, spilling past the frame from 0.44; stagger 0.2 (0-0.5) how far the cards peel off one after another; wind 'close' | 'spring'; tilt 1 (the faces follow the wheel) or 0.2-0.9 (the faces stay near upright); dim 0.4 (0.4-0.8) opacity of a figure row off the reading line; count false (true counts each figure up as it lights); phone 'same' | 'rest'; phoneCards 10 (6-14).",
+  "options": "hold 4 (4-7); phoneHold 4 (3-6); scrub 0.6, locked with Lenis; radius 1 (0.7-1.6) the arch's radius as a share of the width, 0.7 steep, 1.6 flat; crest 0.24 (0.18-0.30) height of the arch's top card; phoneCrest 'auto' or 0.14-0.44; ring 0.46 (0.36-0.48) the ring's width, spilling past the frame from 0.44; stagger 0.2 (0-0.5) how far the cards peel off one after another; wind 'close' | 'spring'; tilt 1 (the faces follow the wheel) or 0.2-0.9 (the faces stay near upright); dim 0.4 (0.4-0.8) opacity of a figure row off the reading line; count false (true counts each figure up as it lights); phone 'same' | 'rest'; phoneCards 10 (6-14).",
   "phone": "The same wheel with phone numbers: a tall ten-card ring, then the wheel sinks to the bottom edge instead of rolling aside and the figures rise out from behind it; hold 4.",
   "roles": [
    "about",
@@ -352,7 +356,7 @@
    "pictures:0"
   ],
   "hold": 1,
-  "weight": 0.35,
+  "weight": 0,
   "lines": 1
  },
  {
@@ -390,11 +394,11 @@
   "id": "hinged-sheets",
   "name": "Hinged sheets",
   "family": "layer-stack",
-  "summary": "Two to four tickets rise together from a face-down deck below the fold, each peeling off, turning from its ink-coloured back to its paper front on a shared vanishing point and landing in its slot one by one, after the headline has stepped back to the top of the stage, where it stays, sharp, as the heading over the row. It is for prices, passes, letters or figures on a page with a real paper, ticket or print idea; without that idea the turn is a trick.",
-  "place": "In the middle, on the pricing, the tickets or the figures. The section's heading stays readable throughout: the headline rises and shrinks to the top of the stage before the deck reaches it and stays there as the heading over the finished row, never a blurred ghost behind the landed tickets.",
-  "content": "Two to four tickets (three reads best; five or more run as the flow version), every front with the same amount of copy: a name of 1-2 words, a pitch of up to 26 words (10-16 with a photograph), 2-3 points of 2-5 words, a price with what it buys, an optional action; every back one or two short words set very large, the brand and a small line. A headline of 4-7 words on two lines, an optional sentence under it, a line over the row of 3-8 words, and fine print of 15-25 words. At rest the row reads as printed tickets, not pricing cards: type set to the edges of the stub, the copy filling the sheet, the page's own corners (square when its buttons are). A photograph on the top 29% of a ticket only when it is the ticket's own picture (a show's poster), never one already used on the page. One ink (--accent) for the backs and every word, a paper colour, and two tints of a ground.",
-  "options": "hold 1.2-4 (0.6 + 0.5 a ticket: 2.1 for three); scrub true with Lenis, else 0.5 (0.2-0.6); deck 0-1 (1) how far the tickets start towards one centre deck, 0 rises each from its own slot; stagger 0.08-0.18 (0.14; 0.12 with four); wobble 0-8 degrees (7); lean 0-18 degrees (16); lift 0-120 px towards the viewer at mid-turn (120); phone 'flip' | 'rest'.",
-  "phone": "No held stage: the tickets stand in a column, and each rises, turns and lands on its own as it scrolls in, face-up and still before it is read. Tablets, short windows and more than four tickets get the same.",
+  "summary": "Two to four tickets lie face-down in one row under the section's headline, ink-coloured backs with one large word each, and turn over one by one as the page scrolls, left to right on a shared vanishing point, to their paper fronts. Each turn runs on a clock of 0.8s once the scroll passes its moment, never with the scroll, so wherever the visitor stops every ticket lies flat, face-down or face-up, and the row fills the screen from the first frame. It is for prices, passes, letters or figures on a page with a real paper, ticket or print idea; without that idea the turn is a trick.",
+  "place": "In the middle, on the pricing, the tickets or the figures. The headline and the line over the row stand over the row from the first frame, never a headline alone on a screen, and the backs are what the row shows first, so their words count.",
+  "content": "Two to four tickets (three reads best; five or more run as the flow version), every front with the same amount of copy: a name of 1-2 words, a pitch of up to 20 words (10-16 with a photograph), 2-3 points of 2-5 words, a price with what it buys, an optional action; every back one or two short words set very large, the brand and a small line. A headline of 4-7 words on two lines, an optional sentence under it (the held stage leaves it out), a line over the row of 3-8 words, and fine print of 10-20 words. About 120 words for the whole section, the backs not counted. At rest the row reads as printed tickets, not pricing cards: type set to the edges of the stub, the copy filling the sheet, the page's own corners (square when its buttons are). A photograph on the top 29% of a ticket only when it is the ticket's own picture (a show's poster), never one already used on the page. One ink (--accent) for the backs and every word, a paper colour that stands clearly off both tints of the ground (a paper the colour of the ground reads as empty boxes), and two tints of a ground.",
+  "options": "hold 1.2-4 (0.6 + 0.5 a ticket: 2.1 for three); scrub true with Lenis, else 0.5 (0.2-0.6), for the ground's brightening; turn 0.5-1.2 s (0.8), one ticket's turn; lift 0-60 px towards the viewer at mid-turn (48); phone 'flip' | 'rest' ('rest' gives tablets and short windows the finished composition too). The tickets turn at (i + 0.5) / (tickets + 0.3) of the hold; two tickets make only two beats.",
+  "phone": "No held stage: the tickets stand face-down in a column, and each turns over on its clock once its top is three quarters up the screen, face-up before it is read; the fine print comes in after the last. Tablets, short windows and more than four tickets get the same; with phone 'rest' all of them show the finished composition.",
   "roles": [
    "pricing",
    "stats",
@@ -416,7 +420,8 @@
   "needs": [
    "pictures:0"
   ],
-  "hold": 2.1
+  "hold": 2.1,
+  "weight": 0
  },
  {
   "id": "fly-into-the-shape",
@@ -450,10 +455,10 @@
   "id": "shaped-window-over-fixed-world",
   "name": "Shape-shifting window over a fixed world",
   "family": "mask-and-reveal",
-  "summary": "One full-bleed photograph of a place stays still behind a shutter in the page's ground colour with two offset tall windows cut in it; the scroll slides the windows level (up to the title above the low one and down to the caption under the high one, never across a word), closes the bar between them, then scales the shutter past the screen edges so the visitor pushes through into the place while one chapter word rises in. It lets one strong, wide picture of a building, a room or a landscape carry the opening title and the name of the first chapter.",
+  "summary": "One full-bleed photograph of a place stays still behind a shutter in the page's ground colour with two tall windows cut in it side by side, level, a narrow bar between them, so the first frame is one picture of the place seen through a mullion, under the title; the scroll widens the windows outward (the title over one and the caption under the other never move), closes the bar, then scales the shutter past the screen edges so the visitor pushes through into the place while one chapter word rises in. It lets one strong, wide picture of a building, a room or a landscape carry the opening title and the name of the first chapter.",
   "place": "The first screen, as the hero (the page's one action stays in the header bar), opening onto the first chapter, which is the place itself. The page's ground is one flat colour that the shutter matches exactly.",
-  "content": "One landscape photograph of the place, 3:2 or 16:10, about 3600px wide, with a diagonal of interest from lower left to upper right (each window frames something at the start), a calm top third for the word and nothing important on the vertical centre line; a 9:16 crop for phones; or a muted 8-12 s loop with little motion and the still as its poster. Two optional props for the bottom corners (foliage, a lamp, a chair), as cut-outs or keyed from a photograph of something dark against a bright sky. A title of 4-7 words on two lines (about 25 characters), a caption of 10-18 words (wide screens only, and left out where it does not fit under the windows, so repeat its key fact in the lede), one chapter word of 6-12 letters, and a lede of 18-32 words with a 2-3 word link.",
-  "options": "hold 2.4 (1.8-3); phoneHold 2.0 (1.6-2.6); stagger 0.16 (0.08-0.165) how far each window starts off the shared band, 0.08 a calm diptych; phoneStagger 0.08 (0.05-0.12); bar 'auto' or 8-24 px of ground between the windows; high 'right' | 'left', the window that starts high; overscan 1.08 (1.04-1.15); phoneOverscan 1.16 (1.04-1.2); worldScale 0.8 (0.75-1) the world's start scale; wordTop 80 px (phoneWordTop 72); wordWidth 0.92 (0.6-0.96; phoneWordWidth 0.86); parallax 0.2 (0-0.3); scrub 0.6, true with Lenis; phone 'same' | 'rest'.",
+  "content": "One landscape photograph of the place, 3:2 or 16:10, about 3600px wide, with the place's subject in its middle half (the first frame shows that half, the bar on its centre line), a calm top third for the word and nothing important on the vertical centre line; a 9:16 crop for phones; or a muted 8-12 s loop with little motion and the still as its poster. Two optional props for the bottom corners (foliage, a lamp, a chair), as cut-outs or keyed from a photograph of something dark against a bright sky. A title of 4-7 words on two lines (about 25 characters), a caption of 10-18 words (wide screens only, and left out where it does not fit under the windows, so repeat its key fact in the lede), one chapter word of 6-12 letters, and a lede of 18-32 words with a 2-3 word link.",
+  "options": "hold 2.4 (1.8-3); phoneHold 2.0 (1.6-2.6); open 0.38 (0-0.5) how far each window widens outward, a share of its width in the first frame; phoneOpen 0.22 (0-0.4); (stagger and phoneStagger are ignored: the windows always start level); bar 'auto' or 8-24 px of ground between the windows; high 'right' | 'left', the window the caption hangs under (the title stands over the other); overscan 1.08 (1.04-1.15); phoneOverscan 1.16 (1.04-1.2); worldScale 0.8 (0.75-1) the world's start scale; wordTop 80 px (phoneWordTop 72); wordWidth 0.92 (0.6-0.96; phoneWordWidth 0.86); parallax 0.2 (0-0.3); scrub 0.6, true with Lenis; phone 'same' | 'rest'. Under a page's fixed or sticky bar the title and the word stay clear of it, and on wide screens the windows are laid out under it. The scrims stay the file's flat dark; recoloured to a pale ground they are a milky veil over the photograph (`gradient`).",
   "phone": "The same push with two slim windows across 85% of the width, the title full width above them, no caption and the word fitted to 86% of the width, its letters landing on a clock of 0.75s once the push reaches them, never with the scroll; hold 2. Portrait tablets get the same.",
   "roles": [
    "hero",
@@ -510,7 +515,8 @@
   "needs": [
    "product-photo"
   ],
-  "hold": 2.5
+  "hold": 2.5,
+  "weight": 0
  },
  {
   "id": "instrument-dial-stage",
@@ -1068,7 +1074,7 @@
   ],
   "hold": 2,
   "byRole": {
-   "work": "Here three to five pieces (three reads best): each lies flat at full screen for a third of a screen, its name on the sheet's top edge over its photograph. More go to a plain index under the scene."
+   "work": "Set data-options {\"rest\": 0.5} and leave the hold on auto: three pieces, each lies flat at full screen for half a screen (2.5 screens in all), its name on the sheet's top edge over its photograph. More go to a plain index under the scene."
   },
   "weight": 1
  },
@@ -1226,7 +1232,7 @@
   "name": "Window relay with a trail of stamps",
   "family": "media-sequence",
   "summary": "A short set of four to six pictures of one family is told as a relay on a held stage. The current picture rests whole in a large main slot (64% of the width, the full height) with its name set large beside it in the accent and one line under it in the ink. The next waits as a small window in the slot's top left corner, showing that picture whole and small. At the hand-over that window opens over the current picture, growing from its corner until it covers the slot, while the name changes in one step. The window leaves a stamp-sized box open in the opposite corner, where the old picture stays on top and shrinks into its stamp, then slides out whole into a trail of stamps along the bottom edge of the caption band, which moves one place along (four at most, the oldest leaving at the far end). The next chip grows out of the corner and each arrival rests whole for a beat. It is for a collection, the rooms of a house, the courses of a menu, the pieces of a small show.",
-  "place": "In the middle, as the section that shows the set, after a quiet section that introduces it; it is that section, told as a relay, not screens in front of it. A quiet section follows. Not on the work as the page's main showcase: the name sits beside the picture, not on it, and the chip lies over the picture's top left corner at rest (scenes.md section 3 asks the title on the piece and the piece unobstructed); there use the fly-through in stop mode or sheets that tip in and away.",
+  "place": "In the middle, as the section that shows the set, after a quiet section that introduces it; it is that section, told as a relay, not screens in front of it. A quiet section follows. Not on the work as the page's main showcase: the name sits beside the picture, not on it, and the chip lies over the picture's top left corner at rest (scenes.md section 3 asks the title on the piece and the piece unobstructed); there use sheets that tip in and away.",
   "content": "Four to six photographs of one family (five reads best): the same light, grade and ground, one kind of subject, each one piece shown once, at least 2000px wide with width and height set, landscape between 4:3 and 3:2, the subject whole in the middle with plain ground round it, and the top left corner plain ground on every picture but the last (the chip lies there). The chip shows the whole picture small, the stamp a tall crop through the subject; --wr-focus on an img moves the slot, chip and stamp together. A name for each of one or two words, 9 characters or fewer, set large in the display face; one line of 6-14 words in the text face saying what the picture shows. A section heading of about 32 characters at most, shown above the trail on wide screens and in the finished composition. With fewer than three pictures the trail says nothing: take another scene.",
   "options": "hold 0.6 a hand-over (1.2-3.2): 2.4 for five, 1.8 for four, 3 for six; phoneHold 0.55 a hand-over (1.2-3.2): 2.2 for five; phone 'same' | 'rest'; swap 0.42 (0.3-0.55) share of the hold the hand-overs take, the rest are beats where one picture rests whole with its name; trail 4 (1-4) places in the trail; peek 0.74 (0.5-1) share of its photograph's width the waiting chip shows; crop 0.56 (0.35-0.9) share of its photograph's width a stamp shows; radius the page's --radius, else square (0-24px), one radius for every frame, chip and stamp, drawn by the clip at the same visible size at every scale; scrub true with Lenis, else 0.5 (0-1). The number of pieces comes from the markup; the layout of the slots (main, chip, trail) is the CSS's .wr-plan boxes, one set for wide screens and one for portrait screens and phones.",
   "phone": "The same relay rearranged for a tall screen (under 768px, and any portrait screen): the window takes the full width and the upper two thirds with the chip in its top left corner, the trail runs along the window's bottom edge with the newest stamp at the right, and the name and its line sit under the trail. The stamp forms in the window's lower right corner and drops into the trail, so nothing moving reaches the caption. The heading is kept for screen readers while it runs. Hold 2.2 for five; touch scrolling is never smoothed. phone 'rest' shows the finished composition: the heading over the pieces in one column, each picture with its name and line.",
@@ -1251,6 +1257,204 @@
   ],
   "hold": 2.4,
   "source": "lib-0237",
+  "weight": 1
+ },
+ {
+  "id": "letter-bar-floods-the-ground",
+  "name": "Letter bar floods the ground",
+  "family": "colour-and-ground",
+  "summary": "One short statement holds on a single line in the page's display face with one straight letter (I, l, i, 1 or a T's stem) on the dead centre of the screen; from the first frame the camera zooms on that letter: the whole line scales up round its stem, the letter in its own proportions and the words growing more slowly as they leave past the screen's edges. Once the letter is wider than a third of the screen and taller than it, only its bar is left, a column of ink that keeps widening; the next section's opening statement arrives inside it at about half-way while the outgoing words' edges are still in frame, the column reaches full bleed by 80% and the statement grows to its resting size as the camera lands, so the next ground arrives through the inside of a letter with no seam and no hold of plain colour. A hand-over for pages with no pictures, in any sector.",
+  "place": "Between two sections, as the hand-over from the page's ground to its ink (the intro to the offer, the about to the prices, the work to the contact). The section before ends on the page's ground; the section after continues on the ink straight under the statement the flood ends on, with little top padding. Once per page, with a quiet section before it.",
+  "content": "No pictures. A statement of 2-4 words, 12-22 characters, on one line, set at display size (96px or more on a desktop, nearly the full width on a phone), with a straight-stemmed letter near its middle: I, l, i, 1 or a T, never O, S, A or any letter with a bowl or a counter. Long words that push the pivot far from the middle shrink the line (its longer half round the stem sets the size). The next section's opening statement, 4-8 words in two lines at most at every width, and an optional sentence of 12-24 words under it, both in the ground's colour on the ink. One ground and one ink, 7:1 or better both ways; no accent, no second colour on any word.",
+  "options": "hold 1.1 (1-1.5); phoneHold 1 (0.8-1.2); pivot, the letter's index in the statement (spaces counted) or the letter itself (a span.lbf-pivot in the markup wins; else the straight letter nearest the middle); third 0.3 (0.2-0.4) share of the hold by which the stem is a third of the width; half 0.5 (0.4-0.6) share by which it is half the width (the next statement arrives about here); flood 0.8 (0.6-0.8) share by which the column fills the screen; grow 0.5 (0.3-0.8) the words' scale as a power of the letter's; nav '', the selector of a fixed header, and navClass 'is-flooded', which it gets while the ink covers it; scrub 0.5, true with Lenis and on touch; phone 'same' | 'rest'. Tokens: --lbf-size, --lbf-gutter, --lbf-next-size, --lbf-next-measure, --lbf-pad.",
+  "phone": "The same zoom with phone numbers: the line spans nearly the whole width round its stem (a 12px gutter); the letter stays a letter, ends in view, until it is taller than the screen (about 0.55, near 30 times its size, repainted sharp rather than stretched from a small layer); the stem is a third of the width by 0.3 with the outgoing words' edges in frame; full bleed by 0.8; hold 1. Screens under 480px tall get the finished composition.",
+  "roles": [
+   "intro",
+   "about",
+   "features",
+   "how-it-works",
+   "pricing",
+   "list",
+   "contact",
+   "cta"
+  ],
+  "position": "transition",
+  "sectors": [
+   "*"
+  ],
+  "needs": [
+   "pictures:0"
+  ],
+  "hold": 1.1,
+  "weight": 0.6,
+  "lines": 1
+ },
+ {
+  "id": "seam-pocket-gathers-the-words",
+  "name": "Section seam bends into a cup that gathers the scattered words",
+  "family": "section-transition",
+  "summary": "The stage holds a section's heading and sentence across the top, with eight to twelve short words (what the section was about, one or two words each) lying scattered under them as small plain type, each at its own tilt, over a band of the next section's dark ground with a low swell in its middle. The scroll carries the words one by one, in staggered windows, to their places in two short columns; as each row is about to be filled, the middle of the seam rises in a wide, shallow, round-shouldered cup (at least half the stage, smootherstep sides, no corner anywhere) just far enough to take it, and each word straightens, grows to display size (48px or more on desktop) and turns to the next ground's light ink exactly where it crosses the edge. The edge's feet lift through the hold, so by the end the dark ground holds most of the screen and the gathered words rest in it as the next section's opening; the stage lets go onto that section on the same ground. The first frame already moves. Fully scrubbed: scrolling back scatters the words exactly as they were. No pictures, no physics, flat colour, no box round the words.",
+  "place": "Between two sections, on the section whose subject is a set of short names (what a farm grows, what a studio makes, the services, the rooms, the subjects of a course), handing over to the next section, which starts on the inverted ground (the page's ink) with no margin: an order or booking section, the offer, the contact. Once per page; a quiet section before it.",
+  "content": "A section heading of 2-5 words (two lines at most at every width) and one sentence of 30 words at most. Eight to twelve real names that sum the section up, one or two words each, 14 characters at most (longer labels make the columns too wide for the cup), in reading order: the first half reads down the left column, the rest down the right; the first six to eight are the ones a phone keeps. Nothing else in the scene: no pictures, no pills, no boxes, no icons. The next section continues on --spg-next (the ink by default).",
+  "options": "hold 1.4 (1-1.5); phoneHold 1.2 (1-1.5); maxWords 12 (8-12) words used on desktop and tablet; phoneCount 7 (6-8) the first items kept on a phone, the rest hidden there in the finished composition too; columns 2 (1-2) on desktop and tablet, a phone takes one; at 0.5 (0.3-0.7) where the cup stands, its middle as a share of the width (a phone keeps it centred); feet 0.6 (0-0.85) how far the edge's feet rise by the end, as a share of the way to the cup's final top, phoneFeet 0.72; scale 0.6 (0.45-0.85) a scattered word's size as a share of its landed size, phoneScale 0.64; tilt 9 (0-14) the largest tilt of a scattered word; flight 0.2 (0.15-0.3, 0.17 at most on a phone) share of the hold each word takes to its slot; seed 3 the scatter's seed (the script tries the next seeds until the whole flight is clear); scrub 0.5, true with Lenis or on touch; phone 'same' | 'rest'. CSS tokens on the section: --spg-next, --spg-next-ink, --spg-title-size, --spg-lede-size, --spg-word-size, --spg-word-lh, --spg-col-gap, --spg-gutter, --spg-foot, --spg-at, and for the finished composition --spg-rise, --spg-a, --spg-sw.",
+  "phone": "The same scene with phone numbers: the first seven words (phoneCount) in one centred column at about 37px, the heading block across the width with the words scattered under it, the cup in the middle and never moving sideways (its curved sides run out past the screen, so they stay soft), flights of 0.17 and a 1.2-screen hold. Screens under 600px tall, reduced motion, no script and a failed CDN get the finished composition: heading and sentence, then the next ground with the cup risen at its top and the words resting in it in the light ink.",
+  "roles": [
+   "list",
+   "features",
+   "showcase",
+   "how-it-works",
+   "about",
+   "intro"
+  ],
+  "position": "transition",
+  "sectors": [
+   "hospitality",
+   "restaurant",
+   "event",
+   "culture",
+   "music",
+   "agency",
+   "studio-portfolio",
+   "personal-portfolio",
+   "architecture",
+   "real-estate",
+   "education",
+   "nonprofit",
+   "physical-product",
+   "ecommerce",
+   "fashion",
+   "health",
+   "other"
+  ],
+  "needs": [
+   "names:8"
+  ],
+  "hold": 1.4,
+  "source": "lib-0301",
+  "weight": 1
+ },
+ {
+  "id": "speed-bent-row",
+  "name": "A row the scroll speed bends",
+  "family": "horizontal-travel",
+  "summary": "The stage holds for two screens while the page scroll carries one row of six to eight pictures of one body of work sideways along a gentle curved surface in CSS 3D, each with its name set large beneath it, turned to face the viewer. Only the visitor's pace bends it: even a slow scroll flexes the row, and a fast one deepens the curve, leans the leading pictures back, sags the middle and lifts the far end, while any card turned past about 30 degrees fades instead of squashing; once the scroll stops the row eases back over about half a second to its gentle, tidy rest. The whole body of work reads as one flexible object; nothing captures the wheel, nothing is dragged, nothing loops.",
+  "place": "In the middle of the page, on a series, a collection or a line-up (one photographer's series, one season's looks, one maker's pieces), where a grid of cards would otherwise go; each picture one piece, linking to it. Not as the page's work section: each card is about a quarter of the width, and on the work each piece stops at 60% of the width or more (references/scenes.md section 3), so the work is shown at size elsewhere. A quiet section comes before it and after it. Never on the first screen (its row needs the scroll to read as one object) and never beside another horizontal scene.",
+  "content": "Six to eight of the client's own photographs of one body of work (one photographer's series, one maker's pieces, one season's looks), each once, in one grade and in full colour; landscape originals 1280px wide or more, cropped to 4:5 on the row with object-position per picture and shown whole at 3:2 on the phone stack. One name per picture, 1-2 words and 14 characters or fewer, naming what it shows (a place, a title, a piece): the names are set at 12% of the card width, and a longer one wraps and shrinks on the far side. A heading of 2-5 words and one line of 6-14 words. The row is plain HTML: an ol of links, each a figure with its picture and a figcaption. Fewer than six pictures make the row thin and the travel short: take a plain row instead.",
+  "options": "hold 2 (1.6-2.6; the travel is measured from the row, so a longer hold only slows it); curve 0.04 (0-0.08) the gentle resting curve, never tilted side cards round a flat middle; depth 0.1 (0-0.16) how much deeper the curve gets at full speed (cards turned past 26 degrees fade out by 34 and never turn further); pull 0.06 (0-0.1) how far the row comes nearer at full speed; lean 16 (0-22) degrees the leading pictures lean back; lift 0.08 (0-0.12) how far the far end lifts, as a share of the height; speed 0.55 (0.25-2) screen widths a second of travel that bends it most of the way; settle 0.5 (0.3-0.9) seconds it takes to ease back flat; perspective 950 (800-1400); phone 'same' (the stack bows with speed) | 'rest' (the plain stack); bow 14 (0-20) degrees the phone stack bows; scrub true with Lenis, else 0.5.",
+  "phone": "No pin and no sideways travel: the pictures stand as a vertical stack in the page, each 3:2 picture whole with its name under it, and the stack bows visibly with the speed of the page (a flick of about a screen a second bows it most of the way: pictures above and below the middle of the screen tilt away and recede, the one in the middle stays flat and near), easing back flat over about half a second once the scroll stops. Touch scrolling is never smoothed or captured.",
+  "roles": [
+   "gallery",
+   "showcase",
+   "list"
+  ],
+  "position": "middle",
+  "sectors": [
+   "music",
+   "fashion",
+   "culture",
+   "ecommerce",
+   "event"
+  ],
+  "needs": [
+   "product-photo",
+   "pictures:6"
+  ],
+  "hold": 2,
+  "weight": 1
+ },
+ {
+  "id": "panels-reproportion-on-arrival",
+  "name": "Panels re-proportion as they arrive",
+  "family": "horizontal-travel",
+  "summary": "A short statement holds at display size in a solid column of the page's ground on the left, as tall as the stage, while four to six large panels arrive one at a time beside it, about 0.4 screens of scroll each. Every panel is one picture over a band of the page's own ground. A panel arrives in the main slot (about 42% of the width) split half and half with its name on one line; as the reader scrolls, the picture grows by its clip to 70% and pushes the band down, and the name re-sets onto two lines in large type, so each item visibly comes into focus at full size. When the next panel comes, a hand-over runs on a clock: the settled panel steps left into a narrower slot beside the column, still whole and named, the one before it slides away whole behind the column, and the next slides in from the right. So the screen holds at most two panels, never a strip of one, and every frame after the first settle shows one panel settled whole. The first panel, with nothing settled beside it, arrives across the whole window and narrows into the slot when the second comes. The last frame is the last panel settled; the column's foot holds the sentence and the one action as a plain button on the page ground. All panels share one ground and one ink; only the pictures tell them apart. For a school's programmes, a developer's buildings, a publisher's imprints, a studio's services: four or five parallel places or offers with one strong picture each.",
+  "place": "The first screen, as the hero: the statement is the h1 and the panels are the programmes, buildings or imprints, so the first screen is that section, told as a scene; the first panel stands half and half at load and changes on the first scroll. A quiet section follows it. (The demo runs it under a short intro to show the page around it.)",
+  "content": "A statement of 4-7 words whose two lines are short (eight to ten characters a line: 'A year / by hand.'), since it is set as large as two lines in a column a third of the width allow (about 100px at 1440x900) and never takes a third line; one sentence of 8-18 words for the column's foot; the one action as a plain link-button. Four or five panels (three runs, six is the most), each one place or offer: one photograph, never repeated, all five graded as one set (same light and colour treatment: grade the files together), at least 1300px wide, its subject in the middle so one picture serves the square main slot, the tall narrow slot (its middle third) and a 4:3 window on a phone; the first picture landscape, since it also fills the whole window as it arrives (about 1.6:1). Frame each with --pr-pos and --pr-pos-phone. A name of two or three words, 8-20 characters, no word over 10 (set on two lines in large type; a one-word name stays on one line and loses the re-set); an optional short line of 3-6 words. No numbers or counts on the panels, no colour per panel. The weights come from --display-weight (500 when the page sets none).",
+  "options": "pace 0.42 (0.3-0.7) screens of scroll per panel: a still moment after it arrives, the change, a rest settled; from 0.5 (0.4-0.56) share of the panel the picture fills as it arrives; grow 0.7 (0.62-0.78) share once settled; column 0.33 (0.26-0.4) share of the width the statement's column keeps on wide screens; panel 0.42 (0.36-0.46) share of the width a panel takes in the main slot (the narrow slot takes the rest, at least 16%); zoom 1.06 (1-1.15) picture scale as it arrives, settling to 1; rest 0.1 (0-0.5) screens of still end frame; hand 0.8 (0.5-1.2) seconds of the hand-over between two panels; hold auto, panels x pace + rest, 2.2 screens for five and never over 2.5; scrub true with Lenis, else 0.4; phone 'same' | 'rest'. Per panel --pr-pos and --pr-pos-phone (object-position).",
+  "phone": "No pin and no sideways travel. The statement and its sentence stand at the top and the panels stack full width, each about half a screen tall, arriving split half and half with the one-line name; as a panel's top edge crosses the middle of the screen it re-proportions on a clock of 0.7s (the picture grows to 70%, the band moves down, the name re-sets onto two lines, its short line beside it on the right), and scrolling back above the middle plays it back. A settled panel is whole on screen wherever the reader stops, no name is ever caught half re-set, and the action follows the last panel, under its name. phone 'rest' shows the finished composition.",
+  "roles": [
+   "hero",
+   "intro",
+   "list",
+   "features",
+   "showcase"
+  ],
+  "position": "opening",
+  "sectors": [
+   "education",
+   "real-estate",
+   "architecture",
+   "culture",
+   "hospitality",
+   "agency",
+   "studio-portfolio",
+   "event",
+   "nonprofit",
+   "other"
+  ],
+  "needs": [
+   "pictures:4",
+   "names:4"
+  ],
+  "hold": 2.2,
+  "source": "lib-0023",
+  "weight": 1
+ },
+ {
+  "id": "object-lowered-onto-the-last-line",
+  "name": "Object lowered onto the last line",
+  "family": "object-scrub",
+  "summary": "The type is the table. One sentence-case closing line in the page's ink runs on one line across nearly the full width at display size (about 17vw at 1440), the action and the price under it, and the product, one cut-out photograph about 30% of the screen tall, hangs whole at the top of the stage. Over the hold it is lowered with uneven pacing, whole in frame at every frame: a slow creep for the first half (a third of its travel, drifting in from the side over the empty ground), gathering pace, most of the travel in the last part, about 40-45% of the screen in all, then it slows and rests with its foot on the x-height line, on the ink top of one lowercase letter without an ascender, like a jug on a shelf, its body clear of every glyph: every letter whole, nothing overlapping. The script fits the line to the row and, after the fonts load and on every resize, measures the letter's ink top from the loaded font, the taller letters beside it and the object's own outline near its foot (from the picture's alpha), and stands it clear of them, smaller only if it must; without script, anchor positioning and the font's tokens stand it there. Flat ground and solid type: no floor line, no shadow, no glow, no frame sequence. The page ends on the product arriving.",
+  "place": "The end of the page: the order or the booking, straight after one quiet section, with a plain footer after it. Once per page, never right after another scene. Pages that sell or show one physical thing: a jug, a lamp, a bottle, a bag, a shoe, a stool.",
+  "content": "One cut-out photograph of the client's own product (a transparent PNG or WebP, never another maker's), upright, cut to its own edges with no ground or shadow baked in, its lowest opaque row the image's bottom edge (that row stands on the letter), 0.5-1 wide to 1 tall, 1000px tall or more, width and height set on the img. One closing line of 2-5 words in sentence case, 10-16 characters, with one lowercase x-height letter of its last word wrapped in .olo-shelf (one with no tall letter on at least one side, like the e of \"table\" beside the full stop) and a <br class=\"olo-br\"> where it breaks on a phone, placed so the last line runs on past the first under that letter. The action of 2-4 words (an order, a booking; never an email address or a phone number) and the price beside it. Never an outline wordmark. Without a real photograph of the product, redraw.",
+  "options": "hold 0.8 (0.6-1.6) screens held; under 0.6 (a section under 1.6 screens) the creep and the drop squash into one jump; creep 0.33 (0.1-0.36) share of the travel over the first half of the hold; drop 0.55 (0.45-0.8) share over the last third; enter 0.6 (0-20) svh of clear ground over the object as the hold starts (it starts whole); travel 'auto' | 20-90 svh, a cap on the auto travel (from the top of the stage down to the letter); phoneTravel 34 (20-80) the cap on a phone; fill 0.97 (0.8-1) share of the row the line runs across; phoneFill 0.88 (0.7-1) for the longer phone line; footX 0.49 (0.2-0.8) where the foot's middle is across the picture; drift 11 (0-16) vw it starts off to one side, home before its foot reaches the tallest letters; phoneDrift 0; side 'auto' | 'left' | 'right'; nav a selector for a fixed bar; foot a selector for a footer line pulled up over the stage's foot; scrub true | 0.1-1; phone 'same' | 'rest'. Scene tokens: --olo-size (0.3 of the screen; 0.26 on a tablet; 0.2 on a phone; the script shrinks it only to keep its foot on the letter and its body clear and on screen), --olo-line-em and --olo-line-em-2 (the line's width in ems, for the no-script size), --olo-xh and --olo-desc (for the no-script placement), --olo-footx, --olo-btn-radius; it reads --display-stretch.",
+  "phone": "The line breaks at .olo-br into two lines, the longer across nearly the full width; the object, narrower than the line (about 15% of the screen tall at 390px, sized so its foot stays on the letter and its body clear of the l and on screen), comes down onto the shelf letter of the last line, clear of the first, whole from the start, over a shorter travel (34svh), no drift. phone: 'rest' gives the finished composition.",
+  "roles": [
+   "cta",
+   "contact"
+  ],
+  "position": "closing",
+  "sectors": [
+   "physical-product",
+   "ecommerce",
+   "studio-portfolio",
+   "fashion"
+  ],
+  "needs": [
+   "product-photo",
+   "pictures:1"
+  ],
+  "hold": 0.8,
+  "weight": 0.7
+ },
+ {
+  "id": "through-the-openings",
+  "name": "Through the openings",
+  "family": "camera-through-space",
+  "summary": "Five to eight full-screen sheets of the page's own ground, each with one opening cut into it (round arches, square doorways or pointed arches, one family a page), stand at uneven depths on the camera's axis, alternating the ground and a slightly deeper tone of it. The visitor starts already in the nearest doorway: its jambs are outside the screen, its head frames the top with one line in display type above it, and through it two more openings show the next section's photograph. Deeper sheets wait hidden behind those and come out one by one in the tone of the sheet in front, so only two or three arches are ever on the screen, never a target of rings. The scrubbed scroll eases in, then accelerates: the arches pass faster and faster through the middle of the hold, the last one sweeps past the edges in a short burst, and by about 65% the photograph is the whole page while its headline sets in at the same display size. The change of section is an arrival through a doorway, never a cut.",
+  "place": "Between two sections: the hand-over from a quiet section on the page ground into a section that opens on one photograph of a place (a courtyard, a hall, a room, a valley), whose headline the scene carries. The section before ends on the ground, which the nearest sheet continues. Once per page.",
+  "content": "One full-colour photograph of the place, landscape about 3:2 or 16:10 and 2400px wide or more, with a 9:16 crop of about 1080px for phones; something to see at its centre (the innermost window shows the middle of it first) and a calm, light area (a sky, a pale wall) for the headline. Take the opening shape from the place itself: the arches of its arcade, its doors. One optional line of 3-7 words on the nearest sheet, above its opening (it leaves with the sheet on the first movement); a headline of 2-6 words on one or two lines. The page's ground must be one flat colour. No fog, glow, blur, colour fringe or gradient anywhere: the sheets are flat, their tones are the ground and the ground mixed with a little ink.",
+  "options": "hold 1.5 (1-1.5); phoneHold 1.2 (0.9-1.5); layers 6 (5-8); phoneLayers 4 (3-6); shape 'arch' | 'door' | 'lancet'; width 1.1 (1-1.4) the nearest opening as a share of the width, so its jambs start outside the screen; phoneWidth 1.12; crown 0.27 (0.12-0.4) its crown's height, the display line stands above it; phoneCrown 0.25; legs 0.5 (0-3); phoneLegs 1.6; vp 0.6 / phoneVp 0.55 the vanishing point's height; near 0.64 and far 0.42 the second and third openings against the nearest at the first frame (phoneNear 0.7, phoneFar 0.5); arrive 0.65 (0.5-0.8) when the last opening has swept past; rush 2 (1.4-3) the power of the camera's ease-in; grow 0.14 how much nearer the photograph comes; scrub 0.5, true with Lenis; phone 'same' | 'rest'. Tokens: --tto-deep, --tto-display (the line and the headline), --tto-title-ink, --tto-title-top, --tto-focus.",
+  "phone": "The same rush with four sheets: the nearest doorway's jambs just outside the screen, two tall doorways inside it and the portrait crop filling half the width from the first frame; the photograph is full-bleed by 65%; hold 1.2. The display line takes two rows; it and the headline leave and land on clocks, never half drawn where a phone stops. Reduced motion and no script: the line on the ground over the photograph, one screen high, with its headline; with reduced motion one sheet with one opening crossfades away as the photograph scrolls in.",
+  "roles": [
+   "intro",
+   "about",
+   "gallery",
+   "showcase",
+   "features"
+  ],
+  "position": "transition",
+  "sectors": [
+   "agency",
+   "studio-portfolio",
+   "hospitality",
+   "architecture",
+   "event",
+   "culture"
+  ],
+  "needs": [
+   "pictures:1"
+  ],
+  "hold": 1.5,
   "weight": 1
  }
 ]

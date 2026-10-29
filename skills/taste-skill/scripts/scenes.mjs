@@ -34,6 +34,18 @@
 //                        scroll after the step count, so a wipe or a roll on its way is not counted; one
 //                        line of display type cropped at the screen's side or its foot is a crop. A
 //                        warning (inspect.mjs fails it on the page at rest).
+//   tilted-letters       at a settled step of the hold, a heading set in letters shows letters turned (over 4°),
+//                        moved off their line or scaled against the word's own middle, or faded while the rest show
+//                        (two letters and 15% of those that show). A word that moves or scales as one is whole.
+//                        A warning (round 10, the scene audit: arrive-and-settle-track's "re c o r" at 10-60%).
+//   edge-sliver          at a settled step strictly inside the hold, an opaque piece of the scene (a picture, a
+//                        filled card) cut by the screen's edge with 40% of it or less on screen, or turned 4° or more
+//                        with a quarter of it or more off screen. A piece in a row or column of its kind, beside a
+//                        neighbour of like size, is a row carried past the edge; a ground, a layer full-bleed by its
+//                        own size (not by a projection that throws it past the camera) or a canvas is not a piece,
+//                        a cut-out is measured by its subject, not its clear box, and a piece the hold opens with,
+//                        level and cut the same way, is framing. A warning (the scene audit:
+//                        depth-card-flythrough's slab and slivers at 36%, 71% and 93%).
 // --steps defaults to one step every quarter screen of hold (10 at least), so a half-screen stop always
 // falls on a step.
 // A scene file may document a deliberate pass over words in its header, with the moving parts in
@@ -433,6 +445,112 @@ function PIECES(a) {
   });
 }
 
+// In the page, at one settled step of a held scene (round 10, part B, from T3's scene audit): the scene's headings set
+// in letters whose letters are turned, moved off their line, scaled or faded against the word's own middle (the median
+// letter: a word that moves or scales as one is whole), and the opaque pieces (a picture, a filled card) the screen's
+// edge cuts to a sliver or that hang turned at the edge, outside a row or column of pieces of their kind (a row of work
+// carried past the edge is a row, and a ground or a full-bleed layer is not a piece).
+function GLYPHS(a) {
+  const root = document.querySelectorAll(a.sel)[a.index];
+  if (!root) return { letters: [], pieces: [] };
+  const W = innerWidth, H = innerHeight;
+  const cs = (e) => getComputedStyle(e);
+  const parse = (c) => {
+    let tx = 0, ty = 0, sc = 1, rot = 0;
+    const m = c.transform && c.transform !== 'none' ? c.transform.match(/matrix(3d)?\(([^)]+)\)/) : null;
+    if (m) { const v = m[2].split(',').map(Number); const [p, q, e, f] = m[1] ? [v[0], v[1], v[12], v[13]] : [v[0], v[1], v[4], v[5]]; tx += e; ty += f; sc *= Math.hypot(p, q); rot += (Math.atan2(q, p) * 180) / Math.PI; }
+    if (c.translate && c.translate !== 'none') { const p = c.translate.split(/\s+/).map(parseFloat); tx += p[0] || 0; ty += p[1] || 0; }
+    if (c.scale && c.scale !== 'none') sc *= parseFloat(c.scale) || 1;
+    if (c.rotate && c.rotate !== 'none') rot += parseFloat(c.rotate) || 0;
+    return [tx, ty, sc, rot];
+  };
+  const letters = [];
+  for (const h of root.querySelectorAll('h1, h2, h3, h4, h5, h6, [role=heading], p, blockquote')) {
+    if (h.parentElement?.closest('h1, h2, h3, h4, h5, h6, [role=heading], p, blockquote') || h.closest('svg, [data-ui]')) continue;
+    const ls = [...h.querySelectorAll('*')].filter((e) => !e.childElementCount && /^\S{1,2}$/.test((e.textContent || '').trim()));
+    if (ls.length < 3) continue;
+    const total = (h.textContent || '').replace(/\s+/g, '').length, inL = ls.reduce((t, e) => t + e.textContent.trim().length, 0);
+    if (inL < total * 0.6) continue;
+    const size = parseFloat(cs(ls[0]).fontSize); if (size < 24 && !/^H[1-3]$/.test(h.tagName)) continue;
+    const r = h.getBoundingClientRect(); if (r.bottom <= 0 || r.top >= H || r.right <= 0 || r.left >= W) continue;
+    const st = ls.slice(0, 80).map((l) => { let op = 1, tx = 0, ty = 0, sc = 1, rot = 0; for (let e = l; e && e !== h; e = e.parentElement) { const c = cs(e); op *= c.visibility === 'hidden' ? 0 : +c.opacity; const [x, y, s, d] = parse(c); tx += x; ty += y; sc *= s; rot += d; } return [op, tx, ty, sc, rot]; });
+    // (a heading not shown at all yet is waiting, not broken)
+    if (st.filter((l) => l[0] >= 0.5).length < 2) continue;
+    const med = (k) => { const v = st.map((l) => l[k]).sort((p, q) => p - q); return v[Math.floor(v.length / 2)]; };
+    const m = [med(0), med(1), med(2), med(3) || 1, med(4)], tol = Math.max(2, size * 0.08);
+    const off = st.map((l) => (l[0] < 0.5 && m[0] >= 0.85) || (l[0] >= 0.1 && (Math.abs(l[1] - m[1]) > tol || Math.abs(l[2] - m[2]) > tol || Math.abs(l[3] / m[3] - 1) > 0.06 || Math.abs(l[4] - m[4]) > 4)));
+    // (two letters and 15% of those that show; letters still hidden on their way in are not counted)
+    const n = off.filter(Boolean).length, shown = st.filter((l) => l[0] >= 0.1).length;
+    if (n >= 2 && n >= shown * 0.15) letters.push({ text: (h.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40), shows: ls.slice(0, 80).map((l, i) => (off[i] ? '·' : l.textContent.trim())).join('').slice(0, 40), n, of: shown });
+  }
+  // the pieces: an img, a film, a canvas or a box with a photograph or an opaque fill, whole opacity, cut by the edge
+  // (a canvas is left out: it may be a drawn object on a clear ground)
+  const opaque = (e) => { if (/^(IMG|VIDEO)$/.test(e.tagName)) return true; if (e.tagName === 'CANVAS') return false; const c = cs(e); if (/url\(/.test(c.backgroundImage)) return true; const mm = c.backgroundColor.match(/rgba?\(([^)]+)\)/); const p = mm ? mm[1].split(/[,\s/]+/).filter(Boolean) : []; return p.length >= 3 && (p.length < 4 || +p[3] >= 0.9); };
+  // (an img with clear pixels: the share of its subject (alpha 0.5+) inside the part of its box on screen, and that
+  // part's area; null for a picture with no clear ground or one that cannot be read)
+  const subjectOn = (e, r, vl, vr, vt, vb) => {
+    if (e.tagName !== 'IMG' || !e.complete || !e.naturalWidth) return null;
+    try {
+      const cw = 48, ch = Math.max(1, Math.round((48 * e.naturalHeight) / e.naturalWidth));
+      const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+      const x = cv.getContext('2d', { willReadFrequently: true }); x.drawImage(e, 0, 0, cw, ch);
+      const d = x.getImageData(0, 0, cw, ch).data;
+      const x0 = ((vl - r.left) / r.width) * cw, x1 = ((vr - r.left) / r.width) * cw, y0 = ((vt - r.top) / r.height) * ch, y1 = ((vb - r.top) / r.height) * ch;
+      let all = 0, on = 0, clear = 0;
+      for (let j = 0; j < ch; j++) for (let i = 0; i < cw; i++) {
+        const a = d[(j * cw + i) * 4 + 3]; if (a < 250) clear++; if (a < 128) continue;
+        all++; if (i + 0.5 >= x0 && i + 0.5 <= x1 && j + 0.5 >= y0 && j + 0.5 <= y1) on++;
+      }
+      if (clear < cw * ch * 0.05 || !all) return null;
+      return { share: on / all, area: (on / (cw * ch)) * r.width * r.height };
+    } catch { return null; }
+  };
+  const pieces = [], taken = [];
+  // (its series: the nearest box round it whose parent holds three or more of its kind; a neighbour of like size
+  // beside it, across or down, makes it a row or a column)
+  const itemOf = (e) => { for (let x = e; x && x !== root; x = x.parentElement) { const p = x.parentElement; if (p && [...p.children].filter((c) => c.tagName === x.tagName && String(c.className) === String(x.className)).length >= 3) return x; } return null; };
+  const inRow = (e) => {
+    const it = itemOf(e); if (!it) return false;
+    const r = it.getBoundingClientRect();
+    const sibs = [it.previousElementSibling, it.nextElementSibling].filter((s) => s && s.tagName === it.tagName && String(s.className) === String(it.className));
+    return sibs.some((s) => {
+      const q = s.getBoundingClientRect(); if (!q.width || !q.height) return false;
+      const ratio = (q.width * q.height) / (r.width * r.height); if (ratio < 0.4 || ratio > 2.5) return false;
+      const ox = Math.min(q.right, r.right) - Math.max(q.left, r.left), oy = Math.min(q.bottom, r.bottom) - Math.max(q.top, r.top);
+      const gx = Math.max(q.left - r.right, r.left - q.right), gy = Math.max(q.top - r.bottom, r.top - q.bottom);
+      return (oy >= Math.min(q.height, r.height) * 0.4 && gx <= Math.max(q.width, r.width) * 0.6) || (ox >= Math.min(q.width, r.width) * 0.4 && gy <= Math.max(q.height, r.height) * 0.6);
+    });
+  };
+  let k = 0;
+  for (const e of root.querySelectorAll('*')) {
+    if (++k > 2500 || pieces.length >= 6) break;
+    if (e instanceof SVGElement || taken.some((t) => t.contains(e)) || !opaque(e)) continue;
+    let op = 1; for (let x = e; x && x !== document.documentElement; x = x.parentElement) { const c = cs(x); if (c.display === 'none' || c.visibility === 'hidden') { op = 0; break; } op *= +c.opacity; }
+    if (op < 0.9) continue;
+    const r = e.getBoundingClientRect(); const lw = e.offsetWidth || r.width, lh = e.offsetHeight || r.height; if (r.width < 24 || r.height < 24 || lw < 24 || lh < 24 || r.width > W * 4 || r.height > H * 4) continue;
+    if (lw >= W * 0.85 || (r.left <= 0 && r.right >= W && lw >= W * 0.5) || (r.top <= 0 && r.bottom >= H && lw >= W * 0.5 && lh >= H * 0.85)) continue;
+    const vl = Math.max(0, r.left), vr = Math.min(W, r.right), vt = Math.max(0, r.top), vb = Math.min(H, r.bottom);
+    if (vr - vl < 2 || vb - vt < 2) continue;
+    taken.push(e);
+    const side = r.left < -Math.max(8, r.width * 0.08) ? 'left' : r.right > W + Math.max(8, r.width * 0.08) ? 'right' : r.top < -Math.max(8, r.height * 0.08) ? 'top' : r.bottom > H + Math.max(8, r.height * 0.08) ? 'bottom' : null;
+    if (!side) continue;
+    let vis = side === 'left' || side === 'right' ? (vr - vl) / r.width : (vb - vt) / r.height;
+    if (((vr - vl) * (vb - vt)) / (W * H) < 0.008) continue;
+    // (a cut-out, clear round its subject, is judged by its subject, not its box: shaped-window's keyed props leave
+    // with only their clear corner on the tablet's screen. A picture another origin will not let us read keeps its box)
+    const cut = subjectOn(e, r, vl, vr, vt, vb);
+    if (cut) { if (cut.area / (W * H) < 0.008) continue; vis = cut.share; }
+    let deg = 0;
+    for (let x = e; x && x !== root.parentElement; x = x.parentElement) { const c = cs(x); if (c.transform && c.transform !== 'none') { try { const mx = new DOMMatrix(c.transform); deg = Math.max(deg, Math.abs((Math.atan2(mx.m12, mx.m11) * 180) / Math.PI), Math.abs((Math.atan2(mx.m13, mx.m11) * 180) / Math.PI)); } catch {} } if (c.rotate && c.rotate !== 'none') deg = Math.max(deg, Math.abs(parseFloat(c.rotate) || 0)); }
+    if (deg > 90) deg = 180 - deg;
+    // (a sliver: 40% of it or less on screen; or turned 4° or more with a quarter of it or more off screen)
+    if (!(vis <= 0.4 || (deg >= 4 && vis <= 0.75)) || inRow(e)) continue;
+    const what = /^(IMG|VIDEO)$/.test(e.tagName) || /url\(/.test(cs(e).backgroundImage) ? 'a picture' : 'a filled box';
+    pieces.push({ what, el: e.tagName.toLowerCase() + (e.classList.length ? '.' + [...e.classList].slice(0, 2).join('.') : ''), side, vis: Math.round(vis * 100), deg: Math.round(deg), w: Math.round(r.width), h: Math.round(r.height) });
+  }
+  return { letters, pieces };
+}
+
 // The moving parts a scene file says may pass over words: "// crosses words: `.sel` why" in its header.
 const PASSES = (kind) => `(async () => { const s = [...document.scripts].find((s) => s.src && new URL(s.src).pathname.endsWith('/' + ${JSON.stringify(kind)} + '.js')); if (!s) return []; try { const t = await (await fetch(s.src)).text(); return [...t.matchAll(/^\\s*\\/\\/\\s*crosses words:(.*)$/gim)].flatMap((m) => [...m[1].matchAll(/\`([^\`]+)\`/g)].map((x) => x[1])); } catch { return []; } })()`;
 
@@ -463,6 +581,7 @@ async function run(label, vp) {
     const passes = held ? await page.eval(PASSES(sc.kind)).catch(() => []) : [];
     const evidence = new Map();
     const clipAt = new Map(); // clipped-text: what each settled step cuts off
+    const glyphAt = new Map(); // tilted-letters and edge-sliver: what each settled step shows
     let n = 0;
     for (const p of points) {
       await page.eval(go(Math.round(p.y))).catch(() => {});
@@ -481,6 +600,7 @@ async function run(label, vp) {
       }
       await sleep(Math.max(0, t0 + WAIT - Date.now()));
       if (held && p.k !== undefined) { await page.eval(look, { sel: SEL, index: sc.index, k: n, step: p.l, reset: n === 0, final: true, end: p.k === STEPS }).catch(() => null); n++; }
+      if (held && p.k !== undefined) { const g = await page.eval(GLYPHS, { sel: SEL, index: sc.index }).catch(() => null); if (g && (g.letters.length || g.pieces.length)) glyphAt.set(p.k, g); }
       if (held && p.k !== undefined && label === 'desktop') {
         const seen = await page.eval(PIECES, { sel: SEL, index: sc.index }).catch(() => []);
         for (const q of seen) { const b = pieces.get(q.i) || { caption: q.caption, ok: false, w: 0, deg: 90 }; if (q.ok) b.ok = true; if (q.whole) { b.w = Math.max(b.w, q.w); b.deg = Math.min(b.deg, q.deg); } pieces.set(q.i, b); }
@@ -540,6 +660,16 @@ async function run(label, vp) {
     for (const c of v.cut.slice(0, 3)) warnings.push(`${where}: end-frame at 100%: "${c.text}" (${c.size}px) runs past the ${c.side} edge${c.shows ? `, the screen shows "${c.shows}"` : ''}`);
     // piece-unseen: a piece of work never stopped whole, flat and large
     for (const [, b] of pieces) if (!b.ok) problems.push(`${where}: piece-unseen: "${b.caption}" is never shown flat and large (largest ${Math.round(b.w * 100)}% of the width whole on screen, turned ${b.deg === 90 ? 'more than 10' : Math.round(b.deg)}°)`);
+    // tilted-letters: a heading's letters turned, moved off their line, scaled or faded at a settled step of the hold
+    const tl = new Map();
+    for (const [k, g] of glyphAt) for (const x of g.letters) { const v = tl.get(x.text) || { ...x, at: [] }; v.at.push(pct(k)); tl.set(x.text, v); }
+    for (const x of [...tl.values()].slice(0, 2)) warnings.push(`${where}: tilted-letters at ${x.at.length > 5 ? `${x.at.slice(0, 5).join(', ')} …` : x.at.join(', ')}: "${x.text}" shows as "${x.shows}" (${x.n} of the ${x.of} letters in view turned, moved off the line or faded)`);
+    // edge-sliver: an opaque piece the screen's edge cuts to a sliver, or that hangs turned at the edge, mid-hold
+    // (a level piece the hold opens with, cut by the same edge to about the same share, is the composition's framing,
+    // not a sliver: shaped-window's foreground tree in the tablet's corner from 0% to 50%. A turned one still hangs)
+    const sl = new Map(), rest0 = new Map((glyphAt.get(0)?.pieces || []).filter((p) => p.deg < 4).map((p) => [p.el + '|' + p.side, p.vis]));
+    for (const [k, g] of glyphAt) { if (k === 0 || k === STEPS) continue; for (const p of g.pieces) { const key = p.el + '|' + p.side; if (p.deg < 4 && rest0.has(key) && Math.abs(rest0.get(key) - p.vis) <= 8) continue; const v = sl.get(key) || { ...p, at: [] }; v.at.push(pct(k)); v.vis = Math.min(v.vis, p.vis); v.deg = Math.max(v.deg, p.deg); sl.set(key, v); } }
+    for (const p of [...sl.values()].slice(0, 3)) warnings.push(`${where}: edge-sliver at ${p.at.length > 5 ? `${p.at.slice(0, 5).join(', ')} …` : p.at.join(', ')}: ${p.what} (${p.el}, ${p.w}x${p.h}) cut by the ${p.side} edge, ${p.vis}% of it on screen${p.deg >= 4 ? `, turned ${p.deg}°` : ''}`);
     // empty-steps: steps where most of the screen is flat empty ground
     const grounds = [];
     for (const fr of frames.slice(1, STEPS + 2)) grounds.push(await helper.eval(groundShare, 'data:image/jpeg;base64,' + fr).catch(() => null));
@@ -596,7 +726,9 @@ if (problems.length || warnings.length) {
   if (ids('end-frame')) console.log('  → end-frame: the rest frame shows the line whole (rule 4). Fit it to the screen, set it on two lines, or end the move where the whole line reads.');
   if (ids('empty-steps')) console.log('  → empty-steps: every frame of a hold shows something to read or see (rule 9). Shorten the hold to its beats, make the held picture large, or bring the next content in sooner.');
   if (ids('clipped-text')) console.log('  → clipped-text: words that have arrived are whole. Let the box grow with them, set a list that lies over a picture into the flow under it on a phone or tablet, or cut what does not fit; never shrink the items that do not fit into screen-reader-only boxes while the rest of the list shows.');
-  if (ids('piece-unseen')) console.log('  → piece-unseen: each piece of work stops on screen flat-on, at 60% of the width or more, with its title on it, for half a screen (references/scenes.md §3; the fly-through takes {"stop": 0.5}).');
+  if (ids('piece-unseen')) console.log('  → piece-unseen: each piece of work stops on screen flat-on, at 60% of the width or more, with its title on it, for half a screen (references/scenes.md §3; sheets that tip in and away take {"rest": 0.5} there).');
+  if (ids('tilted-letters')) console.log('  → tilted-letters: at every step where the scroll can stop, a heading reads whole: its letters on their line, level and opaque. Let words arrive whole (a line or a word at a time), or keep the letters\' travel inside a step the visitor scrolls through, never across the hold.');
+  if (ids('edge-sliver')) console.log('  → edge-sliver: in the middle of a hold no opaque piece hangs at the edge as a sliver or turned: a piece leaves the screen in one step, fades out at reading size, or stays whole on screen; a row of pieces carried past the edge is fine.');
 }
 console.log(problems.length ? `\nRESULT: ${problems.length} problem(s)${warnings.length ? `, ${warnings.length} warning(s)` : ''}. Fix them, then look at every sheet.` : warnings.length ? `\nRESULT: every scene ran, ${warnings.length} warning(s): fix them or be able to defend them. Then look at every sheet.` : '\nRESULT: every scene ran. Now look at every sheet: does each frame read, and is the scene as bold as it should be?');
 process.exit(problems.length ? 1 : 0);

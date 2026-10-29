@@ -240,7 +240,17 @@ points this way, including several above 7.5.
 - **No two neighbours share a layout.** Use the shape of each dealt blueprint (list, split, statement,
   full-bleed, mosaic, table, strip, pinned …). Count them in the screenshot; a shape used three times
   is the template showing. Three or more full-bleed picture screens in a row, each a picture with a
-  strip of text, count as one shape used three times, whichever sections they belong to.
+  strip of text, count as one shape used three times, whichever sections they belong to; so does a
+  picture beside text, whichever side it is on. At least one section breaks the split grid: a
+  full-bleed picture, a headline across the width, an 8/4 asymmetry (a cargo-bike page ran 50/50
+  blocks all the way down and read as a stock theme).
+- **Key content in the open.** On a one-page site the specs, the loads, the rooms, the plans and the
+  menu stand on the page, readable without a click; tabs and accordions only for secondary detail
+  such as the questions (a cargo-bike page hid two thirds of its specs behind tabs and four of its
+  five loads in an accordion).
+- **Rooms and products in two columns:** the photograph at 55% of the width or more beside one grouped
+  block of the name, the facts and the price; never a small picture centred in wide margins with the
+  name at one edge and the price at the other.
 - **Take a blueprint's geometry, never its props.** A blueprint written for a café brings its
   opening-hours bar, its scalloped menu sheet and its visit card; on an architecture practice the list
   of buildings becomes a drawing register or a schedule, not a menu. Ask of every ornament whether it

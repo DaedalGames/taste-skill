@@ -110,13 +110,14 @@ dividers, cards and background decoration at once.
 
 - When photographs carry the colour, the interface stays neutral and takes its ink from the darkest
   tone in the imagery.
-- Do not wash a photograph with the brand colour. Either leave it alone, or commit to a real treatment
-  for every image on the page (all greyscale where section 0 deals it, or all untouched). Where the
-  pictures carry the colour (food, seasons, rooms, products, a client named for a colour or a light)
-  they stay in colour, black-and-white files included (references/imagery.md §6).
-- Text over a photograph needs a calm region. If there is none, move the text off the image. A neutral
-  scrim (black or the ink colour, 30–55% opacity, flat or fading over the text area only) is the one
-  gradient the inspector allows.
+- Do not wash a photograph with the brand colour. Leave it alone, or give every image on the page one
+  real treatment (section 0 deals it). Pictures stay in colour unless the brief asks for black and
+  white: a stand-in whose file is black-and-white is left out, the client's own pictures are shown as
+  they are (references/imagery.md §6).
+- Text over a photograph needs a calm region. If there is none, move the text off the image. No
+  gradient over a picture, no milky or dark fade (the inspector fails it): at most a flat dark scrim,
+  black at 40–55%, over the text area only, on a dark page as on a light one (a pale ink scrim reads
+  as fog).
 - A flat field sampled from a photograph (its sky, its shadow) makes a section sit with that image.
 
 ## 8. Contrast
@@ -135,7 +136,10 @@ The inspector fails these:
 - **Cream with terracotta.** A yellow-cream ground (roughly hue 22–62, light and noticeably
   saturated) with a rust, clay or burnt-orange accent is the house look of AI assistants and of the
   pages they generate. Either half alone is suspect; together they are unmistakable.
-- **Violet and indigo.** The first wave of generated pages was purple; it still reads that way.
+- **Violet, indigo, lavender and periwinkle.** The first wave of generated pages was purple; it still
+  reads that way. A blue lightened for a dark ground drifts into periwinkle (a notes app's cobalt came
+  out as #76a4fe, and its judge named it): lighten a blue toward its cyan side, a sky blue, or take
+  another accent. The draw turns any accent or field in that range to its cyan side.
 
 If the brief wants warmth, get it from a low-chroma stone, bone or putty ground (saturation under
 about 15%), from a deep green, brown or oxblood ink, from photographs, or from a full warm field

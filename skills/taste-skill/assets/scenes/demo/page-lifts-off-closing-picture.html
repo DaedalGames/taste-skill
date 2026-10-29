@@ -206,6 +206,7 @@
 <dialog class="credits" id="credits" aria-labelledby="credits-title">
   <h2 id="credits-title">Image credits</h2>
   <p>Harbour in fog: <a href="https://commons.wikimedia.org/wiki/File:P%C3%A4ij%C3%A4nne_Korpilahden_satama.JPG">“Päijänne Korpilahden satama”</a> by Mika Särkijarvi, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>, via Wikimedia Commons; noise and fog evened out by us, shared under the same licence.</p>
+  <p>The jetty: <a href="https://unsplash.com/photos/TQeX8khR54I">photograph by Aleksi Tappura</a>. The channel marker: <a href="https://unsplash.com/photos/O3rmGgNYLKo">photograph by Billy Lam</a>. Both from Unsplash under the <a href="https://unsplash.com/license">Unsplash License</a>, loaded through Lorem Picsum and cropped there.</p>
   <form method="dialog"><button>Close</button></form>
 </dialog>
 
@@ -240,8 +241,7 @@
     scene.querySelector('.lift-media').replaceWith(document.getElementById('ui-picture').content.cloneNode(true));
     scene.style.setProperty('--lift-band', '#e1e4e2');
     scene.dataset.options = JSON.stringify({ band: 'token', foot: '.foot' });
-    document.querySelector('.credits-link').remove();
-    document.getElementById('credits').remove();
+    document.querySelector('#credits p').remove();
   }
   // the second row rises as it comes into view; nothing stays hidden if the observer never fires
   (() => {

@@ -1,8 +1,9 @@
-/* tasteskill / scenes / hinged-sheets.css — paper with two printed sides, dealt from a face-down deck.
-   By default (no script, reduced motion, a failed CDN, a phone set to 'rest') this is the finished
-   composition: headline, the line over the row, the tickets face-up, the fine print. Under .is-live the
-   deal runs on the held stage; under .is-live.hs-flow (phones, tablets, short windows, more than four
-   tickets) the finished layout stays in the page and each ticket turns over as it scrolls in.
+/* tasteskill / scenes / hinged-sheets.css — paper with two printed sides, turned over one by one.
+   By default (no script, reduced motion, a failed CDN, a phone or tablet set to 'rest') this is the
+   finished composition: headline, the line over the row, the tickets face-up, the fine print. Under
+   .is-live the face-down row is held on the stage under the headline and turns over ticket by ticket;
+   under .is-live.hs-flow (phones, tablets, short windows, more than four tickets) the finished layout
+   stays in the page and each ticket turns over as it comes into view.
    Weights come from the page: --display-weight (headline, ticket names, prices, the big word on the back),
    --strong-weight (the line over the row, the points, the button, the name on the back) and
    --text-weight; set them to weights the page loads, or the browser draws the nearest weight it has (fake bold is
@@ -28,11 +29,11 @@
   --cols: min(var(--n), var(--max-cols));
   --hs-w: min(400px, calc((92vw - (var(--cols) - 1) * var(--hs-gap)) / var(--cols)));
   --hs-h: calc(var(--hs-w) * 1.414);
-  /* The deal's layout, top to bottom: a band for the stepped-back headline and the line over the row,
-     the row, the fine print. The tickets take the height that is left (the script reads --hs-deal-w to
-     decide whether the deal runs at all: every ticket 296px or wider). --hs-title-lines is measured. */
+  /* The held row's layout, top to bottom: a band for the headline and the line over the row, the row,
+     the fine print. The tickets take the height that is left (the script reads --hs-deal-w to decide
+     whether the held row runs at all: every ticket 296px or wider). --hs-title-lines is measured. */
   --hs-lead-size: clamp(18px, 1.5vw, 22px);
-  --hs-title-end: clamp(36px, min(4.2vw, 7svh), 72px);   /* the headline once it has stepped back */
+  --hs-title-end: clamp(36px, min(4.2vw, 7svh), 72px);   /* the headline over the held row */
   --hs-top: calc(max(24px, 4svh) + var(--hs-title-lines, 2) * 0.92 * var(--hs-title-end) + 12px + 1.4 * var(--hs-lead-size) + 24px);
   --hs-foot: 104px;                         /* 28px of air, two lines of fine print, 32px to the edge */
   --hs-deal-w: min(400px, calc((92vw - (var(--n) - 1) * var(--hs-gap)) / var(--n)), calc((100svh - var(--hs-top) - var(--hs-foot)) / 1.414));
@@ -62,14 +63,13 @@
   text-align: center;
 }
 [data-scene="hinged-sheets"] .hs-wash { display: none; }
-/* measures the deal's ticket width and the headline's stepped-back size for the script */
+/* measures the held row's ticket width for the script */
 [data-scene="hinged-sheets"] .hs-gauge {
   position: absolute;
   top: 0;
   left: 0;
   width: var(--hs-deal-w);
   height: 0;
-  font-size: var(--hs-title-end);
   visibility: hidden;
   pointer-events: none;
 }
@@ -91,7 +91,9 @@
   line-height: 1.4;
 }
 [data-scene="hinged-sheets"] .hs-sub { margin: 24px auto 0; max-width: 32em; text-wrap: pretty; }
-[data-scene="hinged-sheets"] .hs-lead { margin: 56px 0 0; font-weight: var(--strong-weight, 600); letter-spacing: -0.01em; }
+/* the line over the row belongs to the headline: closer to it than to the tickets, so it never reads as a
+   label over the first ticket */
+[data-scene="hinged-sheets"] .hs-lead { margin: 20px 0 0; font-weight: var(--strong-weight, 600); letter-spacing: -0.01em; }
 /* a wrapping row, so a last ticket on its own sits in the middle */
 [data-scene="hinged-sheets"] .hs-row {
   display: flex;
@@ -100,7 +102,7 @@
   gap: var(--hs-gap);
   width: calc(var(--cols) * var(--hs-w) + (var(--cols) - 1) * var(--hs-gap));
   max-width: 100%;
-  margin: 28px 0 0;
+  margin: 48px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -241,7 +243,7 @@
 [data-scene="hinged-sheets"] .hs-small { position: absolute; left: 6.5cqi; right: 6.5cqi; }
 [data-scene="hinged-sheets"] .hs-brand { bottom: calc(6.5cqi + 1.34em); font-weight: var(--strong-weight, 600); }
 [data-scene="hinged-sheets"] .hs-small { bottom: 6.5cqi; }
-/* during the deal the script moves the back's words into data-print: the backs overlap in the deck, and
+/* while live the script moves the back's words into data-print: each back lies over its own front, and
    as generated content they are drawn as print, never read or measured as text */
 [data-scene="hinged-sheets"] .hs-face--back [data-print]::before { content: attr(data-print); content: attr(data-print) / ""; }
 
@@ -260,9 +262,12 @@
 }
 [data-scene="hinged-sheets"].is-live .hs-face--front { transform: translateZ(0.1px); }
 [data-scene="hinged-sheets"].is-live .hs-face--back { display: flex; flex-direction: column; transform: rotateY(180deg) translateZ(0.1px); }
-/* backface-visibility alone decides which face shows; the face turned away only loses the pointer */
-[data-scene="hinged-sheets"].is-live .hs-sheet[data-face="back"] > .hs-face--front,
-[data-scene="hinged-sheets"].is-live .hs-sheet[data-face="front"] > .hs-face--back { pointer-events: none; }
+/* backface-visibility alone decides which face shows; the face turned away is also taken off the pointer.
+   A face-down front only goes transparent: its names, prices and button stay in the accessibility tree and
+   the tab order (focusing the button turns the row over: the keyboard guard in the script). The back is
+   print (aria-hidden), so it is hidden outright while face-up. */
+[data-scene="hinged-sheets"].is-live .hs-sheet[data-face="back"] > .hs-face--front { opacity: 0; pointer-events: none; }
+[data-scene="hinged-sheets"].is-live .hs-sheet[data-face="front"] > .hs-face--back { visibility: hidden; pointer-events: none; }
 [data-scene="hinged-sheets"].is-live .hs-shade {
   display: block;
   position: absolute;
@@ -273,13 +278,16 @@
 }
 [data-scene="hinged-sheets"].is-live .hs-face--front > .hs-shade { background: var(--hs-shade-paper); }
 
-/* ---------- live: the deal on the held stage ---------- */
+/* ---------- live: the face-down row on the held stage ---------- */
 
 [data-scene="hinged-sheets"].is-live:not(.hs-flow) {
   --cols: var(--n);
   --hs-w: var(--hs-deal-w);
-  /* the row sits in the middle of what the band over it and the fine print leave */
-  --hs-row-top: calc(var(--hs-top) + (100svh - var(--hs-top) - var(--hs-foot) - var(--hs-h)) / 2);
+  /* the headline, the line over the row, the row and the fine print stand together in the middle of the
+     screen: the spare height (never negative, --hs-deal-w is capped by it) goes half above the headline
+     and half under the fine print, so the line over the row stays 12px under the headline at any size */
+  --hs-slack: calc((100svh - var(--hs-top) - var(--hs-foot) - var(--hs-h)) / 2);
+  --hs-row-top: calc(var(--hs-top) + var(--hs-slack));
 }
 html.js [data-scene="hinged-sheets"].is-live:not(.hs-flow) > .scene-stage {
   display: grid;
@@ -289,34 +297,38 @@ html.js [data-scene="hinged-sheets"].is-live:not(.hs-flow) > .scene-stage {
   background: var(--hs-ground-a);
 }
 [data-scene="hinged-sheets"].is-live:not(.hs-flow) > .scene-stage > * { grid-area: 1 / 1; }
+/* under everything on the stage: while it fades in, its opacity makes it a layer of its own, and at z-index
+   auto that layer would paint over the headline and the line over the row */
 [data-scene="hinged-sheets"].is-live:not(.hs-flow) .hs-wash {
   display: block;
+  position: relative;
+  z-index: -1;
   background: var(--hs-ground-b);
   opacity: 0;
 }
-/* the opening: the headline large, its centre near 44% of the stage, with 12svh of margin below its block.
-   The script then scales it down about its bottom edge into the band over the row (--hs-title-end). */
+/* the headline stands in the band over the row from the first frame, at --hs-title-end */
 [data-scene="hinged-sheets"].is-live:not(.hs-flow) .hs-head {
-  align-self: center;
+  align-self: start;
   justify-self: center;
   width: min(92vw, 1400px);
-  margin-bottom: 12svh;
+  margin-top: calc(max(24px, 4svh) + var(--hs-slack, 0px));
 }
 [data-scene="hinged-sheets"].is-live:not(.hs-flow) .hs-title {
   max-width: 15ch;
-  font-size: clamp(56px, 10vw, 168px);
+  font-size: var(--hs-title-end);
   line-height: 0.92;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.04em;
 }
-/* a layer only while the headline steps back; the rest of the time it is painted flat, sharp at its size */
-[data-scene="hinged-sheets"].is-live.hs-moving:not(.hs-flow) .hs-title { will-change: transform; }
-[data-scene="hinged-sheets"].is-live:not(.hs-flow) .hs-sub { margin-top: 28px; color: var(--hs-ink-deep); }
-/* reserved bands: the line over the row ends 24px above it, the fine print starts 28px below it */
+/* the band has no room for the sentence under the headline: the finished composition and the flow keep it */
+[data-scene="hinged-sheets"].is-live:not(.hs-flow) .hs-sub { display: none; }
+/* reserved bands: the line over the row ends 24px above it, the fine print starts 28px below it; both sit
+   on ground-a at first, so they take the deeper ink */
 [data-scene="hinged-sheets"].is-live:not(.hs-flow) .hs-lead {
   align-self: end;
   justify-self: center;
   margin: 0 0 calc(100svh - var(--hs-row-top) + 24px);
 }
+[data-scene="hinged-sheets"].is-live:not(.hs-flow) :is(.hs-lead, .hs-note) { color: var(--hs-ink-deep); }
 [data-scene="hinged-sheets"].is-live:not(.hs-flow) .hs-row {
   align-self: start;
   justify-self: center;
@@ -353,5 +365,5 @@ html.js [data-scene="hinged-sheets"].is-live.hs-flow > .scene-stage {
   [data-scene="hinged-sheets"] { --max-cols: 1; --hs-w: min(86vw, 340px); }
   [data-scene="hinged-sheets"] > .scene-stage { padding: 96px 16px; }
   [data-scene="hinged-sheets"] .hs-title { font-size: clamp(40px, 11vw, 56px); max-width: 12ch; }
-  [data-scene="hinged-sheets"] .hs-lead { margin-top: 48px; }
+  [data-scene="hinged-sheets"] .hs-row { margin-top: 40px; }
 }

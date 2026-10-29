@@ -95,14 +95,21 @@ dish one of that dish, each product one of that kind of product, from the open c
 library, listed in the report as stand-ins for the client's own; never a grey spec panel or a filled
 box in place of the picture (a guesthouse whose rooms were grey panels read as tabs in a blind test).
 As many pictures as items listed: four rooms, four photographs; with fewer good pictures, list fewer
-(the kinds of room), never a room without its picture or a mug in its place. A stand-in sits beside
-the room or dish it stands for, never as the first picture of the house or the restaurant. Never a
-drawing, and never the place's birds and weather in their place (`references/imagery.md` §8). A
-product with no photographs of its own is shown by real photographs of its kind in use, large, of one
-configuration and build (the sheet says how), at least one with the people it is for, never claimed
-as this model and never replaced by a picture of what its name means. The brief decides what the
-product is: a two-wheeled cargo bike stays two-wheeled whatever the search returns, and with no
-photograph of the right kind the page uses fewer pictures and type, and the report says so.
+(the kinds of room), never a room without its picture or a mug in its place. Each room or product
+stands in two columns, its photograph at 55% of the width or more beside one grouped block of its
+name, facts and price; never a small picture centred in wide margins with the name at one edge and
+the price at the other (a guesthouse's four identical bands read as timid). A stand-in sits beside
+the room or dish it stands for, never as the first picture of the house or the restaurant, and one
+whose title or credit names another business (a real hotel's room, another maker's product) is never
+shown as the client's own: take one that names none, or mark it as a placeholder in the Image credits
+and the report. Never a drawing, and never the place's birds and weather in their place
+(`references/imagery.md` §8). A product with no photographs of its own is shown by real photographs of
+its kind in use, large, of one configuration and build (the sheet says how), at least one with the
+people it is for, never claimed as this model, never retouched to pass for it (a cargo-bike page
+painted another maker's name off a box) and never replaced by a picture of what its name means. The
+brief decides what the product is: a two-wheeled cargo bike stays two-wheeled whatever the search
+returns, and with no photograph of the right kind the page uses fewer pictures and type, and the
+report says so.
 
 If the request is vague, decide and state your reading in one line instead of asking. Ask only when a
 missing fact blocks the work (for example, no product name).
@@ -128,9 +135,9 @@ palette contradicts it (a dark ground for a white name, a pale one for Ember), r
 only when it describes the client, never something it replaces (paper, for an invoicing app). In a
 blind test a guesthouse named Hvit lost on a navy-black ground. A name of light or a pale colour also
 asks for bright, high-key pictures: never a dark overlay, a dimmed hero or a grey sky first
-(`references/imagery.md` §6). Where the pictures carry the colour (food, seasons, rooms, products, a
-name of colour or light), every picture is in colour: a photograph whose file is black-and-white is
-left out, like a grey filter.
+(`references/imagery.md` §6). Every picture is in colour unless the brief asks for black and white:
+a stand-in whose file is black-and-white is left out, like a grey filter; the client's own pictures
+are shown as they are.
 
 ### 2. Write the argument
 
@@ -242,9 +249,9 @@ ground. Lengths, sizes and counts are stepped buttons of real values, never a ra
 1440, 768 and 390, since the inspector only sees the default state.
 
 **The scenes carry the idea too.** The scroll scenes on the sheet are devices waiting for a subject.
-Decide what each one shows from your inventory before building: the fly-through passes through this
-studio's own title cards, the route is the road this shipment really takes, the picture that opens to
-the whole screen is the room the guest will wake up in. A scene filled with pictures that could belong
+Decide what each one shows from your inventory before building: the row that bends with the scroll is
+this photographer's own series, the words gathered into the pocket are what this farm really grows,
+the picture that opens to the whole screen is the room the guest will wake up in. A scene filled with pictures that could belong
 to anyone is a screensaver, and one still filled with its demo's town, photographs or words is not
 started.
 
@@ -280,9 +287,13 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
   list or a scene ("The roastery" over each of four statements); the inspector warns on both
   (`restated-heading`, `repeated-label`).
 - **The sections that convert are complete.** The price says what it includes and the terms (trial,
-  billing, cancelling) as a short list; booking asks for what a booking needs (dates, guests, room);
-  proof is facts the page can stand behind (what the file format is, how many rooms face the fjord,
-  the warranty), never invented customers or quotes.
+  billing, cancelling) as a short list; a place people book ends with a real booking block (the dates
+  or a request, the guests and the room or table, what is included, the price from), never a bare
+  email field (a guesthouse ended on one); proof is facts the page can stand behind (what the file
+  format is, how many rooms face the fjord, the warranty), never invented customers or quotes, and
+  never a stats band of big figures over one-word labels: a figure stands in the line that says what
+  it counts (`stats-band` warns). One email form on the page: a sign-up in the closing section and
+  again in the footer reads as a template (`duplicate-form` warns).
 - **Nothing on the page talks to the client.** No "drawn until the rooms are photographed", no "sample
   content", no `.example` addresses: what is missing goes in the report (the inspector fails notes,
   template streets and zeroed or 555 phones, and warns on other placeholder contacts).
@@ -290,7 +301,10 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
   titles) so the design is seen at full density; list them in the report for the client to confirm.
   Proof is never invented: no customers, quotes, reviews, press, logos or business statistics.
 - **Name the real, checkable things; leave out only what cannot be checked.** A page about a real place
-  names what a visitor needs to get there and picture it: the region's towns, the road, the ferry, train
+  names what a visitor needs to get there and picture it: on the first screen the specific place the
+  brief gives (the fjord, the village, the district); when it names only a region, a real place in it
+  chosen with the visit block and marked as sample copy in the report, never the region alone (a
+  Westfjords guesthouse never named its fjord); then the region's towns, the road, the ferry, train
   or airport that serves it, and distances by road only when read from a map or the brief in this
   session (otherwise the towns and the road without a number). Travel times, populations, history
   and awards come from the brief or stay off the page: a guesthouse in the Westfjords set "forty
@@ -337,7 +351,11 @@ not finished. Order of work:
 3. **Each section in the shape of its blueprint,** with this project's content. A blueprint is one
    example of a shape (what is large, what sits beside what), not a drawing to trace: let the real
    content decide the details, and leave its props behind (a café blueprint's opening-hours bar stays
-   with cafés). Neighbouring sections must not share a layout. **Carry the idea into every section,**
+   with cafés). Neighbouring sections never share a layout, and picture beside text twice running is
+   one layout; at least one section breaks the split grid (a full-bleed picture, a headline across the
+   width, an 8/4 asymmetry): a cargo-bike page ran 50/50 blocks all the way down and read as a stock
+   theme (`repeated-split` warns at three in a row). The key content stands in the open (the specs, the loads, the rooms, the menu); tabs and
+   accordions only for secondary detail such as the questions. **Carry the idea into every section,**
    pricing and FAQ included: the commonest failure in the study is a distinctive first screen followed
    by stock blocks.
 4. **Pictures: fewer, better, larger.** Professional sites give about 30% of every screen to pictures;
@@ -368,10 +386,16 @@ not finished. Order of work:
    the page's ground. The first picture a visitor sees shows the product or the place itself (the cup
    and the bar, the room, the product working), never a street, a facade or a blurred mood shot; if no
    such picture exists, the hero is set in type (a product with no photographs of its own shows its
-   kind in use instead: step 1). Each photograph appears once on the page, except the one good
-   stand-in of a product's kind, which may return once as a close crop of a detail, and, on a page
-   short of pictures, a scene's one picture. Pictures of
-   one series count as one: at most two from one shoot or archive. A drawing rendered to PNG is still a
+   kind in use instead: step 1). Each photograph appears once on the page, never again as a crop (a
+   scene's stamp of the picture it has just shown is the one exception): a cargo-bike page showed its
+   one family photograph three times. Never a blurred or pixelated face: take shots with faces turned
+   away, out of frame or naturally out of focus, or frame the product and the load (that photograph's
+   blurred faces read as news footage). A picture under or beside a line shows what the line names: "A
+   white house on the fjord" stood over a village of coloured houses. A photograph of a place that is
+   not the client's own is captioned with what and where it is, as its source names it, never with a
+   place the source does not name; a room or product stand-in has the name beside it; each has its
+   credit in the Image credits dialog.
+   Pictures of one series count as one: at most two from one shoot or archive. A drawing rendered to PNG is still a
    drawing. Archive photographs, old maps and engravings only when they are the idea itself
    (the history this subject continues, like the slip boxes behind a notes app), sharp, large and of
    one family; never as filler or a random old picture of the place. Never a picture inside a headline
@@ -382,9 +406,12 @@ not finished. Order of work:
    with a white interface slab in every section that every model builds. One photograph or object that
    carries the product's idea (a card catalogue for a notes app) does more than another panel.
    Switches, checkboxes and sliders appear only where they do what the product does, never as
-   decoration. Credits a licence requires go in one "Image credits" dialog opened from a small footer link
-   (`assets.mjs --credits` prints it), never as a list across the footer, never as a sentence on the
-   page. When the project has footage or a real picture of its own product, the first screen shows it,
+   decoration, and a control in a product fragment (a search box, a New note button) either works or
+   reads as static: no pointer, hover or focus, never a field the visitor types into in vain
+   (`dead-control` warns). Credits go in one "Image credits" dialog opened from a small footer link
+   (`assets.mjs --credits` prints it), one for every photograph that is not the client's own, whether
+   its licence asks or not (`uncredited-picture` warns), never as a list across the footer, never as a
+   sentence on the page. When the project has footage or a real picture of its own product, the first screen shows it,
    large. A portfolio whose work is invented for the brief shows each piece as a finished still of that
    work (its title card, an end frame, a poster), with real detail; a stock or location photograph
    never stands in for a piece of work (a motion designer's work slots showing skylines lost a test).
@@ -405,14 +432,13 @@ not finished. Order of work:
    piece,** only if dealt, in the section where it proves the claim, with real content, a thumb-sized
    phone version and a plain fallback.
 6. **The scroll scenes,** when the sheet deals them (section 9), each with the section it carries: the page's big
-   moments, the camera that flies through the work, the picture that opens to the whole screen, the
-   word that buckles under the scroll. Copy the shared stage and the scene's files from
+   moments, the row of work that bends with the scroll, the picture that opens to the whole screen,
+   the word that buckles under the scroll. Copy the shared stage and the scene's files from
    `<skill>/assets/scenes/`, fill the scene with this project's own pictures and words, and set the
    page's tokens so it takes the page's look. `assets/scenes/demo/<id>.html` is a working example of
    each, and its content is a placeholder: every picture, word and drawn thing in your scene comes from
-   this subject, and a route map shows the real route, coast and relief. A scene whose pictures or
-   drawings are still the demo's, or the stand-in a script draws when it is given nothing (the route's
-   bare ground with only the road), is unfinished. A scene is composition: it decides how long the page is and what
+   this subject. A scene whose pictures or words are still the demo's, or the stand-in a script draws
+   when it is given nothing, is unfinished. A scene is composition: it decides how long the page is and what
    each screen shows, so it is built now and seen in every look round, not added at the end. It
    replaces the content of the section it carries, never adds screens of nothing in front of it, and a
    page with scenes still has a length budget: about 12-16 screens at 1440 in all, of which the scenes
@@ -422,7 +448,11 @@ not finished. Order of work:
    list laid over a picture drops into the normal flow under it, and nothing is clipped by its stage:
    a coffee panel that showed two of its four coffees on a phone was marked broken, and the inspector
    fails text cut off by its box at rest (`clipped-text`; one line of display type cropped on purpose
-   at the screen's side or foot is a crop and passes).
+   at the screen's side or foot is a crop and passes). The inspector also looks at each scene's
+   finished composition and fails a list drawn as boxes there (`boxed-list`: tickets, date cards,
+   panes) and a display heading left alone on its screen for two screens (`lone-heading`);
+   `scenes.mjs` warns a settled step whose heading's letters are turned or off their line
+   (`tilted-letters`) or whose picture or filled box the screen edge cuts to a sliver (`edge-sliver`).
    A software page gets one scroll scene at most. A page built without one (`--redraw scenes=none`) is
    about 8-12 screens, with nothing pinned in a scene's place. About one page in two, one of its scenes
    is a researched technique instead (`library/techniques.json`): a principle, a direction to take and
@@ -431,7 +461,7 @@ not finished. Order of work:
    breaks it first, and make every frame of its hold a finished, readable composition: never one strip
    on an empty screen, a fan that hides the texts or a text a screen away from its title. A hold that
    steps (a technique or a scene of your own), where its steps carry pictures, gives each step its own
-   picture or a clearly different crop, never one photograph held under every step; where it needs
+   picture, never one photograph held under every step; where it needs
    none, its statements stand on the ground alone, with no photograph added. It sets its statements as
    short headlines at display size (40px or more on desktop, marked up as h2 or h3: the 36px statement
    rule is for paragraphs), leaves no step frame near empty, and without the pin never repeats one
@@ -444,11 +474,14 @@ not finished. Order of work:
    carries. A screen that is mostly empty ground is an underbuilt section, not a rest; one deliberate
    rest per page is the limit, and the inspector fails a page with two or more near-empty screens.
    Running text, lists and tables are in the full ink at 16px or more (15px on a phone), on dark
-   grounds too; under 14px fails (under 15px on a phone). Only captions and the footer's legal line are smaller. Under a
-   display heading text is 18px or more on desktop. Grey is for secondary notes.
+   grounds too; under 14px fails (under 15px on a phone), and a list's own labels count as the list.
+   Only captions and the footer's legal line are smaller. Under a display heading text is 18px or more
+   on desktop. Grey is for secondary notes; running text under 4.5:1 against its ground fails
+   (`contrast`).
 8. **The frame.** The page has one pair of equal outer margins at every width, and every section uses
    the width the page has set up: when its text sits in the left half, the right half holds its
-   picture, its second column, its list or its figure, never nothing. Asymmetry lives inside the grid,
+   picture, its second column, its list or its figure, never nothing, and a left column never ends
+   while the one beside it runs on (`empty-left` warns). Asymmetry lives inside the grid,
    never in the frame: a void is placed only when something closes it on the far side. No stretch of
    the page taller than about half a screen holds nothing at all; sections are 120–240px apart on
    desktop. Every section the visitor came for opens with a heading that names it, and the first
@@ -515,7 +548,14 @@ under sixteen). Any scroll scenes are already built (step 6); around them the la
    page it is the product replay: the product's own window, large, acts out what the product does for
    the visitor, its section held while the scroll steps the beats (sheet section 8,
    `<skill>/assets/replay.js`). Its first state is a full window, the visitor's own work before the
-   task, never an empty table waiting for its first beat.
+   task, never an empty table waiting for its first beat. It is loud enough to register: its content
+   fills the window in every frame, its text is 18px or more (16px on a phone), each beat changes about
+   a third of the window, the result lands large and in the accent, a panel that opens is in the page's
+   own tokens over whole rows (never a second white ground on a dark page), and on a phone the held
+   heading stays in view (`held-heading-cut` fails one cut off above the screen or under the bar). A
+   notes app's replay whose beats changed 4-24% of its window read as quiet: under about 15% of the
+   window a beat is faint, and `replay-faint` warns on one (or on a largest beat under 30%) and fails
+   when most are.
 2. **The entrance the sheet deals** (section 8): `data-entrance` on the body, its markers on the first
    screen, its CSS already in base.css, and only its own rule below the fold. Nothing else enters: no
    fade-up on every block, and no masked line rise or shutter unless the dealt entrance is `set-type`.
@@ -547,7 +587,8 @@ Tell the user, briefly: the direction dealt (name and seed) and any redraws with
 sentence and the interactive piece, if one was dealt; the final scores from your last critique round
 and what still falls short; every picture and clip with its source (and, where a licence asks, its
 credit in the Image credits dialog); which bundled photographs and which drawings stand in for
-photography (so they can be replaced); and any sample content that must be swapped before launch. Do
+photography, and which stand-ins are placeholders whose source names another business (so they can be
+replaced); and any sample content that must be swapped before launch. Do
 not claim a check you did not run.
 
 ## House rules
@@ -565,9 +606,9 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **No monospace** outside real code blocks. | The text face. Tabular figures where numbers align. |
 | **No index numbering.** No 01 / 02 / 03, no (001), no "Step 2". | Order shown by position, size, or the words. A real `<ol>` if order matters. |
 | **No thin rules.** No hairline dividers, no 1px outlined boxes, no grid lines, crosshairs or crop marks. | Space. A step in background tone. A change of scale. A filled shape. |
-| **No gradients.** Not as backgrounds, not on buttons, not in text. | Flat colour, or a real photograph. A neutral scrim under text on a photo is the one exception. |
+| **No gradients.** Not as backgrounds, not on buttons, not in text, not as a fade or a milky fog over a photograph (`gradient`). | Flat colour, or a real photograph with the words on its calm part; at most a flat dark scrim under the text, black at 40–55%. |
 | **No shadows on things at rest.** No glows. | A tone step between surfaces. Shadows only on what truly floats: a menu, a dialog. |
-| **No assistant palette.** No yellow-cream ground with terracotta or rust; no violet or indigo. | The dealt palette. |
+| **No assistant palette.** No yellow-cream ground with terracotta or rust; no violet, indigo, lavender or periwinkle (a blue lightened for a dark ground drifts there; `palette-purple`). | The dealt palette; a blue lightened toward its cyan side. |
 | **No tiny uppercase letter-spaced labels.** | Sentence case at a readable size. |
 | **No icon-topped feature cards, no rows of identical cards.** | The dealt section blueprint. |
 | **No glass.** No backdrop blur panels, no floating pill navigation. | A plain bar: wordmark, a few links, one action. |
@@ -579,8 +620,8 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges. | Neutral ground (white, off-white, near-black); colour from the pictures; the accent on the action. |
 | **No giant name or email anywhere, no credit walls.** | The email at the h3 step or smaller, with a Copy button and a mailto link; the dealt footer: links, contact, legal at text sizes; picture credits behind one small "Image credits" link. |
 | **No drag rails or progress bars** outside a working tool, no range sliders, no line with a knob or dots on it that reads as one, and no switch, checkbox or toggle that changes nothing: a length or a count is a row of stepped buttons; no sideways scrollers on desktop. | A list or grid that fits the width; stepped buttons of real values; features as lines of text at full ink; a control only where it does what it says. |
-| **No page built from boxes,** no bento grids of cards, no wall of tiles in several fills, no list drawn as filled or outlined boxes (questions, loads, specs, plans, options), no staggered folder tabs, no heading alone in its column or on its screen, no empty half-rows (nothing on the left, text on the right). | Text straight on the page, separated by space and size: questions as plain rows, specs as name and figure, options as text buttons with only the chosen one filled; the heading over its content; tabs, if needed, as one working row that opens on click. The one framed surface is the product's own window. |
-| **No labels that carry nothing**, no walls of text. | Facts, few words; see step 5. |
+| **No page built from boxes,** no bento grids of cards, no wall of tiles in several fills, no list drawn as filled or outlined boxes (questions, loads, specs, plans, options), no staggered folder tabs, no heading alone in its column or on its screen, no empty half-rows (nothing on the left, text on the right), no section with more than one framed thing (a filled panel or the product's window; an outlined box never; `framed-elements` fails three, warns two). | Text straight on the page, separated by space and size: questions as plain rows, specs as name and figure, options as text buttons with only the chosen one filled; the heading over its content; the key content in the open, tabs or an accordion only for secondary detail. The one framed surface is the product's own window, one to a section. |
+| **No labels that carry nothing**, no walls of text, no stats band of big figures over one-word labels. | Facts, few words, a figure in the line that says what it counts; see step 5. |
 
 Three places keep their own conventions and are left alone by the inspector: real code in
 `<pre>`/`<code>` (monospace is correct there), real tables and form fields (they may have lines), and

@@ -2,7 +2,10 @@
 // pictures inside headlines and sentences, giant footers and credit walls, upscaled pictures, colour
 // sprawl, drag rails, pages built from boxes, label clutter, walls of text, rows empty on the left.
 // Runs once at the top of the page after the walk, so every reveal has fired. Returns plain JSON.
-export function extra() {
+// { scenes: true } (round 10, part B): on the reduced-motion page, where scenes show their finished compositions, the
+// boxed-list check looks inside the scenes only (the caller keeps boxedLists).
+export function extra(opts = {}) {
+  const scenesOnly = !!(opts && opts.scenes);
   const W = innerWidth, H = innerHeight, D = document.documentElement, B = document.body || D;
   const sy = scrollY || 0;
   const r2 = Math.round;
@@ -294,7 +297,7 @@ export function extra() {
     let first = 0; const tw = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); let n;
     while ((n = tw.nextNode())) { const el = n.parentElement; if (!el || !visible(el) || el.closest('nav, header, [data-ui]')) continue; const r = el.getBoundingClientRect(); if (r.top + sy < H && r.bottom + sy > 0) first += words(n.nodeValue); }
     out.firstScreenWords = first;
-    out.wordySections = [...document.querySelectorAll('main > section, body > section, main > div > section, section')].filter((s) => visible(s) && !s.parentElement?.closest('section')).map((s) => ({ words: [...s.querySelectorAll('p, li, dd, td, blockquote, figcaption')].filter((p) => visible(p) && !p.closest('[data-ui], footer')).reduce((a, p) => a + words(textOf(p)), 0), head: textOf(s.querySelector('h1, h2, h3') || s).slice(0, 40) })).filter((s) => s.words > 130).slice(0, 6);
+    out.wordySections = [...document.querySelectorAll('main > section, body > section, main > div > section, section')].filter((s) => visible(s) && !s.parentElement?.closest('section')).map((s) => ({ words: [...s.querySelectorAll('p, li, dd, td, blockquote, figcaption')].filter((p) => visible(p) && !p.closest('[data-ui], footer') && !p.querySelector('p, li, dd, td, blockquote, figcaption')).reduce((a, p) => a + words(textOf(p)), 0), head: textOf(s.querySelector('h1, h2, h3') || s).slice(0, 40) })).filter((s) => s.words > 130).slice(0, 6);
   }
 
   // --- breakage at narrow widths (most of the reviewed pages' high-severity faults were phone or tablet only)
@@ -488,6 +491,13 @@ export function extra() {
       const s = [...by.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? parseFloat(getComputedStyle(p).fontSize);
       const what = p.matches('table') ? 'table' : p.matches('ul, ol, dl') ? 'list' : p.closest('footer, [role=contentinfo]') ? 'footer' : 'text';
       if (s < warnUnder - 0.25) { done.add(p); out.smallBody.push({ text: t.slice(0, 40), size: +s.toFixed(1), level: s < failUnder - 0.25 ? 'FAIL' : 'WARN', what }); continue; }
+      // (round 10, part B: a list's own labels are data too, the spec names beside their figures; only captions and the
+      // footer's legal line may be smaller)
+      if (p.matches('dl, table')) {
+        const labs = [...p.querySelectorAll('dt, th')].filter((e) => visible(e) && textOf(e));
+        const ls = labs.length >= 3 ? Math.min(...labs.map((e) => parseFloat(getComputedStyle(e).fontSize))) : Infinity;
+        if (ls < warnUnder - 0.25) { done.add(p); out.smallBody.push({ text: labs.slice(0, 3).map(textOf).join(', ').slice(0, 40), size: +ls.toFixed(1), level: ls < failUnder - 0.25 ? 'FAIL' : 'WARN', what: 'labels' }); continue; }
+      }
       if (W >= 1100 && s < 17.75) {
         const prev = p.previousElementSibling || (p.parentElement && !p.previousElementSibling ? p.parentElement.previousElementSibling : null);
         const hs = prev && prev.matches('h1, h2, h3, h4') ? parseFloat(getComputedStyle(prev).fontSize) : 0;
@@ -723,20 +733,29 @@ export function extra() {
   out.boxedLists = [];
   {
     const boxed = (e) => !!filledOn(e) || sides(e) >= 3;
-    // an item is drawn as a box itself, or by the one child that fills it (a label whose span is the tile)
+    // an item is drawn as a box itself, or by the one child that fills it (a label whose span is the tile), down to three
+    // levels of single children (r9-p43's season ticket: li, sheet, face)
     const drawnAs = (item) => {
-      if (boxed(item)) return item;
-      const kids = [...item.children].filter(visible);
-      if (kids.length !== 1) return null;
-      const a = kids[0].getBoundingClientRect(), b = item.getBoundingClientRect();
-      return a.width * a.height >= b.width * b.height * 0.8 && boxed(kids[0]) ? kids[0] : null;
+      const b = item.getBoundingClientRect();
+      for (let e = item, depth = 0; e && depth < 4; depth++) {
+        if (boxed(e)) return e;
+        const kids = [...e.children].filter(visible);
+        if (kids.length !== 1) return null;
+        const a = kids[0].getBoundingClientRect();
+        if (a.width * a.height < b.width * b.height * 0.8) return null;
+        e = kids[0];
+      }
+      return null;
     };
     const hex = (c) => '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
     let m = 0;
     for (const list of B.querySelectorAll('*')) {
       if (++m > 8000 || out.boxedLists.length >= 6) break;
       if (list.childElementCount < 3 || out.boxedLists.some((x) => x.el.contains(list))) continue;
-      if (list.closest('[data-ui], table, header, nav, footer, svg, dialog, [role=dialog], .scene, [data-scene], [aria-hidden=true], .replay')) continue;
+      if (list.closest('[data-ui], table, header, nav, footer, svg, dialog, [role=dialog], [aria-hidden=true], .replay')) continue;
+      // (a scene is looked at in its finished composition: where it rests here, or on the reduced-motion page)
+      const sc = list.closest('.scene, [data-scene]');
+      if (scenesOnly ? !sc : sc && !sc.classList.contains('is-rest')) continue;
       const items = [...list.children].filter((c) => !/^(SCRIPT|STYLE|TEMPLATE|BR|HR|INPUT)$/.test(c.tagName) && visible(c));
       if (items.length < 3) continue;
       // (filled fields are how a form draws its inputs without outlines; option tiles, radios and checkboxes, still count)

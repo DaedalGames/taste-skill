@@ -245,7 +245,7 @@
   ],
   "needs": [],
   "idea": "For a place, the photograph is the argument. One full-bleed image of where you would be standing fills the first screen, and the design steps back: the name sits along the bottom edge like a film title, or small in a corner, and nothing else interrupts the view. The page that follows keeps that restraint: few words, large pictures, long pauses. The designer's work here is editing: choosing the one frame that makes someone want to be there, and then not covering it.",
-  "composition": "First screen: a single photograph at 100vw by 100svh, focal point kept clear of text. The name is set either very large (14–20vw) hugging the bottom edge with 16–24px of margin, or small (20–28px) top-left with a one-line description bottom-left. Navigation is two to four words in the top corners in the same small size. If text sits on the image, a soft neutral scrim under the text area only. Below, sections alternate between a short centred or left-set paragraph in a narrow column (max 52ch) with wide empty margins, and photographs shown large: one full-bleed, then a pair at different sizes, then one portrait offset to the right. Practical information (hours, address, rates, booking) is gathered once near the end in a plain two-column block.",
+  "composition": "First screen: a single photograph at 100vw by 100svh, focal point kept clear of text. The name is set either very large (14–20vw) hugging the bottom edge with 16–24px of margin, or small (20–28px) top-left with a one-line description bottom-left. Navigation is two to four words in the top corners in the same small size. If text sits on the image, a flat dark scrim under the text area only. Below, sections alternate between a short centred or left-set paragraph in a narrow column (max 52ch) with wide empty margins, and photographs shown large: one full-bleed, then a pair at different sizes, then one portrait offset to the right. Practical information (hours, address, rates, booking) is gathered once near the end in a plain two-column block.",
   "typography": "A face with some grace for the name; small, calm, well-spaced text everywhere else. Sentence case. Body 17–19px with leading around 1.55.",
   "typeClasses": [
    "serif-display",
@@ -260,7 +260,7 @@
    "earth"
   ],
   "imagery": "The dealt set is the palette. Choose four to six photographs with the same light. The hero image must have a calm area for the name. Full-bleed or large with square corners; never thumbnails, never a carousel of ten.",
-  "photoTreatment": "Leave photographs ungraded. If text overlays one, darken only the area behind the text with a neutral scrim.",
+  "photoTreatment": "Leave photographs ungraded. If text overlays one, darken only the area behind the text with a flat dark scrim.",
   "sectionTags": [
    "photo-led",
    "quiet"
@@ -837,8 +837,8 @@
    "editorial"
   ],
   "needs": [],
-  "idea": "Half the screen never moves. One side is a fixed photograph (or object, or product view) that stays in place for the whole visit; the other side is a calm scrolling column with everything you need to read. The fixed half keeps the feeling present while the reader gets on with the facts, like sitting in the room while reading the menu. As sections pass, the fixed image may quietly change to the one that matches.",
-  "composition": "Desktop: a two-column page, 50/50 or 45/55. One column is `position: sticky; top: 0; height: 100svh` and holds a single photograph filling it edge to edge, or the object centred on a flat field. The other column scrolls and holds all content in a single narrow measure (max 46ch) with comfortable padding (48–72px): name and one-line description first, then sections separated by generous space, then contact and footer. Headings in the scrolling column are modest (32–44px). The column grounds differ: photograph on one side, flat paper colour on the other, meeting at a clean vertical edge. On a phone the fixed half becomes a 60svh image at the top that stays sticky behind the first section, then releases.",
+  "idea": "For the first screens, half the screen does not move. One side is a fixed photograph (or object, or product view) that holds while the first sections pass; the other side is a calm scrolling column with what you read first. The fixed half keeps the feeling present while the reader gets the first facts, like sitting in the room while reading the menu. Then it lets go, and the rest of the page opens to the full width.",
+  "composition": "Desktop: the first screen and one or two sections after it are a two-column stretch, 50/50 or 45/55. One column is `position: sticky; top: 0; height: 100svh` and holds a single photograph filling it edge to edge, or the object centred on a flat field. The other column scrolls in a single narrow measure (max 46ch) with comfortable padding (48–72px): name and one-line description first, then one or two sections separated by generous space. Headings in the scrolling column are modest (32–44px). The column grounds differ: photograph on one side, flat paper colour on the other, meeting at a clean vertical edge. Then the sticky half releases: the sections after it run on the full width in shapes of their own (a full-bleed photograph, a table across the width, a list on 8 of 12 columns), at least one of them full width, and never the picture-and-text split two sections running. On a phone the fixed half becomes a 60svh image at the top that stays sticky behind the first section, then releases.",
   "typography": "A text-first setting: a readable serif or a calm sans at 17–19px, with one display size for the name. Left-aligned throughout.",
   "typeClasses": [
    "serif-text",
@@ -853,15 +853,15 @@
    "light-neutral",
    "photographic-neutral"
   ],
-  "imagery": "One excellent portrait-orientation photograph for the fixed half, plus three or four more that crossfade in as their sections arrive. Small photographs between the paragraphs of the reading column, never inside a sentence, are optional and should be few.",
+  "imagery": "One excellent portrait-orientation photograph for the fixed half, plus one or two more that crossfade in as their sections arrive, and large ones of its own for the full-width sections after it. Small photographs between the paragraphs of the reading column, never inside a sentence, are optional and should be few.",
   "sectionTags": [
    "quiet",
    "photo-led",
    "type-led"
   ],
   "motion": "slow-crossfade",
-  "richness": "A full-height photograph always in view, against a quiet, well-set column of text.",
-  "pitfalls": "The reading column must be genuinely well typeset, since it is half the page. Do not put cards or grids in it. Check that the fixed image crops well at short viewport heights. In blind tests the commonest complaint was monotony: several screens of the same split with only the text changing. Change what the reading half holds from section to section (a list, a large figure, a table, a full-colour panel, a second photograph) and let at least one section break the split and run full width.",
+  "richness": "A full-height photograph in view through the first screens, against a quiet, well-set column of text, then the page opening to the full width.",
+  "pitfalls": "The reading column must be genuinely well typeset. Do not put cards or grids in it. Check that the fixed image crops well at short viewport heights. In blind tests the commonest complaint was monotony: several screens of the same split with only the text changing (a cargo-bike page ran 50/50 blocks all the way down). Release the sticky half after one or two sections, and never set two sections in a row as the same picture-and-text split.",
   "seenIn": [
    "opl-le-petit-bleu",
    "opl-rafael-derolez-2026",

@@ -98,14 +98,16 @@ never a small figure in a landscape.
   stays two-wheeled: a photograph of a trike is left out, and no word, specification or picture slot
   is changed to match what a search returned. One builder turned its bike into a trike to fit its
   stock photographs, and its three photographs showed three different vehicles.
-- **One good match, reused, beats several that differ.** Show the one photograph of the right kind
-  large, and again as a close crop of a detail (the loaded box, the hands on the bar); the inspector
-  warns on the repeat and fails a third showing (repeated-picture), and the report says it is the one
-  matching photograph, cropped twice.
+- **One good match, shown once, beats several that differ.** Show the one photograph of the right
+  kind large, once; never again as a crop of a detail. A cargo-bike page showed its one family
+  photograph three times (hero, box, scene) and read as thin; the inspector warns on a repeat and fails
+  a third showing (repeated-picture). A scene's stamp of the picture it has just shown is the one
+  exception.
 - **At least one picture shows it in use with the people it is for:** a parent riding with two
   children in the box, a cook at the hob with the kettle. An honest stand-in of that kind of product
-  in use, never named as this model; children only from behind, far off or unrecognisable. A product
-  parked in an empty street says nothing about who it is for.
+  in use, never named as this model and never retouched to pass for it (one builder painted another
+  maker's name off a box); children only from behind, far off or unrecognisable. A product parked in
+  an empty street says nothing about who it is for.
 - **When no photograph of the right kind exists,** use fewer pictures and let the page be led by type
   or by the product's own facts (the specifications large, a real interface where there is one), and
   say in the report that no matching photograph was found and which slots wait for the client's own.
@@ -132,8 +134,11 @@ never a small figure in a landscape.
   other maker's brand name or logo, no shop or company sign, no readable house number or licence
   plate, no words that would embarrass the client (a sticker, a slogan, a scrawl), and no child who
   could be recognised (children only from behind, far off or unrecognisable). Crop it out or drop the
-  picture. A cargo-bike page in a preview showed children outside private homes, other makers' bikes
-  with their names readable, a shop's logo and a profane sticker.
+  picture; never blur, pixelate or paint it out. A blurred face reads as news or surveillance footage
+  (a family photograph with blurred faces lost a cargo-bike page its best slot): take shots with faces
+  turned away, out of frame or naturally out of focus, or frame the product and the load. A cargo-bike
+  page in a preview showed children outside private homes, other makers' bikes with their names
+  readable, a shop's logo and a profane sticker.
 - It earns its size: a picture in a large slot has a clear subject; a picture that only fills a gap
   is removed and the gap closed.
 
@@ -195,15 +200,15 @@ two or three queries per idea. If nothing sharp and fitting turns up, do not fil
   recognisable living person who could be taken for the client's staff or customers. Look at it at
   full size for what the quality bar in §2 rules out (another maker's name or logo, a sign, a house
   number or plate, embarrassing words, a recognisable child) and crop or drop it.
-- In colour, where the page's pictures carry the colour (section 6: food and drink, the seasons, rooms
-  and tables, products, a client named for a colour or a light). A file that is black-and-white is
-  left out there however well it fits, since a grey dish, room or season tells the visitor nothing.
-  The one exception is an old photograph that is itself the idea (the history above), shown as a
-  document of that history, never in a slot that shows the food, the room, the product or the season.
+- In colour, unless the brief asks for black and white (section 6). A stand-in whose file is
+  black-and-white is left out however well it fits, since a grey dish, room, product or season tells
+  the visitor nothing; the client's own pictures are shown as they are. The one other exception is an
+  old photograph that is itself the idea (the history above), shown as a document of that history,
+  never in a slot that shows the food, the room, the product or the season.
 
 **Use it with intent.** One sharp picture of the place, large, beats a row of small ones; a material
-close-up can hold a whole section behind its text; the same picture can return at a different crop
-further down. Treatments stay within section 6 and the treatment the sheet deals.
+close-up can hold a whole section behind its text. Each picture appears once on the page, never again
+as a crop. Treatments stay within section 6 and the treatment the sheet deals.
 
 **Stay honest.**
 
@@ -213,23 +218,30 @@ further down. Treatments stay within section 6 and the treatment the sheet deals
   the pass). Rooms, dishes and products are shown with a photograph of their kind, and a product with
   no photographs of its own by its kind in use, never named or priced as this model; a stand-in sits
   beside the room or dish it stands for, never as the first picture of the house or restaurant; the
-  report lists each as not the client's (§2).
-- **Caption from the source** when a caption helps: what it is and when, as the archive describes it
-  ("Gand, unloading a steamer, 1905"). Never write a caption that ties it to the client. The one
-  exception is a stand-in for a room, a dish or a product: its own facts (bed, view, rate; name,
-  price) sit beside it, never a line saying it is the client's photograph.
+  report lists each as not the client's (§2). A stand-in whose title or credit names another business
+  (a real hotel's room, another maker's product) is never shown as the client's own: take one that
+  names none, or mark it as a placeholder in the Image credits and the report (a guesthouse's rooms
+  were real hotels' rooms from the open collections, and one of them had no credit at all).
+- **Say what and where it is.** A photograph of a place that is not the client's own is captioned
+  with what and where it is, as its source names it ("Suðureyri in June", "Gand, unloading a steamer,
+  1905"), never with a place the source does not name and never in words that tie it to the client; a
+  stand-in for a room, a dish or a product has its own facts beside it (bed, view, rate; name, price),
+  never a line saying it is the client's photograph.
+  A picture under or beside a line shows what the line names: a guesthouse set "A white house on the
+  fjord" over a village of coloured houses, and its booking section over a lighthouse nobody books.
 - **A caption names only what the picture shows.** Read every caption, label and number beside a
   picture against the picture at full size and against its source title: never a breed, a place, an
   object or a use that neither supports ("a dog in a crate", not "a Labrador, crated", when the source
   says only "a dog in a box behind the bicycle"). A picture placed to prove a claim shows the claim
   (two children on the bike, not women riding ordinary bikes); when no photograph does, the claim is
   made in words, never by a drawing of the product (section 8).
-- **Record every picture; credit where the licence asks, out of sight.** `--get` writes the source,
-  creator, licence and page of each download to `assets/credits.json`. CC BY and CC BY-SA require a
-  credit with the title, the creator, a link to the source and a link to the licence; `--credits`
-  prints them as a dialog opened by one small "Image credits" link in the footer (section 10). Never
-  a list of credits across the footer: reviewers named it as one of the ugliest parts of the pages.
-  Public-domain and CC0 pictures need no credit on the page.
+- **Record every picture; credit every one that is not the client's own, out of sight.** `--get`
+  writes the source, creator, licence and page of each download to `assets/credits.json`. CC BY and
+  CC BY-SA require a credit with the title, the creator, a link to the source and a link to the
+  licence; `--credits` prints them as a dialog opened by one small "Image credits" link in the footer
+  (section 10). Public-domain, CC0 and library pictures go in that dialog too, with their source, so
+  every stand-in can be traced and replaced. Never a list of credits across the footer: reviewers
+  named it as one of the ugliest parts of the pages.
 - **Respect the licence.** CC BY-SA: an altered version (recoloured, combined with other pictures)
   must be shared under the same licence. Non-commercial (NC) and no-derivatives (ND) licences are out
   for a client's site, which is why the script leaves them out unless asked. Read the `note` lines:
@@ -257,10 +269,11 @@ real footage with `--video` (section 11).
 - URLs have the form `https://picsum.photos/id/<id>/<width>/<height>`. Request the exact pixel size you
   render at twice the CSS size for sharpness, capped around 2400 wide. Add `?grayscale` only when
   section 0 deals the black-and-white treatment.
-- A line marked black-and-white is a black-and-white file. Where the pictures carry the colour
-  (section 6) the draw leaves those out; leave them out of `--photos` searches there too.
+- A line marked black-and-white is a black-and-white file. Unless the brief asks for black and white
+  (section 6) the draw leaves those out; leave them out of `--photos` searches too.
 - These are photographs from Unsplash served by Lorem Picsum under the Unsplash licence. List the ids
-  you used in your report; they are meant to be replaced by the project's own pictures.
+  you used in your report and in the Image credits dialog; they are meant to be replaced by the
+  project's own pictures.
 
 ## 5. Cropping and placing
 
@@ -298,29 +311,29 @@ real footage with `--video` (section 11).
 One treatment for the whole page:
 
 - **Untouched.** The default. Pick images whose light already agrees.
-- **Greyscale.** `filter: grayscale(1) contrast(1.05)`, or `?grayscale` on the URL. Unifies a mixed
-  set instantly and suits editorial and typographic directions. Apply to every image or none, and only
-  where section 0 deals it. Never where the pictures carry the colour: food and drink, flowers,
-  fashion, rooms and tables, products, the seasons of a landscape, or a client whose name or brief
-  names a colour or a light. A guesthouse called Hvit, white, turned grey in black-and-white and its
-  four seasons looked alike; the draw does not deal it there.
-- **A black-and-white file is the same treatment.** Where the pictures carry the colour, a photograph
-  whose file is black-and-white (a monochrome photograph from the open collections, a library line
-  marked black-and-white, an old print) is rejected like a grey filter would be, even when every other
-  picture is in colour: check the file, not only the CSS. Section 3 names the one exception, an old
-  photograph that is itself the idea. A blueprint that turns its pictures grey (a mosaic, a wall of
-  portraits) keeps them in colour there.
+- **Greyscale.** `filter: grayscale(1) contrast(1.05)`, or `?grayscale` on the URL. Only where the
+  brief asks for black-and-white pictures: section 0 then deals it, for every image on the page. The
+  draw never deals it otherwise. A notes app greyed its one colour photograph of card drawers, and a
+  guesthouse called Hvit, white, turned grey and its four seasons looked alike.
+- **A black-and-white file is the same treatment.** On a page in colour, a stand-in whose file is
+  black-and-white (a monochrome photograph from the open collections, a library line marked
+  black-and-white, an old print) is left out like a grey filter would be, even when every other picture
+  is in colour: check the file, not only the CSS. The client's own pictures are shown as they are (a
+  photographer's black-and-white work stays black-and-white), and section 3 names the other exception,
+  an old photograph that is itself the idea. A blueprint that turns its pictures grey (a mosaic, a wall of portraits)
+  keeps them in colour.
 - **Multiply on a field.** On a light flat ground, `mix-blend-mode: multiply` makes a white studio
   background vanish so a product sits directly on the colour.
 - **Darkened for a dark page.** `filter: brightness(0.85) contrast(1.05)` so the image edges sink into
   the ground.
 
 Not treatments: colour washes over photographs, duotone overlays, blur, grain overlays, vignettes,
-tilted "polaroid" frames with shadows.
+gradients and fades (a milky white fog over a guesthouse's full-bleed fjord was marked down), tilted
+"polaroid" frames with shadows.
 
-For text on a photograph, a neutral scrim covering only the text area: a solid block at 40–55% black,
-or a fade from 55% black to transparent over the lower third. Never a coloured overlay. A page named
-for a light (below) takes no scrim at all.
+For text on a photograph, its calm part first; failing that, a flat dark scrim covering only the
+text area, black at 40–55%, on a dark page as on a light one. Never a fade, a gradient or a coloured overlay (the
+inspector fails a gradient anywhere). A page named for a light (below) takes no scrim at all.
 
 **A client named for a light or a pale colour** (white, snow, chalk, linen, fog, light, in any
 language: Hvit is white, Snø is snow, Lys is light) gets bright, high-key pictures: daylight, pale
@@ -890,8 +903,8 @@ on the phone only, where the type covers more of the picture.
   that fades into the page.
 - Here: on a picture put only display text, one short line and one action. Body text, captions and
   labels go beside or under it. Measure contrast at the text's own position (4.5:1, or 3:1 for 24px and
-  up). If it fails, move the text to a calmer part, put it on a solid card in the ground colour, or use
-  the scrim in section 6. A fixed navigation that passes over pictures gets a solid band, or hides
+  up). If it fails, move the text to a calmer part or beside the picture, or use the flat scrim in
+  section 6; never a fade or a milky fog over the picture. A fixed navigation that passes over pictures gets a solid band, or hides
   while scrolling down.
 - **A caption never crosses a piece of work.** On a film, a project frame, a drawing or a product
   shot, the title, the year and the description go in the gutter under or beside it, or in a corner

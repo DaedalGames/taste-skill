@@ -208,8 +208,12 @@ p + p { margin-top: 0.9em; }
 
 /* the product replay (assets/replay.js, references/motion.md "Product replay"): the window is written in its
    final state; the script takes it back to its first state as it arms and plays the beats once in view.
-   Nothing here hides anything without the script, under reduced motion or before .is-armed. */
+   Nothing here hides anything without the script, under reduced motion or before .is-armed. The window's text is
+   18px or more on desktop and 16px on a phone (a page rule wins: zero specificity); each beat changes about a
+   third of the window, and a panel that opens takes the page's own tokens (--ink on a light page, --accent on a
+   dark one) over whole rows. */
 .replay { position: relative; margin: 0; }
+:where(.replay > [data-ui]) { font-size: clamp(1rem, 0.8rem + 0.55vw, 1.25rem); }
 [data-replay] [data-roll-at] { font-variant-numeric: tabular-nums; }
 [data-replay] [data-open-at][hidden] { display: none !important; }
 [data-replay] [data-frame-at] { outline-offset: 2px; }

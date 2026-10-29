@@ -244,7 +244,7 @@
  },
  {
   "id": "blue-black-cornflower",
-  "name": "Night and cornflower",
+  "name": "Night and sky blue",
   "tags": [
    "dark-neutral"
   ],
@@ -252,9 +252,9 @@
   "surface": "#131824",
   "ink": "#e9edf3",
   "muted": "#8891a1",
-  "accent": "#5a9bfc",
+  "accent": "#5ab9fc",
   "accentInk": "#0a0d14",
-  "note": "Blue-black ground and slate panels with silver-white text fill the page; no section changes colour. Cornflower blue marks the buttons and at most one word in a heading.",
+  "note": "Blue-black ground and slate panels with silver-white text fill the page; no section changes colour. A sky blue marks the buttons and the links, nothing else.",
   "seenIn": [
    "opl-viewport-2",
    "aww-moto-finance",
@@ -734,10 +734,10 @@
   "bg": "#0034eb",
   "surface": "#002fd6",
   "ink": "#ffffff",
-  "muted": "#c5d0ff",
+  "muted": "#dfe4f2",
   "accent": "#e9e34a",
   "accentInk": "#111111",
-  "note": "One electric cobalt fills everything, with white and pale-blue type; photographs are tinted into blue monotone or kept as small thumbnails. A single yellow dot or button is the only other colour on the page.",
+  "note": "One electric cobalt fills everything, with white and pale type; photographs keep their own colour and are shown large. A single yellow dot or button is the only other colour on the page.",
   "seenIn": [
    "opl-george-wood",
    "aww-studio-k95-3"
@@ -938,11 +938,11 @@
   "surface": "#f3f3f3",
   "ink": "#0a0a0a",
   "muted": "#6b6b6b",
-  "accent": "#2436ff",
+  "accent": "#1f30e0",
   "accentInk": "#ffffff",
   "fields": [
    {
-    "bg": "#2436ff",
+    "bg": "#1f30e0",
     "ink": "#ffffff"
    },
    {
@@ -1007,7 +1007,7 @@
   "bg": "#1423b8",
   "surface": "#1220a6",
   "ink": "#ffffff",
-  "muted": "#b4bcf0",
+  "muted": "#e4e2d6",
   "accent": "#1fc27a",
   "accentInk": "#0a0a0a",
   "fields": [
@@ -1232,7 +1232,7 @@
   "accentInk": "#ffffff",
   "fields": [
    {
-    "bg": "#97aaf6",
+    "bg": "#97cef6",
     "ink": "#000000"
    },
    {
@@ -1248,7 +1248,7 @@
     "ink": "#000000"
    }
   ],
-  "note": "Neutral paper ground and black type, with each card or tile given its own flat pastel (periwinkle, lime, amber or cyan), never two alike side by side. Magenta is reserved for the logo, the email address and text links.",
+  "note": "Neutral paper ground and black type, with each card or tile given its own flat pastel (sky, lime, amber or cyan), never two alike side by side. Magenta is reserved for the logo, the email address and text links.",
   "seenIn": [
    "opl-medium-rare"
   ]
@@ -1290,15 +1290,15 @@
   "tags": [
    "pastel-fields"
   ],
-  "bg": "#c3cbe5",
-  "surface": "#d0d6eb",
+  "bg": "#c3d7e5",
+  "surface": "#d0e0eb",
   "ink": "#141414",
   "muted": "#4a5068",
   "accent": "#0f5257",
   "accentInk": "#ffffff",
   "fields": [
    {
-    "bg": "#c3cbe5",
+    "bg": "#c3d7e5",
     "ink": "#141414"
    },
    {
@@ -1318,7 +1318,7 @@
     "ink": "#141414"
    }
   ],
-  "note": "One flat pastel is the whole background and it swaps per project or chapter: periwinkle, pink, sand, sage, peach. Type and one solid box stay near-black on all five, and dark teal is only for the button.",
+  "note": "One flat pastel is the whole background and it swaps per project or chapter: pale sky, pink, sand, sage, peach. Type and one solid box stay near-black on all five, and dark teal is only for the button.",
   "seenIn": [
    "opl-belen-jones"
   ]
@@ -1390,11 +1390,11 @@
     "ink": "#000000"
    },
    {
-    "bg": "#b9c8ff",
+    "bg": "#b9e2ff",
     "ink": "#000000"
    }
   ],
-  "note": "Black ground and dark photographs take nearly all of the surface. The only flat colour is a solid block behind each title, which takes a new candy pastel per project (mint, cyan, lemon, orange, cornflower); cyan is the default for the button.",
+  "note": "Black ground and dark photographs take nearly all of the surface. The only flat colour is a solid block behind each title, which takes a new candy pastel per project (mint, cyan, lemon, orange, sky); cyan is the default for the button.",
   "seenIn": [
    "aww-glitch-grit"
   ]

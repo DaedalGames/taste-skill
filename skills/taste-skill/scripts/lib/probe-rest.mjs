@@ -8,7 +8,9 @@
 // repeated-label). Phase 1, a short scroll later, keeps only what held still: it moved with the page, or stayed put
 // while the page moved under it. So a mask on its way, a picture still flying in, a ticker or a parallax layer is not
 // counted. Text in a running scene that has not reached its end is skipped for clipped-text (its masks are mid-way);
-// the scene's end is looked at on its own.
+// the scene's end is looked at on its own. Round 10, part B: a pale or coloured veil on a photograph in view (gradient),
+// and on tablets and phones a held stage's heading cut off above the screen (held-heading-cut), each kept when the
+// second look finds it again.
 //   opts.phase   0 or 1
 //   opts.root    [selector, index]: one scene only (scenes.mjs), with its own unfinished state allowed (opts.inScene)
 //   opts.clipOnly  the clipped-text part alone, in one phase (scenes.mjs: its steps are settled already)
@@ -283,6 +285,56 @@ export function restLook(opts = {}) {
       if (headList.length >= 80) break;
     }
 
+    // --- round 10, part B. A veil on a photograph in view (gradient): a translucent fill that is pale or coloured, or a
+    // blurred one, lying on 12% of the picture's frame or more, the element's own ground or its ::before or ::after. A
+    // solid box on a picture is a box (framed-elements), and a dark neutral scrim that keeps words legible is not a veil
+    // (r9-p43: white at 50% and at 80%, blurred, fogging the lower left of the full-bleed fjord).
+    const veilOf = (e, onlyPseudo) => {
+      if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME)$/.test(e.tagName) || e instanceof SVGElement) return null;
+      const op = opacityOf(e); if (op < 0.1) return null;
+      for (const ps of onlyPseudo ? ['::after'] : [null, '::before', '::after']) {
+        const cs = ps ? getComputedStyle(e, ps) : css(e);
+        if (ps && (cs.content === 'none' || cs.content === 'normal')) continue;
+        const m = cs.backgroundColor.match(/rgba?\(([^)]+)\)/); if (!m) continue;
+        const c = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); const a = (c.length > 3 ? c[3] : 1) * op * (ps ? +cs.opacity : 1);
+        const blur = /blur\(/.test(cs.filter) || /blur\(/.test(cs.backdropFilter || '');
+        if (a < 0.1 || (a >= 0.92 && !blur)) continue;
+        const mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]), pale = (mx + mn) / 510 >= 0.6, tinted = mx - mn >= 48;
+        if (pale || tinted) return { what: desc(e) + (ps || ''), colour: `rgba(${c.slice(0, 3).join(', ')}, ${a.toFixed(2)})`, how: pale ? 'a pale veil' : 'a tint', blur };
+      }
+      return null;
+    };
+    const veils = [];
+    for (const p of pics) {
+      // (a running scene's weather or haze on its way is looked at once the scene has reached its end)
+      const el = S.els.get(p.id)?.deref(); if (!el || p.area < 0.04 || unfinished(sceneOf(el))) continue;
+      const fb = { l: Math.max(p.l, 0), r: Math.min(p.l + p.w, W), t: Math.max(p.t, 0), b: Math.min(p.t + p.h, H) };
+      let n = 0, on = 0, by = null;
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) {
+        const stack = document.elementsFromPoint(fb.l + ((fb.r - fb.l) * (i + 0.5)) / 6, fb.t + ((fb.b - fb.t) * (j + 0.5)) / 6);
+        const at = stack.indexOf(el); if (at < 0) continue;
+        n++;
+        for (const e of stack.slice(0, at)) { if (el.contains(e)) continue; const v = veilOf(e, e.contains(el)); if (v) { on++; by = by || v; break; } }
+      }
+      if (n >= 8 && on / n >= 0.12 && by) veils.push({ media: p.file, share: +(on / n).toFixed(2), ...by });
+    }
+    // --- a held stage's heading cut off above the screen (held-heading-cut), on tablets and phones: a replay's stage, a
+    // running scene's stage or a pinned block, a third of the screen tall or more, whose first heading runs above the top
+    // of the screen (or under a filled bar fixed there; a clear bar hides nothing), or has gone above it while the stage
+    // still fills the screen. A heading the scene carries out by a transform is leaving, not cut (r9-p41 at 390: "Find
+    // the note you" above the screen, "half remember" on it, while the replay held).
+    const cutHeads = [];
+    if (W < 1100) {
+      const topLine = (() => { let b = 0; const at = document.elementsFromPoint(W / 2, 2); for (const e of at) { const c = css(e); if (/fixed|sticky/.test(c.position)) { const r = e.getBoundingClientRect(); const fill = (x) => { const m = (x.backgroundColor || '').match(/rgba?\(([^)]+)\)/); const v = m ? m[1].split(/[ ,/]+/).filter(Boolean).map(Number) : []; return v.length >= 3 && (v.length < 4 || v[3] >= 0.5); }; const solid = fill(c) || fill(getComputedStyle(e, '::before')) || (c.backdropFilter && c.backdropFilter !== 'none') || at.some((x) => x !== e && e.contains(x) && fill(css(x))); if (solid && r.top <= 2 && r.height < H * 0.3 && r.width > W * 0.5) b = Math.max(b, r.bottom); } } return b; })();
+      const moved = (el, stop) => { for (let e = el; e && e !== stop; e = e.parentElement) { const c = css(e); if (c.translate !== 'none' && !/^0px(\s+0px){0,2}$/.test(c.translate)) return true; if (c.transform !== 'none') { try { if (!new DOMMatrixReadOnly(c.transform).isIdentity) return true; } catch { return true; } } } return false; };
+      for (const st of scope.querySelectorAll('.replay-stage, .scene.is-live .scene-stage, .pin-spacer > *')) {
+        const r = st.getBoundingClientRect(); if (r.bottom <= 0 || r.top >= H || r.height < H * 0.3) continue;
+        const h = st.querySelector('h1, h2, h3'); if (!h || opacityOf(h) < 0.5 || moved(h, st)) continue;
+        const hr = h.getBoundingClientRect(); if (hr.height < 4) continue;
+        const past = topLine - hr.top;
+        if ((past > 4 && hr.bottom > topLine + 4) || (hr.bottom <= topLine && r.top < topLine - 4 && r.bottom > H * 0.6)) cutHeads.push({ id: idOf(h), text: norm(h.innerText || h.textContent || '').slice(0, 60), stage: desc(st), past: Math.round(past), whole: hr.bottom <= topLine, st: Math.round(r.top) });
+      }
+    }
     const clip = clipped();
     // each running scene or pinned stage in view: where its words and pictures are (a picture by its frame), so phase 1
     // can tell a stage resting on a step from one in the middle of a change (cards in flight, words coming in)
@@ -298,7 +350,7 @@ export function restLook(opts = {}) {
     if (opts.phase !== 1) {
       const parts = [];
       for (const s of stages) { let n = 0; for (const e of s.querySelectorAll('*')) { if (++n > 600) break; if (/^(IMG|VIDEO|CANVAS)$/.test(e.tagName) || [...e.childNodes].some((c) => c.nodeType === 3 && c.nodeValue.trim())) parts.push([e, idOf(s)]); } }
-      window.__tsRestA = { sy, clip, pics, heads: headList, parts: snap(parts), seen: [...headList.map((x) => x.text), ...pics.map((p) => 'pic:' + p.id)] };
+      window.__tsRestA = { sy, clip, pics, heads: headList, parts: snap(parts), seen: [...headList.map((x) => x.text), ...pics.map((p) => 'pic:' + p.id)], veils, cutHeads };
       return { y: sy, n: clip.length + pics.length + headList.length };
     }
     // --- phase 1: keep what held still since phase 0 (it moved with the page, by the scroll between the two looks, or
@@ -320,6 +372,9 @@ export function restLook(opts = {}) {
       clipped: A.clip.filter((a) => { const b = C.get(a.id); return b && still(a.top, b.top) && Math.abs(a.past - b.past) <= 3 && Math.abs(a.op - b.op) <= 0.1; }),
       pics: A.pics.filter((a) => { const b = P.get(a.id); return b && !moving.has(a.stage) && still(a.t, b.t) && Math.abs(a.l - b.l) <= 2 && Math.abs(a.w - b.w) <= 3 && Math.abs(a.h - b.h) <= 3 && Math.abs(a.hits - b.hits) <= 2 && Math.abs(a.op - b.op) <= 0.1; }),
       heads: A.heads.filter((a) => { const b = Hd.get(a.id); return b && !moving.has(a.stage) && still(a.t, b.t) && Math.abs(a.l - b.l) <= 2 && a.text === b.text; }),
+      // (a veil seen in both looks; a heading cut while its stage held still, the page moving under it)
+      veils: (A.veils || []).filter((a) => veils.some((b) => b.media === a.media && b.what === a.what)),
+      cutHeads: (A.cutHeads || []).filter((a) => { const b = cutHeads.find((x) => x.id === a.id); return b && dy !== 0 && Math.abs(b.st - a.st) <= 2; }),
     };
   } finally { hitStyle.remove(); }
 }
