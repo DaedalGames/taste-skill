@@ -291,7 +291,7 @@ gives it, and checked with `scenes.mjs` like any scene.
 
 ## 9. The catalogue
 
-Thirty-eight scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
+Forty scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
 scene's full entry (where it goes, its content, its options, its phone plan);
 `node <skill>/scripts/draw.mjs --list scenes` prints the list, and each scene file's header is the full
 contract. Each entry's `needs` says what the scene really takes, and the draw deals it only when the
@@ -307,6 +307,16 @@ page, a scene on the first screen, which shows the product large.
 `--list scenes` prints each scene's needs.
 
 **Camera through space**
+- **Closing cut under the rise** (`closing-cut-under-the-rise`): the one thing the page is about,
+  masked out of the closing photograph, stands in a flat room of that photograph's own wall and floor
+  and rises steadily out of the frame while the camera ducks under it; at the cut, in one frame, the
+  flat room gives way to the photograph itself, the same thing back in its own place on the same floor
+  line, and the last sentence arrives in two or three phrases on a short band of the floor's tint, with
+  the one action. One photograph of the subject standing clear on a floor or a table, and the rising
+  cut-out masked from that same photograph (*product-photo*); never a drawing or a lookalike. Set the
+  cut where the cut-out is still about half in the frame (0.35 for a short thing standing low, like the
+  demo's teapot). The end of the page, for one physical thing, once; hold 2. Built from the researched
+  technique `lib-0241`, which is no longer dealt to build fresh.
 - **Descend through the weather** (`descend-through-weather`): the first screen sinks through cloud
   from a peak above the weather onto the place below. Two photographs of the place, from above and
   below the cloud. First screen only.
@@ -414,6 +424,14 @@ page, a scene on the first screen, which shows the product large.
 - **Pinned chapter switcher** (`pinned-chapter-switcher`): 3-6 full-bleed picture chapters change by
   hard wipes, the words swapping at the seam, the chapter names under them (no progress bars). One
   picture a chapter, shot or chosen as one series.
+- **Window relay with a trail of stamps** (`window-relay-with-stamps`): the next picture waits as a
+  small window in the main picture's corner and opens over it until it covers the slot, the name beside
+  it changing in one step, while the old picture shrinks into a stamp that joins a trail of four at most
+  along the caption band. Four to six photographs of one family in one light and ground, each subject
+  whole in the middle with the top left corner plain, and a name of one or two words and one line each
+  (*pictures:4*). In the middle, after a quiet section that introduces the set; not the page's main
+  showcase of the work, where the chip would lie on the piece. Five hold 2.4 screens. Built from the
+  researched technique `lib-0237`, which is no longer dealt to build fresh.
 
 **Object scrub**
 - **Fixed hero object** (`fixed-hero-object`): one product turns on its own layer while the chapters

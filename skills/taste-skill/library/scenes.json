@@ -1189,5 +1189,68 @@
   "hold": 1.2,
   "source": "lib-0240",
   "inkChapter": true
+ },
+ {
+  "id": "closing-cut-under-the-rise",
+  "name": "Closing cut under the rise",
+  "family": "camera-through-space",
+  "summary": "In the last section the one thing the page is about stands, as a cut-out masked from the closing photograph itself, in a flat room of two tints: that photograph's own wall and floor, split exactly on the row where its floor meets its wall, the cut-out starting where the thing stands in the picture. From the first frame a carrier lifts it steadily up and out past the top of the frame (about two screens of travel) while the stage counter-moves a fifth of a screen down and back, so the camera seems to duck under the rise. Half-way, in one frame and under the motion, the flat room and the cut-out are gone and the full-bleed closing photograph that was waiting beneath fills the screen, the same thing back in its own place and the floor line on the same row, so the cut reads as the room coming into focus rather than a jump; the camera's return carries on through it. On a short flat band of the floor's tint at its foot the page's last sentence arrives in two or three whole phrases, the one plain action together with the last, and the frame rests finished for the last fifth of the hold.",
+  "place": "The end of the page: the order, the booking or the visit, straight after one quiet section, with only a plain footer line after it (pass it as foot, so the scroll ends on the finished frame). Once per page, never right after another scene. Pages that sell or show one ordinary physical thing: a teapot, a jug, a stool, a lamp, a bottle, a dish, a garment.",
+  "content": "One full-colour closing photograph of the subject in place: the very object standing clear of its surroundings (a distinct colour or a plain ground behind it, so it can be masked) on a floor, a table top or a counter that meets the wall, trees or sky behind on a clear line, with a calm area or room at its foot for a short band; landscape 2400px wide or more, and a portrait crop as its own <source> in which the subject stays whole (or one file framed with --ccr-object-portrait). The rising cut-out is masked from that same photograph (keyed or traced, transparent PNG or WebP, the object only, nothing of the table under it), so the cut lands the very thing back in its own room; never a drawing, never a second photograph of a lookalike. On the img and each <source>: data-horizon (that file's floor line, 0-1) and data-subject (the subject's centre across and its foot, 0-1). Words: the page's last sentence (not the brand name, no invented history) of 6-12 words in two or three phrases, each a .ccr-step; one action of 2-4 words (an order, a booking; never an email address or phone number), arriving with the last phrase; an optional caption of 2-6 words naming the object. --ccr-wall and --ccr-floor set to the photograph's wall and floor (or tint 'auto'); --ccr-band-ink with 4.5:1 or more on the band. Flat tints only: no fade through black or white, no glow, no gradient.",
+  "options": "hold 2 (1.4-2.4); rise 1.8 (1-2.4) screens the cut-out travels; phoneRise (rise) (1-2.4) the same below 768px, where the cut-out is fitted to the width and smaller: set both so it is still about half in the frame at the cut; ease 'none' (steady, so it is visibly moving within the first tenth; an in-out ease starts slower); dip 0.2 (0-0.3) screens the stage counter-moves down and back (the camera ducks; deepest at the cut, settled at 100%); phoneDip 0.1 (0-0.3) the same on portrait screens; cut 0.5 (0.3-0.6) where the room and the cut-out give way to the photograph, set where the cut-out is still about half in the frame (0.35 for a short thing standing low); size 0.8 (0.5-0.9) the cut-out's height share of the stage (fitted to the width less the margins); from (cut + 0.1) where the first phrase has arrived; to 0.76 (0.65-0.9) where the last phrase and the action have arrived, the rest of the hold the finished frame settling; band 'floor' (a short flat band of the floor's tint at the photograph's foot, the same field as the flat room's floor, so it does not change at the cut) | 'none' (straight on the photograph's calm area, the words riding with the picture so they stay on it); place 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'; tint 'token' (--ccr-wall, --ccr-floor) | 'auto' (medians of the photograph's wall and floor as cropped on this screen; same-origin pictures); foot a selector for the footer line; scrub true | 0.1-1; phone 'same' | 'rest'. Scene tokens: --ccr-wall, --ccr-floor, --ccr-ink, --ccr-band, --ccr-band-ink, --ccr-object, --ccr-object-portrait, --ccr-base, --ccr-btn-radius.",
+  "phone": "The same rise and cut at full width: the cut-out fitted to the width less 16px margins and starting at the subject's place in the portrait crop, the closing photograph's own portrait crop with its own floor line and the subject whole, a shallower dip (phoneDip 0.1) so the crop keeps its height, the line over the action on the short band at the foot, the caption left out (it would sit on the cut-out). phone: 'rest' gives the finished composition, the closing photograph a screen tall with the band, the line and the action.",
+  "roles": [
+   "cta",
+   "contact"
+  ],
+  "position": "closing",
+  "sectors": [
+   "physical-product",
+   "fashion",
+   "ecommerce",
+   "hospitality",
+   "consumer-app",
+   "studio-portfolio",
+   "event"
+  ],
+  "needs": [
+   "product-photo",
+   "pictures:1"
+  ],
+  "hold": 2,
+  "source": "lib-0241",
+  "weight": 1
+ },
+ {
+  "id": "window-relay-with-stamps",
+  "name": "Window relay with a trail of stamps",
+  "family": "media-sequence",
+  "summary": "A short set of four to six pictures of one family is told as a relay on a held stage. The current picture rests whole in a large main slot (64% of the width, the full height) with its name set large beside it in the accent and one line under it in the ink. The next waits as a small window in the slot's top left corner, showing that picture whole and small. At the hand-over that window opens over the current picture, growing from its corner until it covers the slot, while the name changes in one step. The window leaves a stamp-sized box open in the opposite corner, where the old picture stays on top and shrinks into its stamp, then slides out whole into a trail of stamps along the bottom edge of the caption band, which moves one place along (four at most, the oldest leaving at the far end). The next chip grows out of the corner and each arrival rests whole for a beat. It is for a collection, the rooms of a house, the courses of a menu, the pieces of a small show.",
+  "place": "In the middle, as the section that shows the set, after a quiet section that introduces it; it is that section, told as a relay, not screens in front of it. A quiet section follows. Not on the work as the page's main showcase: the name sits beside the picture, not on it, and the chip lies over the picture's top left corner at rest (scenes.md section 3 asks the title on the piece and the piece unobstructed); there use the fly-through in stop mode or sheets that tip in and away.",
+  "content": "Four to six photographs of one family (five reads best): the same light, grade and ground, one kind of subject, each one piece shown once, at least 2000px wide with width and height set, landscape between 4:3 and 3:2, the subject whole in the middle with plain ground round it, and the top left corner plain ground on every picture but the last (the chip lies there). The chip shows the whole picture small, the stamp a tall crop through the subject; --wr-focus on an img moves the slot, chip and stamp together. A name for each of one or two words, 9 characters or fewer, set large in the display face; one line of 6-14 words in the text face saying what the picture shows. A section heading of about 32 characters at most, shown above the trail on wide screens and in the finished composition. With fewer than three pictures the trail says nothing: take another scene.",
+  "options": "hold 0.6 a hand-over (1.2-3.2): 2.4 for five, 1.8 for four, 3 for six; phoneHold 0.55 a hand-over (1.2-3.2): 2.2 for five; phone 'same' | 'rest'; swap 0.42 (0.3-0.55) share of the hold the hand-overs take, the rest are beats where one picture rests whole with its name; trail 4 (1-4) places in the trail; peek 0.74 (0.5-1) share of its photograph's width the waiting chip shows; crop 0.56 (0.35-0.9) share of its photograph's width a stamp shows; radius the page's --radius, else square (0-24px), one radius for every frame, chip and stamp, drawn by the clip at the same visible size at every scale; scrub true with Lenis, else 0.5 (0-1). The number of pieces comes from the markup; the layout of the slots (main, chip, trail) is the CSS's .wr-plan boxes, one set for wide screens and one for portrait screens and phones.",
+  "phone": "The same relay rearranged for a tall screen (under 768px, and any portrait screen): the window takes the full width and the upper two thirds with the chip in its top left corner, the trail runs along the window's bottom edge with the newest stamp at the right, and the name and its line sit under the trail. The stamp forms in the window's lower right corner and drops into the trail, so nothing moving reaches the caption. The heading is kept for screen readers while it runs. Hold 2.2 for five; touch scrolling is never smoothed. phone 'rest' shows the finished composition: the heading over the pieces in one column, each picture with its name and line.",
+  "roles": [
+   "showcase",
+   "gallery",
+   "list"
+  ],
+  "position": "middle",
+  "sectors": [
+   "culture",
+   "hospitality",
+   "restaurant",
+   "real-estate",
+   "architecture",
+   "physical-product",
+   "fashion",
+   "education"
+  ],
+  "needs": [
+   "pictures:4"
+  ],
+  "hold": 2.4,
+  "source": "lib-0237",
+  "weight": 1
  }
 ]
