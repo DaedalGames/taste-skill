@@ -74,6 +74,14 @@
 // (footer-not-as-dealt); a portfolio whose work shows fewer than three pictures of the work or slots marked for them
 // warns (portfolio-without-work).
 //
+// Round 11c (Leon: three button shapes at one size, a plain bar that hides on scroll; r12-p53, r12-p54, r12-p52): on
+// desktop, more than two button shapes on the page (by corner and kind; the bar's, a card's or a form's height is the same
+// shape) fail (button-family); the navigation is read at load, past the hero on the way down (a dealt side index or dock
+// that has stepped aside is read again a screen later) and after a short scroll back up, and a form other than the one
+// section 0 dealt fails, and so does a bar that hides on scroll, which warns where none was dealt (nav-not-as-dealt);
+// three sections built round the same thing warn and four fail (same-structure); and four sections or more after the
+// hero, all but one standing in a box, a product window counted, warn (boxed-page).
+//
 // --app judges an app screen (dashboard, admin, settings) by the rules in references/app-screens.md; a
 // direction dealt with draw.mjs --app switches it on by itself.
 //
@@ -87,9 +95,9 @@ import { Browser, sleep } from './lib/cdp.mjs';
 import { probe, frame, reach, layout, app, colourShare, groundShare, cellDiff } from './lib/probe.mjs';
 import { judge, judgeLayout, judgeApp, APP_SKIP } from './lib/rules.mjs';
 import { extra, controls, replayState, photoText, photoTextDone, photoContrast, splitLetters, tileFills } from './lib/probe-extra.mjs';
-import { judgeExtra, judgeBuild } from './lib/rules-extra.mjs';
+import { judgeExtra, judgeBuild, navKind } from './lib/rules-extra.mjs';
 import { restLook, restStops, restGo, heroStack, visitBlocks } from './lib/probe-rest.mjs';
-import { pageBuild, deadControls, space, navBar, crops, grounds, footing, workShown } from './lib/probe-page.mjs';
+import { pageBuild, deadControls, space, navBar, crops, grounds, footing, workShown, navForm, buttonShapes, structures } from './lib/probe-page.mjs';
 import { viewportClass as name, screenshotLabel, isInspectionScreenshot } from './lib/inspection-files.mjs';
 
 const args = process.argv.slice(2);
@@ -105,6 +113,7 @@ let dealtFonts = []; // the faces the saved sheet dealt, to catch a build that q
 let dealtEntrance = null; // the entrance the saved sheet dealt, to catch a build that quietly went back to the old rise
 let dealtReplay = null; // the product replay the saved sheet dealt (software pages), to catch a build without it
 let dealtFooter = null; // the footer section 0 dealt, to catch a build that went back to one line
+let dealtNav = null; // the navigation section 0 dealt, to catch a build that went back to a plain bar
 let dealtPalette = null; // the dealt ink, accent and fields, which may stand as bands beside the ground and its surface
 let sector = null; // the brief's sector: a portfolio shows its work in pictures
 const PORTFOLIO = ['studio-portfolio', 'personal-portfolio', 'agency', 'architecture']; // (as draw.mjs deals them)
@@ -115,7 +124,7 @@ if (!target || target === '-h' || target.startsWith('--')) {
 }
 // Allowances granted by the drawn direction (written by draw.mjs) apply automatically.
 for (const p of ['.taste-skill/direction.json', join(outDir, '..', 'direction.json')]) {
-  if (existsSync(p)) { try { const d = JSON.parse(readFileSync(p, 'utf8')); allow = [...new Set([...allow, ...(d.allow || [])])]; if (d.kind === 'app') appMode = true; if (Array.isArray(d.scenes) && d.scenes.length) film = true; dealtFonts = (d.input?.keep || []).includes('type') ? [] : d.kind === 'app' ? [d.style?.tokens?.font?.family].filter(Boolean) : [d.type?.display?.family, d.type?.text?.family].filter(Boolean); dealtEntrance = d.kind === 'app' ? null : d.entrance?.id || null; dealtReplay = d.kind === 'app' ? null : d.replay || null; dealtFooter = d.kind === 'app' ? null : d.frame?.footer?.id ? d.frame.footer : null; dealtPalette = d.palette ? { ink: d.palette.ink, accent: d.palette.accent, fields: (d.palette.fields || []).map((f) => f.bg) } : null; sector = d.input?.sector || null; } catch {} break; }
+  if (existsSync(p)) { try { const d = JSON.parse(readFileSync(p, 'utf8')); allow = [...new Set([...allow, ...(d.allow || [])])]; if (d.kind === 'app') appMode = true; if (Array.isArray(d.scenes) && d.scenes.length) film = true; dealtFonts = (d.input?.keep || []).includes('type') ? [] : d.kind === 'app' ? [d.style?.tokens?.font?.family].filter(Boolean) : [d.type?.display?.family, d.type?.text?.family].filter(Boolean); dealtEntrance = d.kind === 'app' ? null : d.entrance?.id || null; dealtReplay = d.kind === 'app' ? null : d.replay || null; dealtFooter = d.kind === 'app' ? null : d.frame?.footer?.id ? d.frame.footer : null; dealtNav = d.kind === 'app' ? null : d.frame?.nav?.id ? d.frame.nav : null; dealtPalette = d.palette ? { ink: d.palette.ink, accent: d.palette.accent, fields: (d.palette.fields || []).map((f) => f.bg) } : null; sector = d.input?.sector || null; } catch {} break; }
 }
 // A local file is served over http from a throwaway server on 127.0.0.1, so the browser never has to
 // open a file path (some sandboxes show Node and the browser different views of the disk) and relative
@@ -341,6 +350,9 @@ try {
     const metrics = await page.eval(probe);
     // round 11: the site's bar as the page opens (a bar that hides on the way down may not be back after the walk)
     const navAtLoad = !appMode ? await page.eval(navBar).catch(() => null) : null;
+    // round 11c, on desktop: the navigation's form as the page opens; the walk reads it again past the hero (a dealt side
+    // index or dock steps aside while a band, a scene or the replay is on the screen, so nothing there is read again)
+    const navSeen = w >= 1100 && !appMode ? { load: await page.eval(navForm, 'load').catch(() => null), down: null, up: null, held: 0, aside: ['side index', 'bottom dock'].includes(navKind(dealtNav)?.form) } : null;
     // each product replay's window before the walk: replay.js has not armed it yet, so it shows its final state
     const replayAtLoad = await page.eval(`[...document.querySelectorAll('[data-replay]')].map((r) => { const u = (r.querySelector('[data-ui]') || r).getBoundingClientRect(); return { w: u.width / innerWidth, h: u.height / innerHeight }; })`).catch(() => []);
 
@@ -399,6 +411,20 @@ try {
       await photoCheck(); await letterCheck();
       reached.push(await page.eval(reach, metrics.reach).catch(() => null));
       await page.eval('window.__motionSample && window.__motionSample()').catch(() => {});
+      // once, past the hero on the way down (a screen held by a scene or a sticky stage, where a dock or an index may step
+      // aside, is passed over three times at most, and so is any screen with nothing on it where one was dealt), then after
+      // a short scroll back up, where a bar that hides comes back
+      if (navSeen && !navSeen.down && pos.y >= h * 1.5) {
+        const s = await page.eval(navForm, 'down').catch(() => null);
+        if (s && (s.form !== 'none' || !(s.held || navSeen.aside) || ++navSeen.held > 3)) {
+          navSeen.down = s;
+          await page.wheel(-240, { step: 120, pauseMs: 30 });
+          await sleep(900);
+          navSeen.up = await page.eval(navForm, 'up').catch(() => null);
+          await page.wheel(240, { step: 120, pauseMs: 30 });
+          await sleep(700);
+        }
+      }
       // once, about two thirds down a long page: back up half a screen, where a bar that hides on the way down returns
       if (upReach === null && total > 6 && pos.y >= pos.max * 0.6) {
         await page.wheel(-Math.round(h / 2), { step: 120, pauseMs: 30 });
@@ -435,6 +461,10 @@ try {
         build.grounds = await page.eval(grounds, dealtPalette).catch((e) => { frameErrors.push('grounds: ' + String(e.message).slice(0, 160)); return null; });
         if (dealtFooter) build.foot = await page.eval(footing).then((f) => ({ ...f, dealt: dealtFooter })).catch((e) => { frameErrors.push('footer: ' + String(e.message).slice(0, 160)); return null; });
         if (PORTFOLIO.includes(sector)) build.work = await page.eval(workShown).catch((e) => { frameErrors.push('work: ' + String(e.message).slice(0, 160)); return null; });
+        // round 11c: the button shapes, the navigation against the one section 0 dealt, and the sections' structures
+        build.buttons = await page.eval(buttonShapes).catch((e) => { frameErrors.push('buttons: ' + String(e.message).slice(0, 160)); return null; });
+        if (navSeen) build.navs = { ...navSeen, dealt: dealtNav };
+        build.structures = await page.eval(structures).catch((e) => { frameErrors.push('structures: ' + String(e.message).slice(0, 160)); return null; });
       }
     }
     const appM = appMode ? await page.eval(app).catch(() => null) : null;
@@ -585,7 +615,7 @@ try {
     if (lay) findings.push(...judgeLayout(lay, { width: w, allow }));
     if (ex) findings.push(...judgeExtra(ex, { width: w, allow, screens: total, app: !!appMode }));
     // (a list of cards on a fill is not reported, so it does not hide its section's other frames)
-    if (build) findings.push(...judgeBuild(build, { width: w, allow, boxed: (ex?.boxedLists || []).filter((b) => b.how !== 'filled').map((b) => b.head), dead }));
+    if (build) findings.push(...judgeBuild(build, { width: w, allow, boxed: (ex?.boxedLists || []).filter((b) => b.how !== 'filled').map((b) => b.head), dead, boxedText: ex?.boxed }));
     // ---------- round 9 ----------
     // pictures the page asks for that are not there (r8-p37 asked for four)
     netOff.forEach((off) => off());
@@ -762,7 +792,7 @@ try {
     if (!appMode && (metrics.reach?.dest?.length || metrics.reach?.labels?.length) && pageScreens > 6 * lengthScale && !(upReach && upReach.found) && !allow.includes('nav-lost')) {
       let run = 0, worst = 0, from = 0, span = null;
       reached.forEach((r, i) => { if (i === 0) return; if (r && r.found) { run = 0; return; } if (!run) from = i; run += stride; if (run > worst) { worst = run; span = [from * stride + 1, i * stride + 1]; } });
-      if (worst > 3) findings.push({ level: pageScreens > 10 * lengthScale ? 'FAIL' : 'WARN', id: 'nav-lost', width: w, message: `On this ${pageScreens}-screen page nothing leads back to the navigation or the main action from screen ${span[0]} to ${span[1]}: no bar stays or returns on scroll-up, and no link to its anchors is in view.`, fix: 'Keep one way back in reach after the first screen: a compact bar (the wordmark, a few links, the action) that is sticky, or hides on the way down and returns on scroll-up, on a solid ground where it passes pictures; on a phone the menu button and the action stay in that bar (references/layout.md §7).' });
+      if (worst > 3) findings.push({ level: pageScreens > 10 * lengthScale ? 'FAIL' : 'WARN', id: 'nav-lost', width: w, message: `On this ${pageScreens}-screen page nothing leads back to the navigation or the main action from screen ${span[0]} to ${span[1]}: no navigation stays on the screen, and no link to its anchors is in view.`, fix: 'Keep the navigation section 0 dealt in reach on every screen after the first, the way it says: a bar fixed on a solid band, the wordmark and the action in their corners, a side index or a dock, never one that hides on scroll; on a phone the menu button and the action stay in view (references/layout.md §7).' });
     }
     const empty = frameChecks.map((f, i) => ({ f, i })).filter(({ f }) => f && f.filled < 0.2);
     // the same large statement on screen for three screens or more in a row

@@ -674,6 +674,193 @@ export function workShown() {
   return { sections: secs.map((s) => norm(s.querySelector('h1, h2, h3')?.innerText || s.id).slice(0, 40)), pictures: files.size, slots, typeset };
 }
 
+// Round 11c (Leon: three button shapes at one size, a plain bar that hides on scroll; r12-p53's three unrelated buttons,
+// r12-p54's six sections of a heading, a line and a list panel, r12-p52's page of slate boxes). On desktop.
+//   navForm    the navigation in view now, at load, past the hero on the way down and after a short scroll back up: the
+//              links and buttons of the site's bar (a header or nav outside the sections, at load) and of every layer fixed
+//              to the screen or sticky outside the sections, on top where they lie, read as one form: a dock at the
+//              bottom, a side index (three links or more to the page's own sections stacked at one side), a masthead (the
+//              wordmark alone on its row and centred over the links; at load), a centred wordmark, corners (a group in each
+//              top corner, nothing between them and no band behind them), a top bar, or none; whether a band lies behind
+//              the top groups; and whether a scene or a sticky stage holds the screen (nav-not-as-dealt)
+export function navForm(phase = 'load') {
+  const W = innerWidth, H = innerHeight, B = document.body, D = document.documentElement;
+  const css = (e) => getComputedStyle(e);
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  const inSections = (el) => !!el.parentElement?.closest('main, section, article, [data-scene]');
+  // (on top where it lies: on the screen, not faded, and what the screen shows at its middle)
+  const onTop = (el) => { const r = el.getBoundingClientRect(); if (r.width < 4 || r.height < 4 || r.bottom <= 0 || r.top >= H || r.right <= 0 || r.left >= W) return false; for (let e = el; e && e !== D; e = e.parentElement) { const cs = css(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.5) return false; } const hit = document.elementFromPoint(Math.min(W - 1, Math.max(0, r.left + r.width / 2)), Math.min(H - 1, Math.max(0, r.top + r.height / 2))); return !!hit && (el.contains(hit) || hit.contains(el)); };
+  // the layer that pins it: its outermost ancestor fixed to the screen, or sticky outside the sections (a sticky stage in a
+  // section is the section's); any sticky one for a side index, which may stand in the page's grid
+  const pinOf = (el, any = false) => { let p = null; for (let e = el; e && e !== B; e = e.parentElement) { const pos = css(e).position; if (pos === 'fixed' || (pos === 'sticky' && (any || !inSections(e)))) p = e; } return p; };
+  const home = (a) => { const h = (a.getAttribute('href') || '').trim(); if (['#', '#top', '/', './', 'index.html', './index.html'].includes(h) || a.matches('[data-wordmark], [rel=home]')) return true; try { const u = new URL(h, location.href); return u.origin === location.origin && u.pathname.replace(/index\.html?$/, '') === location.pathname.replace(/index\.html?$/, '') && (!u.hash || u.hash === '#top'); } catch { return false; } };
+  const inBar = (el) => { const b = el.closest('header, [role=banner]'); return !!el.closest('nav') || (!!b && !inSections(b)); };
+  const clear = (e) => { const c = css(e).backgroundColor, a = c.match(/^rgba\(.*,\s*([\d.]+)\)$/); return c === 'transparent' || (!!a && +a[1] < 0.5); };
+  const items = [], side = [];
+  for (const a of document.querySelectorAll('a[href], button, [role=button]')) {
+    if (a.closest('[data-ui], dialog, [role=dialog], [aria-hidden=true], footer') || !norm(a.innerText || a.getAttribute('aria-label')) || !onTop(a)) continue;
+    const q = a.getBoundingClientRect(), it = { a, l: q.left, r: q.right, t: q.top, b: q.bottom, mark: a.matches('a') && home(a), pin: pinOf(a) };
+    if (it.pin || (phase === 'load' && inBar(a))) items.push(it);
+    if (/^#[^#\s]+$/.test(a.getAttribute('href') || '') && !it.mark && pinOf(a, true)) side.push(it);
+  }
+  const mid = (x) => (x.l + x.r) / 2;
+  let form = 'none', band = false;
+  // a dock: two items or more fixed in the lowest band of the screen, in one group (an action and a Top tab in the two
+  // bottom corners are corners)
+  const dock = items.filter((x) => x.pin && css(x.pin).position === 'fixed' && x.t > H * 0.6 && x.b > H - 160);
+  if (dock.length && Math.max(...dock.map((x) => x.r)) - Math.min(...dock.map((x) => x.l)) > W * 0.6) dock.length = 0;
+  // a side index: three links or more to the page's sections, stacked on one left edge, at one side of the screen
+  const stack = side.filter((x) => x.r <= W * 0.3 || x.l >= W * 0.7).filter((x, i, a) => a.filter((y) => Math.abs(y.l - x.l) <= 16).length >= 3);
+  const top = items.filter((x) => x.t < 140 && x.b < H * 0.3);
+  // the wordmark: the bar's link home (a monogram may link home too), else a mark named so in it
+  const marks = top.filter((x) => x.mark);
+  let mark = marks[0] || null;
+  if (!mark && top.length) { const m = [...document.querySelectorAll('[data-wordmark], header [class*=wordmark i], header [class*=logo i], nav [class*=wordmark i], nav [class*=logo i]')].find((e) => onTop(e) && e.getBoundingClientRect().top < 140); if (m) { const q = m.getBoundingClientRect(); mark = { l: q.left, r: q.right, t: q.top, b: q.bottom, a: m }; } }
+  if (dock.length >= 2 && new Set(dock.map((x) => x.pin)).size === 1) form = 'bottom dock';
+  else if (stack.length >= 3) form = 'side index';
+  else if (top.length) {
+    const rest = top.filter((x) => x !== mark && !(mark && mark.a.contains(x.a)));
+    const markRow = mark ? rest.filter((x) => Math.abs((x.t + x.b) / 2 - (mark.t + mark.b) / 2) <= 12) : [];
+    // (the links under the wordmark, the action at the end of their row aside)
+    const under = mark ? rest.filter((x) => x.t >= mark.b - 2) : [];
+    const links = under.filter((x) => clear(x.a));
+    const span = links.length ? [Math.min(...links.map((x) => x.l)), Math.max(...links.map((x) => x.r))] : null;
+    // (a band behind the groups: a fill across half the screen or more round all of them)
+    if (top.length >= 2) { let c = top[0].a.parentElement; while (c && !top.every((x) => c.contains(x.a))) c = c.parentElement; for (let e = c; e && e !== B && e !== D; e = e.parentElement) { const q = e.getBoundingClientRect(); if (q.width >= W * 0.5 && q.top < 140 && !clear(e)) { band = true; break; } if (q.height > H * 0.3) break; } }
+    if (phase === 'load' && mark && !markRow.length && links.length >= 2 && Math.abs(mid(mark) - (span[0] + span[1]) / 2) <= Math.max(48, (span[1] - span[0]) * 0.15) && mid(mark) > W * 0.15) form = 'masthead';
+    else if ((marks.length ? marks : [mark]).some((m) => m && Math.abs(mid(m) - W / 2) <= W * 0.04)) form = 'centred wordmark';
+    else if (top.some((x) => x.r <= W * 0.4) && top.some((x) => x.l >= W * 0.6) && top.every((x) => x.r <= W * 0.4 || x.l >= W * 0.6) && !band) form = 'corners';
+    else form = 'top bar';
+  }
+  // the screen held by a scene or a sticky stage (a side index or a dock may step aside while one holds it)
+  let held = false;
+  for (let e = document.elementFromPoint(W / 2, H / 2); e && e !== B && e !== D; e = e.parentElement) { const q = e.getBoundingClientRect(); if ((css(e).position === 'sticky' || e.matches('.pin-spacer, [data-scene], .scene')) && q.height >= H * 0.8 && q.top <= 2) { held = true; break; } }
+  return { phase, form, band, held, n: items.length, top: top.length, mark: mark ? norm(mark.a.innerText || mark.a.getAttribute('aria-label')).slice(0, 30) : null, items: top.slice(0, 6).map((x) => norm(x.a.innerText || x.a.getAttribute('aria-label')).slice(0, 20)) };
+}
+
+//   buttonShapes  the page's buttons by shape: every link or button drawn as one (a fill unlike its ground, or an outline
+//              on three sides), or holding a drawn part half its height or more beside its label (a circle with an arrow),
+//              by its corner (square to 3px, soft to 12px, round, pill, circle) and its kind (filled, outlined), with the
+//              heights it is built at (the sheet sizes the one button to the bar, a card or a form, so a height is no shape
+//              of its own); and every link or button set in type that stands alone as an action (not in a sentence or a
+//              list, not the bar's links or the footer's). Controls that are not actions are left out: icons with no word,
+//              labels over six words, tabs, switches and toggles (an accordion's rows), the skip link, the wordmark or a
+//              monogram linking home, a card or a band set as a link (a heading or a 48px picture in it, or over 96px
+//              tall), and the bar's own cells (of three drawn items or more in the bar, only the last is its action)
+//              (button-family)
+export function buttonShapes() {
+  const W = innerWidth, SY = scrollY || 0, B = document.body;
+  const memo = new Map(); const css = (e) => { let c = memo.get(e); if (!c) { c = getComputedStyle(e); memo.set(e, c); } return c; };
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  const rgba = (c) => { const s = String(c || ''); const k = s.match(/color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)(?:\s*\/\s*([-\d.e]+))?\s*\)/); if (k) return [k[1] * 255, k[2] * 255, k[3] * 255, k[4] != null ? +k[4] : 1]; const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+  const groundOf = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const c = rgba(css(e).backgroundColor); if (c && c[3] >= 0.9) return c; } return [255, 255, 255, 1]; };
+  const differs = (a, b, d = 6) => !!a && !!b && [0, 1, 2].some((i) => Math.abs(a[i] - b[i]) >= d);
+  const sides = (el) => { const cs = css(el); return ['Top', 'Right', 'Bottom', 'Left'].filter((s) => parseFloat(cs[`border${s}Width`]) >= 1 && cs[`border${s}Style`] !== 'none' && (rgba(cs[`border${s}Color`]) || [0, 0, 0, 0])[3] > 0.2).length; };
+  // (shown on the page: laid out, at a third of its opacity or more, and not parked off the screen like a skip link)
+  const shown = (el) => { for (let e = el, i = 0; e && e !== B && i < 30; e = e.parentElement, i++) { const cs = css(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.3) return false; } const r = el.getBoundingClientRect(); return r.width > 2 && r.height > 2 && r.right > 0 && r.left < W && r.bottom + SY > 0; };
+  const drawn = (e) => { const c = rgba(css(e).backgroundColor); if (c && c[3] >= 0.5 && differs(c, groundOf(e.parentElement || B))) return 'filled'; return sides(e) >= 3 ? 'outlined' : null; };
+  const corner = (e, q) => { const v = css(e).borderTopLeftRadius; const r = /%/.test(v) ? (parseFloat(v) / 100) * Math.min(q.width, q.height) : parseFloat(v) || 0; if (r >= q.height / 2 - 1) return Math.abs(q.width - q.height) <= 4 ? 'circle' : 'pill'; return r <= 3 ? 'square' : r <= 12 ? 'soft' : 'round'; };
+  const inBar = (el) => { const b = el.closest('header, [role=banner]'); return !!el.closest('nav') || (!!b && !b.parentElement?.closest('main, section, article, [data-scene]')); };
+  // (a link home, read as navForm reads the wordmark)
+  const home = (a) => { const h = (a.getAttribute('href') || '').trim(); if (['#', '#top', '/', './', 'index.html', './index.html'].includes(h)) return true; try { const u = new URL(h, location.href); return u.origin === location.origin && u.pathname.replace(/index\.html?$/, '') === location.pathname.replace(/index\.html?$/, '') && (!u.hash || u.hash === '#top'); } catch { return false; } };
+  const shapes = new Map(), bar = [];
+  const add = (key, label, h = 0) => { const s = shapes.get(key) || { n: 0, labels: [], h: [] }; s.n++; if (s.labels.length < 2 && !s.labels.includes(label)) s.labels.push(label); if (h) s.h.push(Math.round(h)); shapes.set(key, s); };
+  for (const el of document.querySelectorAll('a[href], button, [role=button], input[type=submit], input[type=button]')) {
+    if (el.closest('[data-ui], dialog, [role=dialog], [aria-hidden=true], [role=tablist], summary') || el.matches('[role=tab], [role=switch], [aria-pressed], [aria-expanded], [data-wordmark], [rel=home]') || !shown(el)) continue;
+    if (el.matches('a') && inBar(el) && home(el)) continue;
+    // (the words counted on the whole label, before it is cut for the report)
+    const text = norm(el.innerText || el.value || ''), label = text.slice(0, 30);
+    if (!/\p{L}/u.test(text) || text.split(' ').length > 6 || /^skip\b/i.test(text)) continue;
+    const q = el.getBoundingClientRect(); if (q.height > 96 || q.width > W * 0.6 || el.querySelector('h1, h2, h3, h4, h5, h6, [role=heading]') || [...el.querySelectorAll('img, picture, video, canvas')].some((m) => m.getBoundingClientRect().height >= 48)) continue;
+    let how = drawn(el), box = el;
+    if (!how) for (const c of el.querySelectorAll('*')) { const k = drawn(c), p = c.getBoundingClientRect(); if (k && p.height >= q.height * 0.5 && p.width >= 16) { how = k; box = c; break; } }
+    if (how) {
+      const p = box.getBoundingClientRect(), key = `${corner(box, p)} ${how}${box !== el ? ', beside its label' : ''}`;
+      if (inBar(el)) bar.push({ key, label, x: q.left, h: p.height }); else add(key, label, p.height);
+      continue;
+    }
+    // set in type: an action standing alone (a sentence's link and a list's are not)
+    if (inBar(el) || el.closest('footer, li') || el.matches('a[href^="mailto:"], a[href^="tel:"]')) continue;
+    const host = el.parentElement?.closest('p, dd, dt, td, th, h1, h2, h3, h4, h5, h6, figcaption, blockquote, label');
+    if (host && norm(host.innerText).length > text.length + 2) continue;
+    add('type', label);
+  }
+  for (const b of bar.length <= 2 ? bar : [bar.sort((x, y) => y.x - x.x)[0]]) add(b.key, b.label, b.h);
+  return [...shapes].map(([key, s]) => ({ key, n: s.n, labels: s.labels, ...(s.h.length ? { h: [Math.min(...s.h), Math.max(...s.h)] } : {}) }));
+}
+
+//   structures each section's structure after the hero (the hero too, marked): where its heading stands against the rest
+//              (over it, beside it), how many columns it makes at its widest row, and the largest group it holds (a list,
+//              a list in a product window, cards, one panel, a product window, a picture or pictures, a form, a table, or
+//              text), read as one word (split for a heading beside the rest, columns for two or more under it, grid,
+//              gallery, list, table, single-picture, panel, tool, statement), and whether that group stands in a box
+//              (cards, a panel, or a window drawn on a fill unlike its section's). A scene that shows nothing yet but its
+//              heading is left out (same-structure, boxed-page)
+export function structures() {
+  const W = innerWidth, H = innerHeight, SY = scrollY || 0, B = document.body;
+  const memo = new Map(); const css = (e) => { let c = memo.get(e); if (!c) { c = getComputedStyle(e); memo.set(e, c); } return c; };
+  const visible = (el) => { for (let e = el, i = 0; e && e !== B && i < 30; e = e.parentElement, i++) { const cs = css(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.05) return false; } const r = el.getBoundingClientRect(); return r.width > 2 && r.height > 2; };
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  const words = (t) => (norm(t).match(/\S+/g) || []).length;
+  const rgba = (c) => { const s = String(c || ''); const k = s.match(/color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)(?:\s*\/\s*([-\d.e]+))?\s*\)/); if (k) return [k[1] * 255, k[2] * 255, k[3] * 255, k[4] != null ? +k[4] : 1]; const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+  const groundOf = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const c = rgba(css(e).backgroundColor); if (c && c[3] >= 0.9) return c; } return [255, 255, 255, 1]; };
+  const differs = (a, b, d = 6) => !!a && !!b && [0, 1, 2].some((i) => Math.abs(a[i] - b[i]) >= d);
+  const filled = (e) => { const c = rgba(css(e).backgroundColor); return !!c && c[3] >= 0.5 && differs(c, groundOf(e.parentElement || B)); };
+  const area = (q) => Math.max(0, Math.min(W, q.right) - Math.max(0, q.left)) * Math.max(0, q.bottom - q.top);
+  const union = (els) => { const rs = els.map((e) => e.getBoundingClientRect()); return { left: Math.min(...rs.map((q) => q.left)), right: Math.max(...rs.map((q) => q.right)), top: Math.min(...rs.map((q) => q.top)), bottom: Math.max(...rs.map((q) => q.bottom)) }; };
+  // the sections as the splits take them (the innermost of section, scene, hero, a child of main), the footer aside
+  const qual = (s) => { if (!visible(s) || s.closest('nav, footer, dialog, header[role=banner]')) return false; const r = s.getBoundingClientRect(); return r.height >= 160 && r.width >= W * 0.3; };
+  const secs = [...document.querySelectorAll('section, [data-scene], [data-hero], main > div, main > article')].filter(qual).filter((s, i, a) => !a.some((o) => o !== s && s.contains(o))).sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top).slice(0, 30);
+  const out = [];
+  for (const s of secs) {
+    const sr = s.getBoundingClientRect(), hero = !!s.querySelector('h1') || sr.top + SY < H * 0.5;
+    const h = [...s.querySelectorAll(hero ? 'h1, h2' : 'h2, h3, [role=heading]')].find((x) => visible(x) && !x.closest('[data-ui]'));
+    // the head block: the heading and the short text with it, up to the box that also holds a list, a picture or a form
+    let hb = h;
+    if (h) for (let e = h.parentElement; e && e !== s && s.contains(e); e = e.parentElement) { if (e.matches('ul, ol, dl, table, [role=list], form') || e.querySelector('img, video, canvas, [data-ui], ul, ol, dl, table, form, input, [role=list]') || words(e.innerText) > words(h.innerText) + 60) break; hb = e; }
+    const hr = hb ? hb.getBoundingClientRect() : null;
+    const apart = (el) => !(hb && (hb.contains(el) || el.contains(hb)));
+    // (a band over the heading, a ticker, is not what the section holds; nor a link drawn as a button)
+    const above = (q) => !!hr && q.bottom <= hr.top + 2;
+    const parts = []; const part = (q) => { const l = Math.max(0, q.left), r = Math.min(W, q.right); if (r - l >= 4 && q.bottom - q.top >= 4 && !above(q)) parts.push({ l, r, t: q.top, b: q.bottom }); };
+    const tw = document.createTreeWalker(s, NodeFilter.SHOW_TEXT); const rg = document.createRange(); let n, k = 0;
+    while ((n = tw.nextNode()) && k < 800) { const el = n.parentElement; if (!norm(n.nodeValue) || !el || !apart(el) || el.closest('[aria-hidden=true]') || !visible(el)) continue; k++; rg.selectNodeContents(n); for (const q of rg.getClientRects()) part(q); }
+    for (const m of s.querySelectorAll('img, video, canvas, [data-ui], input, textarea, select')) if (apart(m) && visible(m) && area(m.getBoundingClientRect()) > 400) part(m.getBoundingClientRect());
+    const boxes = [...s.querySelectorAll('div, article, li, figure, aside, a, ul, ol')].filter((e) => { if (!apart(e) || !visible(e) || !filled(e)) return false; const q = e.getBoundingClientRect(); return q.width >= 80 && q.height >= 40 && q.width < W * 0.94 && !above(q) && !(e.matches('a') && q.height <= 64 && words(e.innerText) <= 5); });
+    for (const e of boxes) part(e.getBoundingClientRect());
+    const rec = { head: norm(h ? h.innerText : s.id).slice(0, 40), y: Math.round(sr.top + SY), hero };
+    if (!parts.length) { if (s.closest('.scene, [data-scene], .pin-spacer')) continue; out.push({ ...rec, word: 'statement', lead: 'none', boxed: false }); continue; }
+    const body = { l: Math.min(...parts.map((p) => p.l)), r: Math.max(...parts.map((p) => p.r)), t: Math.min(...parts.map((p) => p.t)) };
+    rec.pos = !hr ? 'none' : hr.right <= body.l + 8 || hr.left >= body.r - 8 ? 'beside' : hr.bottom <= body.t + 8 ? 'over' : 'mixed';
+    // its columns: the most parts side by side at one height (the head block among them where it stands beside)
+    const ps = hr && rec.pos === 'beside' ? [...parts, { l: Math.max(0, hr.left), r: Math.min(W, hr.right), t: hr.top, b: hr.bottom }] : parts;
+    rec.cols = 0;
+    for (const p of ps) { const y = (p.t + p.b) / 2, iv = ps.filter((q) => q.t <= y && q.b >= y).map((q) => [q.l, q.r]).sort((a, b) => a[0] - b[0]), m = []; for (const [l, r] of iv) { const c = m[m.length - 1]; if (c && l <= c[1] + 16) c[1] = Math.max(c[1], r); else m.push([l, r]); } rec.cols = Math.max(rec.cols, m.filter((c) => c[1] - c[0] >= W * 0.06).length); }
+    // its groups: lists (three items or more; a list of filled items is cards), product windows (a list when they hold
+    // one), cards or one panel, pictures, a form
+    const groups = [];
+    const itemsOf = (l) => [...l.children].filter((c) => visible(c) && !(hb && c.contains(hb)));
+    // (an item is filled by itself or by the frame that holds most of it: a piece of work's coloured frame)
+    const itemFilled = (c) => filled(c) || [...c.children].some((x) => filled(x) && area(x.getBoundingClientRect()) >= area(c.getBoundingClientRect()) * 0.6);
+    const lists = [...s.querySelectorAll('ul, ol, dl, table, [role=list]')].filter((l) => !(hb && hb.contains(l)) && visible(l) && !l.closest('[data-ui]') && itemsOf(l).length >= 3);
+    for (const l of lists) { if (lists.some((o) => o !== l && o.contains(l))) continue; const kids = itemsOf(l), boxed = kids.filter(itemFilled).length >= kids.length * 0.6; groups.push({ kind: boxed ? 'cards' : l.matches('table') ? 'table' : 'list', el: l, q: l.getBoundingClientRect(), boxed }); }
+    for (const u of s.querySelectorAll('[data-ui]')) { if (u.parentElement?.closest('[data-ui]') || !apart(u) || !visible(u)) continue; groups.push({ kind: [...u.querySelectorAll('ul, ol, table, [role=list]')].some((l) => [...l.children].filter(visible).length >= 3) ? 'list' : 'window', el: u, q: u.getBoundingClientRect(), boxed: [...u.querySelectorAll('div, article, li, figure, aside')].filter((e) => filled(e) && visible(e) && e.getBoundingClientRect().width >= 80 && e.getBoundingClientRect().height >= 40).length >= 2 }); }
+    const outer = boxes.filter((e) => !boxes.some((o) => o !== e && o.contains(e)) && !e.closest('[data-ui]') && !e.querySelector('[data-ui]') && !lists.some((l) => l.contains(e) || e.contains(l)) && norm(e.innerText));
+    if (outer.length) groups.push({ kind: outer.length >= 2 ? 'cards' : 'panel', el: outer[0], q: union(outer), boxed: true });
+    const pics = [...s.querySelectorAll('img, video, canvas')].filter((m) => apart(m) && visible(m) && !m.closest('[data-ui]') && area(m.getBoundingClientRect()) >= W * H * 0.04);
+    if (pics.length) groups.push({ kind: pics.length >= 3 ? 'pictures' : 'picture', el: pics[0], q: union(pics) });
+    const fields = [...s.querySelectorAll('form, input:not([type=hidden]), select, textarea')].filter((f) => apart(f) && visible(f) && !f.closest('[data-ui]'));
+    if (fields.length) groups.push({ kind: 'tool', el: fields[0], q: union(fields) });
+    const lead = groups.filter((g) => !above(g.q)).sort((a, b) => area(b.q) - area(a.q))[0];
+    rec.lead = lead ? lead.kind : 'text';
+    rec.word = rec.cols >= 2 && rec.pos !== 'beside' && /cards|pictures/.test(rec.lead) ? (rec.lead === 'pictures' ? 'gallery' : 'grid') : rec.pos === 'beside' ? 'split' : rec.cols >= 2 ? 'columns' : { list: 'list', table: 'table', window: 'single-picture', picture: 'single-picture', pictures: 'gallery', cards: 'grid', panel: 'panel', tool: 'tool', text: 'statement' }[rec.lead];
+    // in a box: cards or a panel, a window of boxes, or a list or window on a fill unlike the section's, inside the margins
+    rec.boxed = !!lead && (!!lead.boxed || (/list|window|table/.test(lead.kind) && (() => { for (let e = lead.el; e && e !== s; e = e.parentElement) if (filled(e) && e.getBoundingClientRect().width < W * 0.94) return true; return false; })()));
+    out.push(rec);
+  }
+  return out;
+}
+
 // deadControls: the controls of the first screen that change nothing when used (dead-control). A button, a field or a
 // link to "#" on the first screen, and in a product window anything drawn as a control (a field outlined round a few
 // words, a filled button of one to four words), is clicked once: it is alive when the page changes beyond what changes

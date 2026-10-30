@@ -954,6 +954,10 @@
    "agency",
    "studio-portfolio"
   ],
+  "tones": [
+   "bold",
+   "playful"
+  ],
   "needs": [
    "pictures:0"
   ],
@@ -1278,7 +1282,7 @@
    "pictures:0"
   ],
   "hold": 1.1,
-  "weight": 0.6,
+  "weight": 0.3,
   "lines": 1
  },
  {

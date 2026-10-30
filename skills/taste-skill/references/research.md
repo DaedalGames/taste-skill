@@ -399,3 +399,29 @@ builder to build the footer as dealt. The inspector checks the last three (`surf
 technique, entrance, lead photograph or hero shape came back on two draws of one brief in a row (the
 round-12 skill did so 16 times), the entrance where nothing arrives fell from nine pages to seven, and
 the split hero from six to three.
+
+## 16. Round 11c: the patterns built as written, designed chrome, varied pages
+
+The owner's review of 29 October found the pages alike in their simple parts: a plain bar that hides
+on scroll, three button shapes, a one-line footer, the same few sections. The round-12 patterns cured
+the sameness but not the quality: built as dealt they scored 4.5 of 10 against 5.3 for the tested
+designs, 15 of 17 descriptions disagreed with their sheet or asked for assets the page did not have,
+and a notes page built six middle sections as a heading, a line and a list panel.
+
+So a lab pass rewrote every pattern to agree with the sheet and gave each a harsh quality score, the
+assets it needs and, for the frame parts and heroes, a line it must show. The deal now skips a pattern
+scored 3 or below, weighs the rest by score against the tested designs, and never deals one whose
+assets the page lacks (`--have` names logos, a map, real data, a 3D model). Every frame part and hero
+prints its **Must show** line. No navigation hides on scroll: the hiding bar left the twelve designs,
+and the study's band that names the section in view took its place. A page has one button family.
+Each section carries a structure, and none comes three times on a page or twice in a row. A software
+hero shows one of six things in turn (a document, a chart, a timeline, one object, a conversation, a
+map). A direction's own move that holds the stage counts with the scenes. The inspector checks the
+button shapes (`button-family`), the navigation against the one dealt (`nav-not-as-dealt`) and
+sections built alike (`same-structure`).
+
+In thirty draws over seven briefs no pattern came without its assets, none under quality 4, no
+navigation hid, every frame part and hero had its Must show line, and no page had one structure three
+times or two alike in a row. About a third of the frame parts are patterns (round 12: about half).
+The small moves are the weak point: only 17 pass the house rules, so a page gets 1.4 on average and
+some get none.

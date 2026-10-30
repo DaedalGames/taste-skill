@@ -141,6 +141,15 @@ The round-11 test pages (30 October 2026) showed two more:
 | A new ground or panel colour for each section or card | warned at four tones on grounds and large panels, failed at five (`surface-count`; the ink, the accent and a dealt field do not count) | The ground and one surface tone; the ink, the accent or the field as bands |
 | A portfolio whose work is type cards, no picture of the work | warned under three pictures or marked slots in the work (`portfolio-without-work`) | Frames, stills or films of the work; `data-slot="work"` frames where the client's own are missing |
 
+The round-12 test pages (30 October 2026) showed four more:
+
+| Tell | Status | Do instead |
+| --- | --- | --- |
+| A third button shape: an outline, a pill or a block of its own beside the dealt button and its sibling | failed over two shapes on the page, by corner and kind at any height; tabs and toggles do not count (`button-family`) | The dealt button for every action, and one quieter sibling |
+| The dealt navigation built as a plain bar, or a bar that hides on scroll | failed where the built form is not the dealt one (top bar, dock, side index, corners, centred wordmark, masthead); a bar that hides on the way down fails too, and is warned where no navigation was dealt (`nav-not-as-dealt`) | The navigation section 0 deals, on the screen after the hero |
+| Section after section built one way: a small heading, a line and a list panel | warned at three sections round the same thing (a list, cards, a window, one picture), failed at four (`same-structure`) | Each section the structure its content asks for, none three times |
+| Every section a box: product windows, panels and cards on one fill | warned when four sections or more after the hero, all but one, stand in a box (`boxed-page`) | Cards and windows in two or three sections, the rest on the ground |
+
 ## 6. Copy tells
 
 Flagged by `lint.mjs`: the genre's verbs and adjectives (unlock, supercharge, seamless, elevate,

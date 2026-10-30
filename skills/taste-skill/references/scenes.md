@@ -217,7 +217,13 @@ empty, and that the navigation or the one action is in reach after the hero.
 
 1. **Two per page,** from different families, a quiet section between them; three only on a long,
    loud page. The inspector warns over four (`many-scenes`) and when scenes hold more than 60% of the
-   page (`scene-heavy`).
+   page (`scene-heavy`). A section or a hero that pins, and a signature move that holds the stage (a
+   pinned story, a sideways gallery, an opening window, a sheet over a photograph), count with the
+   scenes: together no more held stretches than the page takes scenes, in the same six screens. A
+   move that is the direction's or the hero's own stays and takes the place of one scene (a hero held
+   by its own pinned story is one stretch, not two). For any other that does not fit, or one on a page
+   without a scene, the draw deals another section, hero or move, and the sheet names each held
+   stretch in its length budget.
 2. **A page with scenes still has a length budget:** about 12-16 screens at 1440 in all (the study's
    median page is 8.7 screens and 575 words, its middle half up to 14.4; references/research.md), and
    about 45 words or more a screen. The scenes hold about six screens of scroll between them, and at
@@ -329,7 +335,10 @@ its own at all about six, so the scenes dealt there need no more between them; n
 page, a scene on the first screen, which shows the product large.
 `--list scenes` prints each scene's needs. A scene marked *not dealt* stays in the library as a
 reference and is never dealt, nor taken by id; its entry says why. The round 10 audit retired seven,
-hinged sheets followed, and round 11 retired the raster cut (weight 0 in `scenes.json`).
+hinged sheets followed, and round 11 retired the raster cut (weight 0 in `scenes.json`). A weight
+under 1 deals a scene less often, also when it is the last one that fits a page: a researched
+technique then takes its slot as often as the weight falls short of one. An entry's `tones` deals it
+only to a page of that tone.
 
 **Camera through space**
 - **Closing cut under the rise** (`closing-cut-under-the-rise`): the one thing the page is about,
@@ -392,7 +401,8 @@ hinged sheets followed, and round 11 retired the raster cut (weight 0 in `scenes
   the next section's opening statement, one ground and one ink, no accent (*pictures:0*): a hand-over
   for pages without pictures, in any sector. Between two sections, from the ground to the ink, once;
   hold 1.1. scenes.mjs warns `empty-steps` where the line stands alone on the ground and where the new
-  statement stands on the ink: the header defends it.
+  statement stands on the ink: the header defends it. Dealt at weight 0.3: it fits nearly every page
+  and came on 4 of 30 (round 11b).
 - **Light flood** (`light-flood`): one sentence plays out a day: light rises, floods the screen, night
   falls. Two short lines, no pictures; it holds about one screen (1.2). Not dealt (round 10 audit): the
   whole look is a blurred dome and blurred text.
@@ -626,7 +636,7 @@ hinged sheets followed, and round 11 retired the raster cut (weight 0 in `scenes
   springs back, and its full stop falls out and lands as the button. A word of 4-8 letters, never the
   brand's name (no giant name anywhere), no pictures. For a loud brand (a band, a sports brand, a studio
   that shouts); on a calm house, a craft or a care practice the strain reads as a broken word, so
-  redraw. At rest the word reads whole.
+  it is dealt only for a bold or playful tone. At rest the word reads whole.
 - **The dot becomes the full stop** (`dot-becomes-the-full-stop`): one large dot, the display face's
   own full stop set very large, drops onto the page's ground, and a claim grows out of it to the left
   one whole word at a time across nearly the full width, the dot stepping right and a step smaller with

@@ -4,6 +4,7 @@
   "role": "features",
   "name": "Capabilities at poster scale",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "type-led",
    "poster"
@@ -29,6 +30,7 @@
   "role": "features",
   "name": "Pinned heading, passing rows",
   "shape": "pinned",
+  "structure": "list",
   "tags": [
    "colour-field",
    "type-led"
@@ -54,6 +56,7 @@
   "role": "features",
   "name": "One scene, stepping statements",
   "shape": "full-bleed",
+  "structure": "stage",
   "tags": [
    "photo-led"
   ],
@@ -77,6 +80,7 @@
   "role": "features",
   "name": "Stacking colour sheets",
   "shape": "stack",
+  "structure": "band",
   "tags": [
    "colour-field",
    "poster"
@@ -104,6 +108,7 @@
   "role": "features",
   "name": "Mosaic of unlike tiles",
   "shape": "mosaic",
+  "structure": "gallery",
   "tags": [
    "dense",
    "colour-field"
@@ -132,6 +137,7 @@
   "role": "features",
   "name": "Statement cell, dark rows",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "type-led",
    "dense"
@@ -154,6 +160,7 @@
   "role": "features",
   "name": "Staggered fragment cells",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "ui-led",
    "dense"
@@ -180,6 +187,7 @@
   "role": "features",
   "name": "Small proof beside text",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "quiet",
    "ui-led"
@@ -204,6 +212,7 @@
   "role": "features",
   "name": "Comparison set as text",
   "shape": "table",
+  "structure": "table",
   "tags": [
    "type-led",
    "quiet"
@@ -227,6 +236,7 @@
   "role": "features",
   "name": "One-size name columns",
   "shape": "index",
+  "structure": "grid",
   "tags": [
    "quiet",
    "type-led",
@@ -253,6 +263,7 @@
   "role": "features",
   "name": "Specimens on one ground",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "object-led",
    "colour-field"
@@ -278,6 +289,7 @@
   "role": "features",
   "name": "Statements on colour fields",
   "shape": "statement",
+  "structure": "band",
   "tags": [
    "colour-field",
    "poster",
@@ -302,6 +314,7 @@
   "role": "features",
   "name": "Rows with margin photographs",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "type-led",
    "photo-led"
@@ -324,6 +337,7 @@
   "role": "features",
   "name": "Paragraph with picture words",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -352,6 +366,7 @@
   "role": "features",
   "name": "Capabilities as a menu",
   "shape": "table",
+  "structure": "object",
   "tags": [
    "object-led",
    "type-led"
@@ -376,6 +391,7 @@
   "role": "features",
   "name": "Shape-marked small points",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "object-led",
    "quiet"
@@ -401,6 +417,7 @@
   "role": "showcase",
   "name": "Two giant words compared",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -423,6 +440,7 @@
   "role": "showcase",
   "name": "Two objects, two fields",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "object-led",
    "colour-field"
@@ -445,6 +463,7 @@
   "role": "showcase",
   "name": "Object in front of type",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "object-led",
    "poster"
@@ -471,6 +490,7 @@
   "role": "showcase",
   "name": "Band of unequal panels",
   "shape": "strip",
+  "structure": "gallery",
   "tags": [
    "photo-led"
   ],
@@ -494,6 +514,7 @@
   "role": "showcase",
   "name": "Close-up with column card",
   "shape": "full-bleed",
+  "structure": "single-picture",
   "tags": [
    "photo-led",
    "object-led"
@@ -517,6 +538,7 @@
   "role": "showcase",
   "name": "Live demo with controls",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "ui-led",
    "quiet"
@@ -543,6 +565,7 @@
   "role": "showcase",
   "name": "One frame, three distances",
   "shape": "pinned",
+  "structure": "stage",
   "tags": [
    "photo-led",
    "poster"
@@ -568,6 +591,7 @@
   "role": "showcase",
   "name": "One image across tiles",
   "shape": "mosaic",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "dense"
@@ -591,6 +615,7 @@
   "role": "showcase",
   "name": "Frame run, one lifted",
   "shape": "strip",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "quiet"
@@ -615,6 +640,7 @@
   "role": "showcase",
   "name": "Output slips along the edge",
   "shape": "full-bleed",
+  "structure": "single-picture",
   "tags": [
    "photo-led",
    "object-led"
@@ -637,6 +663,7 @@
   "role": "showcase",
   "name": "Object on a disc",
   "shape": "index",
+  "structure": "object",
   "tags": [
    "object-led",
    "colour-field"
@@ -660,6 +687,7 @@
   "role": "showcase",
   "name": "Square plate, spare text",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "colour-field",
    "photo-led"
@@ -684,6 +712,7 @@
   "role": "how-it-works",
   "name": "Lines that step across",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -708,6 +737,7 @@
   "role": "how-it-works",
   "name": "Photographs down a diagonal",
   "shape": "stack",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "quiet"
@@ -730,6 +760,7 @@
   "role": "how-it-works",
   "name": "Drag row of moments",
   "shape": "carousel",
+  "structure": "gallery",
   "tags": [
    "photo-led"
   ],
@@ -755,6 +786,7 @@
   "role": "how-it-works",
   "name": "Pinned fragment, changing state",
   "shape": "pinned",
+  "structure": "split",
   "tags": [
    "ui-led",
    "quiet"
@@ -782,6 +814,7 @@
   "role": "how-it-works",
   "name": "Itinerary on a slip",
   "shape": "table",
+  "structure": "object",
   "tags": [
    "object-led",
    "type-led"
@@ -806,6 +839,7 @@
   "role": "how-it-works",
   "name": "Accordion of tinted panels",
   "shape": "strip",
+  "structure": "grid",
   "tags": [
    "colour-field",
    "poster"
@@ -829,6 +863,7 @@
   "role": "how-it-works",
   "name": "Tiles that grow",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "object-led",
    "colour-field"
@@ -853,6 +888,7 @@
   "role": "how-it-works",
   "name": "Run-in column",
   "shape": "list",
+  "structure": "column",
   "tags": [
    "quiet",
    "type-led"
@@ -879,6 +915,7 @@
   "role": "how-it-works",
   "name": "Many into one",
   "shape": "band",
+  "structure": "grid",
   "tags": [
    "type-led",
    "dense"
@@ -902,6 +939,7 @@
   "role": "how-it-works",
   "name": "One verb at a time",
   "shape": "full-bleed",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "poster"
@@ -927,6 +965,7 @@
   "role": "stats",
   "name": "One figure owns the screen",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -952,6 +991,7 @@
   "role": "stats",
   "name": "Figures inside a sentence",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "quiet"
@@ -974,6 +1014,7 @@
   "role": "stats",
   "name": "Column aligned on the decimal",
   "shape": "table",
+  "structure": "table",
   "tags": [
    "type-led",
    "dense"
@@ -999,6 +1040,7 @@
   "role": "stats",
   "name": "Photograph with figure tiles",
   "shape": "mosaic",
+  "structure": "split",
   "tags": [
    "colour-field",
    "photo-led"
@@ -1022,6 +1064,7 @@
   "role": "stats",
   "name": "Stepped figure tiles",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "colour-field",
    "dense"
@@ -1048,6 +1091,7 @@
   "role": "stats",
   "name": "Total and its receipt",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "object-led",
    "type-led"
@@ -1072,6 +1116,7 @@
   "role": "stats",
   "name": "Figure on the photograph's edge",
   "shape": "full-bleed",
+  "structure": "single-picture",
   "tags": [
    "photo-led",
    "poster"
@@ -1094,6 +1139,7 @@
   "role": "stats",
   "name": "Quiet figure lines",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "quiet",
    "type-led"
@@ -1118,6 +1164,7 @@
   "role": "testimonial",
   "name": "Name block, quote block",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "colour-field",
    "type-led"
@@ -1141,6 +1188,7 @@
   "role": "testimonial",
   "name": "Lead quote, corner quotes",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "quiet"
@@ -1163,6 +1211,7 @@
   "role": "testimonial",
   "name": "Quotes on paper slips",
   "shape": "strip",
+  "structure": "object",
   "tags": [
    "object-led"
   ],
@@ -1184,6 +1233,7 @@
   "role": "testimonial",
   "name": "Quotation over a photograph",
   "shape": "full-bleed",
+  "structure": "single-picture",
   "tags": [
    "photo-led"
   ],
@@ -1205,6 +1255,7 @@
   "role": "testimonial",
   "name": "Quotes in the gutters",
   "shape": "pinned",
+  "structure": "stage",
   "tags": [
    "photo-led",
    "poster"
@@ -1227,6 +1278,7 @@
   "role": "testimonial",
   "name": "Portrait and offset quotation",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "photo-led",
    "quiet"
@@ -1250,6 +1302,7 @@
   "role": "testimonial",
   "name": "Quotation spread edge to edge",
   "shape": "band",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -1273,6 +1326,7 @@
   "role": "testimonial",
   "name": "One long letter",
   "shape": "stack",
+  "structure": "column",
   "tags": [
    "quiet",
    "type-led"
@@ -1295,6 +1349,7 @@
   "role": "testimonial",
   "name": "Shallow portraits, small quotes",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "dense",
    "photo-led"
@@ -1317,6 +1372,7 @@
   "role": "proof",
   "name": "Names as one sentence",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -1339,6 +1395,7 @@
   "role": "proof",
   "name": "Plain names in columns",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "quiet",
    "type-led"
@@ -1363,6 +1420,7 @@
   "role": "proof",
   "name": "One quiet logo row",
   "shape": "strip",
+  "structure": "band",
   "tags": [
    "quiet"
   ],
@@ -1389,6 +1447,7 @@
   "role": "proof",
   "name": "Recognition as a table",
   "shape": "table",
+  "structure": "table",
   "tags": [
    "type-led",
    "dense"
@@ -1413,6 +1472,7 @@
   "role": "proof",
   "name": "Large marks on tiles",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "dense",
    "colour-field"
@@ -1439,6 +1499,7 @@
   "role": "proof",
   "name": "The printed guest list",
   "shape": "stack",
+  "structure": "object",
   "tags": [
    "object-led",
    "type-led"
@@ -1462,6 +1523,7 @@
   "role": "proof",
   "name": "Names running off the edges",
   "shape": "band",
+  "structure": "band",
   "tags": [
    "type-led",
    "poster"
@@ -1486,6 +1548,7 @@
   "role": "pricing",
   "name": "The price, very large",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "type-led",
    "object-led"
@@ -1510,6 +1573,7 @@
   "role": "pricing",
   "name": "Plans as a large table",
   "shape": "table",
+  "structure": "table",
   "tags": [
    "type-led",
    "dense"
@@ -1531,6 +1595,7 @@
   "role": "pricing",
   "name": "One plan as a sentence",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -1551,6 +1616,7 @@
   "role": "pricing",
   "name": "Two plans, two fields",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "colour-field",
    "poster"
@@ -1573,6 +1639,7 @@
   "role": "pricing",
   "name": "Prices like a menu",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "quiet",
    "type-led"
@@ -1597,6 +1664,7 @@
   "role": "pricing",
   "name": "The ticket",
   "shape": "strip",
+  "structure": "object",
   "tags": [
    "object-led",
    "colour-field"
@@ -1620,6 +1688,7 @@
   "role": "pricing",
   "name": "The itemised receipt",
   "shape": "stack",
+  "structure": "object",
   "tags": [
    "object-led",
    "quiet"
@@ -1643,6 +1712,7 @@
   "role": "pricing",
   "name": "Plan names, one live figure",
   "shape": "index",
+  "structure": "split",
   "tags": [
    "type-led",
    "ui-led"
@@ -1664,6 +1734,7 @@
   "role": "pricing",
   "name": "Plans that step up",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "colour-field",
    "dense"
@@ -1688,6 +1759,7 @@
   "role": "faq",
   "name": "Large questions, answers beside",
   "shape": "table",
+  "structure": "list",
   "tags": [
    "type-led"
   ],
@@ -1708,6 +1780,7 @@
   "role": "faq",
   "name": "A band per question",
   "shape": "band",
+  "structure": "band",
   "tags": [
    "colour-field",
    "type-led"
@@ -1729,6 +1802,7 @@
   "role": "faq",
   "name": "Accordion of filled tiles",
   "shape": "stack",
+  "structure": "split",
   "tags": [
    "dense",
    "colour-field"
@@ -1755,6 +1829,7 @@
   "role": "faq",
   "name": "Answers as reading text",
   "shape": "grid",
+  "structure": "split",
   "tags": [
    "quiet",
    "type-led"
@@ -1777,6 +1852,7 @@
   "role": "faq",
   "name": "Questions beside a tall photograph",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "photo-led",
    "quiet"
@@ -1802,6 +1878,7 @@
   "role": "faq",
   "name": "Wide heading, indented questions",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "type-led"
   ],
@@ -1825,6 +1902,7 @@
   "role": "faq",
   "name": "Question index, one answer",
   "shape": "index",
+  "structure": "split",
   "tags": [
    "quiet",
    "ui-led"
@@ -1848,6 +1926,7 @@
   "role": "faq",
   "name": "Tabbed index cards",
   "shape": "stack",
+  "structure": "column",
   "tags": [
    "object-led",
    "colour-field"
@@ -1870,6 +1949,7 @@
   "role": "cta",
   "name": "The idea again, inverted",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster",
@@ -1896,6 +1976,7 @@
   "role": "cta",
   "name": "One word is the button",
   "shape": "band",
+  "structure": "statement",
   "tags": [
    "poster",
    "colour-field"
@@ -1922,6 +2003,7 @@
   "role": "cta",
   "name": "The object returns",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "object-led",
    "photo-led"
@@ -1946,6 +2028,7 @@
   "role": "cta",
   "name": "A plain sentence, one action",
   "shape": "stack",
+  "structure": "statement",
   "tags": [
    "quiet"
   ],
@@ -1970,6 +2053,7 @@
   "role": "cta",
   "name": "Last photograph, text beside",
   "shape": "full-bleed",
+  "structure": "single-picture",
   "tags": [
    "photo-led",
    "quiet"
@@ -1995,6 +2079,7 @@
   "role": "cta",
   "name": "Three photographs, then a field",
   "shape": "strip",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "colour-field"
@@ -2018,6 +2103,7 @@
   "role": "cta",
   "name": "The reply card",
   "shape": "split",
+  "structure": "object",
   "tags": [
    "object-led"
   ],
@@ -2042,6 +2128,7 @@
   "role": "cta",
   "name": "A sentence with a blank",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "ui-led"
@@ -2064,6 +2151,7 @@
   "role": "cta",
   "name": "The action tile",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "dense",
    "colour-field"
@@ -2089,6 +2177,7 @@
   "role": "footer",
   "name": "Columns above, wordmark below",
   "shape": "stack",
+  "structure": "column",
   "tags": [
    "type-led",
    "poster"
@@ -2120,6 +2209,7 @@
   "role": "footer",
   "name": "Name first, places under it",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "type-led"
   ],
@@ -2148,6 +2238,7 @@
   "role": "footer",
   "name": "Invitation over a cropped name",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -2177,6 +2268,7 @@
   "role": "footer",
   "name": "Name across the last photograph",
   "shape": "full-bleed",
+  "structure": "single-picture",
   "tags": [
    "photo-led",
    "poster"
@@ -2204,6 +2296,7 @@
   "role": "footer",
   "name": "The mark, built large",
   "shape": "band",
+  "structure": "band",
   "tags": [
    "colour-field",
    "object-led"
@@ -2233,6 +2326,7 @@
   "role": "footer",
   "name": "A single quiet line",
   "shape": "strip",
+  "structure": "band",
   "tags": [
    "quiet"
   ],
@@ -2262,6 +2356,7 @@
   "role": "footer",
   "name": "Contact as the headline",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "colour-field",
    "type-led",
@@ -2294,6 +2389,7 @@
   "role": "footer",
   "name": "The back of the card",
   "shape": "stack",
+  "structure": "column",
   "tags": [
    "object-led",
    "quiet"
@@ -2322,6 +2418,7 @@
   "role": "footer",
   "name": "A footer of tiles",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "dense",
    "colour-field"
@@ -2348,6 +2445,7 @@
   "role": "footer",
   "name": "Photograph half, menu half",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "photo-led",
    "type-led"
@@ -2373,6 +2471,7 @@
   "role": "intro",
   "name": "Right-half paragraph, lone photo",
   "shape": "split",
+  "structure": "statement",
   "tags": [
    "type-led",
    "quiet"
@@ -2399,6 +2498,7 @@
   "role": "intro",
   "name": "Edge-to-edge heavy paragraph",
   "shape": "band",
+  "structure": "band",
   "tags": [
    "type-led",
    "colour-field",
@@ -2425,6 +2525,7 @@
   "role": "intro",
   "name": "Statement with inline thumbnails",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "object-led"
@@ -2452,6 +2553,7 @@
   "role": "intro",
   "name": "Narrow column, empty field",
   "shape": "stack",
+  "structure": "column",
   "tags": [
    "quiet",
    "type-led"
@@ -2478,6 +2580,7 @@
   "role": "intro",
   "name": "Title, note, facts row",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "type-led",
    "quiet"
@@ -2502,6 +2605,7 @@
   "role": "intro",
   "name": "Staircase statement",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster",
@@ -2528,6 +2632,7 @@
   "role": "intro",
   "name": "Heading captions a panorama",
   "shape": "full-bleed",
+  "structure": "single-picture",
   "tags": [
    "photo-led",
    "type-led"
@@ -2552,6 +2657,7 @@
   "role": "intro",
   "name": "Statement tiles",
   "shape": "mosaic",
+  "structure": "gallery",
   "tags": [
    "dense",
    "colour-field",
@@ -2578,6 +2684,7 @@
   "role": "intro",
   "name": "Lead line over four columns",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "type-led",
    "dense",
@@ -2605,6 +2712,7 @@
   "role": "intro",
   "name": "Pinned sentence, photographs pass",
   "shape": "pinned",
+  "structure": "stage",
   "tags": [
    "photo-led",
    "type-led"
@@ -2628,6 +2736,7 @@
   "role": "about",
   "name": "Portrait as drop cap",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "photo-led"
@@ -2655,6 +2764,7 @@
   "role": "about",
   "name": "Side facts, wide paragraph",
   "shape": "table",
+  "structure": "split",
   "tags": [
    "type-led",
    "quiet"
@@ -2679,6 +2789,7 @@
   "role": "about",
   "name": "Team framed alike",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "photo-led",
    "colour-field",
@@ -2705,6 +2816,7 @@
   "role": "about",
   "name": "Two columns, highlighted words",
   "shape": "statement",
+  "structure": "column",
   "tags": [
    "type-led",
    "colour-field"
@@ -2727,6 +2839,7 @@
   "role": "about",
   "name": "Founder's letter",
   "shape": "stack",
+  "structure": "column",
   "tags": [
    "quiet",
    "type-led",
@@ -2752,6 +2865,7 @@
   "role": "about",
   "name": "Pinned title, portraits pass",
   "shape": "pinned",
+  "structure": "stage",
   "tags": [
    "photo-led",
    "poster",
@@ -2777,6 +2891,7 @@
   "role": "about",
   "name": "Wide photo, colour tile, facts",
   "shape": "mosaic",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "colour-field"
@@ -2800,6 +2915,7 @@
   "role": "about",
   "name": "Inset panel, shaped portrait",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "colour-field",
    "photo-led",
@@ -2824,6 +2940,7 @@
   "role": "work",
   "name": "Big names, fixed preview",
   "shape": "index",
+  "structure": "list",
   "tags": [
    "type-led",
    "photo-led"
@@ -2850,6 +2967,7 @@
   "role": "work",
   "name": "One strip per project",
   "shape": "strip",
+  "structure": "gallery",
   "tags": [
    "dense",
    "photo-led"
@@ -2874,6 +2992,7 @@
   "role": "work",
   "name": "Giant title, uneven wall",
   "shape": "mosaic",
+  "structure": "gallery",
   "tags": [
    "poster",
    "photo-led",
@@ -2898,6 +3017,7 @@
   "role": "work",
   "name": "Loose scatter with pauses",
   "shape": "stack",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "quiet"
@@ -2922,6 +3042,7 @@
   "role": "work",
   "name": "Full panels, one midline row",
   "shape": "full-bleed",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "poster"
@@ -2948,6 +3069,7 @@
   "role": "work",
   "name": "Stacked folders with tabs",
   "shape": "band",
+  "structure": "band",
   "tags": [
    "colour-field",
    "object-led",
@@ -2973,6 +3095,7 @@
   "role": "work",
   "name": "Book-spine index",
   "shape": "index",
+  "structure": "list",
   "tags": [
    "type-led",
    "dense"
@@ -2996,6 +3119,7 @@
   "role": "work",
   "name": "Staggered tiles, empty cells",
   "shape": "grid",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "colour-field"
@@ -3022,6 +3146,7 @@
   "role": "work",
   "name": "Quiet ledger, side preview",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "quiet",
    "type-led"
@@ -3047,6 +3172,7 @@
   "role": "work",
   "name": "Oversized visual, small cluster",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "object-led",
    "photo-led"
@@ -3070,6 +3196,7 @@
   "role": "work",
   "name": "Names as one paragraph",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -3097,6 +3224,7 @@
   "role": "gallery",
   "name": "Staggered pairs in empty ground",
   "shape": "stack",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "quiet"
@@ -3121,6 +3249,7 @@
   "role": "gallery",
   "name": "Drag row of mixed modules",
   "shape": "carousel",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "dense"
@@ -3146,6 +3275,7 @@
   "role": "gallery",
   "name": "Full-bleed sequence, text interlocked",
   "shape": "full-bleed",
+  "structure": "stage",
   "tags": [
    "photo-led"
   ],
@@ -3169,6 +3299,7 @@
   "role": "gallery",
   "name": "Small frames, wide space",
   "shape": "strip",
+  "structure": "gallery",
   "tags": [
    "quiet",
    "object-led",
@@ -3196,6 +3327,7 @@
   "role": "gallery",
   "name": "Prints dropped on the headline",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "poster",
    "photo-led",
@@ -3223,6 +3355,7 @@
   "role": "gallery",
   "name": "Dense masonry sheet",
   "shape": "mosaic",
+  "structure": "gallery",
   "tags": [
    "dense",
    "photo-led"
@@ -3246,6 +3379,7 @@
   "role": "gallery",
   "name": "Wall of word tiles",
   "shape": "grid",
+  "structure": "grid",
   "tags": [
    "type-led",
    "colour-field",
@@ -3275,6 +3409,7 @@
   "role": "gallery",
   "name": "One frame, contents change",
   "shape": "pinned",
+  "structure": "single-picture",
   "tags": [
    "object-led",
    "quiet",
@@ -3300,6 +3435,7 @@
   "role": "gallery",
   "name": "Photo tiles with label strips",
   "shape": "grid",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "colour-field",
@@ -3326,6 +3462,7 @@
   "role": "list",
   "name": "Line-up at one type size",
   "shape": "table",
+  "structure": "table",
   "tags": [
    "type-led",
    "dense"
@@ -3351,6 +3488,7 @@
   "role": "list",
   "name": "Two-column menu, photo bullets",
   "shape": "grid",
+  "structure": "list",
   "tags": [
    "object-led",
    "photo-led"
@@ -3374,6 +3512,7 @@
   "role": "list",
   "name": "Giant word, filled bar rows",
   "shape": "stack",
+  "structure": "list",
   "tags": [
    "type-led",
    "colour-field",
@@ -3398,6 +3537,7 @@
   "role": "list",
   "name": "Day tabs, banded agenda",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "dense",
    "type-led",
@@ -3422,6 +3562,7 @@
   "role": "list",
   "name": "One item per poster line",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster",
@@ -3446,6 +3587,7 @@
   "role": "list",
   "name": "Sticky photograph, active list",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "photo-led",
    "type-led",
@@ -3471,6 +3613,7 @@
   "role": "list",
   "name": "Two-ended rows, narrow column",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "quiet",
    "type-led"
@@ -3494,6 +3637,7 @@
   "role": "list",
   "name": "The printed menu sheet",
   "shape": "band",
+  "structure": "object",
   "tags": [
    "object-led",
    "type-led",
@@ -3521,6 +3665,7 @@
   "role": "list",
   "name": "Statement, table beside its picture",
   "shape": "table",
+  "structure": "split",
   "tags": [
    "type-led",
    "quiet",
@@ -3546,6 +3691,7 @@
   "role": "contact",
   "name": "Address in display rows",
   "shape": "list",
+  "structure": "list",
   "tags": [
    "type-led",
    "poster",
@@ -3568,6 +3714,7 @@
   "role": "contact",
   "name": "The email as display type",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -3593,6 +3740,7 @@
   "role": "contact",
   "name": "Photo strip, three-cell bar",
   "shape": "strip",
+  "structure": "band",
   "tags": [
    "colour-field",
    "photo-led",
@@ -3617,6 +3765,7 @@
   "role": "contact",
   "name": "Clip-out coupon form",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "object-led",
    "colour-field"
@@ -3643,6 +3792,7 @@
   "role": "contact",
   "name": "One field, nothing else",
   "shape": "stack",
+  "structure": "statement",
   "tags": [
    "quiet",
    "ui-led"
@@ -3669,6 +3819,7 @@
   "role": "contact",
   "name": "Visit card beside a photograph",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "photo-led",
    "object-led"
@@ -3693,6 +3844,7 @@
   "role": "contact",
   "name": "Sentence, portrait, two links",
   "shape": "band",
+  "structure": "split",
   "tags": [
    "type-led",
    "quiet",
@@ -3719,6 +3871,7 @@
   "role": "showcase",
   "name": "One control, blown up",
   "shape": "full-bleed",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "poster",
@@ -3745,6 +3898,7 @@
   "role": "showcase",
   "name": "Output index, live sheet",
   "shape": "index",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "object-led"
@@ -3768,6 +3922,7 @@
   "role": "showcase",
   "name": "One row, three states",
   "shape": "stack",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "quiet"
@@ -3790,6 +3945,7 @@
   "role": "showcase",
   "name": "Headline you can type",
   "shape": "statement",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "type-led",
@@ -3815,6 +3971,7 @@
   "role": "showcase",
   "name": "Input half, output half",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "ui-led",
    "colour-field"
@@ -3839,6 +3996,7 @@
   "role": "showcase",
   "name": "Rows as a board",
   "shape": "table",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "dense"
@@ -3864,6 +4022,7 @@
   "role": "showcase",
   "name": "Lit panel, dark row",
   "shape": "carousel",
+  "structure": "gallery",
   "tags": [
    "ui-led",
    "object-led"
@@ -3888,6 +4047,7 @@
   "role": "features",
   "name": "Giant command list",
   "shape": "list",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "type-led",
@@ -3910,6 +4070,7 @@
   "role": "features",
   "name": "Sentences with switches",
   "shape": "band",
+  "structure": "band",
   "tags": [
    "ui-led",
    "colour-field",
@@ -3935,6 +4096,7 @@
   "role": "features",
   "name": "Panel with margin notes",
   "shape": "index",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "quiet",
@@ -3960,6 +4122,7 @@
   "role": "features",
   "name": "Fixed output, live controls",
   "shape": "pinned",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "quiet"
@@ -3985,6 +4148,7 @@
   "role": "features",
   "name": "Close-ups on a board",
   "shape": "mosaic",
+  "structure": "gallery",
   "tags": [
    "ui-led",
    "dense",
@@ -4014,6 +4178,7 @@
   "role": "how-it-works",
   "name": "One card, four fields",
   "shape": "strip",
+  "structure": "grid",
   "tags": [
    "ui-led",
    "colour-field",
@@ -4041,6 +4206,7 @@
   "role": "how-it-works",
   "name": "Call and response column",
   "shape": "list",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "quiet"
@@ -4065,6 +4231,7 @@
   "role": "how-it-works",
   "name": "Drag through the stages",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "ui-led",
    "colour-field"
@@ -4092,6 +4259,7 @@
   "role": "how-it-works",
   "name": "Stages as one bar",
   "shape": "band",
+  "structure": "band",
   "tags": [
    "ui-led",
    "poster",
@@ -4119,6 +4287,7 @@
   "role": "stats",
   "name": "Figure set by a slider",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "ui-led",
    "type-led",
@@ -4143,6 +4312,7 @@
   "role": "stats",
   "name": "Bars standing on the edge",
   "shape": "full-bleed",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "colour-field"
@@ -4166,6 +4336,7 @@
   "role": "testimonial",
   "name": "Quote as comment thread",
   "shape": "stack",
+  "structure": "tool",
   "tags": [
    "ui-led",
    "quiet"
@@ -4190,6 +4361,7 @@
   "role": "cta",
   "name": "First step, already open",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "ui-led",
    "colour-field"
@@ -4215,6 +4387,7 @@
   "role": "work",
   "name": "Names passing a held square",
   "shape": "index",
+  "structure": "list",
   "tags": [
    "type-led",
    "photo-led",
@@ -4238,6 +4411,7 @@
   "role": "work",
   "name": "Title torn at the seam",
   "shape": "pinned",
+  "structure": "stage",
   "tags": [
    "photo-led",
    "poster"
@@ -4260,6 +4434,7 @@
   "role": "work",
   "name": "One slide, two neighbours",
   "shape": "strip",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "quiet"
@@ -4283,6 +4458,7 @@
   "role": "showcase",
   "name": "Cards crossing a held photograph",
   "shape": "carousel",
+  "structure": "stage",
   "tags": [
    "photo-led",
    "colour-field"
@@ -4308,6 +4484,7 @@
   "role": "list",
   "name": "Object riding down the schedule",
   "shape": "table",
+  "structure": "table",
   "tags": [
    "object-led",
    "type-led",
@@ -4334,6 +4511,7 @@
   "role": "gallery",
   "name": "Rising triptych",
   "shape": "pinned",
+  "structure": "stage",
   "tags": [
    "photo-led",
    "quiet"
@@ -4356,6 +4534,7 @@
   "role": "showcase",
   "name": "Portrait on its own ground",
   "shape": "full-bleed",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "colour-field"
@@ -4378,6 +4557,7 @@
   "role": "cta",
   "name": "Question at both edges",
   "shape": "statement",
+  "structure": "statement",
   "tags": [
    "type-led",
    "poster"
@@ -4397,6 +4577,7 @@
   "role": "intro",
   "name": "Headline crossing onto a photograph",
   "shape": "split",
+  "structure": "split",
   "tags": [
    "type-led",
    "photo-led"
@@ -4419,6 +4600,7 @@
   "role": "features",
   "name": "Four cards dealt into a fan",
   "shape": "pinned",
+  "structure": "stage",
   "tags": [
    "colour-field",
    "poster"
@@ -4443,6 +4625,7 @@
   "role": "work",
   "name": "Small index, large picture",
   "shape": "pinned",
+  "structure": "stage",
   "tags": [
    "photo-led",
    "type-led"
@@ -4466,6 +4649,7 @@
   "role": "list",
   "name": "Cards that fold into spines",
   "shape": "pinned",
+  "structure": "stage",
   "tags": [
    "type-led",
    "colour-field",
@@ -4489,6 +4673,7 @@
   "role": "gallery",
   "name": "Photographs gathered round a heading",
   "shape": "mosaic",
+  "structure": "gallery",
   "tags": [
    "photo-led",
    "quiet"

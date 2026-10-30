@@ -57,7 +57,8 @@ sheets. Make each pass on its own; do not blend them.
    picture's own lettering? Is anything a grey box, a stretched photo, a fake screen made of bars?
    Does the photography share one light and one grade, or is it a stock mix?
 9. **Sameness.** Write one word for each section's layout (split, list, full-bleed, grid, statement,
-   index …). The same word twice in a row, or three times on the page, is the template showing.
+   index …). The same word twice in a row, or three times on the page, is the template showing
+   (`same-structure` counts it: three sections built one way warn, four fail).
 10. **Phone.** Is the mobile screen a composition of its own, with its own crop and its own line
     breaks, or the desktop page squeezed? Is the first screen still one clear thing?
 11. **Fullness.** Go through the desktop sheets screen by screen. Is each screen a composed poster, or
@@ -87,7 +88,9 @@ sheets. Make each pass on its own; do not blend them.
     (the plans, the rooms, the visit details), or does text float loose with nothing holding it? Count
     the words on the first screen (30 at most) and in each section (60 at most): cut before anything
     else. Are the navigation, the buttons, the cards and the footer built as section 0 dealt them, or
-    did they slide back to a plain bar, a small square button and a one-line footer?
+    did they slide back to a plain bar, a small square button and a one-line footer? Count the button
+    shapes: one family, the dealt button and one quieter sibling. Does the navigation stay on the
+    screen after the hero, or hide on the way down?
 
 A note from testing: in blind comparisons a richer page full of template devices beat a cleaner page
 that was thin, every time. The house rules remove the devices; passes 11–13 are where you make sure the
@@ -147,6 +150,8 @@ These override the arithmetic.
   anything run into one screen edge: design cannot exceed **6.5**.
 - A one-line footer, a bar above the navigation or a sentence in it, or groups of facts floating with
   no card where they belong together: design cannot exceed **7**.
+- Three button shapes or more, a navigation that hides on scroll or is not the one dealt, three
+  sections built the same way, or a box in every section: design cannot exceed **7**.
 - A documentary or archive photograph anywhere: design cannot exceed **6.5**.
 - Labels, captions, chips or timestamps that carry nothing, paragraphs over about 40 words, or a
   first screen over 30 words: content cannot exceed **6.5**.

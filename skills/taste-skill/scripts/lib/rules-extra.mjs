@@ -1,6 +1,8 @@
 // Findings from probe-extra.mjs (v2.5): what reviewers kept finding on pages the first rules passed.
 // Thresholds come from the October 2026 comparison of professional sites, award sites and skill builds
 // (professional sites: no giant footers, about one hue, almost no page on coloured grounds).
+import { hidesOnScroll } from './frame-deal.mjs';
+
 export function judgeExtra(x, { width, allow = [], screens = 1, app = false } = {}) {
   const out = [];
   const add = (level, id, message, fix) => { if (!allow.includes(id)) out.push({ level, id, width, message, fix }); };
@@ -37,7 +39,7 @@ export function judgeExtra(x, { width, allow = [], screens = 1, app = false } = 
   if (bars.length) add('FAIL', 'drag-bar', `A progress, drag or slider bar outside a working tool: ${list(bars, (r) => `${r.what} ${r.size}${r.text ? ' (' + r.text + ')' : ''}`)}.`, 'Remove it. Scroll progress bars, drag handles and sliders that only move content are decoration; show the content as a plain list or grid.');
   if (desktop && scrollers.length) add('WARN', 'sideways-rail', `${scrollers.length} sideways scroller(s) on desktop: ${list(scrollers, (r) => `${r.size} "${r.text}"`)}.`, 'On desktop show the items in a grid or list that fits the width. A sideways rail hides most of its content and needs a scrollbar or drag to reach it.');
   // (round 11: cards are wanted for grouping; a page built of nothing but boxes still fails)
-  if (x.boxed && x.boxed.words > 150 && x.boxed.share > 0.6) add(x.boxed.share >= 0.85 ? 'FAIL' : 'WARN', 'boxed-page', `${Math.round(x.boxed.share * 100)}% of the running text sits inside filled or outlined boxes${x.boxed.share >= 0.85 ? ': the page is built of nothing but boxes' : ''}.`, 'Cards group what belongs together, not everything: let the statements, the headings and the lead lines stand on the ground, and keep cards for the things a visitor compares or handles (rooms, plans, pieces of work, a booking). Vary the cards from section to section; never a page of boxes.');
+  if (BOXED_TEXT(x.boxed)) add(x.boxed.share >= 0.85 ? 'FAIL' : 'WARN', 'boxed-page', `${Math.round(x.boxed.share * 100)}% of the running text sits inside filled or outlined boxes${x.boxed.share >= 0.85 ? ': the page is built of nothing but boxes' : ''}.`, 'Cards group what belongs together, not everything: let the statements, the headings and the lead lines stand on the ground, and keep cards for the things a visitor compares or handles (rooms, plans, pieces of work, a booking). Vary the cards from section to section; never a page of boxes.');
   if (x.labels) {
     const per = new Map(); for (const l of x.labels) { const k = Math.floor(l.y / 900); per.set(k, (per.get(k) || 0) + 1); }
     const worst = Math.max(0, ...per.values());
@@ -150,7 +152,9 @@ export function judgeExtra(x, { width, allow = [], screens = 1, app = false } = 
 // boxed: the boxed-list findings' headings, so one row of boxes is not reported twice; dead: deadControls().
 // Round 11: b.space (space()), b.nav (navBar()) and b.crops (crops()), set on b by inspect.mjs.
 // Round 11b, on desktop: b.grounds (grounds()), b.foot (footing() and the dealt footer) and b.work (workShown()).
-export function judgeBuild(b, { width, allow = [], boxed = [], scenes = null, dead = null } = {}) {
+// Round 11c, on desktop: b.buttons (buttonShapes()), b.navs (navForm() at load, down and up, and the dealt navigation) and
+// b.structures (structures()); boxedText: extra()'s running text in boxes, which judgeExtra reports as boxed-page.
+export function judgeBuild(b, { width, allow = [], boxed = [], scenes = null, dead = null, boxedText = null } = {}) {
   const out = [];
   const add = (level, id, message, fix) => { if (!allow.includes(id)) out.push({ level, id, width, message, fix }); };
   const desktop = width >= 1100;
@@ -227,8 +231,76 @@ export function judgeBuild(b, { width, allow = [], boxed = [], scenes = null, de
   const wk = b.work;
   const pieces = (w) => `${w.pictures ? `${w.pictures} picture(s)` : 'no picture'} of the work${w.slots ? ` and ${w.slots} slot(s) marked for the client's own` : ''}`;
   if (desktop && wk && wk.pictures + (wk.slots || 0) < 3) add('WARN', 'portfolio-without-work', wk.sections.length || wk.slots ? `The work${wk.sections.length ? ` (${wk.sections.slice(0, 2).map((s) => `"${s}"`).join(', ')})` : ''} shows ${pieces(wk)}${wk.typeset ? `; ${wk.typeset} piece(s) are set in type` : ''}.` : 'This is a portfolio, and no section is named for the work (work, projects, selected, case studies) and no slot is marked for it.', 'A portfolio shows the work as pictures of the work: frames, stills or films of three pieces or more, the strongest large. Where the client\'s own pictures are missing, each piece gets a frame at its ratio with `data-slot="work"`, holding a still of the piece or the best stand-in of this trade\'s own work, listed in the report; never an empty frame, a note that a picture is missing, or type cards standing in for the pieces.');
+
+  // ---------- round 11c (Leon: three button shapes at one size, a plain bar that hides on scroll; r12-p53's three
+  // unrelated buttons, r12-p54's six sections of a heading, a line and a list panel, r12-p52's page of slate boxes) ----------
+  // one button family: the dealt button and at most one quieter sibling, so a third shape fails (a shape is its corner
+  // and its kind; the sheet sizes the one button to the bar, a card and a form, so a height is no shape of its own)
+  const bs = b.buttons || [];
+  const px = (s) => (s.h ? `, ${s.h[0] === s.h[1] ? s.h[0] : `${s.h[0]}-${s.h[1]}`}px` : '');
+  if (desktop && bs.length > 2) add('FAIL', 'button-family', `${bs.length} button shapes on one page: ${list(bs, (s) => `${s.key === 'type' ? 'set in type' : s.key}${px(s)} (${s.labels.map((l) => `"${l}"`).join(', ')}${s.n > s.labels.length ? ` and ${s.n - s.labels.length} more` : ''})`, 5)}.`, 'One button family, as section 0 dealt it: the dealt button for every action, in the bar, the hero, the cards, the form and the footer, at one corner (in the bar, on a card and in a form at that part\'s height), and at most one quieter sibling (the label alone with the dealt arrow, or the same shape in the surface tone). An outline, a pill or a block of its own is a second family.');
+  // the navigation's form, as built (at load, past the hero and back up), against the one section 0 dealt (navKind); a
+  // bar that hides on the way down warns whatever was dealt, and fails where the dealt one stays
+  const nf = b.navs;
+  if (desktop && nf && nf.load) {
+    const ph = [nf.load, nf.down, nf.up].filter(Boolean), at = (f) => ph.some((s) => s.form === f);
+    // (past the hero: the reading on the way down, else back up, else at load, so a navigation that hides keeps its form)
+    const past = [nf.down, nf.up, nf.load].find((s) => s && s.form !== 'none');
+    const built = at('bottom dock') ? 'bottom dock' : [nf.down, nf.up].some((s) => s?.form === 'side index') ? 'side index' : nf.load.form === 'masthead' ? 'masthead' : [nf.load, nf.down].some((s) => s?.form === 'centred wordmark') ? 'centred wordmark' : past ? (past.form === 'corners' ? 'corners' : 'top bar') : null;
+    const hides = !!nf.down && nf.down.form === 'none' && !nf.down.held && nf.load.form !== 'none';
+    const dealt = navKind(nf.dealt);
+    // (corners and a top bar differ by the band behind the groups and the room between them, which a pattern's words do
+    // not fix: a pattern read as a top bar for want of a named form may stand as corners, and one read as corners as a row
+    // with no band behind it)
+    const fits = !!dealt && (built === dealt.form || built === dealt.first || (dealt.pattern && ((!dealt.named && built === 'corners') || (dealt.form === 'corners' && built === 'top bar' && !past?.band))));
+    const how = hides ? (nf.up && nf.up.form !== 'none' ? 'hides on the way down and comes back on a scroll up' : 'scrolls away with the hero and does not come back') : '';
+    const seen = `"${(nf.load.items || []).slice(0, 5).join(' · ')}"`;
+    if (built && dealt && (!fits || (hides && !dealt.hides))) add('FAIL', 'nav-not-as-dealt', `Section 0 dealt the "${nf.dealt.id}" navigation (${NAV_NAMES[dealt.form]}${dealt.hides ? '' : ' on every screen after the hero'}), but ${fits ? 'on the page it' : `the page builds ${NAV_NAMES[built]}${hides ? ' that' : ''}`}${hides ? ` ${how}` : ''} (${seen}).`, `Build the navigation as section 0 describes it: its form (${dealt.form}), its sizes, its fill, and where it stands on every screen after the hero. Never back to a plain bar of a wordmark, links and a button, and never a bar that hides on scroll.`);
+    else if (hides) add('WARN', 'nav-not-as-dealt', `The navigation ${how} (${seen}).`, 'Keep the navigation on the screen: fixed on a solid band, a floating capsule or tabs in the corners, as section 0 dealt it. A bar that hides on the way down is the plain template bar.');
+  }
+  // the same structure three times on one page: what the section holds (its largest group), wherever its heading stands
+  // (r12-p54's judge read its lists beside a heading and under one as six sections built alike): three warn, four fail.
+  // The hero is not counted
+  const st = (b.structures || []).filter((s) => !s.hero);
+  if (desktop && st.length) {
+    const by = new Map(); for (const s of st) by.set(s.lead, [...(by.get(s.lead) || []), s]);
+    const [lead, same] = [...by].sort((x, y) => y[1].length - x[1].length)[0];
+    const place = (s) => (s.lead === 'none' ? '' : ` (${s.pos === 'none' ? 'no heading' : PLACES[s.word] || 'under its heading'}${s.boxed ? ', in a box' : ''})`);
+    if (same.length >= 3) add(same.length >= 4 ? 'FAIL' : 'WARN', 'same-structure', `${same.length} sections are built round ${HOLDS[lead] || lead}: ${list(same, (s) => `"${s.head}"${place(s)}`, 6)}.`, 'Give each section the structure its content asks for, and never one structure three times: a list as a list across the width, a split with a picture, cards in a row, a statement alone, a table, a gallery, a working tool. Change what the section holds, the heading\'s place and the columns from one to the next (critique.md, pass 9).');
+  }
+  // a page of boxes, the product's windows counted: four sections or more after the hero, all of them but one, stand in
+  // a box (the sheet puts cards in two or three); not again where the running text in boxes has reported it (judgeExtra)
+  const bx = st.filter((s) => s.boxed);
+  if (desktop && bx.length >= 4 && bx.length >= st.length - 1 && !BOXED_TEXT(boxedText)) add('WARN', 'boxed-page', `${bx.length} of the ${st.length} sections after the hero hold their content in a box (a product window, a panel or cards on a fill): ${list(bx, (s) => `"${s.head}"`, 6)}.`, 'Cards and windows in two or three sections, where a visitor compares or handles things; the rest stands on the ground: a statement, a list set as type, a picture across the width. A page whose every section is a box reads as a dashboard of boxes.');
   return out;
 }
+// the navigation section 0 dealt, as a form: the twelve tested designs by their id, a pattern by its text and its Must
+// show line before the phone's, the form it takes once the hero has gone first (named: read from the words, not a top
+// bar for want of any; first: the first screen's form beside it); and whether it hides on scroll, by the deal's own test
+const NAV_KINDS = { 'hide-on-scroll': 'top bar', 'centred-logo': 'centred wordmark', 'floating-pill': 'top bar', 'menu-button': 'corners', shrinks: 'top bar', 'side-index': 'side index', 'bottom-dock': 'bottom dock', corners: 'corners', masthead: 'masthead', 'ink-band': 'top bar', 'contained-bar': 'top bar', 'big-links': 'corners', 'chapter-band': 'top bar' };
+const NAV_FORMS = [
+  ['side index', /\bside index\b|\bvertical list\b|\brail\b/i],
+  ['bottom dock', /\bdock(?:ed)?\b|\bdial fixed at the bottom\b/i],
+  ['masthead', /\bmasthead\b|\btwo rows\b/i],
+  ['centred wordmark', /\b(?:wordmark|logo|monogram|emblem)\b[^.,;:]{0,40}\b(?:centred|dead centre)\b|\bcentred\b[^.,;:]{0,12}\b(?:wordmark|logo|monogram|emblem)\b|\bcentre: (?:a |the )?(?:\d+px )?(?:monogram|wordmark|logo|emblem)\b/i],
+  ['corners', /\bno bar\b(?! fill)|\bfour corners\b|\beach (?:top )?corner\b|\bin (?:their|its) corners\b|\bcorners of the screen\b/i],
+];
+const HANDS_OVER = /\b(?:once|after|when|past) the hero\b|\bpast the first screen\b|\b(?:over|after) (?:the first )?\d+(?:px)?(?: to \d+px)? of scroll\b/i;
+export function navKind(nav) {
+  if (!nav?.id) return null;
+  const parts = [nav.text, nav.signature].map((t) => String(t || '').split(/\bOn (?:a )?phones?\b|\b[Bb]elow \d+px\b/)[0]);
+  const named = (t) => NAV_FORMS.find(([, re]) => re.test(t))?.[0] || null;
+  const after = parts.map((t) => { const i = t.search(HANDS_OVER); return i >= 0 ? named(t.slice(i)) : null; }).find(Boolean) || null;
+  const whole = parts.map(named).find(Boolean) || null;
+  const pattern = !NAV_KINDS[nav.id], form = NAV_KINDS[nav.id] || after || whole;
+  return { form: form || 'top bar', pattern, named: !!form, first: pattern && after && whole !== after ? whole : null, hides: nav.id === 'hide-on-scroll' || hidesOnScroll({ description: String(nav.text || ''), signature: nav.signature }) };
+}
+const NAV_NAMES = { 'top bar': 'a top bar', 'bottom dock': 'a bottom dock', 'side index': 'a side index', corners: 'a navigation in the corners', 'centred wordmark': 'a bar round a centred wordmark', masthead: 'a masthead' };
+// what a section holds, and where it stands against its heading (structures())
+const HOLDS = { list: 'a list', cards: 'cards', panel: 'one panel', window: 'a product window', picture: 'one picture', pictures: 'pictures', tool: 'a form', table: 'a table', text: 'text alone', none: 'a heading alone' };
+const PLACES = { split: 'beside its heading', columns: 'in columns under its heading', grid: 'in a row under its heading', gallery: 'in a row under its heading' };
+// the running text in boxes that judgeExtra reports (boxed-page)
+const BOXED_TEXT = (x) => !!x && x.words > 150 && x.share > 0.6;
 const FRAMED_FIX = 'Cards are welcome: a fill one step from the ground, a picture-led card, a card that overlaps an empty corner of a picture with less than half of itself. One level only: what sits in a card is set apart by space and type, never by a second box (a product window on a card, a dark slab in a pale card), and a photograph is a frame too, so no box lies on one; a note or a booking block stands on the ground beside the picture. A card is a plain rectangle with a radius, never cut into a ticket, a tab or a torn edge. Frame with a fill, not an outline. The first screen holds one product window at most; what the others showed is said in a line of type.';
 const BENTO_FIX = 'Size each card to what it holds: a card with nothing in its middle reads as broken. Fewer, fuller cards (the picture large, the point in a line, the figure that matters), cards of different sizes for things of different weight, or the thin ones set as a list of type under the grid.';
 const SMALL_FIX = 'Running text, lists and tables 16px or more on desktop and 15px on a phone, on dark grounds as well; under a display heading 18px or more; set it beside the picture it describes, never pushed to the far edge. Only captions and the footer\'s legal line may be smaller.';

@@ -18,6 +18,12 @@
 // every design or pattern used in the last nine draws is out while others fit. A missing pattern file deals the
 // designs alone. The loading, fitting and house checks of the patterns live here; draw.mjs deals the heroes, sections,
 // small moves and type notes from them with the same rules.
+//
+// Round 11c (October 2026): the patterns built at 4.5 of 10 against the tested designs' 5.3, and asked for assets the
+// sheet never dealt (review-004). Each now carries a harsh quality score, the assets it needs and a must-show signature
+// (the lab's round 11c pass): none at 3 or below is dealt, the rest weigh by their score against the tested designs,
+// none is dealt to a page that lacks its assets, and the sheet prints each dealt part's signature as "Must show". No
+// navigation hides on scroll (the owner named the hiding bar as the generic one), and the page has one button family.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -30,19 +36,44 @@ export const RECENT_OUT = ONE_IN - 1;
 // of a fresh one, so the fresh ones that fit still come first
 export const comeBack = (at) => 0.5 * ((Math.max(0, at) + 1) / RECENT_OUT) ** 2;
 // how a pattern weighs beside a tested design, a dealt hero of the direction or a section blueprint of the direction
-// (each 1): the patterns are many, so even at these weights they take about half the deals or more
-export const PATTERN_SHARE = { frame: 0.8, hero: 0.6, section: 0.5 };
-// Each file is an array of entries {id, name, description, fits {sectors, tone, density}, needs {pictures, productUi,
-// video, words}, phone, avoidWith, houseRuleCheck} (motion adds basic). A file that is missing or unreadable is an
-// empty family; an entry without an id or a description, or marked banned, is never dealt.
+// (each 1), times its quality weight: a frame pattern scored 5 is as likely as one of the twelve tested designs of its
+// part (they score about 5); the hero and section patterns are many, so they weigh less
+export const PATTERN_SHARE = { frame: 1, hero: 0.6, section: 0.5 };
+// The quality the lab's round 11c pass gave each pattern (1-10, harsh): one at 3 or below is never dealt, a 4 weighs half
+// a tested design, a 5 as much, a 6 or more half as much again. One with no score weighs as a 4.
+export const QUALITY_FLOOR = 4;
+const QUALITY_WEIGHT = { 4: 0.5, 5: 1, 6: 1.5 };
+export const qualityWeight = (e) => (Number.isFinite(e?.quality) ? QUALITY_WEIGHT[Math.min(6, e.quality)] ?? 0 : 0.5);
+// Each file is an array of entries {id, name, description, signature, fits {sectors, tone, density}, needs {pictures,
+// productUi, video, words, assets}, phone, avoidWith, houseRuleCheck, quality} (motion adds basic). A file that is
+// missing or unreadable is an empty family; an entry without an id or a description, marked banned, or scored under the
+// quality floor is never dealt.
 export function loadPatterns(dir) {
   const out = {};
   for (const f of PATTERN_FAMILIES) {
     let list = [];
     try { const j = JSON.parse(readFileSync(join(dir, `${f}.json`), 'utf8')); list = Array.isArray(j) ? j : Array.isArray(j?.patterns) ? j.patterns : []; } catch { /* no file: today's designs alone */ }
     const seen = new Set();
-    out[f] = list.filter((e) => e && typeof e.id === 'string' && typeof e.description === 'string' && e.description.trim() && !(e.banned === true || (Array.isArray(e.banned) && e.banned.length)) && !houseClash(e) && !seen.has(e.id) && seen.add(e.id));
+    out[f] = list.filter((e) => e && typeof e.id === 'string' && typeof e.description === 'string' && e.description.trim() && !(e.banned === true || (Array.isArray(e.banned) && e.banned.length)) && !(Number.isFinite(e.quality) && e.quality < QUALITY_FLOOR) && !houseClash(e) && !seen.has(e.id) && seen.add(e.id));
   }
+  return out;
+}
+// The ids the round 11c pass renamed (library/patterns/id-map.json, {old id: new id}, written by the export) and the
+// patterns promoted to a tested design (PROMOTED): read through them, a history written before still keeps its draws
+// away. A missing map leaves the ids as they are.
+export function loadIdMap(dir) {
+  let map = {};
+  try { map = JSON.parse(readFileSync(join(dir, 'id-map.json'), 'utf8')) || {}; } catch { /* no map */ }
+  return (id) => (typeof id === 'string' ? PROMOTED[map[id] || id] || map[id] || id : id);
+}
+// a history entry with its pattern ids read through the map: the frame's parts, the hero, the sections, the small moves
+// and the type note
+export function historyIds(h, rename) {
+  if (!h || typeof h !== 'object') return h;
+  const each = (x) => (Array.isArray(x) ? x.map(rename) : rename(x));
+  const out = { ...h };
+  if (h.frame && typeof h.frame === 'object') out.frame = Object.fromEntries(Object.entries(h.frame).map(([k, v]) => [k, rename(v)]));
+  for (const k of ['hero', 'sections', 'moves', 'typeNote']) if (h[k] !== undefined) out[k] = each(h[k]);
   return out;
 }
 // The house rules a description can break in so many words (the export drops what the study marked banned; this is
@@ -99,15 +130,38 @@ function sectorFits(list, sector) {
 // whether an avoidWith entry names something on the page: its id, an id it begins ("nav-transparent"), or a kind of
 // thing the page has ("scene", "replay", "video", "dark-ground")
 function names(set, x) { const w = String(x || '').toLowerCase(); if (!w) return false; for (const d of set) if (d === w || d.startsWith(w + '-')) return true; return false; }
+// What the builder must have for a pattern to work (its needs.assets): the product's own interface, footage, a 3D model,
+// cut-outs from the client's own photographs, real logos of clients or press, a real map or route, real figures, quotes
+// or prices, so many photographs. Round 12's builders drew an outline laptop for a 3D scene, a number badge for a
+// picture block and a play button with no film (review-004): a pattern whose assets the page lacks is never dealt. What
+// a page has, from --have (real figures, quotes or prices only with --have data: a brief's opening hours are no quote,
+// and a page dealt a quote card it has no quote for invents one):
+export function pageAssets(input, software) {
+  const have = new Set(input.have || []);
+  const has = new Set(['none']);
+  if (software || have.has('product-ui')) has.add('product-ui');
+  for (const a of ['video', '3d', 'logos', 'map']) if (have.has(a)) has.add(a);
+  if (have.has('product-photo') || have.has('photography')) has.add('cut-out');
+  if (have.has('route')) has.add('map');
+  if (have.has('data')) has.add('real-data');
+  return has;
+}
+const ASSET_WORDS = { 'product-ui': 'the product\'s own interface', video: 'footage of this very subject', '3d': 'a 3D model of the subject', 'cut-out': 'cut-outs from the client\'s own photographs', logos: 'real logos of clients or press', map: 'a real map or route', 'real-data': 'real figures, quotes or prices the brief gives' };
+// the photographs a pattern's assets name ("photos:4"), 0 when none; and the most it takes by either count
+const photosOf = (e) => Math.max(0, ...[].concat(needsOf(e).assets || []).map((a) => +(String(a).match(/^photos:(\d+)$/)?.[1] || 0)));
+export const photosNeeded = (e) => Math.max(patternPictures(e), photosOf(e));
 // Why a pattern cannot go on this page, or null: written for other sectors, a need the brief does not meet (the
-// product's own interface, footage, more photographs than the page can honestly show), or a clash it names with
-// something already dealt. pc: { sector, tones, loud, software, video, pictureCap, density, dealt: Set, avoid: Set }.
+// product's own interface, footage, an asset the page lacks, more photographs than its photograph total), or a clash it
+// names with something already dealt. pc: { sector, tones, loud, software, video, assets: Set (pageAssets), pictureCap,
+// density, dealt: Set, avoid: Set }.
 export function patternWhyNot(e, pc) {
   const n = needsOf(e);
   if (!sectorFits(e.fits?.sectors, pc.sector)) return `it is not written for a ${pc.sector} page`;
   if (n.productUi && !pc.software) return 'it needs the product\'s own interface';
   if (n.video && !pc.video) return 'it needs footage of this very subject';
-  if (patternPictures(e) > pc.pictureCap) return `it needs more photographs than this page can honestly show (${pc.pictureCap})`;
+  const lacks = pc.assets && [].concat(n.assets || []).find((a) => !/^photos:/.test(a) && !pc.assets.has(a));
+  if (lacks) return `it needs ${ASSET_WORDS[lacks] || lacks}, which this page does not have`;
+  if (photosNeeded(e) > pc.pictureCap) return `it needs more photographs than this page can honestly show (${pc.pictureCap})`;
   if ((e.avoidWith || []).some((a) => names(pc.dealt || new Set(), a)) || names(pc.avoid || new Set(), e.id)) return 'it clashes with something already dealt';
   if (e.fits?.density === 'dense' && pc.density !== 'dense-ok') return 'it is dense, and this page wants air';
   return null;
@@ -119,32 +173,47 @@ function toneFits(e, pc) {
 }
 // The patterns of one family that fit the page, as [entry, weight]: sector, needs, clashes and density always; the
 // tone while at least `min` still fit, then the others of other tones at half the weight rather than an empty pool. On
-// an airy page the airy ones weigh most.
+// an airy page the airy ones weigh most; and each weighs by its quality (qualityWeight).
 export function fitPool(list, pc, min = 3) {
   const ok = (list || []).filter((e) => !patternWhyNot(e, pc));
   const toned = ok.filter((e) => toneFits(e, pc));
-  const w = (e) => (pc.density === 'airy' && e.fits?.density && e.fits.density !== 'airy' ? 0.7 : 1) * (toneFits(e, pc) ? 1 : 0.5);
+  const w = (e) => qualityWeight(e) * (pc.density === 'airy' && e.fits?.density && e.fits.density !== 'airy' ? 0.7 : 1) * (toneFits(e, pc) ? 1 : 0.5);
   return (toned.length >= min ? toned : ok).map((e) => [e, w(e)]);
 }
 // Whether a pattern can be the page's navigation, footer, card style or button design at all, under the house rules
 // (the export drops what the study marked banned; this keeps out what is not that part: no navigation, a footer of one
 // line, a media tile with no words, an icon disc or a field in place of the button).
 const TEXT_OF = (e) => `${e.name || ''}. ${e.description}`;
+// A navigation that hides on the way down and comes back on the way up, or scrolls away with the hero and leaves
+// nothing in its place: the owner named the bar that hides as the generic one (October 2026). A bar that hands over to
+// fixed corners, a tab or a dock still navigates; one that hides while a pinned scene holds the screen is no hide.
+const HIDES_ON_SCROLL = /\bhides?\b(?!\s*(?:\([^)]*\)\s*)?(?:while|during)\b)|\b(?:on|any|the first|first|every) scroll(?:ing)? (?:up|down)\b|\bscroll(?:ing)? down\b[^.]{0,60}\b(?:hides?|slides?|leaves|out of view|off)\b|\b(?:returns?|comes? back|reappears?)\b[^.]{0,30}\bscroll(?:ing)? up\b|\bon the way (?:down|up)\b|\bnothing replaces it\b|\bno bar until\b|\bnothing is fixed on the first screen\b/i;
+// (and a bar that scrolls away with the first screen while what replaces it comes only once the hero has gone: for a
+// screen of scroll nothing navigates)
+const SCROLLS_AWAY = /\bscroll(?:s|ing)? away\b/i;
+const AFTER_HERO = /\b(?:once|after|when) the hero (?:has )?(?:gone|left|scrolled (?:out|away|past))\b[^.]{0,240}\b(?:fades? in|drops? in|appears?|arrives?|comes? in|stays? fixed)\b|\bonly after that\b/i;
+export const hidesOnScroll = (e) => { const t = `${TEXT_OF(e)} ${e.signature || ''}`; return says(t, HIDES_ON_SCROLL) || (says(t, SCROLLS_AWAY) && says(t, AFTER_HERO)); };
 export function partUsable(part, e) {
   const id = e.id; const d = e.description; const all = TEXT_OF(e);
   // (no part is a bento grid: the sheet's Always line)
   if (houseClash(e) || says(all, /\bannouncement\b|\bbento\b/i)) return false;
-  // a navigation or footer that lives on a 3D or canvas stage, or on a page that does not scroll, is not this page's
-  const staged = /\bcanvas\b|\bWebGL\b|\b3D\b|\bnon-scrolling\b|\bHUD\b/i.test(all);
-  if (part === 'nav') return !staged && !/^nav-none\b|phone-only/.test(id) && !/\bno desktop nav\b|\bon any screen at any width\b/i.test(d) && !says(all, /\bdot rail\b|\brail of (?:\w+ )?(?:scene )?dots\b|\bscroll(?:ing)? progress\b|\bsentence\b/i);
-  // a footer holds real links (in columns or a row), never one line, never a lone link or headline
-  if (part === 'footer') return !staged && !/^foot-(?:none|unrecorded|thin-row|single-baseline)/.test(id) && !/^no footer\b|\bno footer object\b|\bsingle (?:\d+(?:-\d+)?px )?row\b|\bone line of\b|\bonly (?:footer )?element\b|\bnothing (?:else )?(?:but|stands)\b|\beverything else is empty\b|\bnearly empty\b/i.test(d) && says(d, /\blinks\b|\bcolumns?\b|\bsitemap\b|\bdirectory\b|\blink row\b/i) && !says(d, /\b(?:giant|huge|full-width|screen-wide)\s+(?:wordmark|name|logo|e-?mail)\b|\bcredits? wall\b|\bcredit roll\b/i);
+  // a navigation or footer that lives on a 3D, canvas or shader stage, or on a page that does not scroll, is not this
+  // page's (round 11b left a footer over a shader band)
+  const staged = /\bcanvas\b|\bWebGL\b|\b3D\b|\bshader\b|\bnon-scrolling\b|\bHUD\b/i.test(all);
+  // (nor one that hides on scroll, or a pattern now dealt as a tested design)
+  if (part === 'nav') return !staged && !PROMOTED[id] && !hidesOnScroll(e) && !/^nav-none\b|phone-only/.test(id) && !/\bno desktop nav\b|\bon any screen at any width\b/i.test(d) && !says(all, /\bdot rail\b|\brail of (?:\w+ )?(?:scene )?dots\b|\bscroll(?:ing)? progress\b|\bsentence\b/i);
+  // a footer holds real links (in columns or a row), never one line, never a lone link or headline, never one the study
+  // calls sparse (a link, a logo and open ground: the one-line footer again)
+  if (part === 'footer') return !staged && !/^foot-(?:none|unrecorded|thin-row|single-baseline)/.test(id) && !/^no footer\b|\bno footer object\b|\bsingle (?:\d+(?:-\d+)?px )?row\b|\bone line of\b|\bonly (?:footer )?element\b|\bnothing (?:else )?(?:but|stands)\b|\beverything else is empty\b|\bnearly empty\b|\bsparse\b|\beverything else is open ground\b/i.test(d) && says(d, /\blinks\b|\bcolumns?\b|\bsitemap\b|\bdirectory\b|\blink row\b/i) && !says(d, /\b(?:giant|huge|full-width|screen-wide)\s+(?:wordmark|name|logo|e-?mail)\b|\bcredits? wall\b|\bcredit roll\b/i);
   // (a card holds the page's own content: never a generative canvas, a flow field or particles as its picture; and no
   // row whose next card peeks in at the screen edge, which runs into one edge: `edge-run`)
-  if (part === 'card') return !/\bno text\b|\bunboxed\b|\bno words\b/i.test(d) && !says(all, /\bcanvas\b|\bgenerative\b|\bparticles?\b|\bflow (?:field|lines)\b/i) && (!says(d, /\bpeek\w*\b/i) || /\b(?:inside|within|at) the container\b/i.test(d)) && !/bento|marquee|stat|number|logo|chip|form|ui-|symbol|blank|icon/.test(id) && says(d, /\bfill(?:ed)?\b|\bpanel\b|\bsurface\b|\bsolid\b|\btile\b|\bcard\b|\bphoto\b|\bpicture\b|\bimage\b|\bvideo\b|\brender\b|\bcut-?out\b/i) && says(d, /\btitle\b|\bname\b|\bheading\b|\blabel\b|\bparagraph\b|\btext\b|\bprice\b|\bsentence\b|\bcaption\b|\bstatement\b/i) && !says(d, /\bicon\b[^.]{0,30}\b(?:on top|above|at the top)\b|\boutlined?\b|\bthin frame\b|\bborder\b/i);
+  // (nor a card built on one quote or review: the page's card style holds every group it has, and a page with no quote
+  // invented one for it)
+  if (part === 'card') return !/\b(?:quotes?|reviews?|testimonials?)\b/i.test(`${id.replace(/-/g, ' ')} ${e.name || ''}`) && !/\bno text\b|\bunboxed\b|\bno words\b/i.test(d) && !says(all, /\bcanvas\b|\bgenerative\b|\bparticles?\b|\bflow (?:field|lines)\b/i) && (!says(d, /\bpeek\w*\b/i) || /\b(?:inside|within|at) the container\b/i.test(d)) && !/bento|marquee|stat|number|logo|chip|form|ui-|symbol|blank|icon/.test(id) && says(d, /\bfill(?:ed)?\b|\bpanel\b|\bsurface\b|\bsolid\b|\btile\b|\bcard\b|\bphoto\b|\bpicture\b|\bimage\b|\bvideo\b|\brender\b|\bcut-?out\b/i) && says(d, /\btitle\b|\bname\b|\bheading\b|\blabel\b|\bparagraph\b|\btext\b|\bprice\b|\bsentence\b|\bcaption\b|\bstatement\b/i) && !says(d, /\bicon\b[^.]{0,30}\b(?:on top|above|at the top)\b|\boutlined?\b|\bthin frame\b|\bborder\b/i);
   // (never a button the study marked basic: the stock square, soft and pill shapes the owner saw on every page)
   // (nor one whose label scrambles: references/motion.md, every frame of a word reads whole)
-  if (part === 'button') return e.basic !== true && !/^btn-(?:circle|icon|input|text)-|menu-trigger|burger|store-badge|dashed/.test(id) && !says(all, /\bscrambl\w*|\brandom (?:letters|characters|glyphs)\b|\bcharacters? cycles?\b/i) && !/^(?:transparent|unboxed|unfilled)\b|\bno fill\b/i.test(d.trim()) && !says(d, /\bupper-?case\b|\ball caps\b|\bin caps\b|\bcaps (?:label|word|text)\b|\btracked\b/i) && !(says(d, /\b(?:outline|border|ring)\b/i) && !says(d, /\b(?:solid|filled?)\b/i));
+  // (nor a label that stands bare at rest: the first screen's action is a real button, the sheet's Always line)
+  if (part === 'button') return e.basic !== true && !/^btn-(?:circle|icon|input|text)-|menu-trigger|burger|store-badge|dashed/.test(id) && !says(all, /\bscrambl\w*|\brandom (?:letters|characters|glyphs)\b|\bcharacters? cycles?\b/i) && !/^(?:transparent|unboxed|unfilled)\b|\bno fill\b|\bat rest\b[^.]{0,40}\b(?:bare|unfilled|transparent)\b|\bstands bare\b/i.test(d.trim()) && !says(d, /\bupper-?case\b|\ball caps\b|\bin caps\b|\bcaps (?:label|word|text)\b|\btracked\b/i) && !(says(d, /\b(?:outline|border|ring)\b/i) && !says(d, /\b(?:solid|filled?)\b/i));
   return true;
 }
 // a footer pattern that opens on its own closing line and button (it carries the call to action, like CLOSING_FOOTERS;
@@ -152,16 +221,31 @@ export function partUsable(part, e) {
 const closingPattern = (e) => says(e.description, /\bclosing (?:line|statement|headline)\b|\bcall to action\b|\bcta\b/i) || says(e.description, /\b(?:headline|statement|prompt)\b[^.]{0,80}\bbutton\b/i);
 // a navigation pattern that sets the wordmark large on the first screen (dealt less under a hero whose headline is the name)
 const largeMark = (e) => says(e.description, /\b(?:giant|large|big|wide|full-width)\b[^.]{0,30}\b(?:wordmark|logo|lockup)\b/i);
+// a button pattern whose label is set in the pairing's serif: never on a page whose pairing has none (draw.mjs checks it
+// again after --redraw type)
+export const needsSerif = (text) => says(text, /\bthe serif of the pairing\b|\bneeds a serif\b/i);
+// A navigation whose bar holds no section links, only Menu (the band that names the section in view, the Menu button, a
+// pattern with a Menu and no links on desktop): the sheet then puts the sections in the Menu panel, not in the bar.
+const MENU_ONLY = new Set(['chapter-band', 'menu-button']);
+const BAR_LINKS = /\b(?:two|three|four|five|six)(?: (?:or|to|and) (?:three|four|five|six))?(?: one-word| one- or two-word)? (?:links?|link (?:chips|tiles|buttons)|section names)\b/i;
+export function menuOnly(id, e = null) {
+  if (MENU_ONLY.has(id)) return true;
+  const desk = String(e?.description || '').split(/\bOn a phone\b|\bPhone:/)[0];
+  return !!e && says(desk, /\bMenu\b/) && !says(desk, BAR_LINKS);
+}
 
-const ALWAYS_NAV = 'Nothing stands above it (no announcement, information or language strip: `announcement-bar` fails it), and every link is one or two words, never a sentence (`nav-sentence` fails a sentence in the bar and any link or button over three words). It sits on the page\'s margins, on an opaque ground wherever it is fixed.';
+const ALWAYS_NAV = 'Nothing stands above it (no announcement, information or language strip: `announcement-bar` fails it), and every link is one or two words, never a sentence (`nav-sentence` fails a sentence in the bar and any link or button over three words). It sits on the page\'s margins, on an opaque ground wherever it is fixed. It never hides on the way down and comes back on the way up, and never scrolls away leaving nothing in its place: where the first screen\'s bar scrolls away, what this design keeps fixed takes over at once (`nav-not-as-dealt` fails a bar that hides).';
 // a first screen whose headline is the name shows no second wordmark (sheet section 6): the two designs that set the
 // wordmark large on the first screen say how, and are dealt less often under such a hero
 const NAME_MARK = 'When the hero\'s headline is the name, the first screen shows the mark alone in the wordmark\'s place (or leaves it empty) and the wordmark arrives in the fixed band once the hero has gone.';
+// (the plain bar that hides on the way down, the owner's generic bar, is no longer one of them: round 11c put the
+// study's best navigation in its place, the band that names the section in view, nav-live-chapter-caption)
+export const PROMOTED = { 'nav-live-chapter-caption': 'chapter-band' };
 const NAV = [
-  ['hide-on-scroll', 1, 'A plain bar that hides on the way down: the wordmark at the left margin at the h3 step, three to five one-word links at body size, one button at the right margin; 64-72px tall on the page ground, no line under it. It scrolls away with the hero, stays hidden while the visitor scrolls down and comes back on the first scroll up on a solid band of the ground (a 200ms slide). On a phone: the wordmark and a Menu button in a 56px bar that hides the same way; Menu opens the links full-screen on the ground.'],
+  ['chapter-band', 1, 'A band that names where you are: fixed at the top, 56px tall, a solid band of the page ground on every screen. The wordmark at the left margin at the h4 step; at the right margin a Menu text button beside the one action (40px tall); dead centre the name of the section in view at 16px in the ink: the section\'s one- or two-word name (its link in Menu), never a sentence or a number. When the next section takes the screen the old name slides up out of a 24px mask and the new one slides up in (280ms, ease-out); over the hero the centre is empty. Menu opens the section names full-screen on the ink, with the action and the email. On a phone: a 56px band with the wordmark, Menu and the action; the live name is dropped.'],
   ['centred-logo', 1, `Split round a centred wordmark: two or three links at the left margin, the wordmark centred at the h3 step, the action at the right margin with one secondary link (Visit, Sign in) beside it; 80px tall over the hero. After the hero it stays fixed as a 56px band of the ground with the wordmark centred and the action at the right; below 900px the links go behind a Menu text button. ${NAME_MARK}`, (c) => (c.nameHero ? 0.3 : 1)],
   ['floating-pill', 1, 'A floating capsule: centred at the top, 16px below the edge, as wide as its content (about 520-640px at 1440), 52-56px tall, fully round, filled with the surface tone and opaque (no blur, no border, no shadow at rest); in it the wordmark, three or four links at 15-16px and the action as the accent fill at its right end. It stays fixed on every screen on its solid fill, and every held heading keeps clear of it. On a phone: the wordmark and a Menu button in a 48px capsule, 12px from the edges.'],
-  ['menu-button', 1, 'Minimal: the wordmark at the left margin, and at the right margin a Menu text button beside the one action, both 44-48px tall, at every width. Menu opens a full-screen panel on the ink: the section names as links at the h2 step stacked on the left, the action, the email and the address or hours on the right, Close where Menu was; it slides down in 320ms. The 72px bar scrolls away with the hero; the wordmark and the two buttons then stay fixed in their corners, each on a solid tab of the ground.'],
+  ['menu-button', 1, 'Minimal: the wordmark at the left margin, and at the right margin a Menu text button beside the one action, both 44-48px tall, at every width. Menu opens a full-screen panel on the ink: the section names as links at the h2 step stacked on the left, the action, the email and the address or hours on the right, Close where Menu was; it slides down in 320ms. The 72px bar\'s ground scrolls away with the hero while the wordmark and the two buttons never leave: they stay fixed in their corners, each on a solid tab of the ground.'],
   ['shrinks', 1, 'A bar that changes on scroll: over the hero it is 104-120px tall with the wordmark at the h2 step and the links at body size; after 80px of scroll it settles into a 56-64px band of the ground (or the surface tone) with the wordmark at the h4 step, by transform alone (scale and translate, 300ms), and stays fixed. Never fades to glass. On a phone: 72px with the wordmark at the h4 step and a Menu button, settling to 56px the same way.'],
   ['side-index', 0.7, 'A side index: at 1200px and wider the section names stand as a short vertical list at the left margin in grid columns 1-2, at body size, sticky from the end of the hero to the footer (position: sticky inside the page grid), the current one in the ink at weight 600 and the others in the muted ink. Every section after the hero keeps its content in columns 3-12, so the margins stay equal and nothing runs under the list: map each blueprint\'s columns 1-12 onto columns 3-12. The index hides (opacity 0, 200ms) while a full-bleed band, a scene or the replay is on screen, and comes back after. Over the hero the wordmark and the action stand in a plain top row; below 1200px it is a top bar with a Menu button.', (c) => (c.software ? 0.6 : 1)],
   ['bottom-dock', 1, 'A dock at the bottom: at the top of the first screen only the wordmark, at the left margin, which scrolls away with the hero. The links and the action live in a capsule fixed 20px above the bottom edge and centred, there from the first screen on, 56px tall, as wide as its content, filled with the ink and lettered in the ground colour (on a dark page the surface tone with ink letters), opaque, no border, no shadow: three or four section names at 15-16px, the current one at weight 600, and the action as its one filled item in the accent. On a phone the dock spans the width less the margins, 60px plus the safe area, each target 44px or taller, and the page keeps 96px free under its last line. It slides down out of view while a pinned scene or the replay holds the screen, and comes back after.'],
@@ -207,7 +291,11 @@ const CARDS = [
   ['poster', 1, 'Poster cards: tall cards at 3:4, the picture filling the card to its edges, the name and one fact on a solid foot of the surface tone across the card\'s bottom 88-104px, never on the picture itself. Three or four to a row, 20px gaps; on hover the foot rises 8px to show one more line. For work, rooms, products, places.', (c) => (c.few ? 0.3 : c.software ? 0.6 : 1)],
   ['tall-text', 1, 'Tall cards of words: cards at 4:5 on the surface tone with the dealt corner and 32px padding, the name at the h3 step pinned to the top and one sentence with a link or a price pinned to the foot, the space between left empty. Three or four to a row with 16-20px gaps; hover steps the fill one tone and moves the link 4px. For services, plans in short, reasons to choose. On a phone they stack at their natural height, 24px of space between top and foot.'],
 ];
-const ALWAYS_BUTTONS = 'One button design on the whole page: the primary action takes it on the first screen (a real button, 44px or taller), the second action takes the treatment it names. Sentence case, no tracked capitals, no gradient, no shadow, no outline as the only shape. Where the brand has its own button, the brand\'s wins (say so in the report). One action appears once in a block: never two buttons to the same place on one screen.';
+// One button family on a page (round 12: r12-p53 had three unrelated shapes): the dealt button and at most one quieter
+// sibling, and no pattern brings a shape of its own
+// (the family is the shape, fill, type and hover; the size written for it holds where the action stands out, and the
+// navigation, a card or a form sets its own height: a 72px block in a 56px bar asked for the impossible)
+const ALWAYS_BUTTONS = 'One button family on the whole page: this button, and at most one quieter sibling for the second action (the label alone with this button\'s arrow where it has one, or the same shape in the surface tone). The family is its shape, fill, type and hover, and every button on the page takes them: the navigation\'s action, the hero, the sections, the cards, the forms and the footer. It keeps the size written here in the hero, the sections and the footer; in the navigation, on a card and in a form it takes the height that part gives it (40-48px where it names none). Where a hero, section, card, footer or navigation above or below names a button of its own (a pill, a play disc, a 64px block, a split button), build this one in its place (`button-family` fails three unrelated shapes). The primary action takes it on the first screen (a real button, 44px or taller). Sentence case, no tracked capitals, no gradient, no shadow, no outline as the only shape. Where the brand has its own button, the brand\'s wins (say so in the report). One action appears once in a block: never two buttons to the same place on one screen.';
 const BUTTONS = [
   ['pill-accent', 1, 'Pills: fully round, 48px tall, 24px side padding, the text face at 16px weight 500, filled with the accent; hover darkens the fill one step, press scales to 0.97. The second action is a text link at the same size in the ink with an arrow (→) that moves 4px on hover.', (c) => (c.tone === 'luxury' ? 0.4 : c.tone === 'playful' || c.tone === 'warm' ? 1.4 : 1)],
   ['pill-large-ink', 1, 'Large pills in the ink: fully round, 60-64px tall, 32px padding, the text face at 18-20px weight 500, filled with the ink and lettered in the ground colour; hover turns the fill the accent. The second action is the same pill in the surface tone with ink letters.', (c) => (c.tone === 'bold' || c.tone === 'playful' ? 1.4 : 1)],
@@ -222,6 +310,67 @@ const BUTTONS = [
   ['big-block', 1, 'Big blocks: square, 72px tall, 280px wide or more, the text face at the h4 step, weight 600, filled with the accent, the label at the left; hover darkens the fill. For the one action of a confident page. The second action is a text link at the same size.', (c) => (c.tone === 'bold' || c.creative ? 1.4 : c.tone === 'quiet' || c.tone === 'luxury' ? 0.4 : 1)],
   ['slim-ink', 1, 'Slim buttons: 4px radius, 44px tall, 18px padding, the text face at 15px weight 500, filled with the ink; the second action is the same shape in the surface tone. Quiet and exact, for a page of a lot of content.', (c) => (c.tone === 'luxury' || c.tone === 'quiet' || c.software ? 1.3 : 1)],
 ];
+// What each tested design must show once built (the sheet's "Must show" line, as the study's patterns carry one): the
+// one thing that tells it from the plain bar, the one-line footer and the stock card (review-004: a masthead built as a
+// plain bar after one screen, a footer cut to a line).
+const SIGNATURES = {
+  nav: {
+    'chapter-band': 'The centre of the fixed 56px band shows the name of the section in view and swaps it by sliding the old name up out of a mask.',
+    'centred-logo': 'The wordmark stands centred between the links at the left and the action at the right, and stays centred in the fixed 56px band after the hero.',
+    'floating-pill': 'An opaque capsule as wide as its content floats 16px below the top edge, centred, with the action as its accent end, on every screen.',
+    'menu-button': 'At every width only the wordmark and a Menu button beside the action; Menu opens a full-screen panel on the ink with the section names at the h2 step.',
+    shrinks: 'A 104-120px bar with the wordmark at the h2 step over the hero that settles into a fixed 56-64px band after 80px of scroll.',
+    'side-index': 'At 1200px and wider the section names stand as a sticky list in columns 1-2, the current one at weight 600, with all content in columns 3-12.',
+    'bottom-dock': 'The links and the action live in a capsule in the ink fixed 20px above the bottom edge; at the top only the wordmark.',
+    corners: 'No bar: the wordmark top-left and the action top-right on small solid tabs, fixed on every screen.',
+    masthead: 'Two centred rows over the hero, the wordmark at the h2 step over the links; past the hero a fixed 56px band of the links with the wordmark small at its left.',
+    'ink-band': 'A full-width 60-64px band filled with the ink, its wordmark, links and action in the ground colour, fixed on every screen.',
+    'contained-bar': 'A filled bar inside the page margins, 16px below the top edge, in the surface tone with the dealt corner, never full width.',
+    'big-links': 'The section names as links at the h3 step spread across the top of the first screen; past the hero they fold into a Menu tab beside the wordmark.',
+  },
+  footer: {
+    'closing-columns': 'A closing line at the h2 step with its one button, then three or four short columns 96px below, on the surface tone, about 60svh.',
+    'contact-block': 'On the ink: the heading at the h2 step on the left half, the email at the h3 step with a Copy button on the right half.',
+    'sitemap-grid': 'Four or five columns of real links, each under a short heading in the display face, with the wordmark at the h3 step top-left.',
+    'picture-footer': 'A full-bleed photograph of 55-65svh carrying the closing line and the button, over a 30svh band of contact, links and legal line.',
+    'newsletter-card': 'One filled card across eight columns with a sentence at the h3 step and the email field and its button in one row.',
+    'big-link-list': 'The sections and Contact stacked as links at the h2 step in the display face on the ink, the contact at body size in the right third.',
+    'three-cards': 'Three filled cards in a row on the surface tone, 260-320px tall, each with its heading at the h3 step.',
+    'two-halves': 'Two halves meeting on the centre line: the closing line and button on the ink at the left, the links and contact on the surface tone at the right.',
+    'hours-and-place': 'The opening hours as a real table beside the street, the way there and Directions, in two columns on the surface tone.',
+    'statement-and-row': 'One line at the display step with its button on the ground, then 120px of space and one band of the surface tone with the links, contact and legal line.',
+    'link-columns': 'Four or five columns of links to real pages beyond this one, with the wordmark and one sentence at the top-left.',
+    'picture-and-facts': 'A 60svh photograph on the left six columns beside the closing line, the button, the contact and the links on the surface tone.',
+  },
+  cards: {
+    surface: 'Filled cards one tone from the ground, two or three to a row at equal heights, a heading at the h3 step and a link or price at the foot.',
+    'picture-top': 'The picture runs to the card\'s top and side edges at 4:3, the words under it on the card\'s fill.',
+    rows: 'Full-width filled rows 80-104px tall, 8px apart: the name at the left, one fact in the middle, the price or link at the right.',
+    horizontal: 'Wide cards with the picture on the left 40% running to the card\'s edges and the name, two facts and the action on the right.',
+    ink: 'Cards filled with the ink and lettered in the ground colour, in two sections at most.',
+    'one-panel': 'One large filled panel 8-10 columns wide holding one whole group, beside or under its heading.',
+    overlapping: 'A row of three or four cards, in turn the surface tone and the ink, each overlapping the one before by 24-32px and sitting 24px lower.',
+    staggered: 'Two columns of filled cards, the right column starting 96-140px lower than the left.',
+    'sticky-stack': 'Cards about 70svh tall, in turn the surface tone and the ink, each sticking 96px below the top as the next slides over it.',
+    expanding: 'A row of equal cards where the hovered or focused one widens to about half the row and shows its picture.',
+    poster: 'Tall 3:4 cards with the picture to their edges and the name on a solid foot of the surface tone across the bottom.',
+    'tall-text': 'Tall 4:5 cards of words: the name pinned to the top, one sentence and a link pinned to the foot, the middle left empty.',
+  },
+  buttons: {
+    'pill-accent': 'Fully round 48px pills in the accent; the second action a text link with an arrow that moves 4px on hover.',
+    'pill-large-ink': 'Large fully round pills in the ink, 60-64px tall in the hero and the sections, that turn the accent on hover.',
+    'square-block': 'Square 56px blocks in the ink with no radius that swap to the accent on hover.',
+    'wide-split': 'Bars four grid columns wide and 60-64px tall in the hero and the sections, the label at the left and an arrow at the right that slides 6px on hover.',
+    'soft-accent': '8px-radius buttons 44-48px tall in the accent; the second action the same shape in the surface tone.',
+    'soft-large': '14px-radius buttons 56px tall, in the ink on a light page or the accent on a dark one.',
+    'circle-arrow': 'A label followed by a 52-56px circle in the accent holding an arrow that turns 45 degrees on hover; label and circle are one link.',
+    'fact-inside': 'The label and its price, time or date on one line inside a 52px button in the accent.',
+    'rolling-label': 'On hover the label rolls up out of the 52px button in the accent and a copy rolls in from below.',
+    'wipe-fill': 'A fully round button in the surface tone that the accent wipes across from the left on hover.',
+    'big-block': 'Square blocks in the accent, 72px tall and 280px wide or more in the hero and the sections, the label at the h4 step at the left.',
+    'slim-ink': 'Slim 44px buttons in the ink with a 4px radius; the second action the same shape in the surface tone.',
+  },
+};
 const CORNERS = [
   [{ id: 'square', radius: '0' }, 3, 'Square corners on pictures, cards, panels and fields.'],
   [{ id: 'hint', radius: '4px' }, 2.5, 'A 4px radius on cards, panels and fields; pictures square or at the same 4px.'],
@@ -301,8 +450,9 @@ export function dealFrame({ rnd, input, imagery, history = null, recent = {}, ct
   const c = { tone, sector: input.sector, software, multiPage, product: ['physical-product', 'ecommerce'].includes(input.sector), creative: ['bold', 'playful'].includes(tone) || ['agency', 'studio-portfolio', 'personal-portfolio', 'music', 'fashion', 'event', 'culture'].includes(input.sector), ...ctx };
   // (a design whose text depends on the page, a door or none, is written here)
   const fit = (list) => list.map((x) => [x[0], x[1] * (x[3] ? x[3](c) : 1), typeof x[2] === 'function' ? x[2](c) : x[2]]).filter((x) => x[1] > 0);
-  // The study's patterns of one part beside its designs: fitted to the page (fitPool), kept to what can be that part
-  // under the house rules (partUsable), and weighed by the same reasons the designs give (a hero whose headline is the
+  // The study's patterns of one part beside its designs: fitted to the page (fitPool, its assets and quality with it),
+  // kept to what can be that part under the house rules (partUsable), so a pattern scored 5 is as likely as a tested
+  // design and a 4 half as likely, and weighed by the same reasons the designs give (a hero whose headline is the
   // name, a closing scene, an email form elsewhere, a door, few pictures). Each part is dealt in turn, so a pattern that
   // names a clash with one already dealt (avoidWith) is left out.
   const dealt = new Set(pc?.dealt || []); const avoid = new Set(pc?.avoid || []);
@@ -312,7 +462,7 @@ export function dealFrame({ rnd, input, imagery, history = null, recent = {}, ct
       .map(([e, w]) => {
         const closes = part === 'footer' && closingPattern(e);
         const text = patternText(e) + (part === 'nav' && largeMark(e) ? ` ${NAME_MARK}` : '');
-        return [e.id, w * PATTERN_SHARE.frame * adjust(e, closes), text, { pattern: true, name: e.name || e.id, avoidWith: e.avoidWith || [], ...(closes ? { closes } : {}) }];
+        return [e.id, w * PATTERN_SHARE.frame * adjust(e, closes), text, { pattern: true, name: e.name || e.id, avoidWith: e.avoidWith || [], ...(e.signature ? { signature: e.signature } : {}), ...(closes ? { closes } : {}) }];
       })
       .filter((x) => x[1] > 0);
   };
@@ -329,8 +479,13 @@ export function dealFrame({ rnd, input, imagery, history = null, recent = {}, ct
   // (a button that is a shell command only for a product that has one: a developer tool, or a brief that names its
   // command line; round 12's first run gave an invoicing app a copy-the-install-line button)
   const command = input.sector === 'dev-tool' || /\b(?:CLI|command[- ]line|terminal|npm|pip|brew|install)\b/i.test(input.brief || '');
-  const buttons = take(wpick(away('buttons', [...fit(BUTTONS), ...pats('button', patterns?.button, (e) => (says(e.description, /\bshell command\b|\bcode face\b/i) && !command ? 0 : 1))])));
-  const part = (x, extra = {}) => ({ id: x[0], text: x[2], ...(x[3]?.pattern ? { pattern: true, name: x[3].name, avoidWith: x[3].avoidWith } : {}), ...extra });
+  // (nor a label in the pairing's serif on a page whose pairing has none)
+  const buttons = take(wpick(away('buttons', [...fit(BUTTONS), ...pats('button', patterns?.button, (e) => ((says(e.description, /\bshell command\b|\bcode face\b/i) && !command) || (c.serif === false && needsSerif(e.description)) ? 0 : 1))])));
+  // (each with what it must show: the pattern's signature, or the tested design's)
+  const part = (x, key, extra = {}) => {
+    const signature = x[3]?.signature || SIGNATURES[key]?.[x[0]];
+    return { id: x[0], text: x[2], ...(signature ? { signature } : {}), ...(x[3]?.pattern ? { pattern: true, name: x[3].name, avoidWith: x[3].avoidWith } : {}), ...extra };
+  };
   const corners = wpick(not('corners', CORNERS.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'large' ? 0.2 : tone === 'playful' && x[0].id === 'square' ? 0.5 : 1), x[2]])));
   const spacing = wpick(not('spacing', SPACING.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'open' ? 2 : multiPage && x[0].id === 'open' ? 0.5 : 1), x[2]])));
   const treatment = bw ? TREATMENT.find((x) => x[0] === 'mono') : wpick(not('treatment', TREATMENT.filter((x) => x[1] > 0).map((x) => [x[0], x[1] * (software && x[0] === 'cut-out' ? 0.3 : 1), x[2]])));
@@ -339,8 +494,8 @@ export function dealFrame({ rnd, input, imagery, history = null, recent = {}, ct
   const interaction = wpick(not('interaction', INTERACTION.map((x) => [x[0], x[1] * (x[0] === 'product' && !(software || c.product) ? 0 : 1) * (input.sector === 'physical-product' ? { none: 0.4, tool: 2 }[x[0]] ?? 1 : 1), typeof x[2] === 'function' ? x[2](c) : x[2]])));
   const clip = wpick(not('clip', CLIP.map((x) => [x[0], x[1] * (software && x[0] === 'one-clip' ? 0.5 : 1), x[2]])));
   return {
-    nav: part(nav), footer: part(footer, CLOSING_FOOTERS.has(footer[0]) || footer[3]?.closes ? { closes: true } : {}),
-    cards: part(cards), buttons: part(buttons),
+    nav: part(nav, 'nav'), footer: part(footer, 'footer', CLOSING_FOOTERS.has(footer[0]) || footer[3]?.closes ? { closes: true } : {}),
+    cards: part(cards, 'cards'), buttons: part(buttons, 'buttons'),
     corners: { ...corners[0], text: corners[2] }, spacing: { ...spacing[0], text: spacing[2] },
     treatment: { id: treatment[0], text: treatment[2] }, interaction: { id: interaction[0], text: interaction[2] }, clip: { id: clip[0], text: clip[2] },
   };

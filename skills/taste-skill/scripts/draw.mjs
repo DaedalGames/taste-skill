@@ -9,7 +9,8 @@
 //                 [--tone quiet|bold|warm|technical|playful|luxury|editorial]
 //                 [--have photography,product-photo,product-ui,illustration,video,document]   assets you really have
 //                        also mark (the brand's own solid mark), route (a real route with stops), plan (a real plan or exploded drawing),
-//                        names (eight or more real names of its rooms, dishes, places, projects or products)
+//                        names (eight or more real names of its rooms, dishes, places, projects or products),
+//                        logos (real logos of clients or press), map, data (real figures, quotes or prices), 3d (a model)
 //                 [--keep palette,type]        the brand already fixes these; draw the rest
 //                 [--avoid id,id] [--seed N] [--out DIR]
 //                 [--options 3]                show three dealt directions to choose from, write nothing
@@ -33,15 +34,17 @@ import { randomInt } from 'node:crypto';
 import { homedir } from 'node:os';
 import { dealTypeSystem, THIN_TEXT } from './lib/type-deal.mjs';
 import { dealPaletteV25, contrast } from './lib/colour-deal.mjs';
-import { dealFrame, BW_BRIEF, FRAME_RULES, FRAME_DESIGNS, PATTERN_FAMILIES, PATTERN_SHARE, RECENT_OUT, comeBack, loadPatterns, fitPool, patternWhyNot, partUsable, houseNote, patternPhone, patternPictures, phoneIn, studyTones, says } from './lib/frame-deal.mjs';
+import { dealFrame, BW_BRIEF, FRAME_RULES, FRAME_DESIGNS, PATTERN_FAMILIES, PATTERN_SHARE, QUALITY_FLOOR, RECENT_OUT, comeBack, loadPatterns, loadIdMap, historyIds, pageAssets, hidesOnScroll, menuOnly, needsSerif, fitPool, patternWhyNot, partUsable, houseNote, patternPhone, patternPictures, photosNeeded, phoneIn, studyTones, says } from './lib/frame-deal.mjs';
 import { colourFamily } from './lib/rules.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const LIB = join(HERE, '..', 'library');
 // The patterns of the design-anatomy study (library/patterns/<family>.json, exported from the lab): heroes, sections,
 // navigation, footers, cards, buttons, type and motion, each with what it fits and needs. TASTE_SKILL_PATTERNS points
-// at another folder (tests). A family whose file is missing deals today's designs alone.
+// at another folder (tests). A family whose file is missing deals today's designs alone. The history's pattern ids are
+// read through the export's id map (ids renamed in round 11c).
 const PATTERNS = loadPatterns(process.env.TASTE_SKILL_PATTERNS || join(LIB, 'patterns'));
+const PATTERN_IDS = loadIdMap(process.env.TASTE_SKILL_PATTERNS || join(LIB, 'patterns'));
 const ASSETS_PATH = join(HERE, 'assets.mjs').split('\\').join('/');
 const ASSETS_CMD = `node ${/\s/.test(ASSETS_PATH) ? `"${ASSETS_PATH}"` : ASSETS_PATH}`;
 const load = (name) => JSON.parse(readFileSync(join(LIB, name + '.json'), 'utf8'));
@@ -62,11 +65,86 @@ const NEVER_SCENES = new Set(['stepped-columns-raise-a-stage', 'scatter-and-lock
 // Atmosphere scenes (light, a burst of lines, letters) carry one line and no information. In round 1 of the v2.5 tests
 // every one of them was the stretch judges called dead scroll on a product page: dealt only to loud or creative pages.
 const ATMOSPHERE = new Set(['warp-jump', 'light-flood', 'letter-physics', 'wordmark-under-strain', 'object-through-giant-type', 'type-flip-relayout']);
+// The signature moves that hold the stage (library/motions.json) and the screens each holds: one of the page's held
+// stretches, counted with its scenes and the sections that pin (settlePins; round 11b left them uncounted).
+const MOVE_HOLD = { 'pinned-story': 2, 'sideways-gallery': 2, 'opening-window': 1, 'sheet-over': 1 };
+// Signature moves the deal leaves out: never the four that built the reviewed pages' worst parts (drag rails, a scaling
+// giant name, colour chapters, a curtain footer), and two more except as a hero's or a direction's own.
+const NO_MOTION = new Set(['drag-row', 'scaling-wordmark', 'colour-on-scroll', 'curtain-footer']);
+const NOT_DEALT_MOVES = new Set([...NO_MOTION, 'carried-picture', 'index-preview']);
 // The first screen's picture. Archetypes that set it small (a poster, a mosaic, a strip), unless the blueprint makes the
 // picture full-bleed, and the heroes whose blueprint sets it small whatever their archetype: a photograph on three of
 // twelve columns, two 280px doors, a portrait or a print a third of the width, one 450px control on half the screen.
 const SMALL_PICTURE = new Set(['type-poster', 'giant-wordmark', 'colour-field', 'inline-media-sentence', 'index', 'mosaic', 'tiles', 'quiet-column', 'artefact']);
 const SMALL_PICTURE_HEROES = new Set(['name-split-to-corners', 'pinned-title-over-portraits', 'two-doors-on-a-dark-wall', 'counter-object-wide-wordmark', 'two-prints-in-darkness', 'control-reads-the-page']);
+// What each library hero must show once built (sheet section 6's "Must show", as a pattern hero carries its own
+// signature; round 11c's first run printed none on 21 of 30 sheets): the one thing that tells it from the template
+// stack of a centred headline over a picture.
+const HERO_SIGNATURES = {
+  'name-under-photograph': 'A full-bleed photograph over the top 58% of the screen and, on the flat band under it, the name on one line across all twelve columns, its baseline 28px above the bottom edge.',
+  'stacked-name-two-inks': 'One saturated field and no picture: the name on two tight lines, the first in a light ink and the second in a dark one, filling the top 58% of the screen.',
+  'name-split-to-corners': 'The name cut in two, the first word held top-left and the second bottom-right while the page passes between them.',
+  'pinned-title-over-portraits': 'One line of title across about 82% of the width, held in a sticky layer, crossing the upper quarter of one centred 2:3 portrait.',
+  'headline-across-two-fields': 'Two flat fields meeting at half height, and the two-line headline centred across the seam, changing ink where it crosses it.',
+  'swatch-column-beside-view': 'One photograph panel on columns 1-10 inside a 10px frame, and on columns 11-12 a full-height stack of five colour blocks that is the navigation.',
+  'film-title-on-bottom-edge': 'One full-screen photograph with the name across the full width, its baseline 34px above the bottom edge.',
+  'small-name-open-sky': 'One photograph whose empty upper part carries no type: small type in the corners, and the name at 44-64px bottom-left as the only larger type.',
+  'giant-cropped-shape': 'A photograph of the subject cut to one simple shape about 110vh tall on columns 7-12, cropped by the hero\'s top and bottom, beside the headline on the bare ground.',
+  'fragment-on-shaped-stage': 'The headline in the upper-left third, and one flat stage in a saturated colour from column 5 to the right margin holding the interface fragment at true size.',
+  'control-reads-the-page': 'Two halves split by tone alone: the words anchored bottom-left, and on the right one working control of the product, about 450px square, that acts on the page.',
+  'column-on-one-line': 'Everything hangs on one line at the start of column 4: a 380px column of words beside a panel with two real rows of the interface, the right half left blank.',
+  'single-object-on-plinth': 'One photographed object dead centre, about half the screen tall, on a plinth one step lighter than the page, the wordmark top-left the only large type.',
+  'object-crops-three-edges': 'One object about 150% of the hero\'s height, turned 10-20 degrees on the left 60% and cropped by the top and bottom, beside a two-line headline on the right margin.',
+  'object-on-the-seam': 'A darker panel over the top 44% of the screen and the object straddling its lower edge, half on the panel and half on the page, the headline far left.',
+  'statement-beside-specimen-mosaic': 'Two halves split by tone: the statement filling the upper left, and on the right a loose mosaic of seven tiles, each holding one cut-out item.',
+  'specimen-wall-docked-panel': 'No headline: a wall of cut-out items on equal tiles in brickwork rows to every edge, with one ink panel docked at the bottom centre holding the sentence and the action.',
+  'single-specimen-name-list': 'One item on a tile dead centre with a list of item names right-aligned towards it; choosing a name swaps the item and the tile colour.',
+  'shouted-headline-rising-photo': 'A two-line headline centred across about 60% of the width, and one portrait photograph tucked under its last line, cropped by the bottom edge.',
+  'counter-object-wide-wordmark': 'One object photograph centred on a dark field, and under it the name as an ultra-wide wordmark across 72% of the width and only about 45px tall.',
+  'text-band-then-sheet': 'No display type: one band of text at 16px across seven columns, then from mid-height a sheet of thumbnails, one per column.',
+  'sheet-with-text-cell': 'The whole screen a sheet of photographs in six offset columns, one of its cells a filled panel holding the wordmark, the sentence and the action.',
+  'lit-strip-four-corners': 'A dark field crossed by one strip of photographs wider than the screen, the frame nearest the centre the brightest, and only small text in the four corners.',
+  'mosaic-masthead-title-on-axis': 'A gutterless mosaic of photographs and flat tiles across the top 52%, and under it the title starting exactly at 42% of the width.',
+  'narrow-talk-wide-headline': 'A narrow left column with the sentence and the action, and from the 34% line a very heavy two-line headline over a photograph cropped by the bottom edge.',
+  'waterline-headline': 'Two flat fields meeting at half height, the seam cutting through the headline\'s second line, the letters in one ink above it and another below.',
+  'flush-left-shout-seam-photo': 'A heavy two-line headline flush left on a saturated field, and one arched portrait turned 5 degrees right of centre, straddling the seam to the bottom band.',
+  'menu-column-sticky-photo': 'Two equal halves: a photograph of the place that stays put on the right while the left half, set like a menu and centred, scrolls.',
+  'anchored-text-specimen-half': 'Two halves split by tone: the words anchored bottom-left, and a sticky right half with one cut-out item on a square tile at its centre.',
+  'stepped-title-two-photos': 'A two-line headline stepping across the middle third, the second line indented to column 6, with two photographs placed against the step.',
+  'three-prints-one-line': 'Three photographs of three sizes hanging from one top line at 18% of the height, the tall 3:4 the largest thing on the screen, and the type small.',
+  'two-prints-in-darkness': 'A near-black field about 75% empty with two low-key photographs far apart, the larger 4:5 the brightest thing on the screen.',
+  'two-line-statement-full-width': 'No picture: a two-line statement filling the upper two thirds, the first line flush left and the second flush right, margin to margin.',
+  'void-then-statement-on-axis': 'The upper 60% empty but for the top row, and the statement hanging from a vertical axis at 42% of the width in the bottom third.',
+  'colour-field-two-ink-statement': 'One saturated field with no bar and no picture: a two-line statement in a pale ink and a dark ink, the lines nearly touching, filling the top 55%.',
+  'one-word-cropped': 'One word so large that the left, right and bottom edges cut its letters, filling the lower half of the screen.',
+  'window-opens-to-the-edges': 'A picture seen through a small centred window that opens to the whole screen over the first screen of scroll, the words beside it never moving.',
+  'ring-of-frames-around-the-headline': 'Eighteen to twenty-four frames on a tilted ellipse round the centre, and the headline in its empty core.',
+  'title-in-the-sky-line-on-the-horizon': 'One wide photograph with the headline centred in its empty sky and one sentence split in two on the horizon, the subject showing through the gap.',
+  'name-across-the-middle': 'No picture: the name on one line across the vertical centre from margin to margin, everything else in the four corners.',
+  'square-over-a-moving-line': 'One line of display type moving slowly edge to edge across a square photograph, its letters turning light where they cross it.',
+  'two-doors-on-a-dark-wall': 'Two portrait photographs side by side on a near-black field, each the link to one half of the subject with its name beneath it.',
+  'title-from-top-to-bottom-edge': 'One full-screen picture with the headline pulled apart: line one at the top-left, line two indented and set on the bottom edge.',
+  'line-up-on-an-arc': 'The current item cut out at the centre and its siblings on a shallow arc behind it, smaller and darker; a swipe, a key or a click brings another forward.',
+  'view-with-two-cards-in-the-corner': 'One full-screen picture with the headline on the left at mid-height and, in the bottom-right corner, the two newest things as text links with arrows.',
+  'product-under-headline': 'The headline, sentence and action at the top, and the product filling the content width under them, cropped by the bottom edge of the first screen.',
+  'words-beside-product': 'The content width split about 5 to 7: a headline of 72px or more beside the product, the object or the place at the full height of the screen.',
+  'photograph-with-a-line': 'One photograph filling the first screen, with a short line and one action on its calmest part and nothing else.',
+  'two-photographs-and-a-line': 'Two photographs of one family side by side filling the width, the line and the action under them or on the lower edge of one.',
+  'object-on-plain-ground': 'The name or the idea as the largest type across the top on the centre axis, and the object standing large under it on the same ground, with no box round it.',
+  'answer-first': 'A headline that says what the service is and for whom, one real picture beside or under it, and three or four complete facts as short lines under both.',
+};
+// What the product's interface shows on a software page's first screen, through the history (review-004: every hero of
+// an invoicing app was a window of ledger rows). One with `fits` only where the brief names what it needs, one with
+// `needs` only where the page has that asset (a map it could only draw fails drawn-illustration), and none over a
+// replay that shows the same (`notWith`). How any of it arrives is section 8's entrance, never its own.
+const HERO_SUBSTANCES = [
+  { id: 'document', name: 'a document', notWith: ['turns', 'source-output'], text: 'One document the product makes or keeps, set as a page at reading size (an invoice, a note, a report, a brief) with its real heading, lines and figures; the rest of the interface is only its edge.' },
+  { id: 'chart', name: 'a chart', notWith: ['source-output'], fits: /\b(?:invoic\w*|expens\w*|budget\w*|bookkeep\w*|accounting|financ\w*|money|payments?|payroll|sales|revenue|metrics?|analytics?|tracking|spend\w*|savings?|invest\w*|energy|fitness)\b/i, text: "One chart of the user's own figures (a month of income, the hours of a week), built in HTML in the product's window, and the figure that matters in words beside it." },
+  { id: 'timeline', name: 'a timeline', text: "The product's own time axis: a week or a month of the user's items along it (due dates, sessions, sends), today marked and one item set apart with its facts." },
+  { id: 'object', name: 'a single object of the product', text: 'One thing the product holds, opened large and alone: one card, one record, one note, its fields readable, nothing listed around it.' },
+  { id: 'conversation', name: 'a conversation', notWith: ['turns', 'agent-run'], text: 'An exchange inside the product: a message and its answer, or a comment on an item and the reply, two to four turns.' },
+  { id: 'map', name: 'a map', needs: 'map', fits: /\b(?:maps?|routes?|places|locations?|deliver\w*|travel\w*|trips?|fleets?|stores|logistics|shipping|rides?)\b/i, text: "The product's map of the user's own places (the stops, sites or routes it keeps), one of them marked with its facts beside it." },
+];
 // What a scene really takes ("needs" in library/scenes.json), checked against what the brief has (--have, its words
 // and the imagery mode):
 //   product-photo  photographs or renders of this very product, building or work (--have product-photo)
@@ -239,6 +317,22 @@ const DEFAULT_SECTIONS = {
 const FAQ_WORDS = /\bFAQs?\b|\bfrequently asked\b|\bcommon questions\b|\bquestions (?:section|and answers)\b/i;
 // requested role names → the role vocabulary used by library/sections.json
 const ROLE_ALIAS = { features: 'features', feature: 'features', benefits: 'features', services: 'features', showcase: 'showcase', product: 'showcase', demo: 'showcase', 'how-it-works': 'how-it-works', how: 'how-it-works', process: 'how-it-works', steps: 'how-it-works', testimonial: 'testimonial', testimonials: 'testimonial', quotes: 'testimonial', proof: 'proof', logos: 'proof', press: 'proof', stats: 'stats', numbers: 'stats', pricing: 'pricing', plans: 'pricing', faq: 'faq', cta: 'cta', footer: 'footer', intro: 'intro', manifesto: 'intro', about: 'about', team: 'about', work: 'work', projects: 'work', index: 'work', 'case-studies': 'work', gallery: 'gallery', images: 'gallery', list: 'list', menu: 'list', schedule: 'list', lineup: 'list', 'line-up': 'list', speakers: 'list', agenda: 'list', programme: 'list', program: 'list', timetable: 'list', rooms: 'list', tickets: 'pricing', price: 'pricing', contact: 'contact', booking: 'contact', newsletter: 'contact', signup: 'contact' };
+// The structure a section pattern's name says (structureOf), first match first: the product's own window or a working
+// control, a split, a list of rows, a grid of cards; a bare row is a list only where no headline or quote leads it (the
+// third item: round 11c tagged a portrait beside a big quote a list). Then whether pictures or footage lead it, then a
+// statement, then its shape.
+const STATEMENT_NAME = /\bstatement\b|\bheadline\b|\bquote\b|\bparagraph\b|\bsentence\b/;
+const STRUCTURE_NAMES = [
+  ['tool', /\bui\b|\b(?:product|app|demo|browser) (?:windows?|screens?)\b|\binterface\b|\bdashboard\b|\bconfigurator\b|\bcalculator\b/],
+  ['split',/\bsplit\b|\bhalves\b|\bbeside\b|\btwo[- ]pane\b|\bleft\b.*\bright\b|\bright\b.*\bleft\b|\b(?:text|copy|title|heading|statement|list|names?) (?:left|right)\b/],
+  ['table', /\btable\b|\bboard\b|\bledger\b|\bcomparison\b/],
+  ['list', /\blist\b|\bindex\b|\bnames\b|\bmenu\b|\bschedule\b|\bagenda\b|\bline ?up\b/],
+  ['grid', /\bgrid\b|\bcards?\b|\btiles?\b|\bthree[- ]up\b|\bcolumns\b|\bcells?\b/],
+  ['list', /\brows?\b/, STATEMENT_NAME],
+  ['band', /\bband\b|\bmarquee\b|\bticker\b/],
+];
+const GALLERY_NAME = /\b(?:photos?|photographs?|pictures?|images?|portraits?|artworks?|stills|prints|frames|videos?|collage|mosaic|masonry|lookbook|reel|gallery|scatter\w*|carousel|fan)\b/;
+const SHAPE_STRUCTURE = { split: 'split', table: 'table', list: 'list', index: 'list', grid: 'grid', mosaic: 'gallery', carousel: 'gallery', strip: 'band', band: 'band', statement: 'statement', 'full-bleed': 'band', pinned: 'split', stack: 'column' };
 
 // ---------- the study's patterns as heroes, section blueprints, small moves and type notes ----------
 // (lib/frame-deal.mjs loads them, fits them to the page and deals the navigation, footer, cards and buttons from them)
@@ -254,6 +348,8 @@ const P_HEROES = PATTERNS.hero.filter((e) => !/^hero-(?:gate|loader|phone)-/.tes
   blueprint: e.description.trim() + houseNote(e), mobile: e.phone ? String(e.phone).trim() : PHONE_FALLBACK,
   headline: says(e.description, /\b(?:giant|huge|large|full-width|screen-wide)\s+(?:wordmark|name|logo(?:type)?)\b/i) ? 'The name itself, on one line where it fits, when the page is built on what the name means; otherwise the page\'s own idea in two lines at most.' : 'The page\'s own idea, in this client\'s words, on two lines at most (12 words or fewer).',
   needs: e.needs?.video ? ['video'] : [], pneeds: e.needs || {}, fits: e.fits || {}, avoidWith: e.avoidWith || [],
+  // (its quality weighs it in fitPool; its signature is the sheet's "Must show")
+  quality: e.quality, ...(e.signature ? { signature: e.signature } : {}),
   split: says(e.description, /\bsplit\b|\b(?:left|right) half\b|\bhalves\b|\b50\/50\b/i),
 }));
 // A section pattern stands in for a blueprint of the role its name and description say. One that is a transition, a
@@ -270,8 +366,8 @@ const ROLE_RULES = [
   [/\btestimonials?\b|\bquotes?\b|\breviews?\b/i, ['testimonial']],
   [/\blogos?\b|\bpress\b|\bclients?\b|\bpartners?\b/i, ['proof']],
   [/\bstats?\b|\bstatistics\b|\bnumerals?\b|\bbig numbers\b/i, ['stats']],
-  // (a "ticket-style" signup card is no price list)
-  [/\bpric(?:e|es|ing)\b|\bplans?\b|\btiers?\b|\btickets?\b(?![- ]style)/i, ['pricing']],
+  // (a "ticket-style" signup card is no price list, under its round 11c id either: "notched ticket signup card")
+  [/\bpric(?:e|es|ing)\b|\bplans?\b|\btiers?\b|\btickets?\b(?![- ](?:style|sign ?up))/i, ['pricing']],
   [/\bfaqs?\b|\bquestions\b/i, ['faq']],
   [/\bcontact\b|\bsign ?up\b|\bnewsletter\b|\bbooking\b|\bmap tile\b/i, ['contact']],
   [/\bcta\b|\bcall to action\b|\bclosing\b/i, ['cta']],
@@ -290,6 +386,9 @@ function sectionRoles(e) {
   if (NOT_A_SECTION.test(words) || NOT_A_SECTION_TEXT.test(e.description)) return [];
   // (no bento grid: the sheet's Always line)
   if (says(`${e.name || ''}. ${e.description}`, /\bbento\b/i)) return [];
+  // (nor a dialog, a drawer or an overlay a button opens: it is no section of the page, and a place's visit block, which
+  // stands in its contact section, went behind it; round 11c dealt a contact overlay to a café and a guesthouse)
+  if (/^[^.]*\b(?:overlay|dialog|drawer)\b[^.]*\bopen(?:ed|s)\b/i.test(e.description.trim())) return [];
   const known = new Set(Object.values(ROLE_ALIAS));
   // the export may name the roles itself
   const given = [].concat(e.roles || e.role || []).map((r) => ROLE_ALIAS[r] || r).filter((r) => known.has(r) && r !== 'footer');
@@ -311,29 +410,30 @@ function shapeOf(e) {
 const P_SECTIONS = PATTERNS.section.map((e) => ({ e, roles: sectionRoles(e) })).filter((x) => x.roles.length).map(({ e, roles }) => ({
   id: e.id, name: e.name || e.id, pattern: true, role: roles[0], roles, shape: shapeOf(e), tags: [], directions: [],
   needs: e.needs?.video ? ['video'] : [], pneeds: e.needs || {}, fits: e.fits || {}, avoidWith: e.avoidWith || [],
-  blueprint: e.description.trim() + houseNote(e), mobile: patternPhone(e),
+  blueprint: e.description.trim() + houseNote(e), mobile: patternPhone(e), quality: e.quality,
 }));
 // A section that pins the screen (a pinned stage or scene, a sticky stage in a wrapper of several screens, a stretch held
 // for so many screens or pixels) holds it like a scroll scene, so it counts against the page's scenes (settlePins); a
 // sticky heading, column or picture beside content that scrolls holds nothing. The screens it holds, or 0 (about one
 // section pattern in four pins: the study's pinned stages).
-const PIN_WORDS = /\bpinned (?:[\w-]+ ){0,2}(?:stage|scene|screen|canvas|run|stretch|section|track|viewport|strip|panel|opening|transition|beats?|swap|video|room|scroll|sequence|chapter)\b|\bpinned (?:for|about|behind|full)\b|\b(?:viewport|stage|strip|track|scene|section) is pinned\b|\bstays? (?:pinned|held)\b|\bsticky (?:full-bleed |\d+s?vh )?(?:stage|layer)\b|\bheld (?:sticky )?for (?:about |the whole )?(?:[\d.,]+ ?(?:px|screens?|viewports?)|chapter)\b|\bwrapper (?:about )?[2-9]\d\d(?:[–-]\d{3})?s?vh\b/i;
-const NO_PIN = /\b(?:no|not|never|without)\s+(?:a\s+|any\s+)?(?:pin|pinned|pins|sticky)\b/i;
+const PIN_WORDS = /\bpinned (?:[\w-]+ ){0,2}(?:stage|scene|screen|canvas|run|stretch|section|track|viewport|strip|panel|opening|transition|beats?|swap|video|room|scroll|sequence|chapter)\b|\bpinned (?:for|about|behind|full)\b|\b(?:viewport|stage|strip|track|scene|section) is pinned\b|\bstays? (?:pinned|held)\b|\bsticky (?:full-bleed |\d+s?vh )?(?:stage|layer)\b|\bheld (?:sticky |with position: sticky )?for (?:about |the whole )?(?:(?:[\d.,]+|one|two|three|four|five|six) ?(?:px|screens?|viewports?)|chapter)\b|\bheld behind\b[^.]*?\b\d{3}s?vh of scroll\b|\bwrapper (?:about )?[2-9]\d\d(?:[–-]\d{3})?s?vh\b/i;
+const NO_PIN =/\b(?:no|not|never|without)\s+(?:a\s+|any\s+)?(?:pin|pinned|pins|sticky)\b/i;
 // (a section that follows or precedes another's pin holds nothing itself: "a quiet breath after a heavy pinned scene")
 const OTHER_PIN = /\b(?:after|before|following|from|out of)\s+(?:a|an|the|its)\s+(?:[\w-]+\s+){0,3}?pinned\b[^.]*/gi;
 // the screens of hold for a page's scenes and pinned sections together (dealScenes, settlePins)
 const HOLD_BUDGET = 6.5;
 function pinHold(bp) {
   const text = String(bp?.blueprint || '').split(/\bPhone:/)[0];
-  // (the study names its pinned stages so: sec-pinned-…)
-  if (!/^sec-pinned-/.test(bp?.id || '') && !text.split(/(?<=\.)\s+/).map((t) => t.replace(OTHER_PIN, '')).some((t) => (/^pinned\b/i.test(t) || PIN_WORDS.test(t)) && !NO_PIN.test(t))) return 0;
-  // "about two screens", "about 2640px of scroll", "a wrapper 300vh tall", "about 800px of scroll per scene, three
-  // scenes"; two screens when it does not say
+  // (the study names its pinned stages so: sec-pinned-…; a blueprint of library/sections.json says so by its structure)
+  if (!/^sec-pinned-/.test(bp?.id || '') && bp?.structure !== 'stage' && !text.split(/(?<=\.)\s+/).map((t) => t.replace(OTHER_PIN, '')).some((t) => (/^pinned\b/i.test(t) || PIN_WORDS.test(t)) && !NO_PIN.test(t))) return 0;
+  // "about two screens", "about 2640px of scroll", "a wrapper 300vh tall", "about 200svh of scroll", "about 800px of
+  // scroll per scene, three scenes"; two screens when it does not say
   const n = text.match(/\b(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight) (?:full )?(?:screens?|viewports?)\b/i);
   const steps = text.match(/\b(\d{3,4})px of (?:pinned )?scroll (?:per|a|each) (?:scene|step|beat|stop)\b[^.]*?\b(two|three|four|five|six|[2-6]) (?:scenes|steps|beats|stops)\b|\b(two|three|four|five|six|[2-6]) (?:scenes|steps|beats|stops) of (?:about )?(\d{3,4})px\b/i);
   const px = text.match(/\b(\d{3,4})px of (?:pinned )?scroll\b|\b(?:lasting|over) (?:about )?(\d{3,4})px\b/i);
-  const vh = text.match(/\b(\d{3})s?vh (?:long|tall|of (?:scroll|pin))\b|\bwrapper (?:about )?(\d{3})(?:[–-]\d{3})?s?vh\b/i);
-  const held = n ? (n[1].toLowerCase() === 'one' ? 1 : asNumber(n[1])) : steps ? (+(steps[1] || steps[4]) * asNumber(steps[2] || steps[3])) / 900 : px ? +(px[1] || px[2]) / 900 : vh ? (+(vh[1] || vh[2]) - 100) / 100 : 2;
+  // (a wrapper is its hold and one screen tall; the scroll it names is the hold itself)
+  const vh = text.match(/\b(\d{3})s?vh (?:long|tall)\b|\bwrapper (?:about )?(\d{3})(?:[–-]\d{3})?s?vh\b|\b(\d{3})s?vh of (?:scroll|pin)\b/i);
+  const held = n ? (n[1].toLowerCase() === 'one' ? 1 : asNumber(n[1])) : steps ? (+(steps[1] || steps[4]) * asNumber(steps[2] || steps[3])) / 900 : px ? +(px[1] || px[2]) / 900 : vh ? (vh[3] ? +vh[3] : +(vh[1] || vh[2]) - 100) / 100 : 2;
   // (held three screens at most: the adjustment under a longer one cuts it back)
   return Math.min(3, Math.max(1, Math.round(held * 2) / 2));
 }
@@ -360,12 +460,23 @@ function smallMove(e) {
   if (/\bparticles?\b|\bshapes?\b|\bdecor\b|\bline drawings?\b|\billustrat\w*|\bsprites?\b|\bicons?\b|\bbadge\b|\boutlined?\b|\bring\b|\bglow\b|\btheme colou?r\b|\bsound\b|\bbeep\b|\bflicker\b|\bhard-cuts?\b|\bRGB\b|\bchromatic\b|\bauto-advance\b|\bon a timer\b|\bown photo in a window\b|\bscroll hint\b|\bhow to scroll\b|\bspine\b|\bnumber tile\b/i.test(d) || says(all, /\bparticles?\b|\bconfetti\b|\bgrain\b|\bnoise tile\b/i) || /^mo-carousel-hero|^mo-video-clip-cycle/.test(e.id)) return false;
   // no word split into flying letters (references/scenes.md: every frame reads whole)
   if (/\bscatter\w*\b|\bcharacters apart\b|\bsplitting (?:characters|letters)\b|\bslot machine\b|\bflying letters\b/i.test(d)) return false;
-  if (says(d, /\bpinned\b|\bpins\b/i)) return false;
-  // an arrival: on load or entry, or a rise or fade that no scroll, hover, click or pointer drives
-  if (says(d, /\bon (?:load|entry|arrival)\b|\bonce\b|\bas (?:it|they) (?:enters?|arrives?)\b|\bentering\b/i) || (/\b(?:rises?|fades? in|slides? (?:up|in)|arrives?|pops?|drops?|types? in)\b/i.test(d) && !/\bscroll|\bscrub|\bhover|\bclick|\btap|\bpointer\b|\bcursor\b/i.test(d))) return false;
+  // ("Nothing pins" is no pin)
+  if (says(d, /\bpinned\b|(?<!\bnothing )\bpins\b/i)) return false;
+  // an arrival: on load or entry, or a rise or fade that no scroll, hover, click or pointer drives ("once the block
+  // passes" is a when, not a single arrival: a scrubbed blur that reverses once the block passes was left out)
+  if (says(d, /\bon (?:load|entry|arrival)\b|\bonce\b(?! (?:the|it|they|this|its|their)\b)|\bas (?:it|they) (?:enters?|arrives?)\b|\bentering\b/i) || (/\b(?:rises?|fades? in|slides? (?:up|in)|arrives?|pops?|drops?|types? in)\b/i.test(d) && !/\bscroll|\bscrub|\bhover|\bclick|\btap|\bpointer\b|\bcursor\b/i.test(d))) return false;
   if (moveKind(e) === 'hover' && says(d, /\bbuttons?\b/i)) return false;
+  // no heading laid on a picture (round 11b: "Cover rises and grows" asked for an h1 on a photograph, a second h1), no
+  // fills of its own (a band, bars, rows or cards that are not section 0's card style: round 11b dealt three tints), and
+  // nothing that hides the navigation on the way down (section 0's never hides); a hover, focus or active state in the
+  // ink or the surface tone is the palette's own, no fill of its own (a row that takes the ink fill under the hand)
+  if (says(d, MOVE_ON_PICTURE) || says(d.split(/(?<=\.)\s+/).filter((t) => !/\bdealt card style\b/.test(t) && !PALETTE_STATE(t)).join(' '), MOVE_FILLS)) return false;
+  if (/\bnav(?:igation)?\b|\bbar\b|\bheader\b/i.test(d) && hidesOnScroll(e)) return false;
   return true;
 }
+const MOVE_ON_PICTURE = /\b(?:headlines?|headings?|h1|titles?)\b[^.]{0,120}\b(?:on|over|across) (?:the |a |its )?(?:picture|photo(?:graph)?|image|cover|clip|footage|video)\b|\b(?:pictures?|photo(?:graph)?s?|covers?|images?)\b[^.]{0,40}\b(?:carrying|carries|holding|holds) (?:a |the )?(?:headline|heading|h1|title)\b|\bunder the type\b|\b(?:in front of|behind) (?:the |a )?(?:picture|figure|cut-?out|photo\w*)\b/i;
+const MOVE_FILLS = /\btints?\b|\bfills?:|\bfilled (?:bars?|bands?|blocks?|discs?|circles?|shapes?|squares?|strips?)\b|\b(?:takes?|turns?) the (?:ink|accent) fill\b|\bon the ink field\b|\b(?:cards?|tiles?|bars?|bands?|rows?|panels?|blocks?) (?:is |are )?(?:on|in) the (?:surface tone|ink|accent)\b/i;
+const PALETTE_STATE = (t) => /\bhover\w*|\bfocus\w*|\bactive\b|\bpress\w*|\bselected\b|\b(?:takes?|turns?) the (?:ink|surface)\b/i.test(t) && !/\btints?\b|\baccent\b|\bnew (?:hue|colou?r)\b/i.test(t);
 const P_MOVES = PATTERNS.motion.filter(smallMove);
 // type notes: never a monospace voice, a system with no display step or a single step
 const P_TYPES = PATTERNS.type.filter((e) => !says(`${e.name || ''}. ${e.description}`, /\bmono(?:space)?\b/i) && !/\bno display\b|\bonly one step\b|\bexactly one step\b|\bscene-level\b|\bno big display\b/i.test(e.description));
@@ -410,7 +521,7 @@ if (opt('list')) {
   if (what === 'sectors') console.log(SECTORS.join('\n'));
   else if (what === 'tones') console.log(TONES.join('\n'));
   else if (what === 'roles') console.log([...new Set(Object.values(ROLE_ALIAS))].join('\n'));
-  else if (what === 'scenes') { const all = existsSync(join(LIB, 'scenes.json')) ? load('scenes') : []; for (const sc of all) console.log(`${sc.id.padEnd(34)} ${sc.name} — ${sc.family}; ${sc.summary.split(/(?<=\.)\s/)[0]} Needs: ${sceneNeedsWords(sc)}.${sc.weight === 0 || NEVER_SCENES.has(sc.id) ? ' (not dealt)' : ''}`); if (!all.length) console.log('No scene library yet.'); }
+  else if (what === 'scenes') { const all = existsSync(join(LIB, 'scenes.json')) ? load('scenes') : []; for (const sc of all) console.log(`${sc.id.padEnd(34)} ${sc.name} — ${sc.family}; ${sc.summary.split(/(?<=\.)\s/)[0]} Needs: ${sceneNeedsWords(sc)}.${sc.weight === 0 || NEVER_SCENES.has(sc.id) ? ' (not dealt)' : sc.tones ? ` (only for a ${sc.tones.join(' or ')} tone)` : ''}`); if (!all.length) console.log('No scene library yet.'); }
   else if (what === 'techniques') { const all = existsSync(join(LIB, 'techniques.json')) ? load('techniques') : []; const scenes = existsSync(join(LIB, 'scenes.json')) ? load('scenes') : []; for (const t of all) { const sc = techniqueScene(t); const built = scenes.find((x) => x.source === t.id); console.log(`${t.id}  ${t.name} — ${t.family}; ${t.position}, ${t.energy}, hold ${t.hold}; ${t.sectors.join(', ')}. Needs: ${sceneNeedsWords(sc)}.${built ? ` (not dealt: now the tested scene ${built.id})` : ''}`); } if (!all.length) console.log('No technique library yet.'); }
   else if (what === 'entrances') { const all = existsSync(join(LIB, 'entrances.json')) ? load('entrances') : []; for (const e of all) console.log(`${e.id.padEnd(16)} ${e.name} — ${e.family}, ${e.energy}, weight ${e.weight}; ${e.summary || e.sees.split(/(?<=\.)\s/)[0]}`); if (!all.length) console.log('No entrance library yet.'); }
   else if (what === 'frame') {
@@ -422,7 +533,7 @@ if (opt('list')) {
     const usable = { hero: P_HEROES, section: P_SECTIONS, nav: PATTERNS.nav.filter((e) => partUsable('nav', e)), footer: PATTERNS.footer.filter((e) => partUsable('footer', e)), card: PATTERNS.card.filter((e) => partUsable('card', e)), button: PATTERNS.button.filter((e) => partUsable('button', e)), type: P_TYPES, motion: P_MOVES };
     if (!PATTERN_FAMILIES.some((f) => PATTERNS[f].length)) console.log('No pattern library yet (library/patterns/*.json): the deal uses the designs alone.');
     for (const f of PATTERN_FAMILIES) {
-      console.log(`## ${f}: ${PATTERNS[f].length} in the file, ${usable[f].length} dealt${f === 'motion' ? ' as small moves (the basic ones and the big ones are not)' : ''}`);
+      console.log(`## ${f}: ${PATTERNS[f].length} in the file at quality ${QUALITY_FLOOR} or more, ${usable[f].length} dealt${f === 'motion' ? ' as small moves (the basic ones and the big ones are not)' : ''}`);
       if (f === 'section') { const by = {}; for (const s of P_SECTIONS) for (const r of s.roles) (by[r] ||= []).push(s.id); for (const [r, ids] of Object.entries(by)) console.log(`${r.padEnd(13)} ${ids.join(', ')}`); }
       else if (usable[f].length) console.log(usable[f].map((e) => e.id).join(', '));
     }
@@ -504,7 +615,7 @@ const sceneById = (id) => L.scenes.find((x) => x.id === id) || L.techniques.find
 const FORCED_TECHNIQUE = opt('technique') === undefined ? null : opt('technique');
 if (FORCED_TECHNIQUE === true) { console.error('--technique needs an id. `node draw.mjs --list techniques` lists them.'); process.exit(2); }
 if (FORCED_TECHNIQUE && opt('no-technique')) { console.error('Use --technique <id> or --no-technique, not both.'); process.exit(2); }
-const hist = readHist();
+const hist = readHist().map((h) => historyIds(h, PATTERN_IDS));
 const recent = (key, n) => hist.slice(0, n).map((h) => h[key]).filter(Boolean);
 // the value of `key` in this sector's last draw of the nine, as a list (empty when none): briefs drawn between two of
 // the same sector push it out of the shorter windows
@@ -564,8 +675,9 @@ if (opt('redraw')) {
   }
   else if (what === 'photos') sheet.photos = dealPhotos(dir, sheet.input, sheet.photos?.set);
   else if (what === 'scenes' || what.startsWith('scenes=')) {
-    // the replay keeps its section; a scene never carries it or a section next to it
-    const reserved = sheet.replay ? [sheet.replay.carries] : [];
+    // the replay keeps its section; a scene never carries it or a section next to it; a kept signature move keeps its
+    // stretch (keptHold)
+    const reserved = sheet.replay ? [sheet.replay.carries] : []; const kept = keptHold(sheet);
     const wanted = what.startsWith('scenes=') ? what.slice(7).trim().toLowerCase() : null;
     delete sheet.lightOptions;
     // none is still allowed, but the sheet names the scenes that need no photograph or one and still fit
@@ -574,7 +686,7 @@ if (opt('redraw')) {
       // a scene taken by id: it must fit this page (sector, needs) and find a section to carry. The ones it replaces are
       // kept as dealt, so a later redraw does not bring them back (r9: a fly-through returned after a scene taken by id)
       try {
-        const next = dealScenes(dir, sheet.input, [], reserved, list(wanted));
+        const next = dealScenes(dir, sheet.input, [], reserved, list(wanted), false, kept);
         sheet.scenesTried = [...new Set([...(sheet.scenesTried || []), ...(sheet.scenes || []).map((x) => x.id)])];
         sheet.scenes = next; sheet.noScenes = false; delete sheet.noScenesWhy;
       } catch (e) { console.error(e.message); process.exit(2); }
@@ -594,12 +706,12 @@ if (opt('redraw')) {
       // same fly-through.
       const hadTechnique = (sheet.scenes || []).some((x) => x.technique);
       sheet.scenesTried = [...new Set([...(sheet.scenesTried || []), ...(sheet.scenes || []).map((x) => x.id)])];
-      let next = dealScenes(dir, sheet.input, sheet.scenesTried, reserved);
+      let next = dealScenes(dir, sheet.input, sheet.scenesTried, reserved, null, false, kept);
       // (a page short of pictures may take another technique that needs none or one: better than a scene it cannot fill)
       // (and when no tested scene is left to deal, a technique that fits is dealt rather than nothing)
-      if (!hadTechnique || fewPictures(sheet.input) || !next.length || next.stale) next = dealTechnique(dir, sheet.input, next, reserved, { exclude: sheet.scenesTried, always: !next.length || !!next.stale });
+      if (!hadTechnique || fewPictures(sheet.input) || !next.length || next.stale) next = dealTechnique(dir, sheet.input, next, reserved, { exclude: sheet.scenesTried, always: !next.length || !!next.stale, kept });
       // (no technique dealt lately can be placed either: a scene dealt on another page lately, as the first deal does)
-      if (!next.length && next.stale) next = dealScenes(dir, sheet.input, sheet.scenesTried, reserved, null, true);
+      if (!next.length && next.stale) next = dealScenes(dir, sheet.input, sheet.scenesTried, reserved, null, true, kept);
       if (!next.length) {
         // nothing that has not been dealt here fits: no redraw, the list of what does instead
         sheet.sceneRedraws -= 1; sheet.redraws -= 1;
@@ -642,10 +754,12 @@ if (opt('redraw')) {
   // new hero; and a section made of pictures keeps a share of the photographs (settlePhotos)
   if (/^(?:scenes|section:|hero$)/.test(what)) {
     const [r, id] = what.slice(8).split('='); const keep = what.startsWith('section:') && id ? ROLE_ALIAS[r] || r : null;
-    settlePins(sheet, keep, heroTried); settlePhotos(sheet, keep);
+    settlePins(sheet, keep, heroTried); settlePhotos(sheet, keep); settleStructures(sheet, keep);
   }
   // a page ends once: new scenes that close the page take a footer that does not open on its own closing line
   if (sheet.frame?.footer?.closes && closingScene(sheet)) sheet.frame.footer = redealFooter(sheet);
+  // a button set in the pairing's serif goes when a new pairing has none (the frame deal's own check)
+  if (sheet.frame?.buttons && frameCtx(sheet).serif === false && needsSerif(sheet.frame.buttons.text)) sheet.frame.buttons = redealButtons(sheet);
   // a new hero or new scenes can change what the first screen shows: keep the entrance only while it still fits
   if (sheet.entrance && what !== 'direction') {
     const mode = heroMode(sheet);
@@ -666,7 +780,9 @@ if (opt('redraw')) {
     brief, sector,
     tone: TONES.includes(opt('tone')) ? opt('tone') : null,
     have: list(opt('have')), keep: list(opt('keep')), avoid: list(opt('avoid')),
-    sections: (requested.length ? requested : defaults).map((r) => ROLE_ALIAS[r] || r).filter((r) => r !== 'hero'),
+    // (one section a role: services and benefits are the features role, and the deal finds every section, scene, pin and
+    // structure by its role; three of one gave three features grids in a row)
+    sections: [...new Set((requested.length ? requested : defaults).map((r) => ROLE_ALIAS[r] || r).filter((r) => r !== 'hero'))],
     direction: typeof opt('direction') === 'string' ? opt('direction') : null,
     ...(opt('no-technique') ? { noTechnique: true } : {}),
   };
@@ -700,7 +816,7 @@ const techniqueOf = (s) => (s.scenes || []).find((x) => x.technique)?.id || null
 const photoHist = (s) => { const was = hist.find((h) => h.at === s.at); const ids = (s.photos?.photos || []).map((ph) => ph.id); return { photoSet: s.photos?.set || null, photoLead: [...[].concat(was?.photoLead ?? []).filter((id) => id !== ids[0]), ...ids.slice(0, 1)], photoIds: [...new Set([...(was?.photoIds || []), ...ids])] }; };
 // a technique given up (--redraw scenes) stays in the entry, so the next draws still avoid it
 if (opt('redraw') && String(opt('redraw')) !== 'direction') patchHist(sheet.at, { sections: builtSections(sheet), ...(sheet.frame ? { frame: Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) } : {}), hero: sheet.hero?.id, heroShape: heroShape(sheet.hero), scenes: (sheet.scenes || []).map((x) => x.id), technique: techniqueOf(sheet) || hist.find((h) => h.at === sheet.at)?.technique || null, entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null, moves: (sheet.moves || []).map((m) => m.id), typeNote: sheet.typeNote?.id || null, ...photoHist(sheet) });
-if (!opt('redraw') || String(opt('redraw')) === 'direction') writeHist({ at: sheet.at, direction: sheet.direction.id, type: sheet.type?.id, families: sheet.type ? [...new Set([sheet.type.display.family, sheet.type.text.family])] : [], palette: sheet.palette?.id, ground: sheet.palette?.ground || null, hue: sheet.palette?.hue || null, frame: sheet.frame ? Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) : null, hero: sheet.hero?.id, heroShape: heroShape(sheet.hero), sector: sheet.input.sector, sections: builtSections(sheet), scenes: (sheet.scenes || []).map((x) => x.id), technique: techniqueOf(sheet), entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null, moves: (sheet.moves || []).map((m) => m.id), typeNote: sheet.typeNote?.id || null, ...photoHist(sheet) });
+if (!opt('redraw') || String(opt('redraw')) === 'direction') writeHist({ at: sheet.at, direction: sheet.direction.id, type: sheet.type?.id, families: sheet.type ? [...new Set([sheet.type.display.family, sheet.type.text.family])] : [], palette: sheet.palette?.id, ground: sheet.palette?.ground || null, hue: sheet.palette?.hue || null, frame: sheet.frame ? Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) : null, hero: sheet.hero?.id, heroShape: heroShape(sheet.hero), heroSubstance: sheet.heroSubstance?.id || null, sector: sheet.input.sector, sections: builtSections(sheet), scenes: (sheet.scenes || []).map((x) => x.id), technique: techniqueOf(sheet), entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null, moves: (sheet.moves || []).map((m) => m.id), typeNote: sheet.typeNote?.id || null, ...photoHist(sheet) });
 console.log(render(sheet));
 
 // ---------- dealing ----------
@@ -784,12 +900,13 @@ function deal(input, redraws, sceneExclude = []) {
   s.palette = input.keep.includes('palette') ? null : dealPalette(dir, input, [], nameColours(input.brief).lean);
   s.type = input.keep.includes('type') ? null : dealType(dir, [], input.tone, isDark(s.palette));
   s.photos = dealPhotos(dir, input);
-  // signature moves that built the reviewed pages' worst parts (drag rails, a scaling giant name, colour
-  // chapters) are not dealt; another move is drawn instead
-  const NO_MOTION = new Set(['drag-row', 'scaling-wordmark', 'colour-on-scroll', 'curtain-footer']);
-  // the hero's own move most of the time; otherwise any allowed move, so the same few do not repeat
-  const wanted = rnd() < 0.4 ? null : [s.hero?.motion, dir.motion].find((id) => id && !NO_MOTION.has(id));
-  s.motion = L.motions.find((m) => m.id === wanted) || wpick(L.motions.filter((m) => !NO_MOTION.has(m.id) && !['carried-picture', 'index-preview'].includes(m.id)).map((m) => [m, m.id === 'stillness' ? 0.5 : 1]));
+  // the hero's own move most of the time; otherwise any allowed move (NOT_DEALT_MOVES), so the same few do not repeat.
+  // A direction built on its move's hold (pinned-poster: its composition is the sticky layer) always takes that move, so
+  // the hold section 2 asks for is the one section 8 names and the page counts (round 11c: under another move's name it
+  // went uncounted)
+  const built = MOVE_HOLD[dir.motion] && pinHold({ blueprint: dir.composition }) ? dir.motion : null;
+  const wanted = built || (rnd() < 0.4 ? null : [s.hero?.motion, dir.motion].find((id) => id && !NO_MOTION.has(id)));
+  s.motion = L.motions.find((m) => m.id === wanted) || wpick(L.motions.filter((m) => !NOT_DEALT_MOVES.has(m.id)).map((m) => [m, m.id === 'stillness' ? 0.5 : 1]));
   s.sections = [];
   for (const role of input.sections) {
     // the footer is section 0's, dealt with the frame below: no blueprint is dealt for it (review-003: a banned footer
@@ -805,7 +922,11 @@ function deal(input, redraws, sceneExclude = []) {
   // replay is the signature move, so no other one is dealt
   s.replay = dealReplay(s, []);
   if (s.replay) s.motion = null;
-  s.scenes = dealScenes(dir, input, sceneExclude, s.replay ? [s.replay.carries] : []);
+  // what the hero's window shows, once the replay is known (dealSubstance)
+  s.heroSubstance = dealSubstance(s);
+  // a signature move kept for its hold takes one of the scenes and its screens (keptHold)
+  const kept = keptHold(s);
+  s.scenes = dealScenes(dir, input, sceneExclude, s.replay ? [s.replay.carries] : [], null, false, kept);
   // r9-p41: the replay took how-it-works, every scene that fits a notes app carries features or how-it-works or sits
   // next to them, so none could be placed and the sheet went from section 8 to 10. Then the replay tries its other
   // sections, with the scenes dealt round each
@@ -813,24 +934,32 @@ function deal(input, redraws, sceneExclude = []) {
   // a forced technique is for the first deal only; a new direction deals at the usual rate. When still no tested scene
   // could be placed, a technique is dealt always, not one time in two (this raises the share of techniques on software
   // pages whose scenes do not fit: finance about 9 in 12)
-  const technique = (always) => { try { s.scenes = dealTechnique(dir, input, s.scenes, s.replay ? [s.replay.carries] : [], { forced: opt('redraw') ? null : FORCED_TECHNIQUE, exclude: sceneExclude, always }); } catch (e) { console.error(e.message); process.exit(2); } };
+  const technique = (always) => { try { s.scenes = dealTechnique(dir, input, s.scenes, s.replay ? [s.replay.carries] : [], { forced: opt('redraw') ? null : FORCED_TECHNIQUE, exclude: sceneExclude, always, kept }); } catch (e) { console.error(e.message); process.exit(2); } };
   const staleSlot = !!s.scenes.stale;
   technique(!s.scenes.length || staleSlot);
   // no technique could be placed either: the stale scene after all, rather than none
-  if (staleSlot && !s.scenes.length) s.scenes = dealScenes(dir, input, sceneExclude, s.replay ? [s.replay.carries] : [], null, true);
+  if (staleSlot && !s.scenes.length) s.scenes = dealScenes(dir, input, sceneExclude, s.replay ? [s.replay.carries] : [], null, true, kept);
   // and with nothing still, the replay may take the proof or testimonial section (moveReplay)
   if (s.replay && !s.scenes.length && moveReplay(dir, s, sceneExclude, ['proof', 'testimonial'])) technique(false);
   if (!s.scenes.length) { s.noScenes = true; s.noScenesWhy = noSceneWhy(s); }
-  // a section or a hero that pins counts against the scenes (settlePins)
+  // a section or a hero that pins counts against the scenes (settlePins); and no structure comes three times or twice
+  // in a row once the scenes and the replay have their sections (settleStructures), before the frame is dealt to the
+  // sections as they stand (frameCtx)
   settlePins(s, null, []);
+  settleStructures(s);
   // the frames of the draws in the history (24): the navigation, footer, cards and buttons are dealt from the designs
   // and the study's patterns, away from the last nine and from the ones it holds most, so none comes back on more than
   // about one page in ten (lib/frame-deal.mjs)
   const history = hist.map((h) => h.frame).filter(Boolean);
   // black-and-white pictures only where the brief asks for them (lib/frame-deal.mjs); everywhere else they keep colour
-  s.frame = dealFrame({ rnd, input, imagery: s.imagery, history, ctx: frameCtx(s), bw: asksBW(input), patterns: PATTERNS, pc: patternCtx(dir, input, s) });
-  // a section made of pictures keeps a share of the page's photographs, once the footer's is known (settlePhotos)
+  const ctx = frameCtx(s);
+  s.frame = dealFrame({ rnd, input, imagery: s.imagery, history, ctx, bw: asksBW(input), patterns: PATTERNS, pc: patternCtx(dir, input, s) });
+  // a section made of pictures keeps a share of the page's photographs, once the footer's is known (settlePhotos), and
+  // the structures are settled again around one dealt anew for that. A section dealt anew may be a visit block or ask for
+  // an email the footer already has: then another footer (round 11c: an address section over the hours-and-place footer)
   settlePhotos(s);
+  settleStructures(s);
+  if (['visitShown', 'emailElsewhere'].some((k) => frameCtx(s)[k] && !ctx[k])) s.frame.footer = redealFooter(s);
   // last, because whether an entrance fits depends on the hero, the move and the scenes
   s.entrance = dealEntrance(s, []);
   settleMotion(s);
@@ -842,8 +971,9 @@ function deal(input, redraws, sceneExclude = []) {
 }
 // ---------- the study's patterns on this page ----------
 // What a pattern is fitted against (lib/frame-deal.mjs, fitPool): the sector, the tones (the brief's, or the
-// direction's when it gives none), whether the page is software and has footage, the photographs it can honestly show,
-// how much air it wants, and what is already dealt on the sheet (for the clashes a pattern names, avoidWith).
+// direction's when it gives none), whether the page is software and has footage, the assets it has (pageAssets), the
+// photographs it can honestly show and its photograph total, how much air it wants, and what is already dealt on the
+// sheet (for the clashes a pattern names, avoidWith).
 function patternCtx(dir, input, s = null) {
   const dealt = new Set(); const avoid = new Set();
   const add = (x) => { if (!x?.id) return; dealt.add(String(x.id).toLowerCase()); for (const a of x.avoidWith || []) avoid.add(String(a).toLowerCase()); };
@@ -860,13 +990,20 @@ function patternCtx(dir, input, s = null) {
   return {
     sector: input.sector, tones: studyTones(input.tone ? [input.tone] : dir?.tones || []),
     loud: ['bold', 'playful'].includes(input.tone) || (!input.tone && creativePage(input)),
-    software: isSoftware(input), video: (input.have || []).includes('video'),
-    pictureCap: fewPictures(input) ? 1 : PATTERN_PICTURE_CAP[imageryMode(input)] ?? Infinity,
+    software: isSoftware(input), video: (input.have || []).includes('video'), assets: pageAssets(input, isSoftware(input)),
+    // (never more than the page's photograph total, photoPlan's cap: a pattern that takes more is not dealt)
+    pictureCap: Math.min(fewPictures(input) ? 1 : PATTERN_PICTURE_CAP[imageryMode(input)] ?? Infinity, photoCap(dir?.pictures ?? 6, imageryMode(input), input.sector)),
     // a quiet or luxurious page wants air; a site with pages beyond this one (software, shops, schools, events) may
     // take a dense pattern; the rest a balanced one
     density: ['quiet', 'luxury'].includes(input.tone) ? 'airy' : isSoftware(input) || ['ecommerce', 'physical-product', 'education', 'event'].includes(input.sector) ? 'dense-ok' : 'balanced',
     dealt, avoid,
   };
+}
+// the page's photograph total at most (photoPlan's cap): the direction's budget, held to what the page can honestly
+// show by its imagery mode and a portfolio's three, raised to a product page's floor
+// (a portfolio without pictures of its own shows its work in the other slots, and one photograph of its place at most)
+function photoCap(budget, mode, sector) {
+  return Math.max(PHOTO_FLOOR[mode] || 0, Math.min(budget, PHOTO_CAP[mode] ?? Infinity, PORTFOLIO.includes(sector) && mode !== 'own' ? 3 : Infinity));
 }
 // The study's hero patterns that can open this page, as [hero, weight], by the rules the direction's heroes keep
 // (heroPool): software shows its own interface large, a product with no photographs of its own shows its kind large
@@ -891,7 +1028,10 @@ function patternSections(dir, role, input, s = null) {
   // never a work section of type alone (r11-p51 showed a motion designer's work only as type cards)
   const work = role === 'work' && PORTFOLIO.includes(input.sector);
   const pc = work ? { ...patternCtx(dir, input, s), pictureCap: Infinity } : patternCtx(dir, input, s);
-  const list = P_SECTIONS.filter((x) => x.roles.includes(role) && (!work || picturesLead(x)));
+  // (a place's contact section holds its visit block: never a sign-up card there, whose column holds "nothing else";
+  // round 11c dealt a guesthouse a ticket-style newsletter card as its contact)
+  const signup = role === 'contact' && hasDoor(input);
+  const list = P_SECTIONS.filter((x) => x.roles.includes(role) && (!work || picturesLead(x)) && !(signup && /\bsign ?up\b|\bnewsletter\b|\bsubscri\w*/i.test(`${x.id} ${x.name}`)));
   return fitPool(list, pc, 2).map(([bp, w]) => [bp.role === role ? bp : { ...bp, role }, w * PATTERN_SHARE.section]);
 }
 // A pattern whose pictures are its main element: never one whose pictures are chips, thumbnails or icons beside rows of
@@ -919,19 +1059,25 @@ function dealMoves(s, exclude = []) {
   // line suits more sectors than it was seen in: twelve saas pages in a row otherwise ran out of moves by the fourth)
   const fitted = fitPool(P_MOVES, pc, 10); const seen = new Set(fitted.map(([m]) => m.id));
   const wider = P_MOVES.filter((m) => !seen.has(m.id) && !patternWhyNot({ ...m, fits: { ...(m.fits || {}), sectors: ['*'] } }, pc)).map((m) => [m, 0.3]);
-  let pool = [...fitted, ...wider].filter(([m]) => !exclude.includes(m.id) && !(same && same.test(`${m.name || ''}. ${m.description}`)));
+  // (a move's photographs are the page's own: it rides on a part that holds as many, or takes what the photograph total
+  // leaves; round 11c dealt a strip of eight picture cards to a page whose eight were all shared out)
+  const plan = photoPlan(s);
+  const room = Math.max(plan.cap - plan.total, ...plan.parts.map((x) => (s.imagery === 'interface' ? x.asked : x.share) || 0), ...plan.work.map((x) => x.asked || 0), 0);
+  let pool = [...fitted, ...wider].filter(([m]) => !exclude.includes(m.id) && !(same && same.test(`${m.name || ''}. ${m.description}`)) && photosNeeded(m) <= room);
   if (s.motion?.id === 'stillness') pool = pool.filter(([m]) => ['hover', 'click'].includes(moveKind(m)));
   const n = s.motion?.id === 'stillness' ? 1 : creativePage(s.input) || rnd() < 0.35 ? 3 : 2;
   const out = [];
-  // Each away from the last nine draws. When none of those fits, the first may come back if the last six draws did
-  // not have it, and the others are left out: a page with one or two moves of its own beats a move that every other page
-  // repeats (round 12's first run dealt one move on seven of thirty pages, twice running).
+  // Each away from the last nine draws. When none of those fits, one the last six draws did not have may come back, the
+  // longest unused first, in the first two slots: the house rules leave few small moves, and with only the first slot
+  // coming back pages had 1.2 moves each (round 11c; the owner finds too little motion). A third comes only fresh, so
+  // one page does not take what the next needs (every slot coming back left eight of thirty pages with none). Never one
+  // of the last six: round 12's first run dealt one move on seven of thirty pages, twice running.
   const lastAt = (m) => hist.findIndex((h) => histHas(h, 'moves', m.id));
   while (out.length < n) {
     const kinds = new Set(out.map(moveKind));
     const cands = pool.filter(([m]) => !kinds.has(moveKind(m)) && !out.includes(m));
     const live = liveOf(cands, 'moves');
-    const back = out.length ? [] : cands.filter(([m]) => lastAt(m) < 0 || lastAt(m) >= 6);
+    const back = out.length < 2 ? cands.filter(([m]) => lastAt(m) < 0 || lastAt(m) >= 6) : [];
     if (!live.length && !back.length) break;
     out.push(wpick(live.length ? live : awayFrom(back, 'moves', 1)));
   }
@@ -980,9 +1126,10 @@ function dealTypeNote(s) {
 // What the frame deal needs to know about the page (lib/frame-deal.mjs). One email form on the page (r9-p41 asked for
 // the address in its closing sentence and again in a sign-up footer): no newsletter footer under a section that already
 // asks for one, or when the booking block carries the email field. A hero whose headline is the name takes the
-// navigations with a large wordmark less often; a page with a closing scene takes no footer with a closing line.
+// navigations with a large wordmark less often; a page with a closing scene takes no footer with a closing line; a button
+// set in the pairing's serif needs a serif in the dealt pairing (serif: unknown when the brand keeps its type).
 function frameCtx(s) {
-  return { door: hasDoor(s.input), emailElsewhere: s.sections.some(asksEmail) || !!bookingBlock(s), few: fewPictures(s.input), nameHero: nameHero(s.hero), closingScene: closingScene(s), visitShown: s.sections.some(visitShaped) };
+  return { door: hasDoor(s.input), emailElsewhere: s.sections.some(asksEmail) || !!bookingBlock(s), few: fewPictures(s.input), nameHero: nameHero(s.hero), closingScene: closingScene(s), visitShown: s.sections.some(visitShaped), serif: s.type ? [s.type.display, s.type.text].some((x) => /serif|slab/.test(x?.cls || '')) : null };
 }
 // a section blueprint that is itself a visit block (a visit card, the address rows): the visit stands there, and the
 // footer that is one (hours-and-place) is not dealt beside it (round 11: a visit card over an hours-and-place footer)
@@ -1006,6 +1153,13 @@ function redealFooter(s) {
   const history = [...s.footersTried.map((id) => ({ footer: id })), ...hist.map((h) => h.frame).filter(Boolean)];
   const pc = patternCtx(s.direction, s.input, { ...s, frame: { ...s.frame, footer: null } });
   return dealFrame({ rnd, input: s.input, imagery: s.imagery, history, ctx: frameCtx(s), bw: asksBW(s.input), patterns: PATTERNS, pc }).footer;
+}
+// Another button design for one the page can no longer set (a label in the pairing's serif after --redraw type dealt a
+// pairing with none), away from it and the last draws.
+function redealButtons(s) {
+  const history = [{ buttons: s.frame.buttons.id }, ...hist.map((h) => h.frame).filter(Boolean)];
+  const pc = patternCtx(s.direction, s.input, { ...s, frame: { ...s.frame, buttons: null } });
+  return dealFrame({ rnd, input: s.input, imagery: s.imagery, history, ctx: frameCtx(s), bw: asksBW(s.input), patterns: PATTERNS, pc }).buttons;
 }
 // The first screen's entrance (library/entrances.json; the CSS is in assets/base.css). Every model built the same
 // one (lines rising out of masks, a clip-path shutter on the picture), so it had become the plainest sign of this
@@ -1072,8 +1226,8 @@ function settleMotion(s) {
   if (!s.motion || !s.entrance) return;
   const clash = (m) => ['masked-headline', 'shutter-image'].includes(m.id) || (m.id === 'opening-window' && s.entrance.id === 'aperture') || (m.id === 'stillness' && s.entrance.id !== 'already-there');
   if (!clash(s.motion)) return;
-  const NOT_DEALT = ['drag-row', 'scaling-wordmark', 'colour-on-scroll', 'curtain-footer', 'carried-picture', 'index-preview'];
-  s.motion = wpick(L.motions.filter((m) => !NOT_DEALT.includes(m.id) && !clash(m)).map((m) => [m, m.id === 'stillness' ? 0.5 : 1]));
+  // (one that holds the stage only where the page has room for another held stretch: moveRoom)
+  s.motion = wpick(L.motions.filter((m) => !NOT_DEALT_MOVES.has(m.id) && !clash(m) && (!MOVE_HOLD[m.id] || moveRoom(s, MOVE_HOLD[m.id]))).map((m) => [m, m.id === 'stillness' ? 0.5 : 1]));
 }
 // Why a scene cannot go on this page, or null when it can: never dealt, written for other sectors, a need the brief
 // does not meet, a first screen it would take from the product, a closing scene on a software page, or an atmosphere
@@ -1096,6 +1250,8 @@ function sceneWhyNot(sc, input, sector = true) {
   // on a software page the product replay is the big moment: a closing scene would end the page on a second one
   if (isSoftware(input) && sc.position === 'closing') return 'a software page ends on its product, not on a closing scene';
   if (!creativePage(input) && ATMOSPHERE.has(sc.id)) return 'it carries one line and no information, which only a loud or creative page can spend';
+  // a scene written for a loud brand only (scenes.json `tones`): wordmark-under-strain was dealt to quiet portfolios
+  if (sc.tones && !sc.tones.includes(input.tone)) return `it is for a ${sc.tones.join(' or ')} page only, and this one is ${input.tone || 'given no tone'}`;
   return null;
 }
 // Why a technique cannot go on this page, or null: by its labels, with the scene rules above and two of its own (a
@@ -1160,9 +1316,10 @@ function sceneMost(input) {
 // reserved: sections a scene may neither carry nor touch (the product replay's)
 // chosen: ids the builder takes (--redraw scenes=<id>,<id>), placed in that order; one that does not fit or
 // cannot be placed throws, with the reason
-function dealScenes(dir, input, exclude, reserved = [], chosen = null, staleOk = false) {
+// kept: the screens a kept signature move holds (keptHold): it takes one of the page's scenes and its hold
+function dealScenes(dir, input, exclude, reserved = [], chosen = null, staleOk = false, kept = 0) {
   if (!L.scenes.length) { if (chosen) throw new Error('There is no scene library.'); return []; }
-  const BUDGET = HOLD_BUDGET; // screens of hold for all the page's scenes together
+  const BUDGET = HOLD_BUDGET - kept; // screens of hold for all the page's scenes together
   const LONG = 3;     // a scene over this is the page's one long scene, and never carries the work
   const creative = creativePage(input);
   // A scene of weight 0 (scenes.json) stays in the library but is never dealt; a software page with nothing that
@@ -1173,11 +1330,11 @@ function dealScenes(dir, input, exclude, reserved = [], chosen = null, staleOk =
   let pool = L.scenes.filter((sc) => !sceneWhyNot(sc, input));
   if (pool.length < 2) { sectorAsked = false; pool = L.scenes.filter((sc) => !sceneWhyNot(sc, input, false)); }
   pool = pool.filter((sc) => !exclude.includes(sc.id));
-  const most = sceneMost(input);
+  const most = sceneMost(input) - (kept ? 1 : 0);
   if (chosen) {
     if (!chosen.length) throw new Error('Name a scene: --redraw scenes=<id>, scenes=<id>,<id> or scenes=none.');
     if (new Set(chosen).size !== chosen.length) throw new Error('The same scene is named twice.');
-    if (chosen.length > most) throw new Error(`This page takes ${['', 'one scene', 'two scenes', 'three scenes'][most]} at most${most === 1 ? ': on a software page the product replay is the big moment' : ''}.`);
+    if (chosen.length > most) throw new Error(`This page takes ${['', 'one scene', 'two scenes', 'three scenes'][most]} at most${kept ? ' beside its signature move, which holds the stage (section 8)' : most === 1 ? ': on a software page the product replay is the big moment' : ''}.`);
     for (const id of chosen) {
       const sc = sceneById(id);
       if (!sc) throw new Error(`No scene with id ${id}. \`node draw.mjs --list scenes\` lists them all; once scenes have been redrawn twice, \`--redraw scenes\` lists the ones that fit this page.`);
@@ -1270,6 +1427,10 @@ function dealScenes(dir, input, exclude, reserved = [], chosen = null, staleOk =
     // repeat, so the deal spreads over the whole library instead of the same few set pieces; and the history weighs
     // it down as it does a section (a quarter as likely in the last eight draws, divided by its uses: round 11 dealt
     // one closing scene on six of thirty pages)
+    // (and when the few left weigh less than one scene between them, a technique takes the slot as often as they fall
+    // short: the one scene of weight 0.3 still fitting a software page came back the draw it left the window, 4 of 30)
+    const own = cands.reduce((t, c) => t + (c.weight ?? 1), 0);
+    if (techniques && own < 1 && rnd() >= own) { out.stale = true; break; }
     add(wpick(cands.map((c) => { const at = hist.findIndex((h) => (h.scenes || []).includes(c.id)); return [c, (c.weight ?? 1) * (at >= 0 && at < 8 ? 0.25 : 1) / (1 + hist.filter((h) => (h.scenes || []).includes(c.id)).length)]; })));
   }
   return out.sort((a, b) => roles.indexOf(a.carries) - roles.indexOf(b.carries));
@@ -1279,7 +1440,8 @@ function dealScenes(dir, input, exclude, reserved = [], chosen = null, staleOk =
 // score, avoiding the techniques of the last few draws, and placed by the scene rules (a free section for its position
 // clear of the replay and the other scenes, another family, the picture cap, the hold budget, one long scene).
 // forced: an id that must go on (--technique); it throws with the reason when it cannot. exclude: ids not to deal.
-function dealTechnique(dir, input, scenes, reserved, { forced = null, exclude = [], always = false } = {}) {
+// kept: the screens a kept signature move holds (dealScenes).
+function dealTechnique(dir, input, scenes, reserved, { forced = null, exclude = [], always = false, kept = 0 } = {}) {
   if (!L.techniques.length || input.noTechnique) return scenes;
   // A page short of pictures takes only those that need no photograph or one, and always one when no tested scene of
   // that kind could be dealt (none, or one that wants several photographs), in place of the hungriest first, even one
@@ -1290,19 +1452,20 @@ function dealTechnique(dir, input, scenes, reserved, { forced = null, exclude = 
   if (!forced && !hungry && !always && rnd() >= TECHNIQUE_RATE) return scenes;
   const ids = scenes.map((x) => x.id);
   let why = null;
+  const take = (chosen) => dealScenes(dir, input, [], reserved, chosen, false, kept);
   const placed = (t) => {
     // in the slot a stale scene left empty (dealScenes), beside the scenes dealt, when it fits there
-    if (scenes.stale && ids.length) { try { const out = dealScenes(dir, input, [], reserved, [...ids, t.id]); if (out.some((x) => x.id === t.id)) return out; } catch (e) { why = e.message; } }
+    if (scenes.stale && ids.length) { try { const out = take([...ids, t.id]); if (out.some((x) => x.id === t.id)) return out; } catch (e) { why = e.message; } }
     // in place of each dealt scene in turn, in random order (on a page short of pictures, the hungry ones first)
     const order = ids.length ? shuffle(ids.map((_, k) => k)) : [-1];
     if (few) order.sort((a, b) => (a < 0 || b < 0 ? 0 : scenePictures(scenes[b]) - scenePictures(scenes[a])));
     for (const i of order) {
-      try { const out = dealScenes(dir, input, [], reserved, [...ids.filter((_, k) => k !== i), t.id]); if (out.some((x) => x.id === t.id)) return out; } catch (e) { why = e.message; }
+      try { const out = take([...ids.filter((_, k) => k !== i), t.id]); if (out.some((x) => x.id === t.id)) return out; } catch (e) { why = e.message; }
     }
     // on a page short of pictures, alone, keeping only the dealt scenes that need no photograph or one beside it
     if (few && ids.length) {
       const light = scenes.filter(lightScene).map((x) => x.id);
-      for (const keep of [light, []]) { if (keep.length === ids.length) continue; try { const out = dealScenes(dir, input, [], reserved, [...keep, t.id]); if (out.some((x) => x.id === t.id)) return out; } catch (e) { why = e.message; } }
+      for (const keep of [light, []]) { if (keep.length === ids.length) continue; try { const out = take([...keep, t.id]); if (out.some((x) => x.id === t.id)) return out; } catch (e) { why = e.message; } }
     }
     return null;
   };
@@ -1314,7 +1477,7 @@ function dealTechnique(dir, input, scenes, reserved, { forced = null, exclude = 
     if (unfit) throw new Error(`${forced} does not fit this page: ${unfit}.`);
     // in place of one dealt scene, else alone: the scene it would sit beside may clash with it
     let out = placed(t);
-    if (!out) { try { out = dealScenes(dir, input, [], reserved, [t.id]); } catch (e) { why = e.message; } }
+    if (!out) { try { out = take([t.id]); } catch (e) { why = e.message; } }
     if (!out) throw new Error(why || `${forced} cannot go on this page.`);
     return out;
   }
@@ -1347,13 +1510,13 @@ function dealTechnique(dir, input, scenes, reserved, { forced = null, exclude = 
 // one line each with what it needs, and the two ways out (one by id, or none).
 // why: 'cap' after two redraws; 'none-new' when no scene that has not been dealt on this sheet fits
 function sceneChoices(dir, s, why = 'cap') {
-  const reserved = s.replay ? [s.replay.carries] : [];
+  const reserved = s.replay ? [s.replay.carries] : []; const kept = keptHold(s);
   const now = (s.scenes || []).map((x) => x.id); const before = s.scenesTried || [];
   const few = fewPictures(s.input);
   const fit = [];
-  for (const sc of L.scenes) { try { const [d] = dealScenes(dir, s.input, [], reserved, [sc.id]); if (d) fit.push(d); } catch { /* does not fit */ } }
+  for (const sc of L.scenes) { try { const [d] = dealScenes(dir, s.input, [], reserved, [sc.id], false, kept); if (d) fit.push(d); } catch { /* does not fit */ } }
   const lightTechniques = few || !fit.length ? fittingTechniques(dir, s).filter(lightScene).slice(0, 5) : [];
-  const most = sceneMost(s.input);
+  const most = sceneMost(s.input) - (kept ? 1 : 0);
   const o = why === 'none-new' ? ['# Scroll scenes: nothing new fits, so a choice', ''] : ['# Scroll scenes: redrawn twice, so now a choice', ''];
   o.push(why === 'none-new' ? 'Every scene that fits this page, and every technique that would, has been dealt on this sheet already, so a redraw would only deal one again. This one did not count.' : 'Scenes are redrawn at most twice: a page with one honest scene, or none, beats a fifth redraw.', '');
   if (!fit.length && !lightTechniques.length) {
@@ -1363,7 +1526,7 @@ function sceneChoices(dir, s, why = 'cap') {
   // two that fit alone may still clash (one family, one section, the photographs between them): each line names the
   // ones it goes with
   const partners = new Map(fit.map((d) => [d.id, []]));
-  if (most > 1) for (let i = 0; i < fit.length; i++) for (let j = i + 1; j < fit.length; j++) { try { dealScenes(dir, s.input, [], reserved, [fit[i].id, fit[j].id]); partners.get(fit[i].id).push(fit[j].id); partners.get(fit[j].id).push(fit[i].id); } catch { /* not together */ } }
+  if (most > 1) for (let i = 0; i < fit.length; i++) for (let j = i + 1; j < fit.length; j++) { try { dealScenes(dir, s.input, [], reserved, [fit[i].id, fit[j].id], false, kept); partners.get(fit[i].id).push(fit[j].id); partners.get(fit[j].id).push(fit[i].id); } catch { /* not together */ } }
   const pairs = [...partners.values()].some((x) => x.length);
   const goes = (d) => (most < 2 ? '' : partners.get(d.id).length ? ` Goes with ${partners.get(d.id).map((x) => `\`${x}\``).join(', ')}.` : ' Goes with none of the others.');
   const sceneLine = (d) => `- \`${d.id}\` — ${d.name} (${d.family}). Needs: ${sceneNeedsWords(d)}. Carries ${d.carries === 'hero' ? 'the first screen' : `the ${d.carries} section`}, hold ${d.hold}.${goes(d)}${now.includes(d.id) ? ' On the sheet now.' : before.includes(d.id) ? ' Dealt before.' : ''}`;
@@ -1400,7 +1563,7 @@ function noSceneWhy(s) {
 function fittingTechniques(dir, s) {
   const reserved = s.replay ? [s.replay.carries] : [];
   const out = [];
-  for (const t of L.techniques) { try { const [d] = dealScenes(dir, s.input, [], reserved, [t.id]); if (d) out.push(d); } catch { /* does not fit */ } }
+  for (const t of L.techniques) { try { const [d] = dealScenes(dir, s.input, [], reserved, [t.id], false, keptHold(s)); if (d) out.push(d); } catch { /* does not fit */ } }
   return out.sort((a, b) => (b.score || 0) - (a.score || 0));
 }
 // The scenes, then the techniques, that need no photograph or one and still fit this page: printed under a page built
@@ -1408,7 +1571,7 @@ function fittingTechniques(dir, s) {
 function lightOptions(dir, s) {
   const reserved = s.replay ? [s.replay.carries] : [];
   const scenes = [];
-  for (const sc of L.scenes.filter(lightScene)) { try { const [d] = dealScenes(dir, s.input, [], reserved, [sc.id]); if (d) scenes.push(d.id); } catch { /* does not fit */ } }
+  for (const sc of L.scenes.filter(lightScene)) { try { const [d] = dealScenes(dir, s.input, [], reserved, [sc.id], false, keptHold(s)); if (d) scenes.push(d.id); } catch { /* does not fit */ } }
   return [...scenes, ...fittingTechniques(dir, s).filter(lightScene).map((d) => d.id)].slice(0, 6);
 }
 // The product replay (library/replays.json, built with assets/replay.js): on a software page the product's
@@ -1491,6 +1654,15 @@ function heroPool(dir, input, dirs = [dir]) {
   return pool;
 }
 function heroMeets(input) { return (h) => (h.needs || []).every((n) => n === 'photography' || input.have.includes(n)); }
+// What a software page's first screen shows in its interface (HERO_SUBSTANCES), away from the last nine draws and
+// weighed down by its uses, like the hero; never what the replay shows under it (dealt after it); null on any other page.
+function dealSubstance(s) {
+  if (!isSoftware(s.input)) return null;
+  const has = pageAssets(s.input, true);
+  const pool = HERO_SUBSTANCES.filter((x) => (!x.fits || x.fits.test(s.input.brief || '')) && (!x.needs || has.has(x.needs)) && !(x.notWith || []).includes(s.replay?.id)).map((x) => [x, 1]);
+  const x = wpick(awayFrom(pool, 'heroSubstance', 1));
+  return { id: x.id, name: x.name, text: x.text };
+}
 function dealHero(dir, input, exclude, s = null) {
   const pool = heroPool(dir, input); const meets = heroMeets(input);
   const ok = pool.filter((h) => !exclude.includes(h.id) && meets(h));
@@ -1905,6 +2077,9 @@ function softwareOnly(x) { return (x.directions || [])[0] === 'product-performs'
 function picturesAsked(bp, s = null) {
   if (!bp?.blueprint) return 0;
   if (s?.imagery === 'interface' && uiPicture(bp)) return 0;
+  // (a software hero's picture is the product's window showing its dealt substance: a photograph it names is that
+  // window, round 11c counted "one photograph of the place" beside a chart in the window)
+  if (s?.heroSubstance && bp === s.hero) return 0;
   if (bp.pattern) return patternPictures(bp);
   const text = bp.blueprint; let n = 0;
   for (const m of text.matchAll(PHOTO_COUNT)) n = Math.max(n, asNumber(m[2] || m[1]) || 1);
@@ -1926,8 +2101,7 @@ function photoPlan(s, reserve = true) {
   const portfolio = PORTFOLIO.includes(s.input.sector);
   const budget = s.direction.pictures ?? 6;
   const floor = PHOTO_FLOOR[s.imagery] || 0;
-  // (a portfolio without pictures of its own shows its work in the other slots, and one photograph of its place at most)
-  const cap = Math.max(floor, Math.min(budget, PHOTO_CAP[s.imagery] ?? Infinity, portfolio && s.imagery !== 'own' ? 3 : Infinity));
+  const cap = photoCap(budget, s.imagery, s.input.sector);
   const parts = [];
   for (const sc of s.scenes || []) parts.push({ what: `the scene on the ${sc.carries === 'hero' ? 'first screen' : `${sc.carries} section`}`, bp: sc, asked: scenePictures(sc), scene: true, work: portfolio && sc.carries === 'work' });
   if (!(s.scenes || []).some((x) => x.carries === 'hero')) parts.push({ what: 'the hero', bp: s.hero, asked: picturesAsked(s.hero, s) });
@@ -2083,7 +2257,8 @@ function adjustments(bp, s) {
   // the hero's geometry is binding, within the house rules: a drawn shape and a headline on a card are not (round 10)
   if (/(?<!\bno (?:\w+ )?)\b(?:dot(?:ted)? leaders?|leaders? of (?:round )?(?:\d+px )?dots)\b/i.test(text)) notes.push('It joins a name and its value with a leader of dots: join them with space alone (`justify-content: space-between`), no dots and no line.');
   if (/drawn in CSS|inline SVG path|flat shape at enormous scale/i.test(text)) notes.push('It draws a shape: no drawn or decorative shapes on this page. Cut a photograph of the subject to that outline at the same size and place, or leave the ground plain; the button keeps the page\'s one shape.');
-  if (!bp.archetype && /scallop|zigzag|tear-off strip/i.test(text)) notes.push('It cuts scalloped, zigzag or torn edges: no drawn or decorative shapes on this page. Every edge stays straight, and the content stands on the section\'s own ground.');
+  // (a zigzag of text set flush left and right is no edge; a notch cut from a card like a coupon is: round 11c dealt a ticket card)
+  if (!bp.archetype && /scallop|zigzag (?:edge|foot|tear|cut|bottom)|(?:edges?|edge is|cut into) (?:a |shallow )?(?:scallops or a )?zigzag|tear-off strip|\bnotch(?:es)? cut\b|\bnotched\b|\bcoupon\b/i.test(text)) notes.push('It cuts scalloped, zigzag, notched or torn edges: no drawn or decorative shapes on this page, and a card is never cut into a ticket. Every edge stays straight, and the content stands on the section\'s own ground.');
   if (bp.archetype && /\b(?:printed|menu) card\b/i.test(text)) notes.push('It sets the headline on a card: no headline in a card, panel or box (`hero-in-card`). That half is the page\'s own ground, the same colour, running to the edges with no inset and no corners; the words keep their place and size on it, and the photograph keeps its half.');
   if (bp.archetype && /\bportrait card\b/i.test(text)) notes.push('It sets the title on a card: no headline in a card, panel or box (`hero-in-card`). The page\'s ground is the paper: the names and the date, time and place sit straight on it where the card held them, with no card, no scalloped corners and no diamond between the lines.');
   return notes;
@@ -2173,6 +2348,51 @@ function sectionPool(dir, role, input) {
   const byTag = pool.filter((s) => (s.tags || []).some((t) => (dir.sectionTags || []).includes(t)));
   return byTag.length ? byTag : pool;
 }
+// The structure of a section as built: split, grid, list, table, statement, gallery, single-picture, object (one printed
+// or product object on a field), column (one reading column), tool (the product's own interface or a working control),
+// band (full-width fields, a row of names) or stage (it pins). library/sections.json gives each blueprint its own; a
+// pattern of the study is read from its name, its pictures, then its shape. Within one page no structure comes three
+// times and none twice in a row (r12-p54 built six middle sections as a heading, a line and a list panel). The words of
+// a pattern's name for each are at the top (STRUCTURE_NAMES).
+function structureOf(bp) {
+  if (!bp?.blueprint) return null;
+  if (bp.structure) return bp.structure;
+  if (pinHold(bp)) return 'stage';
+  const words = `${bp.id} ${bp.name || ''}`.replace(/-/g, ' ');
+  // (a pattern made of several pictures that its name calls pictures is a gallery, whatever else it names; its footage
+  // counts as pictures, several where it says videos, clips or video slides, none where it only previews under the
+  // pointer)
+  const footage = bp.pneeds?.video && !/\bpreview\b/.test(words) ? (/\b(?:videos|clips|video slides)\b/i.test(bp.blueprint) ? 2 : 1) : 0;
+  const pictures = Math.max(picturesLead(bp) ? patternPictures(bp) : 0, footage);
+  if (pictures > 1 && GALLERY_NAME.test(words)) return 'gallery';
+  for (const [k, re, unless] of STRUCTURE_NAMES) if (re.test(words) && !unless?.test(words)) return k;
+  if (pictures) return pictures > 1 ? 'gallery' : 'single-picture';
+  if (STATEMENT_NAME.test(words)) return 'statement';
+  return bp.pneeds?.productUi ? 'tool' : SHAPE_STRUCTURE[bp.shape] || 'column';
+}
+// The page's sections in order with their structures, as built: the replay's section is its window (a tool), a section
+// a scene carries is that scene, and the footer, a cta the footer carries and an empty slot are left out. skip: a role
+// left out (the one being dealt).
+function structureRun(s, skip = null) {
+  const out = [];
+  for (const sec of s.sections) {
+    if (sec.role === skip || (sec.role === 'footer' && s.frame) || (sec.role === 'cta' && ctaByFooter(s))) continue;
+    const scene = carriedBy(s, sec);
+    const k = s.replay?.carries === sec.role ? 'tool' : scene ? `scene:${scene.id}` : structureOf(sec);
+    if (k) out.push({ role: sec.role, k, replay: s.replay?.carries === sec.role });
+  }
+  return out;
+}
+// Whether a structure may stand in this role's place: not twice on the page already, not the structure of the section
+// built before or after it (a split hero counts as a split before the first).
+function structureFits(s, role) {
+  const roles = ['hero', ...s.input.sections];
+  const at = roles.indexOf(role);
+  const run = structureRun(s, role);
+  const before = run.filter((x) => roles.indexOf(x.role) < at).at(-1)?.k ?? (heroShape(s.hero) === 'split' ? 'split' : null);
+  const after = run.find((x) => roles.indexOf(x.role) > at)?.k ?? null;
+  return (k) => !k || (k !== before && k !== after && run.filter((x) => x.k === k).length < 2);
+}
 // A section is dealt from every blueprint of its role that suits the brief, not only the one to three the direction
 // names: the direction's own weigh 1, those that suit its tags 0.6, the rest 0.3 (the sheet keeps the geometry and sets
 // it in the direction's type and colour). Then away from the last draws (awayFrom: round 11 dealt one call to action on
@@ -2196,6 +2416,14 @@ function dealSection(dir, role, usedIds, prevShape, nextShape, input, s = null, 
   // a software page leans to the blueprints built from its own interface
   if (imageryMode(input) === 'interface') pool = pool.map(([s, w]) => [s, w * ((s.tags || []).includes('ui-led') || s.pneeds?.productUi ? 2.5 : 1)]);
   const unused = pool.filter(([s]) => !usedIds.includes(s.id)); if (unused.length) pool = unused;
+  // no structure three times on the page and none twice in a row (structureFits), while one not dealt lately fits; else
+  // the fresh one stays and settleStructures deals its neighbour again (round 11c: a gallery role after a gallery intro
+  // took the one single-picture gallery three draws after the last page had it). With none fresh, one that fits unless
+  // the only ones that fit are the last page's (a café's contact rows came back on the guesthouse drawn next)
+  if (s) {
+    const fits = structureFits(s, role); const kept = pool.filter(([x]) => fits(structureOf(x)));
+    if (liveOf(kept, 'sections').length || (!liveOf(pool, 'sections').length && kept.some(([x]) => !histHas(hist[0], 'sections', x.id)))) pool = kept;
+  }
   // never two of one shape side by side (split-stage's showcases for a product are both splits, after a split hero: r9-p42)
   const varies = ([s]) => s.shape !== prevShape && s.shape !== nextShape;
   const varied = pool.filter(varies); if (varied.length) pool = varied;
@@ -2221,10 +2449,18 @@ function settlePins(s, keep = null, heroTried = null) {
   // fits beside the scenes and the sections that pin, never next to a scene, else another hero is dealt; round 11b
   // dealt two pinned heroes in twelve beside a scene on the first section)
   const pins = s.sections.filter((x) => built(x) && !busy.has(roles.indexOf(x.role)) && pinHold(x));
-  const heroFits = (h) => scenes.length && count + pins.length < sceneMost(s.input) && held + h + pins.reduce((t, x) => t + pinHold(x), 0) <= HOLD_BUDGET && !busy.has(1) && !pins.some((x) => roles.indexOf(x.role) === 1);
+  // (beside a kept signature move, in what its stretch leaves: keptMove)
+  const beside = () => (keptMove(s) ? moveHold(s) : 0);
+  const heroFits = (h) => scenes.length && count + pins.length + (beside() ? 1 : 0) < sceneMost(s.input) && held + h + beside() + pins.reduce((t, x) => t + pinHold(x), 0) <= HOLD_BUDGET && !busy.has(1) && !pins.some((x) => roles.indexOf(x.role) === 1);
   while (heroTried && !busy.has(0) && pinHold(s.hero) && !heroFits(pinHold(s.hero)) && heroTried.length < 8) { heroTried.push(s.hero.id); s.hero = dealHero(dir, s.input, heroTried, s); }
   const heroHold = busy.has(0) ? 0 : pinHold(s.hero);
   if (heroHold) { busy.add(0); count += 1; held += heroHold; }
+  // (a signature move that holds the stage, a pinned story or a sideways gallery, is one of them too, counted with the
+  // hero when it is the hero's pin (moveHold): a kept one stays, another only where it fits beside the scenes and the
+  // hero, else another move is dealt; round 11b left these holds uncounted)
+  const mv = moveHold(s);
+  if (mv && (keptMove(s) || (scenes.length && count < sceneMost(s.input) && held + mv <= HOLD_BUDGET))) { count += 1; held += mv; }
+  else if (mv) s.motion = otherMove(s);
   // (the cta last: when the footer carries it, its pin pushes out no other)
   const order = s.sections.map((_, i) => i).sort((a, b) => (s.sections[a].role === 'cta') - (s.sections[b].role === 'cta'));
   for (const i of order) {
@@ -2235,6 +2471,53 @@ function settlePins(s, keep = null, heroTried = null) {
     const fits = scenes.length && !busy.has(at) && count < sceneMost(s.input) && held + hold <= HOLD_BUDGET && ![at - 1, at + 1].some((k) => busy.has(k));
     if (fits || sec.role === keep) { busy.add(at); count += 1; held += hold; continue; }
     s.sections[i] = dealSection(dir, sec.role, s.sections.map((x) => x.id), s.sections[i - 1]?.shape ?? (s.hero?.split ? 'split' : undefined), s.sections[i + 1]?.shape, s.input, s, pinHold) || sec;
+  }
+  // (a section taken by id stays over the count: then a move with a stretch of its own gives way; round 11c kept a
+  // scene, a pinned section and the move on a page that takes two)
+  if (moveHold(s) && (count > sceneMost(s.input) || held > HOLD_BUDGET)) s.motion = otherMove(s);
+}
+// The screens the signature move holds as a stretch of its own: none with the replay or a move that holds nothing, and
+// none when it is the hero's own move and the hero pins where no scene carries it, since the hero's pin is that one
+// stretch (round 11c counted a name held in two corners and its pinned story twice).
+function moveHold(s) {
+  const hold = s.replay ? 0 : MOVE_HOLD[s.motion?.id] || 0;
+  return hold && s.motion.id === s.hero?.motion && pinHold(s.hero) && !(s.scenes || []).some((x) => x.carries === 'hero') ? 0 : hold;
+}
+// A signature move that holds the stage and is the direction's or the hero's own stays (settlePins), and the scenes leave
+// its stretch free, on a page that takes two scenes or more (round 11c: it was swapped whenever the scenes filled the
+// page, while the sheet's composition still asked for its hold). One dealt at random gives way instead.
+function keptMove(s) { return !s.replay && !!MOVE_HOLD[s.motion?.id] && [s.direction?.motion, s.hero?.motion].includes(s.motion.id) && sceneMost(s.input) > 1; }
+// The screens the scenes leave free for a kept move: its own hold, or the hero's pin where that is the same stretch.
+function keptHold(s) { return keptMove(s) ? Math.max(MOVE_HOLD[s.motion.id], moveHold(s) ? 0 : pinHold(s.hero)) : 0; }
+// Whether a move that holds the stage fits beside the page's scenes, a hero that pins and the sections that pin.
+function moveRoom(s, hold) {
+  const scenes = s.scenes || [];
+  const heroHold = scenes.some((x) => x.carries === 'hero') ? 0 : pinHold(s.hero);
+  const pins = pinnedSections(s);
+  return !s.replay && scenes.length > 0 && scenes.length + (heroHold ? 1 : 0) + pins.length < sceneMost(s.input) && scenes.reduce((t, x) => t + (x.hold || 2), 0) + heroHold + pins.reduce((t, x) => t + pinHold(x), 0) + hold <= HOLD_BUDGET;
+}
+// Another signature move for one that cannot stay: never one the deal leaves out, the set-type entrance's own two
+// (settleMotion) or one that holds the stage.
+function otherMove(s) {
+  return wpick(L.motions.filter((m) => m.id !== s.motion?.id && !NOT_DEALT_MOVES.has(m.id) && !['masked-headline', 'shutter-image'].includes(m.id) && !MOVE_HOLD[m.id]).map((m) => [m, m.id === 'stillness' ? 0.5 : 1]));
+}
+// A section whose structure would come a third time on the page, or twice in a row, once the scenes, the replay and the
+// pins have settled, is dealt again from those that keep the run varied; never one that pins or, where it had none, one
+// made of pictures (settlePins and settlePhotos have counted them). keep: a role whose section was taken by id.
+function settleStructures(s, keep = null) {
+  const dir = L.directions.find((d) => d.id === s.direction.id) || s.direction;
+  for (const sec of [...s.sections]) {
+    const i = s.sections.indexOf(sec);
+    if (sec.role === keep || !structureRun(s).some((x) => x.role === sec.role && !x.replay && !x.k.startsWith('scene:'))) continue;
+    const fits = structureFits(s, sec.role);
+    if (fits(structureOf(sec))) continue;
+    // (a fresh one that fits first; else any that fits, one dealt lately included, since the rule holds on the page, but
+    // never the last page's)
+    const out = (y) => !!pinHold(y) || (madeOfPictures(y) && !madeOfPictures(sec));
+    const again = (o) => dealSection(dir, sec.role, s.sections.map((x) => x.id), s.sections[i - 1]?.shape ?? (s.hero?.split ? 'split' : undefined), s.sections[i + 1]?.shape, s.input, s, o);
+    let next = again(out);
+    if (next && !fits(structureOf(next))) next = again((y) => out(y) || !fits(structureOf(y)) || histHas(hist[0], 'sections', y.id));
+    if (next && fits(structureOf(next))) s.sections[i] = next;
   }
 }
 // The sections that pin and are built (a scene does not carry them), with the screens each holds, for the sheet.
@@ -2291,8 +2574,12 @@ function entranceBlock(e, s, p) {
 function movesBlock(s, p) {
   p();
   p(`### Small moves — ${['', 'one', 'two', 'three'][s.moves.length] || s.moves.length}, dealt from the design-anatomy study`);
-  p(`A good page has more than one kind of motion. Beyond ${s.replay ? 'the product replay' : s.motion?.id === 'stillness' ? 'the stillness above' : 'the signature move'} and the entrance, build ${s.moves.length > 1 ? 'each of these once' : 'this once'}, where its line says, on native scroll or under the hand, with transform and opacity, and a reduced-motion fallback that keeps the content where it rests. None makes anything enter below the fold (the entrance's rule stands), none pins, and none replaces feedback on the controls. Each description is the spec: set it in this page's own content, type and colour (its fills take \`--surface\`, the ink or the accent, never tints of their own: section 4).`);
-  for (const m of s.moves) p(`- **${m.name}** (\`${m.id}\`): ${m.description}${m.phone ? ` On a phone: ${m.phone}` : ''} ${MOVE_WHERE[m.kind] || 'Once, where it carries something; still for reduced motion.'}`);
+  p(`A good page has more than one kind of motion. Beyond ${s.replay ? 'the product replay' : s.motion?.id === 'stillness' ? 'the stillness above' : 'the signature move'} and the entrance, build ${s.moves.length > 1 ? 'each of these once' : 'this once'}, where its line says, on native scroll or under the hand, with transform and opacity, and a reduced-motion fallback that keeps the content where it rests. None makes anything enter below the fold (the entrance's rule stands), none pins, and none replaces feedback on the controls. Each description is the spec: set it in this page's own content, type and colour (its fills take \`--surface\`, the ink or the accent, never tints of their own: section 4). A move written as rows, tiles or a list of its own goes on a section of this page already built that way, in its structure and with its pictures; where there is none, leave the move out and say so in the report.`);
+  // (round 11c's sheets: a move that names a hold asked for a held hero beside "none pins", and one on the hero's headline
+  // ran into the entrance's)
+  const held = (m) => (/\bheld\b|\bsticky\b/i.test(m.description) ? ' Nothing of it pins: where it names a hold or a sticky layer, it runs over the same plain scroll.' : '');
+  const onHero = (m) => (/\bhero (?:headline|heading|title)\b/i.test(m.description) ? ' On the hero\'s headline it runs on scroll only, once the entrance has set the headline in place.' : '');
+  for (const m of s.moves) p(`- **${m.name}** (\`${m.id}\`): ${m.description}${m.phone ? ` On a phone: ${m.phone}` : ''}${held(m)}${onHero(m)} ${MOVE_WHERE[m.kind] || 'Once, where it carries something; still for reduced motion.'}`);
 }
 // The dealt product replay, printed as the signature move of a software page.
 function replayBlock(r, s, p) {
@@ -2356,13 +2643,16 @@ function render(s) {
   if (s.frame) {
     const f = s.frame;
     p('## 0. The frame (dealt; these replace whatever a blueprint below says about them)');
-    p(`Pages built by models came out alike in exactly these parts: three button shapes, one plain bar, a one-line footer, text floating with nothing grouping it. Each part below is one of about twelve tested designs${['nav', 'footer', 'card', 'button'].some((k) => PATTERNS[k].length) ? ' or one of the patterns of the design-anatomy study (great sites read part by part)' : ''}, dealt away from the last pages built; build it as written, at the sizes given.${[f.nav, f.footer, f.cards, f.buttons].some((x) => x?.pattern) ? ' A part marked as a pattern is described as the study saw it: its description is your spec, built with this page\'s own content, in the dealt type, colour and corners (where it names a colour, a face, a radius or a size the dealt system lacks, the dealt system wins), within the rules printed after it.' : ''}${[f.nav, f.footer, f.cards, f.buttons, s.hero, ...(s.sections || [])].some((x) => x?.pattern) || s.moves?.length || s.typeNote ? ' A pattern\'s id (in code type, here and below) is only its handle for redraws: where the id names something its description leaves out (capitals, an outline, glass, mono, a nested card), the description wins; and where a description makes its content arrive (on load, or as it comes into view: it rises, fades, slides or wipes in), section 8\'s entrance decides instead, on the first screen and below the fold.' : ''}`);
+    p(`Pages built by models came out alike in exactly these parts: three button shapes, one plain bar, a one-line footer, text floating with nothing grouping it. Each part below is one of about twelve tested designs${['nav', 'footer', 'card', 'button'].some((k) => PATTERNS[k].length) ? ' or one of the patterns of the design-anatomy study (great sites read part by part)' : ''}, dealt away from the last pages built; build it as written, at the sizes given. Its **Must show** line is what the built part is checked against: a part that does not show it is not built as dealt.${[f.nav, f.footer, f.cards, f.buttons].some((x) => x?.pattern) ? ' A part marked as a pattern is described as the study saw it: its description is your spec, built with this page\'s own content, in the dealt type, colour and corners (where it names a colour, a face, a radius or a size the dealt system lacks, the dealt system wins), within the rules printed after it.' : ''}${[f.nav, f.footer, f.cards, f.buttons, s.hero, ...(s.sections || [])].some((x) => x?.pattern) || s.moves?.length || s.typeNote ? ' A pattern\'s id (in code type, here and below) is only its handle for redraws: where the id names something its description leaves out (capitals, an outline, glass, mono, a nested card), the description wins; and where a description makes its content arrive (on load, or as it comes into view: it rises, fades, slides or wipes in), section 8\'s entrance decides instead, on the first screen and below the fold.' : ''}`);
     const label = (x) => `\`${x.id}\`${x.pattern ? `, ${x.name}: a pattern of the study` : ''}`;
-    p(`- **Navigation (${label(f.nav)}):** ${f.nav.text} ${FRAME_RULES.nav} The real sections as links and the one action.`);
+    // (each part ends on what it must show once built: the builder's acceptance line, round 11c)
+    const must = (x) => (x?.signature ? ` **Must show:** ${x.signature}` : '');
+    // (a navigation whose bar holds only Menu keeps the sections in its Menu panel)
+    p(`- **Navigation (${label(f.nav)}):** ${f.nav.text} ${FRAME_RULES.nav} ${menuOnly(f.nav.id, f.nav.pattern ? PATTERNS.nav.find((e) => e.id === f.nav.id) : null) ? 'The real sections as the links of the Menu panel, and the one action.' : 'The real sections as links and the one action.'}${must(f.nav)}`);
     const visit = visitNote(s, f.footer.text);
-    p(`- **Footer (${label(f.footer)}):** ${f.footer.text}${visit ? ` ${visit}` : ''} ${FRAME_RULES.footer}${f.footer.pattern && f.footer.closes ? ' It opens on the page\'s closing line and its button: that is the call to action.' : ''}`);
-    if (f.cards) p(`- **Cards (${label(f.cards)}):** ${f.cards.text} ${FRAME_RULES.cards}${s.imagery === 'interface' ? ' On this software page a card\'s picture is a crop of the product\'s interface running to the card\'s edges with no frame of its own: a window inside a card is a box in a box.' : ''}`);
-    if (f.buttons) p(`- **Buttons (${label(f.buttons)}):** ${f.buttons.text} ${FRAME_RULES.buttons}`);
+    p(`- **Footer (${label(f.footer)}):** ${f.footer.text}${visit ? ` ${visit}` : ''} ${FRAME_RULES.footer}${f.footer.pattern && f.footer.closes ? ' It opens on the page\'s closing line and its button: that is the call to action.' : ''}${must(f.footer)}`);
+    if (f.cards) p(`- **Cards (${label(f.cards)}):** ${f.cards.text} ${FRAME_RULES.cards}${s.imagery === 'interface' ? ' On this software page a card\'s picture is a crop of the product\'s interface running to the card\'s edges with no frame of its own: a window inside a card is a box in a box.' : ''}${must(f.cards)}`);
+    if (f.buttons) p(`- **Buttons (${label(f.buttons)}):** ${f.buttons.text} ${FRAME_RULES.buttons}${must(f.buttons)}`);
     p(`- **Corners:** ${f.corners.text} (\`--radius: ${f.corners.radius}\`${f.corners.button ? `, buttons \`${f.corners.button === 'square' ? '0' : f.corners.button}\`` : '; buttons as dealt above'}).`);
     p(`- **Space:** ${f.spacing.text}${f.spacing.gap ? ` In CSS: \`--section-gap: ${f.spacing.gap}; --margin: ${f.spacing.marginCss};\`, the gap set as \`padding-block: calc(var(--section-gap) / 2)\` on every section after the hero and as \`padding-bottom\` of the same half under the hero's last content, so it is the same on one ground or across two (references/layout.md §2).` : ''} **The first screen is the hero alone:** \`min-height: 100svh\` at every width with the navigation inside it, and nothing of the next section (its heading, text, picture or ground) in view at 1440 by 900 or 390 by 844 (\`hero-not-alone\`). The space between sections counts from the last content of one to the first content of the next, and a change of ground never shortens it (\`section-air\`). **Nothing runs into one screen edge:** whatever is not full-bleed keeps the page margin on both sides at rest; a product window that ran into the right edge while the left margin held failed a notes page (\`edge-run\`).`);
     p(`- **Pictures:** ${f.treatment.text}${f.treatment.id === 'mono' ? '' : ' Never greyed: no grayscale filter, and no stand-in whose file is black-and-white (the client\'s own pictures as they are).'}`);
@@ -2493,8 +2783,13 @@ function render(s) {
   photoTotalBlock(s, p); p();
   const adjust = (bp) => { const n = adjustments(bp, s); if (n.length) { p(); p('Adjusted for this page:'); for (const x of n) p(`- ${x}`); } };
   p(`## 6. Hero — ${s.hero.name}${s.hero.pattern ? ` (\`${s.hero.id}\`, a pattern of the design-anatomy study)` : ''}`);
-  if (s.hero.pattern) p('Described as the study saw it on a great site: build this composition with this page\'s own words and pictures, in the dealt type, colour and corners; a backdrop it names that this page cannot honestly have (a 3D scene, footage) is a photograph of the subject or the product\'s own interface at the same size and place, or the ground itself.');
+  if (s.hero.pattern) p('Described as the study saw it on a great site: build this composition with this page\'s own words and pictures, in the dealt type, colour and corners, its buttons section 0\'s; a backdrop it names that this page cannot honestly have (a 3D scene, footage) is a photograph of the subject or the product\'s own interface at the same size and place, or the ground itself.');
   p(s.hero.blueprint); p(); p(`On a phone: ${s.hero.mobile}`); if (s.hero.headline) p(`Headline: ${s.hero.headline}`);
+  // (dealt through the history: every software hero had become a window of rows)
+  if (s.heroSubstance) p(`**What the product shows here: ${s.heroSubstance.name}.** ${s.heroSubstance.text} It is the hero's picture, whatever the blueprint calls it: a photograph it names is this window (section 5 counts none for the hero). Never a list of rows; whether it moves is section 8's entrance.`);
+  // (the hero's signature, a pattern's own or the library hero's: what the built first screen is checked against)
+  const heroMust = s.hero.signature || HERO_SIGNATURES[s.hero.id];
+  if (heroMust) p(`**Must show:** ${heroMust}`);
   // r9-p44 was dealt the object on a plain ground and built the stack every model builds (the judge: any café)
   const sceneHero = (s.scenes || []).some((x) => x.carries === 'hero');
   p(`**Within the house rules and the adjustments under it, this geometry is binding:** what is large, where the words sit and how the picture is cut, in the dealt type and colour; where section 2 describes the first screen otherwise, this is it${sceneHero ? '. The scene in section 9 sets the first screen\'s picture and its motion; the words keep their places here' : ''}. **It fills the first screen alone** (\`min-height: 100svh\`, the navigation inside it): nothing of the next section shows under it at 1440 by 900 or on a phone, and a part of this blueprint that would run below the fold (a peek of the next section, a row continuing under the fold) is left out. At most 30 words in it. Its largest type carries the page's own idea (the Headline above says how) or, for a name whose meaning the page is built on (Klee is clover), the name; never a bare category line with nothing of this client in it. **The headline never repeats the logo:** when the name is the headline, the bar shows no second wordmark on the first screen (the mark alone, or the wordmark arriving once the hero has scrolled away); otherwise the headline says something new and the name stays in the bar. One action appears once here: never two buttons to the same place (two Directions buttons on one first screen). Never the template stack of a centred headline and a line under it over a photograph card with round corners or a row of two or three cards, with or without actions (\`template-hero\`). Its picture shows what the headline names${hasDoor(s.input) ? ': the place itself, never the village next door under "a white house on the fjord" (with no such picture, the first screen is set in type); and the first screen names the specific place the brief gives (the fjord, the village, the district), or when the brief names only a region, a real place in it chosen with the visit block and marked as sample copy in the report, never the region alone' : ''}.`);
@@ -2514,6 +2809,9 @@ function render(s) {
   }
   const visitText = visitBlock(s); if (visitText) { p(); p(visitText); }
   const booking = bookingBlock(s); if (booking) { p(); p(booking); }
+  // each section's structure, so six of them are not built as one heading, a line and a panel (r12-p54)
+  const run = structureRun(s);
+  if (run.length > 1) { p(); p(`**Structures, in order:** ${run.map((x) => `${x.role} ${x.replay ? 'the replay' : x.k.startsWith('scene:') ? 'the scene' : x.k}`).join(', ')}. Build each section in the structure its heading names: a list stays rows, a grid stays a grid of cells, tiles or columns, a split stays two sides; never three on one structure, nor three sections round the same thing (three lists, three rows of cards, three single pictures), and never two alike in a row (\`same-structure\` warns at three and fails at four).`); }
   s.sections.forEach((sec, i) => {
     p();
     // (built as dealt: r11-p51's dealt three cards came out as one credit line)
@@ -2527,10 +2825,10 @@ function render(s) {
     const scene = carriedBy(s, sec);
     if (scene) { p(`### ${i + 1}. ${sec.role} — the scene \`${scene.id}\` (section 9)`); p(`This section is the scene: what it says (${sec.role === 'work' ? 'the work' : `the ${sec.role}`}) is set in the scene as section 9 says, with no second shape around it and no blueprint here.`); return; }
     if (!sec.blueprint) { p(`### ${i + 1}. ${sec.role}`); p('No blueprint in the library for this role. Compose it from the direction above, using a layout shape not used by its neighbours.'); return; }
-    p(`### ${i + 1}. ${sec.role} — ${sec.name} (${sec.shape})${sec.pattern ? ` — \`${sec.id}\`, a pattern of the design-anatomy study` : ''}`);
+    p(`### ${i + 1}. ${sec.role} — ${sec.name} (${structureOf(sec) || sec.shape})${sec.pattern ? ` — \`${sec.id}\`, a pattern of the design-anatomy study` : ''}`);
     const opens = (s.scenes || []).find((x) => x.carries === sec.role && x.position === 'transition');
     if (opens) p(`The hand-over scene \`${opens.id}\` (section 9) opens this section; ${opens.technique ? 'its direction' : 'its "Where" line'} says what of the section it carries, and the rest follows in this shape.`);
-    if (sec.pattern) p('A pattern of the study standing in for this section\'s blueprint: its description is the spec, built with this page\'s content, in the dealt type, colour, corners and card style, within the word and picture budgets above.');
+    if (sec.pattern) p('A pattern of the study standing in for this section\'s blueprint: its description is the spec, built with this page\'s content, in the dealt type, colour, corners, card style and button, within the word and picture budgets above.');
     p(sec.blueprint); if (sec.mobile || (sec.pattern && !phoneIn(sec.blueprint))) p(`On a phone: ${sec.mobile || PHONE_FALLBACK}`); adjust(sec);
   });
   p();
@@ -2538,6 +2836,8 @@ function render(s) {
     p(`## 8. Motion${s.replay ? ' — the product replay' : s.motion ? ` — ${s.motion.name}` : ''}`);
     if (s.replay) replayBlock(s.replay, s, p);
     else if (s.motion) { p(s.motion.description); p(`This is the signature move, the one loud moment. Around it the page still needs the rest of the motion layer (SKILL.md step 9): ${s.entrance ? 'the entrance below' : 'a quiet entrance on the first screen (never a fade on every section)'}${s.moves?.length ? ', the small moves below' : ''} and feedback on every control; video only as section 0 deals it. The inspector fails a page that barely moves. Recipes: references/motion.md.`); }
+    // (counted once: as its own stretch, or as the hero's pin when it is the hero's own move: moveHold)
+    if (!s.replay && MOVE_HOLD[s.motion?.id]) p(moveHold(s) ? `It holds the stage about ${moveHold(s)} screen${moveHold(s) > 1 ? 's' : ''}: one of this page's held stretches, counted with the scenes in section 9, and no section beside it pins.` : `It is the hero's own move: the hero's held first screen (section 6) is this hold, one held stretch counted in section 9, and no section beside it pins.`);
     if (s.entrance) entranceBlock(s.entrance, s, p);
     if (s.moves?.length) movesBlock(s, p);
     p();
@@ -2551,7 +2851,7 @@ function render(s) {
     const held = s.scenes.reduce((t, x) => t + (x.hold || 2), 0);
     // a section that pins is a held stretch too (settlePins)
     const pins = [...(s.scenes.some((x) => x.carries === 'hero') || !pinHold(s.hero) ? [] : [{ ...s.hero, role: 'hero' }]), ...pinnedSections(s)];
-    p(`**The length budget.** ${s.scenes.length === 1 ? 'This scene holds' : 'Together these scenes hold'} about ${+held.toFixed(1)} screens of scroll (a scene's section is its hold plus one screen tall)${pins.length ? `, and the ${pins.map((x) => x.role).join(' and ')}${pins.length > 1 ? ' pin' : ' pins'} about ${pins.reduce((t, x) => t + pinHold(x), 0)} more: held stretches as well, and no other section pins` : ''}. A scene replaces the content of the section it carries: it is that section, not extra screens in front of it, and it never adds screens of nothing. The whole page still runs about 12-16 screens at 1440 (the inspector's header counts them), so build the other sections to their content and keep each hold to the beats it has.`);
+    p(`**The length budget.** ${s.scenes.length === 1 ? 'This scene holds' : 'Together these scenes hold'} about ${+held.toFixed(1)} screens of scroll (a scene's section is its hold plus one screen tall)${pins.length ? `, and the ${pins.map((x) => x.role).join(' and ')}${pins.length > 1 ? ' pin' : ' pins'} about ${pins.reduce((t, x) => t + pinHold(x), 0)} more: held stretches as well, and no other section pins` : ''}${moveHold(s) ? `; the signature move (${s.motion.name}) holds about ${moveHold(s)} more` : ''}. A scene replaces the content of the section it carries: it is that section, not extra screens in front of it, and it never adds screens of nothing. The whole page still runs about 12-16 screens at 1440 (the inspector's header counts them), so build the other sections to their content and keep each hold to the beats it has.`);
     p(`**The ${tested ? 'demo' : 'example'} is not the content.** ${tested ? "Each scene's demo page is a working example for a made-up client: its town, its photographs, its map, its object and its words are placeholders." : "The direction a technique gives is written for another client: its business, its objects and its words are examples."} Every picture, word and drawn thing in your scene comes from this subject (your inventory, SKILL.md step 1): a row of work is this client's own work; the words a scene gathers are what this client really makes or grows; a quote is the client's own words. A scene that still shows the ${tested ? "demo's" : "example's"} content${tested ? ', or the stand-in a script draws when it is given nothing,' : ''} is unfinished.`);
     if (fewPictures(s.input) && s.scenes.every(lightScene)) p(`**This page is short of pictures of its own subject, so ${one ? 'its scene needs' : 'its scenes need'} no photograph or one.** Fill ${one ? 'it' : 'them'} from the words and the product's own facts; a scene's one picture is one the page shows nowhere else (a cargo-bike page showed its one family photograph three times, the scene's among them). If even that cannot be filled, \`--redraw scenes\` deals another of the same kind before any that needs more.`);
     for (const sc of s.scenes) {
@@ -2582,7 +2882,7 @@ function render(s) {
     const moves = [s.entrance && s.entrance.family !== 'still' && `the entrance (${s.entrance.name})`, s.replay && `the product replay (${s.replay.name})`, !s.replay && s.motion && s.motion.id !== 'stillness' && `the signature move (${s.motion.name})`, s.frame && s.frame.clip.id !== 'none' && 'the moving picture section 0 deals', s.moves?.length && 'the small moves section 8 deals'].filter(Boolean);
     const and = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}` : xs[0]);
     const chosen = s.noScenes && !s.noScenesWhy;
-    p(`**None: this page is built without a scroll scene** ${chosen ? '(`--redraw scenes=none`): no scene could be filled honestly.' : `(none dealt): ${s.noScenesWhy || noSceneWhy(s)}.`} ${moves.length ? `Its motion comes from ${and(moves)}: build ${moves.length > 1 ? 'them' : 'it'} with care, with feedback on every control, and put no pinned stretch in place of a scene.` : 'Nothing else dealt here moves (the entrance is one where nothing arrives): take a moving one with `--redraw entrance`, since the inspector fails a page that barely moves, and put no pinned stretch in place of a scene.'}`);
+    p(`**None: this page is built without a scroll scene** ${chosen ? '(`--redraw scenes=none`): no scene could be filled honestly.' : `(none dealt): ${s.noScenesWhy || noSceneWhy(s)}.`} ${moves.length ? `Its motion comes from ${and(moves)}: build ${moves.length > 1 ? 'them' : 'it'} with care, with feedback on every control, and put no ${moveHold(s) ? `other pinned stretch in place of a scene (the signature move's hold of about ${moveHold(s)} screens is the page's one)` : 'pinned stretch in place of a scene'}.` : 'Nothing else dealt here moves (the entrance is one where nothing arrives): take a moving one with `--redraw entrance`, since the inspector fails a page that barely moves, and put no pinned stretch in place of a scene.'}`);
     p('**The length budget drops:** about 8-12 screens at 1440 (the study\'s median page is 8.7; references/layout.md), every section built to its content, with no stretch held for a scene.');
     if (s.lightOptions?.length) p(`**A scene that needs no photograph, or one, still fits this page:** ${s.lightOptions.map((id) => `\`${id}\``).join(', ')} (\`node draw.mjs --list scenes\` and \`--list techniques\` say what each is). Before building without one, take one of them with \`node draw.mjs --redraw scenes=<id>\` (taking one by id is not one of the two redraws) and fill it from the words and the one picture you have; none is for a page that cannot fill even these, and the report says why.`);
     p();

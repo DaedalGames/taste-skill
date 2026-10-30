@@ -175,7 +175,10 @@ and say why in the report.
   `video`, `mark` (the brand's own solid mark), `route` (a real route with stops the subject travels),
   `plan` (a real floor plan or exploded drawing), `names` (eight or more real names of its rooms,
   dishes, places, projects or products), `document` (a document the product really makes, such as an
-  invoice or a contract, when the brief does not name it). Leave it out if you have none: the draw then avoids compositions that depend on them and
+  invoice or a contract, when the brief does not name it), `logos` (real logos of clients or press),
+  `map` (a real map or route), `data` (real figures, quotes or prices the brief gives: opening hours
+  are not quotes), `3d` (a 3D model of the subject). A pattern that needs one of these is never dealt
+  without it. Leave it out if you have none: the draw then avoids compositions that depend on them and
   the sheet says how to fill picture slots honestly (software shows its own interface built in HTML; a
   product with no photographs of its own is shown by real photographs of its kind in use, never
   claimed as this model, never a drawing and never a fake product shot). Pictures you will find in the
@@ -377,7 +380,10 @@ not finished. Order of work:
    with cafés). Neighbouring sections never share a layout, and picture beside text twice running is
    one layout; at least one section breaks the split grid (a full-bleed picture, a headline across the
    width, an 8/4 asymmetry): a cargo-bike page ran 50/50 blocks all the way down and read as a stock
-   theme (`repeated-split` warns at three in a row). The key content stands in the open (the specs, the loads, the rooms, the menu); tabs and
+   theme (`repeated-split` warns at three in a row). Each section keeps the structure the sheet prints
+   for it (a list, a grid, a split, a statement …): never one structure three times on a page, never
+   two alike in a row (a notes page built six sections as a heading, a line and a list panel;
+   `same-structure` warns at three and fails at four). The key content stands in the open (the specs, the loads, the rooms, the menu); tabs and
    accordions only for secondary detail such as the questions. **Cards group what belongs together:**
    in two or three sections, the things a visitor compares or reads as one (the plans, the rooms, the
    visit details, the features) stand in the card style section 0 deals, filled, never outlined; text
@@ -474,7 +480,11 @@ not finished. Order of work:
 5. **The navigation, the footer, the cards and the buttons** as section 0 deals them, each one of
    about twelve tested designs or one of the study's patterns, built at the sizes and with the
    behaviour written there: the owner found every page with the same plain bar, the same three button
-   shapes and a one-line footer. The
+   shapes and a one-line footer. Each part, and the hero, ends on a **Must show** line: the built part
+   is checked against it. One button family on the page: the dealt button for every action (in the
+   bar, on a card and in a form at that part's height) and at most one quieter sibling
+   (`button-family` fails a third shape). The navigation never hides on scroll and is built in the
+   form dealt (`nav-not-as-dealt`). The
    navigation carries the page's sections as one- or two-word links and the one action; nothing
    stands above it (no announcement or information strip, `announcement-bar`) and nothing in it is a
    sentence (a manuscript tool put a sentence in its bar and the page read as chaos; `nav-sentence`
@@ -683,6 +693,8 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **No icon-topped cards, no outlined cards.** | Filled cards in the style section 0 deals, where things belong together. |
 | **No glass.** No backdrop blur, no translucent panels or bars. | Opaque surfaces one tone step from the ground; the navigation section 0 deals (a floating pill too is opaque). |
 | **No bar above the navigation, no sentence in it.** No announcement or information strip over the bar. | The dealt navigation: the wordmark, one- or two-word links, one action. |
+| **The navigation never hides on scroll** and is the one dealt, not a plain bar (`nav-not-as-dealt`). | The navigation section 0 deals, on every screen after the hero, as its Must show line says. |
+| **One button family:** the dealt button and one quieter sibling, no third shape (`button-family`). | The dealt button in the bar, the hero, the cards, the forms and the footer, at that part's height. |
 | **The footer is a designed section,** never a single line. | The footer section 0 deals, built as dealt (`footer-not-as-dealt`), on its own ground: links, contact, legal, Image credits. |
 | **No documentary or archive photographs.** No old Commons or museum pictures, history photographs, postcards, old maps, engravings, news-like shots. | Modern, well-lit, professional photographs (the library's first), or none: the product, the type, the colour. |
 | **No emoji, no gradient blobs, no decorative shapes, no drawn diagrams, charts or illustrations, no fake dashboards of grey bars.** | A real picture, a real interface fragment, the process said in words, or nothing. |

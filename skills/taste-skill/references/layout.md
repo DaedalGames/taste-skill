@@ -351,18 +351,39 @@ of loose text. Cards are wanted, varied, and kept to their job.
 - **On a phone** cards stack one to a row (or two narrow ones for a long list), full width inside
   the margins, never a sideways scroller.
 
+### Buttons
+
+- **One family a page.** Section 0 deals one button design. The family is its shape, fill, type and
+  hover, and every button on the page takes them: the navigation's action, the hero, the sections,
+  the cards, the forms and the footer. It keeps its dealt size in the hero, the sections and the
+  footer; in the navigation, on a card and in a form it takes the height that part gives it
+  (40-48px where it names none), so a 72px block becomes a 44px block of the same shape and fill in
+  the bar. The second action is at most one
+  quieter sibling: the label alone with the button's arrow, or the same shape in the surface tone. A
+  hero, section or footer pattern that names a button of its own (a pill, a play disc, a 64px block,
+  a split button) takes the dealt one in its place. A test page with three unrelated button shapes
+  read as a kit (`button-family`).
+
 ## 7. Navigation
 
-- **The dealt design.** Section 0 of the sheet deals one of about twelve navigation designs: a bar
-  that hides on the way down, links split round a centred wordmark, an opaque floating capsule, a
+- **The dealt design.** Section 0 of the sheet deals one of twelve navigation designs: a band that
+  names the section in view, links split round a centred wordmark, an opaque floating capsule, a
   minimal wordmark with a Menu button, a bar that shrinks on scroll, a side index, a dock fixed at the
   bottom, four fixed corners, a masthead, a band in the ink, a contained bar, large links over the hero.
   Or, as often, one of the navigation patterns a design-anatomy study read off great sites (a split bar
-  round a centred mark, a floating strip, a tall header that scrolls away and returns on the way up,
-  two corners, link clusters on the grid columns …), marked as a pattern and printed with its full
-  description. Build the one dealt with its sizes and its behaviour; the owner found the same plain
-  hiding bar on nearly every page, and no design or pattern is dealt on more than about one page in
-  ten. The wordmark, three to five links, one action. Median link count in the study is 3.
+  round a centred mark, a floating strip, a rail of tiles in the left margin, a compact panel at the
+  top right, link clusters on the grid columns …), marked as a pattern and printed with its full
+  description, a pattern scored 5 of 10 as likely as a tested design and a 4 half as likely. Build the
+  one dealt with its sizes and its behaviour, and check it against its **Must show** line; no design
+  or pattern is dealt on more than about one page in ten. The wordmark, three to five links, one
+  action. Median link count in the study is 3.
+- **It never hides on scroll.** No bar that slides away on the way down and comes back on the way
+  up, and no navigation that scrolls away with the hero leaving nothing in its place: the owner found
+  that plain hiding bar on nearly every page and named it as the generic one. Where the first
+  screen's bar scrolls away, what the dealt design keeps fixed (the wordmark and the action in their
+  corners, a Menu tab, a dock) is there at once. The inspector reads the built form at load, past the
+  hero and on a scroll back up, and fails a bar that hides or a form other than the one dealt
+  (`nav-not-as-dealt`).
 - **Nothing above it, no sentence in it.** No announcement, information or language strip over the
   bar (the owner: not modern); every link one or two words, never a sentence or a tagline (a
   manuscript tool set a sentence in its bar and the page read as chaos).
@@ -372,8 +393,8 @@ of loose text. Cards are wanted, varied, and kept to their job.
   covering text.
 - **On a long page it stays in reach.** Past about ten screens at 1440 (a page with scroll scenes
   always is), the navigation, or at least the one action, can be reached from every screen, the way
-  the dealt design says (it returns on scroll up, it stays fixed, it shrinks, or the wordmark and the
-  action keep their corners). A hero that animates its bar away hands it on to that navigation. In
+  the dealt design says (it stays fixed, it shrinks, or the wordmark and the action keep their
+  corners). A hero that animates its bar away hands it on to that navigation. In
   testing, three long pages kept their navigation only inside the hero, leaving the booking twenty
   screens away with no way back, and the blind judges named it on all three. Scenes that can keep
   their type clear of a fixed bar take its selector as an option (`scenes.md` §4).
@@ -400,7 +421,7 @@ of loose text. Cards are wanted, varied, and kept to their job.
   over one row, link columns for a site with more pages, a picture beside the facts), or one of the
   study's footer patterns (a closing headline beside a link grid, a mark beside link columns, link
   columns with a sign-up …), never one of the study's one-line, no-footer or nearly empty endings,
-  nor a bento grid. It stands on its own ground (the surface tone or the ink), at least 40% of a screen tall at 1440, with the links,
+  nor a bento grid or a band over a shader. It stands on its own ground (the surface tone or the ink), at least 40% of a screen tall at 1440, with the links,
   the contact, the legal links and the Image credits link at text sizes. The owner found the footers
   of the recent pages ignored, one line each. Build the dealt one as dealt, every part and size of
   it: a dealt three-card footer built as one credit line fails (`footer-not-as-dealt`). Link columns only for real pages beyond this one; never
