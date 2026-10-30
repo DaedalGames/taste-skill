@@ -355,3 +355,25 @@ forms, visual language, taste, styles), and a synthesis into `references/app-scr
 `library/app.json` (seven styles, five shells, screen patterns). The screenshots stay private; the
 skill carries only the measurements and the rules. Blind test rounds of app screens built with and
 without the skill then shaped the warnings at the top of that file.
+
+## 14. The design-anatomy study (round 12)
+
+The owner's review of October 2026: every page looked alike, not only its special sections but its
+buttons, navigation, footers, type and motion, and the same special section came back on about every
+second page. He asked for hundreds of distinct sections and components, each on about one page in ten.
+So 107 great sites (award winners and the sites of companies everyone knows) were read part by part from
+their own code and computed styles: the hero, every section, the navigation, the footer, the cards,
+the buttons, the type and the motion. The parts were grouped into a shared vocabulary of 1,410
+patterns (86 heroes, 486 sections, 79 navigations, 64 footers, 190 cards, 113 buttons, 77 type
+systems, 315 motions), each with what distinguishes it from its neighbours. 506 broke a house rule and
+are never dealt. The rest were rewritten so a builder can build them with new content (geometry,
+sizes, type and colour roles, behaviour, the phone) and labelled with what they fit (sectors, tone,
+density) and need (pictures, the product's interface, footage), and the skill carries them in
+`library/patterns/` with no site names. `draw.mjs` deals the navigation, footer, cards and buttons
+from the tested designs and these patterns, widens the heroes and the sections with them, adds one to
+three small moves and a type note, and keeps every one of them, design or pattern, to about one page
+in ten across a run of draws (`--list patterns` shows what it can deal). After the critics and the
+export, 1,097 ship; in thirty test draws over seven briefs no hero, navigation, footer, card style,
+button or section came back on more than three pages (most on two at most). The small moves are the
+thin family: only about thirty of the 195 motions beyond the basics are small, safe moves, so one of
+them still came back on four pages in thirty.

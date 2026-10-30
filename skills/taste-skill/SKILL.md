@@ -24,9 +24,11 @@ This skill replaces those defaults with decisions, in four ways:
 
 1. **A script deals the direction; you build it.** `scripts/draw.mjs` deals, at random and away from
    recent builds, the direction, a type pairing from 169 faces with its own scale, a restrained
-   palette, the navigation, the footer, the cards and the buttons (each one of about twelve designs),
-   corners, spacing, how pictures are treated, whether the page has an interactive piece or a video,
-   and its scroll scenes. You do not choose among options: your
+   palette, the navigation, the footer, the cards and the buttons (each one of about twelve tested
+   designs or of the patterns a design-anatomy study read off great sites), the hero and the sections
+   (from blueprints and those patterns), one to three small moves, corners, spacing, how pictures are
+   treated, whether the page has an interactive piece or a video, and its scroll scenes, none of them
+   on more than about one page in ten. You do not choose among options: your
    own choice is the bias this skill exists to remove.
 2. **The idea comes from the subject.** In the study, what separated the best sites from the forgettable
    ones was a concept taken from the thing itself, not the styling.
@@ -184,7 +186,7 @@ The command prints a **direction sheet**. It is the art direction for this build
 
 - **Adopt it.** Do not blend it with the layout you would have made anyway. If it feels unfamiliar,
   good: the familiar layout is the one this skill exists to prevent.
-- Redraw one slot (`--redraw hero | type | palette | photos | scenes | entrance | section:<role> | direction`) only for a
+- Redraw one slot (`--redraw hero | type | palette | photos | scenes | entrance | moves | section:<role> | direction`) only for a
   reason you can state: it contradicts a stated brand constraint, needs an asset that does not exist,
   or is a section that cannot hold the real content (next point). Never redraw to get something more
   comfortable. Record every redraw in your report. Scenes are redrawn twice at most: a third
@@ -194,8 +196,14 @@ The command prints a **direction sheet**. It is the art direction for this build
 - When a dealt section cannot hold the real content (it compares three plans and there is one price;
   it wants five quotations and there are none), do not bend the content to fit. List the others with
   `--alternatives <role>`, pick the one whose assumptions match the content, and take it with
-  `--redraw section:<role>=<id>`. The footer is section 0's: `--redraw section:footer` deals another
-  of its designs.
+  `--redraw section:<role>=<id>` (the list includes the study's patterns that fit, taken the same way).
+  The footer is section 0's: `--redraw section:footer` deals another of its designs.
+- **A part, hero or section marked as a pattern** (of the design-anatomy study) is printed as the study
+  saw it on a great site: its description is the spec. Build that composition with this page's own
+  words and pictures, in the dealt type, colour, corners and card style; where it names a colour, a
+  face, a radius or a size the dealt system lacks, the dealt system wins, and the house rules win over
+  both. The type note under the type system (section 3) says how a site of the same kind set its
+  type: take how its steps relate, never its faces or its sizes.
 - **Take the accent from the subject.** If the dealt accent has nothing to do with the subject (a
   software teal on a coffee roaster), keep its lightness and strength and move its hue to the subject's
   own colour (crema amber, copper, the green of the name), and say so in the report.
@@ -457,8 +465,9 @@ not finished. Order of work:
 
    `references/imagery.md` covers searching, licences, video, drawing, crops and treatments.
 5. **The navigation, the footer, the cards and the buttons** as section 0 deals them, each one of
-   about twelve designs, built at the sizes and with the behaviour written there: the owner found
-   every page with the same plain bar, the same three button shapes and a one-line footer. The
+   about twelve tested designs or one of the study's patterns, built at the sizes and with the
+   behaviour written there: the owner found every page with the same plain bar, the same three button
+   shapes and a one-line footer. The
    navigation carries the page's sections as one- or two-word links and the one action; nothing
    stands above it (no announcement or information strip, `announcement-bar`) and nothing in it is a
    sentence (a manuscript tool put a sentence in its bar and the page read as chaos; `nav-sentence`
@@ -584,7 +593,7 @@ Judge only the pictures. If a problem is visible in a screenshot, it is real, wh
 
 Now build the motion layer. It is required, and it is more than one fade: the inspector counts the
 elements that really move while the page loads and is scrolled, and fails a page under eight (it warns
-under sixteen). Any scroll scenes are already built (step 6); around them the layer has four parts:
+under sixteen). Any scroll scenes are already built (step 6); around them the layer has five parts:
 
 1. **The signature move** named on the sheet: one, done well (a dealt scene can be it). On a software
    page it is the product replay: the product's own window, large, acts out what the product does for
@@ -602,7 +611,11 @@ under sixteen). Any scroll scenes are already built (step 6); around them the la
    screen, its CSS already in base.css, and only its own rule below the fold. Nothing else enters: no
    fade-up on every block, and no masked line rise or shutter unless the dealt entrance is `set-type`.
 3. **Feedback on every control:** press, hover and focus on buttons, links, cards and any tool.
-4. **Video or a moving picture only as section 0 deals it.** Most pages get none; motion comes from
+4. **The small moves the sheet deals** (section 8, one to three from the study's motion patterns: a
+   hover on the cards or a list, a scroll-linked line, a picture that drifts in its frame): each once,
+   where its line says, on native scroll or under the hand. A good site has many special motions, not
+   one; these are the page's others, never something entering below the fold and never a pin.
+5. **Video or a moving picture only as section 0 deals it.** Most pages get none; motion comes from
    the page itself.
 
 Transform and opacity only; every move has a `prefers-reduced-motion` fallback that keeps the content
@@ -816,4 +829,4 @@ report that the open collections could not be searched.
 | `assets/replay.js` · `assets/replay-demo.html` | Step 9 on a software page: the product replay the sheet deals, and a working example of its six patterns. |
 | `assets/scenes/` | The scroll scenes: the shared stage (`stage.js`, `stage.css`) and, for each scene in the library, its `.js`, `.css` and a working demo page in `demo/`. |
 | `assets/app.css` · `assets/charts.js` | For app screens: a neutral shell, panels, tables and controls, and small SVG charts drawn to the app rules. |
-| `library/` | The data the draw reads: directions, heroes, sections, type systems, palettes, photographs, studied sites, motions, scroll scenes (`scenes.json`), researched techniques dealt in place of a scene (`techniques.json`), product replays (`replays.json`), and the app styles, shells and screen patterns (`app.json`). Do not read it whole; use the script. |
+| `library/` | The data the draw reads: directions, heroes, sections, type systems, palettes, photographs, studied sites, motions, scroll scenes (`scenes.json`), researched techniques dealt in place of a scene (`techniques.json`), product replays (`replays.json`), the patterns of the design-anatomy study (`patterns/`: heroes, sections, navigation, footers, cards, buttons, type and motion, with what each fits and needs; `--list patterns`), and the app styles, shells and screen patterns (`app.json`). Do not read it whole; use the script. |

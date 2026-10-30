@@ -144,6 +144,13 @@ coherent. When the dealt system has two faces:
 - Do not mix two faces inside one headline.
 - Italic is for titles of works and real emphasis inside paragraphs, never as decoration.
 
+**The type note.** Under the type system the sheet may print a type note: how a site of the
+design-anatomy study set type of the same kind as the dealt pairing (one family or two, serif or sans
+on each side, condensed, wide or rounded as dealt, capitals only where the system sets them). Take
+from it how the steps relate (how far they jump, where the big jump falls, which steps carry the page)
+and its leading, tracking and case where the system allows them. The dealt faces, weights and six
+steps stand: map its sizes onto the steps, nothing under 13px, running text 16px or more.
+
 ## 7. Details that separate set type from typed text
 
 - Curly quotes and apostrophes, real dashes, a real ellipsis (see `copy.md` §7).

@@ -1029,6 +1029,21 @@ Things open from where they were triggered (`transform-origin` at the trigger). 
 The direction sheet names one. Each of these was seen repeatedly on the studied gallery sites. On a
 software page the signature move is the product replay the sheet deals (§6, "Product replay").
 
+**Small moves.** A good site has many special motions, not one (the owner, October 2026). Beside the
+signature move and the entrance, the sheet deals one to three small moves (section 8, "Small moves")
+from the motion patterns of the design-anatomy study, beyond the basics every page has: a picture that
+zooms inside its card on hover, a list that dims round the hovered row, a paragraph that fills with ink
+as it scrolls, a strip that moves sideways with the scroll, a picture that drifts in its frame. One of
+each kind on a page, fitted to its sector and tone, never the same move as the signature, and none on
+more than about one page in ten (when every fitting move was on one of the last nine pages, the page
+gets fewer rather than a repeat). The deal leaves out what is not a small move or breaks the house
+rules: WebGL worlds and canvases, pins, scroll that is not native, preloaders and counters, a cursor in
+place of the pointer, drawn lines, shapes, particles and grain overlays, anything that makes content
+enter on load or entry (the entrance owns arrival), and anything on the buttons or the call to action
+(the dealt button design has its own), and a theme switch that recolours the dealt palette.
+Build each once, where its line says, with transform and opacity and a reduced-motion fallback that
+keeps the content where it rests.
+
 | Move | What happens | Build with |
 | --- | --- | --- |
 | Masked headline | Lines rise from behind their baselines on load | Not dealt: part of the `set-type` entrance |

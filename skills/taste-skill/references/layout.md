@@ -254,6 +254,13 @@ points this way, including several above 7.5.
 - **Cards group what belongs together** (below): the plans, the rooms, the visit details, the
   features a visitor compares. Never a page of nothing but cards, never a card inside a card, never
   empty space inside one.
+- **A section may be a pattern of the study.** The sheet deals each section from the blueprints of its
+  role and from the section patterns of the design-anatomy study that stand in for that role (by their
+  names and what they do: quotes for a testimonial, logos for proof, steps for how it works, a closing
+  line for the call to action) and fit the page (its sector, tone, the air it wants, what it really
+  has). One is marked as a pattern and its description is the spec. The page keeps its order of
+  sections, its budgets (60 words a section, three to six pictures) and its closing rules, whichever
+  is dealt; no section or pattern comes back on more than about one page in ten.
 - **No two neighbours share a layout.** Use the shape of each dealt blueprint (list, split, statement,
   full-bleed, mosaic, table, strip, pinned …). Count them in the screenshot; a shape used three times
   is the template showing. Three or more full-bleed picture screens in a row, each a picture with a
@@ -312,7 +319,11 @@ of loose text. Cards are wanted, varied, and kept to their job.
 - **One style a page, dealt.** Section 0 of the sheet deals one of about twelve: filled surface
   cards, picture-led cards, rows with a surface, horizontal cards, cards in the ink, one large panel,
   overlapping, staggered, cards that stack as you scroll, cards that open, poster cards, tall cards of
-  words. Build the one dealt, at its sizes; another page gets another. Cards that overlap or stack
+  words; or one of the card patterns of the design-anatomy study that holds words on a fill or under
+  a picture (a round panel of title, text and button, a landscape photograph over a large title, a
+  tall text panel …), never a media tile with no words, an icon card, an outlined one, a generative
+  canvas in place of a picture, or a row whose next card peeks in at the screen edge. Build the one
+  dealt, at its sizes; another page gets another. Cards that overlap or stack
   step their tone one by one (the surface mixed 6%, 12%, 18% toward the ink), so each edge reads with
   no border and no shadow.
 - **Filled, not outlined.** A card is a surface one tone step from the ground (or the ink), in the
@@ -334,9 +345,12 @@ of loose text. Cards are wanted, varied, and kept to their job.
   that hides on the way down, links split round a centred wordmark, an opaque floating capsule, a
   minimal wordmark with a Menu button, a bar that shrinks on scroll, a side index, a dock fixed at the
   bottom, four fixed corners, a masthead, a band in the ink, a contained bar, large links over the hero.
-  Build the one dealt with its sizes and its behaviour; the owner found the same plain hiding bar on
-  nearly every page. The wordmark, three to five links, one action. Median link count in the study is
-  3.
+  Or, as often, one of the navigation patterns a design-anatomy study read off great sites (a split bar
+  round a centred mark, a floating strip, a tall header that scrolls away and returns on the way up,
+  two corners, link clusters on the grid columns …), marked as a pattern and printed with its full
+  description. Build the one dealt with its sizes and its behaviour; the owner found the same plain
+  hiding bar on nearly every page, and no design or pattern is dealt on more than about one page in
+  ten. The wordmark, three to five links, one action. Median link count in the study is 3.
 - **Nothing above it, no sentence in it.** No announcement, information or language strip over the
   bar (the owner: not modern); every link one or two words, never a sentence or a tagline (a
   manuscript tool set a sentence in its bar and the page read as chaos).
@@ -371,8 +385,10 @@ of loose text. Cards are wanted, varied, and kept to their job.
 - **The footer is a designed section, never a single line.** Section 0 deals one of about twelve
   designs (a closing line over columns, a big contact block, a sitemap grid, a picture footer, a
   newsletter card, large links, three cards, two halves, the hours and the place, a closing statement
-  over one row, link columns for a site with more pages, a picture beside the facts). It stands on its
-  own ground (the surface tone or the ink), at least 40% of a screen tall at 1440, with the links,
+  over one row, link columns for a site with more pages, a picture beside the facts), or one of the
+  study's footer patterns (a closing headline beside a link grid, a mark beside link columns, link
+  columns with a sign-up …), never one of the study's one-line, no-footer or nearly empty endings,
+  nor a bento grid. It stands on its own ground (the surface tone or the ink), at least 40% of a screen tall at 1440, with the links,
   the contact, the legal links and the Image credits link at text sizes. The owner found the footers
   of the recent pages ignored, one line each. Link columns only for real pages beyond this one; never
   a list the page already shows as content. Style every list: no browser bullets in a footer or a

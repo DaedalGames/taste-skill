@@ -4,11 +4,153 @@
 // (a live widget on 33 of 34, video on 29, a giant footer name on 28, square buttons on 22), and in October 2026 the
 // owner still saw three button shapes, one plain bar that hides on scroll and a one-line footer on nearly every page.
 // The four parts every page shows (navigation, footer, cards, buttons) now hold twelve designs each, dealt away from
-// the last draws in the history, so no one design comes back on more than about one page in eight.
+// the last draws in the history beside the study's patterns (below), so no one comes back on more than about one page
+// in ten.
 //
 // Each entry: [id, weight, what to build (or a function of ctx that writes it), fit(ctx) -> a weight multiplier
 // (optional)]. ctx: { tone, sector, software, door, multiPage, emailElsewhere, creative, few, nameHero, closingScene,
 // visitShown (a section blueprint is itself the visit block: then the footer is not) }.
+//
+// Round 12 (October 2026): the owner still saw about ten special things and everything else alike, and asked for
+// hundreds, each on about one page in ten. The twelve designs of each part now share the deal with the patterns of the
+// design-anatomy study (library/patterns/<family>.json: 107 great sites read for their heroes, sections, navigation,
+// footers, cards, buttons, type and motion), fit-filtered by sector, tone, density and what the page really has, and
+// every design or pattern used in the last nine draws is out while others fit. A missing pattern file deals the
+// designs alone. The loading, fitting and house checks of the patterns live here; draw.mjs deals the heroes, sections,
+// small moves and type notes from them with the same rules.
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+// ---------- the pattern library ----------
+export const PATTERN_FAMILIES = ['hero', 'section', 'nav', 'footer', 'card', 'button', 'type', 'motion'];
+// no design or pattern on more than about one page in ten: one used in the last nine draws is out while others fit
+export const ONE_IN = 10;
+export const RECENT_OUT = ONE_IN - 1;
+// the weight of one used `at` draws ago when too few fresh ones fit: the longest unused first, and each under half
+// of a fresh one, so the fresh ones that fit still come first
+export const comeBack = (at) => 0.5 * ((Math.max(0, at) + 1) / RECENT_OUT) ** 2;
+// how a pattern weighs beside a tested design, a dealt hero of the direction or a section blueprint of the direction
+// (each 1): the patterns are many, so even at these weights they take about half the deals or more
+export const PATTERN_SHARE = { frame: 0.8, hero: 0.6, section: 0.5 };
+// Each file is an array of entries {id, name, description, fits {sectors, tone, density}, needs {pictures, productUi,
+// video, words}, phone, avoidWith, houseRuleCheck} (motion adds basic). A file that is missing or unreadable is an
+// empty family; an entry without an id or a description, or marked banned, is never dealt.
+export function loadPatterns(dir) {
+  const out = {};
+  for (const f of PATTERN_FAMILIES) {
+    let list = [];
+    try { const j = JSON.parse(readFileSync(join(dir, `${f}.json`), 'utf8')); list = Array.isArray(j) ? j : Array.isArray(j?.patterns) ? j.patterns : []; } catch { /* no file: today's designs alone */ }
+    const seen = new Set();
+    out[f] = list.filter((e) => e && typeof e.id === 'string' && typeof e.description === 'string' && e.description.trim() && !(e.banned === true || (Array.isArray(e.banned) && e.banned.length)) && !houseClash(e) && !seen.has(e.id) && seen.add(e.id));
+  }
+  return out;
+}
+// The house rules a description can break in so many words (the export drops what the study marked banned; this is
+// the last check, so a pattern that still asks for one is never dealt): an announcement strip, a progress bar, a drag
+// rail, glass, a gradient, a shadow, monospace, an eyebrow, a drawn illustration, emoji, the violet family. A negated
+// mention ("no gradient") is no clash.
+const HOUSE_TELLS = /\bannouncement (?:bar|strip)\b|\binformation strip\b|\binfo bar\b|\bprogress (?:bar|rail|ring)\b|\bdrag(?:gable)? (?:rail|row|cards?)\b|\bglass(?:morphism)?\b|\bbackdrop[- ]blur\b|\bgradients?\b|\bdrop shadows?\b|\bmonospace\b|\beyebrows?\b|\billustrat\w*|\bline drawings?\b|\bdoodles?\b|\bemoji\b|\bviolet\b|\blavender\b|\bperiwinkle\b/i;
+export const houseClash = (e) => says(`${e.name || ''}. ${e.description}`, HOUSE_TELLS);
+// A positive mention: the words match somewhere not negated just before ("no outline", "never a shadow", "without
+// a border" are not an outline, a shadow or a border).
+const NEGATED = /\b(?:no|never|not|without|nor|instead of)\b[^.;:]{0,28}$/i;
+export function says(text, re) {
+  const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
+  for (const m of String(text || '').matchAll(g)) if (!NEGATED.test(String(text).slice(Math.max(0, m.index - 40), m.index))) return true;
+  return false;
+}
+// how the study designed a house-rule conflict out of a pattern (its houseRuleCheck), when it names one. A bare verdict
+// ("Clean.", "No conflict.") prints nothing; a verdict followed by its terms ("Clean. Pictures designed, not
+// documentary"; "No conflict: the mat is a fill") prints the terms; a conditional one ("Clean when the headline is there
+// from the first frame", "No conflict if the pictures are art-directed") prints whole. (The first export hid all of
+// them: some 350 notes, the documentary-photograph and outline conditions among them, never reached the sheet.)
+const VERDICT = /^(?:none|ok|n\/a|no conflicts?(?: left)?|clean|passes)\b/i;
+export const houseNote = (e) => {
+  const x = [].concat(e.houseRuleCheck ?? []).filter((v) => typeof v === 'string')
+    .map((v) => { const t = v.trim(); if (!VERDICT.test(t)) return t; const m = t.match(/^(?:none|ok|n\/a|no conflicts?(?: left)?|clean|passes)\s*[.:;,]\s*(.*)$/is); return m ? m[1] : /^\S+(?:\s+conflicts?)?\s*\.?$/i.test(t) ? '' : t; })
+    .map((v) => v.trim().replace(/\.$/, '')).filter(Boolean).map((v) => v[0].toUpperCase() + v.slice(1));
+  return x.length ? ` House rules for it: ${x.join('; ')}.` : '';
+};
+// the builder's spec of a pattern: its description in full, how the house rules bend it, then how it adapts on a phone
+// (most descriptions already end on their phone plan, "Phone: …": then the phone field is not printed again)
+export const phoneIn = (text) => /\b(?:on a phone|phone)\s*:/i.test(String(text || ''));
+export const patternPhone = (e) => (e.phone && !phoneIn(e.description) ? String(e.phone).trim() : null);
+export const patternText = (e) => `${e.description.trim()}${houseNote(e)}${patternPhone(e) ? ` On a phone: ${patternPhone(e)}` : ''}`;
+// the photographs a pattern takes (its needs.pictures label)
+const PICTURES = { 0: 0, 1: 1, '2-3': 3, '4-8': 6, many: 8 };
+const needsOf = (e) => (e.pneeds || (e.needs && !Array.isArray(e.needs) ? e.needs : {}));
+export const patternPictures = (e) => PICTURES[String(needsOf(e).pictures ?? 0)] ?? 0;
+// the page's tones in the study's words (quiet is calm there)
+export const studyTones = (tones) => [...new Set((tones || []).map((t) => (t === 'quiet' ? 'calm' : t)))];
+// sector words the study may use for a group of the skill's sectors
+const SOFTWARE_SECTORS = ['saas', 'dev-tool', 'ai-product', 'consumer-app', 'finance'];
+const SECTOR_WORDS = {
+  software: SOFTWARE_SECTORS, tech: SOFTWARE_SECTORS, technology: SOFTWARE_SECTORS, 'b2b-software': SOFTWARE_SECTORS, app: ['consumer-app'], ai: ['ai-product'], fintech: ['finance'],
+  portfolio: ['studio-portfolio', 'personal-portfolio', 'agency', 'architecture'], studio: ['studio-portfolio', 'agency'], creative: ['agency', 'studio-portfolio', 'personal-portfolio', 'music', 'fashion', 'event', 'culture'],
+  retail: ['ecommerce', 'physical-product', 'fashion'], commerce: ['ecommerce', 'physical-product'], shop: ['ecommerce', 'physical-product'], product: ['physical-product', 'ecommerce'], 'consumer-product': ['physical-product', 'ecommerce'], automotive: ['physical-product'],
+  food: ['restaurant', 'hospitality'], 'food-drink': ['restaurant', 'hospitality', 'physical-product'], drink: ['restaurant', 'physical-product'], travel: ['hospitality'], hotel: ['hospitality'], place: ['hospitality', 'restaurant', 'real-estate', 'architecture'], property: ['real-estate', 'architecture'],
+  arts: ['culture', 'music', 'event'], art: ['culture'], museum: ['culture'], film: ['culture', 'music', 'event'], entertainment: ['music', 'event', 'culture'], gaming: ['consumer-app', 'culture'], sport: ['event', 'physical-product'], luxury: ['fashion', 'hospitality', 'real-estate', 'physical-product'], beauty: ['fashion', 'physical-product', 'health'],
+  wellness: ['health'], healthcare: ['health'], learning: ['education'], charity: ['nonprofit'], 'non-profit': ['nonprofit'], brand: ['agency', 'physical-product', 'fashion'],
+};
+function sectorFits(list, sector) {
+  if (!Array.isArray(list) || !list.length) return true;
+  return list.some((x) => { const w = String(x).toLowerCase(); return w === '*' || w === sector || (SECTOR_WORDS[w] || []).includes(sector); });
+}
+// whether an avoidWith entry names something on the page: its id, an id it begins ("nav-transparent"), or a kind of
+// thing the page has ("scene", "replay", "video", "dark-ground")
+function names(set, x) { const w = String(x || '').toLowerCase(); if (!w) return false; for (const d of set) if (d === w || d.startsWith(w + '-')) return true; return false; }
+// Why a pattern cannot go on this page, or null: written for other sectors, a need the brief does not meet (the
+// product's own interface, footage, more photographs than the page can honestly show), or a clash it names with
+// something already dealt. pc: { sector, tones, loud, software, video, pictureCap, density, dealt: Set, avoid: Set }.
+export function patternWhyNot(e, pc) {
+  const n = needsOf(e);
+  if (!sectorFits(e.fits?.sectors, pc.sector)) return `it is not written for a ${pc.sector} page`;
+  if (n.productUi && !pc.software) return 'it needs the product\'s own interface';
+  if (n.video && !pc.video) return 'it needs footage of this very subject';
+  if (patternPictures(e) > pc.pictureCap) return `it needs more photographs than this page can honestly show (${pc.pictureCap})`;
+  if ((e.avoidWith || []).some((a) => names(pc.dealt || new Set(), a)) || names(pc.avoid || new Set(), e.id)) return 'it clashes with something already dealt';
+  if (e.fits?.density === 'dense' && pc.density !== 'dense-ok') return 'it is dense, and this page wants air';
+  return null;
+}
+function toneFits(e, pc) {
+  const t = e.fits?.tone;
+  if (!Array.isArray(t) || !t.length || t.includes('*') || !pc.tones?.length) return true;
+  return t.some((x) => pc.tones.includes(x) || (x === 'raw' && pc.loud));
+}
+// The patterns of one family that fit the page, as [entry, weight]: sector, needs, clashes and density always; the
+// tone while at least `min` still fit, then the others of other tones at half the weight rather than an empty pool. On
+// an airy page the airy ones weigh most.
+export function fitPool(list, pc, min = 3) {
+  const ok = (list || []).filter((e) => !patternWhyNot(e, pc));
+  const toned = ok.filter((e) => toneFits(e, pc));
+  const w = (e) => (pc.density === 'airy' && e.fits?.density && e.fits.density !== 'airy' ? 0.7 : 1) * (toneFits(e, pc) ? 1 : 0.5);
+  return (toned.length >= min ? toned : ok).map((e) => [e, w(e)]);
+}
+// Whether a pattern can be the page's navigation, footer, card style or button design at all, under the house rules
+// (the export drops what the study marked banned; this keeps out what is not that part: no navigation, a footer of one
+// line, a media tile with no words, an icon disc or a field in place of the button).
+const TEXT_OF = (e) => `${e.name || ''}. ${e.description}`;
+export function partUsable(part, e) {
+  const id = e.id; const d = e.description; const all = TEXT_OF(e);
+  // (no part is a bento grid: the sheet's Always line)
+  if (houseClash(e) || says(all, /\bannouncement\b|\bbento\b/i)) return false;
+  // a navigation or footer that lives on a 3D or canvas stage, or on a page that does not scroll, is not this page's
+  const staged = /\bcanvas\b|\bWebGL\b|\b3D\b|\bnon-scrolling\b|\bHUD\b/i.test(all);
+  if (part === 'nav') return !staged && !/^nav-none\b|phone-only/.test(id) && !/\bno desktop nav\b|\bon any screen at any width\b/i.test(d) && !says(all, /\bdot rail\b|\brail of (?:\w+ )?(?:scene )?dots\b|\bscroll(?:ing)? progress\b|\bsentence\b/i);
+  // a footer holds real links (in columns or a row), never one line, never a lone link or headline
+  if (part === 'footer') return !staged && !/^foot-(?:none|unrecorded|thin-row)/.test(id) && !/^no footer\b|\bno footer object\b|\bsingle (?:\d+(?:-\d+)?px )?row\b|\bone line of\b|\bonly (?:footer )?element\b|\bnothing (?:else )?(?:but|stands)\b|\beverything else is empty\b|\bnearly empty\b/i.test(d) && says(d, /\blinks\b|\bcolumns?\b|\bsitemap\b|\bdirectory\b|\blink row\b/i) && !says(d, /\b(?:giant|huge|full-width|screen-wide)\s+(?:wordmark|name|logo|e-?mail)\b|\bcredits? wall\b|\bcredit roll\b/i);
+  // (a card holds the page's own content: never a generative canvas, a flow field or particles as its picture; and no
+  // row whose next card peeks in at the screen edge, which runs into one edge: `edge-run`)
+  if (part === 'card') return !/\bno text\b|\bunboxed\b|\bno words\b/i.test(d) && !says(all, /\bcanvas\b|\bgenerative\b|\bparticles?\b|\bflow (?:field|lines)\b/i) && (!says(d, /\bpeek\w*\b/i) || /\b(?:inside|within|at) the container\b/i.test(d)) && !/bento|marquee|stat|number|logo|chip|form|ui-|symbol|blank|icon/.test(id) && says(d, /\bfill(?:ed)?\b|\bpanel\b|\bsurface\b|\bsolid\b|\btile\b|\bcard\b|\bphoto\b|\bpicture\b|\bimage\b|\bvideo\b|\brender\b|\bcut-?out\b/i) && says(d, /\btitle\b|\bname\b|\bheading\b|\blabel\b|\bparagraph\b|\btext\b|\bprice\b|\bsentence\b|\bcaption\b|\bstatement\b/i) && !says(d, /\bicon\b[^.]{0,30}\b(?:on top|above|at the top)\b|\boutlined?\b|\bthin frame\b|\bborder\b/i);
+  // (never a button the study marked basic: the stock square, soft and pill shapes the owner saw on every page)
+  // (nor one whose label scrambles: references/motion.md, every frame of a word reads whole)
+  if (part === 'button') return e.basic !== true && !/^btn-(?:circle|icon|input|text)-|menu-trigger|burger|store-badge|dashed/.test(id) && !says(all, /\bscrambl\w*|\brandom (?:letters|characters|glyphs)\b|\bcharacters? cycles?\b/i) && !/^(?:transparent|unboxed|unfilled)\b|\bno fill\b/i.test(d.trim()) && !says(d, /\bupper-?case\b|\ball caps\b|\bin caps\b|\bcaps (?:label|word|text)\b|\btracked\b/i) && !(says(d, /\b(?:outline|border|ring)\b/i) && !says(d, /\b(?:solid|filled?)\b/i));
+  return true;
+}
+// a footer pattern that opens on its own closing line and button (it carries the call to action, like CLOSING_FOOTERS)
+const closingPattern = (e) => says(e.description, /\bclosing (?:line|statement|headline)\b|\bcall to action\b|\bcta\b/i) || says(e.description, /\b(?:headline|statement)\b[^.]{0,80}\bbutton\b/i);
+// a navigation pattern that sets the wordmark large on the first screen (dealt less under a hero whose headline is the name)
+const largeMark = (e) => says(e.description, /\b(?:giant|large|big|wide|full-width)\b[^.]{0,30}\b(?:wordmark|logo|lockup)\b/i);
 
 const ALWAYS_NAV = 'Nothing stands above it (no announcement, information or language strip: `announcement-bar` fails it), and every link is one or two words, never a sentence (`nav-sentence` fails a sentence in the bar and any link or button over three words). It sits on the page\'s margins, on an opaque ground wherever it is fixed.';
 // a first screen whose headline is the name shows no second wordmark (sheet section 6): the two designs that set the
@@ -126,25 +268,26 @@ export const FRAME_DESIGNS = { nav: NAV.map((x) => x[0]), footer: FOOTER.map((x)
 
 // history: the frames of the last draws, newest first ({ nav: id, footer: id, … } each); recent: the last one alone
 // (older callers). ctx: what the page is (see the top). bw: whether the brief asks for black-and-white pictures
-// (draw.mjs decides, with its colour veto).
-export function dealFrame({ rnd, input, imagery, history = null, recent = {}, ctx = {}, bw = BW_BRIEF.test(input.brief || '') }) {
+// (draw.mjs decides, with its colour veto). patterns: { nav, footer, card, button } lists from loadPatterns, and pc the
+// page as fitPool reads it (draw.mjs, patternCtx); without them the twelve designs of each part are dealt alone.
+export function dealFrame({ rnd, input, imagery, history = null, recent = {}, ctx = {}, bw = BW_BRIEF.test(input.brief || ''), patterns = null, pc = null }) {
   const hist = (history || [recent]).filter(Boolean);
   const wpick = (pairs) => { const t = pairs.reduce((s, x) => s + x[1], 0); let r = rnd() * t; for (const x of pairs) { r -= x[1]; if (r <= 0) return x; } return pairs.at(-1); };
   const idOf = (x) => x[0]?.id ?? x[0];
-  // the parts with many designs: one used in the last four draws is out (while three others fit), one in the last
-  // eight a quarter as likely, and each is weighed down by how often the history holds it, so a run of draws cycles
-  // through the whole set (about one page in eleven or twelve each, never more than about one in eight)
-  // (when fewer fit, as on a door place with a booking block and a closing scene, the ones of the last four come back,
+  // the parts with many designs: one used in the last nine draws is out (while three others fit), and each is weighed
+  // down by how often the history holds it, so a run of draws cycles through the whole set, the patterns included
+  // (none on more than about one page in ten)
+  // (when fewer fit, as on a door place with a booking block and a closing scene, the ones of the last nine come back,
   // the longest unused first and never the last draw's while another fits: round 11 dealt one footer twice running)
   const away = (key, pairs) => {
     const w = pairs.map((x) => {
       const at = hist.findIndex((h) => h?.[key] === idOf(x));
       const damp = x[1] / (1 + hist.filter((h) => h?.[key] === idOf(x)).length);
-      return { x, at, v: damp * (at < 0 ? 1 : at < 4 ? 0 : at < 8 ? 0.25 : 1), back: damp * 0.03 * 2 ** Math.max(0, at) };
+      return { x, at, v: damp * (at >= 0 && at < RECENT_OUT ? 0 : 1), back: damp * comeBack(at) };
     });
     const live = w.filter((e) => e.v > 0);
     const pool = live.length >= 3 ? live : w.filter((e) => e.at !== 0).length ? w.filter((e) => e.at !== 0) : w;
-    return pool.map((e) => [e.x[0], e.v || e.back, e.x[2]]);
+    return pool.map((e) => [e.x[0], e.v || e.back, e.x[2], e.x[3]]);
   };
   // the parts with few: the last draw's is about a third as likely
   const not = (key, pairs) => pairs.map((x) => [x[0], x[1] * (hist[0]?.[key] === idOf(x) ? 0.35 : 1), x[2]]);
@@ -156,18 +299,44 @@ export function dealFrame({ rnd, input, imagery, history = null, recent = {}, ct
   const c = { tone, sector: input.sector, software, multiPage, creative: ['bold', 'playful'].includes(tone) || ['agency', 'studio-portfolio', 'personal-portfolio', 'music', 'fashion', 'event', 'culture'].includes(input.sector), ...ctx };
   // (a design whose text depends on the page, a door or none, is written here)
   const fit = (list) => list.map((x) => [x[0], x[1] * (x[3] ? x[3](c) : 1), typeof x[2] === 'function' ? x[2](c) : x[2]]).filter((x) => x[1] > 0);
-  const nav = wpick(away('nav', fit(NAV)));
-  const footer = wpick(away('footer', fit(FOOTER)));
-  const cards = wpick(away('cards', fit(CARDS)));
-  const buttons = wpick(away('buttons', fit(BUTTONS)));
+  // The study's patterns of one part beside its designs: fitted to the page (fitPool), kept to what can be that part
+  // under the house rules (partUsable), and weighed by the same reasons the designs give (a hero whose headline is the
+  // name, a closing scene, an email form elsewhere, a door, few pictures). Each part is dealt in turn, so a pattern that
+  // names a clash with one already dealt (avoidWith) is left out.
+  const dealt = new Set(pc?.dealt || []); const avoid = new Set(pc?.avoid || []);
+  const pats = (part, list, adjust = () => 1) => {
+    if (!pc || !list?.length) return [];
+    return fitPool(list.filter((e) => partUsable(part, e)), { ...pc, dealt, avoid }, 3)
+      .map(([e, w]) => {
+        const closes = part === 'footer' && closingPattern(e);
+        const text = patternText(e) + (part === 'nav' && largeMark(e) ? ` ${NAME_MARK}` : '');
+        return [e.id, w * PATTERN_SHARE.frame * adjust(e, closes), text, { pattern: true, name: e.name || e.id, avoidWith: e.avoidWith || [], ...(closes ? { closes } : {}) }];
+      })
+      .filter((x) => x[1] > 0);
+  };
+  const pictured = (e) => patternPictures(e) > 0 || says(e.description, /\bphoto(?:graph)?s?\b|\bpictures?\b|\bimages?\b|\bvideo\b/i);
+  const take = (x) => { dealt.add(String(x[0]).toLowerCase()); for (const a of x[3]?.avoidWith || []) avoid.add(String(a).toLowerCase()); return x; };
+  const nav = take(wpick(away('nav', [...fit(NAV), ...pats('nav', patterns?.nav, (e) => (largeMark(e) && c.nameHero ? 0.3 : 1))])));
+  const footer = take(wpick(away('footer', [...fit(FOOTER), ...pats('footer', patterns?.footer, (e, closes) => {
+    if (closes && c.closingScene) return 0;
+    if (c.emailElsewhere && says(e.description, /\bnewsletter\b|\be-?mail (?:field|form|input)\b|\bsign-?up\b/i)) return 0;
+    if (says(e.description, /\bopening hours\b|\bDirections\b/)) return c.door && !c.visitShown ? 1.4 : 0;
+    return pictured(e) ? (c.few ? 0.3 : c.software ? 0.5 : 1) : 1;
+  })])));
+  const cards = take(wpick(away('cards', [...fit(CARDS), ...pats('card', patterns?.card, (e) => (c.few && pictured(e) ? 0.4 : 1))])));
+  // (a button that is a shell command only for a product that has one: a developer tool, or a brief that names its
+  // command line; round 12's first run gave an invoicing app a copy-the-install-line button)
+  const command = input.sector === 'dev-tool' || /\b(?:CLI|command[- ]line|terminal|npm|pip|brew|install)\b/i.test(input.brief || '');
+  const buttons = take(wpick(away('buttons', [...fit(BUTTONS), ...pats('button', patterns?.button, (e) => (says(e.description, /\bshell command\b|\bcode face\b/i) && !command ? 0 : 1))])));
+  const part = (x, extra = {}) => ({ id: x[0], text: x[2], ...(x[3]?.pattern ? { pattern: true, name: x[3].name, avoidWith: x[3].avoidWith } : {}), ...extra });
   const corners = wpick(not('corners', CORNERS.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'large' ? 0.2 : tone === 'playful' && x[0].id === 'square' ? 0.5 : 1), x[2]])));
   const spacing = wpick(not('spacing', SPACING.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'open' ? 2 : multiPage && x[0].id === 'open' ? 0.5 : 1), x[2]])));
   const treatment = bw ? TREATMENT.find((x) => x[0] === 'mono') : wpick(not('treatment', TREATMENT.filter((x) => x[1] > 0).map((x) => [x[0], x[1] * (software && x[0] === 'cut-out' ? 0.3 : 1), x[2]])));
   const interaction = wpick(not('interaction', INTERACTION.map((x) => [x[0], x[1] * (x[0] === 'product' && !(software || ['physical-product', 'ecommerce'].includes(input.sector)) ? 0 : 1), x[2]])));
   const clip = wpick(not('clip', CLIP.map((x) => [x[0], x[1] * (software && x[0] === 'one-clip' ? 0.5 : 1), x[2]])));
   return {
-    nav: { id: nav[0], text: nav[2] }, footer: { id: footer[0], text: footer[2], ...(CLOSING_FOOTERS.has(footer[0]) ? { closes: true } : {}) },
-    cards: { id: cards[0], text: cards[2] }, buttons: { id: buttons[0], text: buttons[2] },
+    nav: part(nav), footer: part(footer, CLOSING_FOOTERS.has(footer[0]) || footer[3]?.closes ? { closes: true } : {}),
+    cards: part(cards), buttons: part(buttons),
     corners: { ...corners[0], text: corners[2] }, spacing: { ...spacing[0], text: spacing[2] },
     treatment: { id: treatment[0], text: treatment[2] }, interaction: { id: interaction[0], text: interaction[2] }, clip: { id: clip[0], text: clip[2] },
   };

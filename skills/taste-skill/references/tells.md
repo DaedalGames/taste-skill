@@ -122,7 +122,7 @@ On 29 October 2026 the owner looked at the test pages himself. What he named, an
 
 | Tell | Status | Do instead |
 | --- | --- | --- |
-| Everything alike: three button shapes at one size, one plain bar that hides on scroll, a one-line footer | not dealt; each is one of about twelve designs in section 0 | The navigation, footer, cards and buttons the sheet deals |
+| Everything alike: three button shapes at one size, one plain bar that hides on scroll, a one-line footer | not dealt; each is one of about twelve designs or one of the study's patterns in section 0, none on more than about one page in ten | The navigation, footer, cards and buttons the sheet deals |
 | The next section already in view on the first screen | failed (`hero-not-alone`) | The hero alone, `min-height: 100svh` |
 | Sections crowding each other, no air between them | warned under 12% of the screen, failed under 6% (`section-air`) | 16vh or more between sections at 1440, as dealt |
 | A product window or picture run into one screen edge while the other keeps its margin | failed (`edge-run`; a picture or colour field as tall as its section, flush with one side, is warned) | Inside both margins, or full-bleed across both edges |

@@ -16,13 +16,15 @@
 //                 [--direction <id>]           deal the full sheet for the chosen direction
 //                 [--technique <id> | --no-technique]   force one researched technique in place of a scene, or deal none
 //   node draw.mjs --show                       reprint the saved direction sheet
-//   node draw.mjs --redraw hero|type|palette|photos|scenes|entrance|replay|section:<role>|direction   re-deal one slot
+//   node draw.mjs --redraw hero|type|palette|photos|scenes|entrance|replay|moves|section:<role>|direction   re-deal one slot
 //   node draw.mjs --redraw scenes=<id>[,<id>] | scenes=none   take scenes by id, or build without one. Scenes are redrawn
 //                                              twice at most: a third --redraw scenes lists the ones that still fit instead
-//   node draw.mjs --list sectors|directions|roles|tones|scenes|techniques|entrances|replays|frame
+//   node draw.mjs --list sectors|directions|roles|tones|scenes|techniques|entrances|replays|frame|patterns
 //   node draw.mjs --site <id>                  print one studied reference site in full
 //   node draw.mjs --app --kind <kind> ...      deal a style for an app screen instead (see lib/app-draw.mjs)
 //
+// The history of recent draws lives in ~/.taste-skill/history.json (TASTE_SKILL_HISTORY moves it); the patterns of the
+// design-anatomy study in library/patterns/ (TASTE_SKILL_PATTERNS points at another folder, for tests).
 // Zero dependencies. Node 18+.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -31,11 +33,15 @@ import { randomInt } from 'node:crypto';
 import { homedir } from 'node:os';
 import { dealTypeSystem, THIN_TEXT } from './lib/type-deal.mjs';
 import { dealPaletteV25, contrast } from './lib/colour-deal.mjs';
-import { dealFrame, BW_BRIEF, FRAME_RULES, FRAME_DESIGNS } from './lib/frame-deal.mjs';
+import { dealFrame, BW_BRIEF, FRAME_RULES, FRAME_DESIGNS, PATTERN_FAMILIES, PATTERN_SHARE, RECENT_OUT, comeBack, loadPatterns, fitPool, patternWhyNot, partUsable, houseNote, patternPhone, phoneIn, studyTones, says } from './lib/frame-deal.mjs';
 import { colourFamily } from './lib/rules.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const LIB = join(HERE, '..', 'library');
+// The patterns of the design-anatomy study (library/patterns/<family>.json, exported from the lab): heroes, sections,
+// navigation, footers, cards, buttons, type and motion, each with what it fits and needs. TASTE_SKILL_PATTERNS points
+// at another folder (tests). A family whose file is missing deals today's designs alone.
+const PATTERNS = loadPatterns(process.env.TASTE_SKILL_PATTERNS || join(LIB, 'patterns'));
 const ASSETS_PATH = join(HERE, 'assets.mjs').split('\\').join('/');
 const ASSETS_CMD = `node ${/\s/.test(ASSETS_PATH) ? `"${ASSETS_PATH}"` : ASSETS_PATH}`;
 const load = (name) => JSON.parse(readFileSync(join(LIB, name + '.json'), 'utf8'));
@@ -233,6 +239,132 @@ const FAQ_WORDS = /\bFAQs?\b|\bfrequently asked\b|\bcommon questions\b|\bquestio
 // requested role names → the role vocabulary used by library/sections.json
 const ROLE_ALIAS = { features: 'features', feature: 'features', benefits: 'features', services: 'features', showcase: 'showcase', product: 'showcase', demo: 'showcase', 'how-it-works': 'how-it-works', how: 'how-it-works', process: 'how-it-works', steps: 'how-it-works', testimonial: 'testimonial', testimonials: 'testimonial', quotes: 'testimonial', proof: 'proof', logos: 'proof', press: 'proof', stats: 'stats', numbers: 'stats', pricing: 'pricing', plans: 'pricing', faq: 'faq', cta: 'cta', footer: 'footer', intro: 'intro', manifesto: 'intro', about: 'about', team: 'about', work: 'work', projects: 'work', index: 'work', 'case-studies': 'work', gallery: 'gallery', images: 'gallery', list: 'list', menu: 'list', schedule: 'list', lineup: 'list', 'line-up': 'list', speakers: 'list', agenda: 'list', programme: 'list', program: 'list', timetable: 'list', rooms: 'list', tickets: 'pricing', price: 'pricing', contact: 'contact', booking: 'contact', newsletter: 'contact', signup: 'contact' };
 
+// ---------- the study's patterns as heroes, section blueprints, small moves and type notes ----------
+// (lib/frame-deal.mjs loads them, fits them to the page and deals the navigation, footer, cards and buttons from them)
+const PHONE_FALLBACK = 'Its own phone composition: the same parts in one column inside the phone margins, the picture first or behind the words where the description sets it, the headline on two lines at most, nothing cropped by the screen edge.';
+// A hero pattern is dealt beside the direction's heroes, never one that is a gate, a loader or a first screen with no
+// headline: the title is readable 1.2s after load (`late-title`) and the first screen says what this is.
+const P_HEROES = PATTERNS.hero.filter((e) => !/^hero-(?:gate|loader|phone)-/.test(e.id) && !/\b(?:entry gate|preloader|loader screen|loading screen|percent counter|start prompt|click to (?:start|enter)|press to (?:start|enter)|tap to (?:start|enter))\b|\bno (?:display |big |large )?(?:headline|title)\b|\bheadless\b|\bno scroll\b|\bshows only (?:a|the) (?:logo|lockup|wordmark)\b|\bonly (?:a|the) logo lockup\b/i.test(`${e.name || ''} ${e.description}`)
+  // (nor particles rushing past: references/scenes.md §7, no drawn shapes, tracks or particles)
+  && !says(`${e.name || ''}. ${e.description}`, /\bparticles?\b/i)).map((e) => ({
+  id: e.id, name: e.name || e.id, pattern: true,
+  // a hero whose largest type is the name counts as a giant wordmark (nameHero, the frame's navigation)
+  archetype: says(e.description, /\b(?:giant|huge|large|full-width|screen-wide)\s+(?:wordmark|name|logo(?:type)?)\b/i) ? 'giant-wordmark' : 'pattern',
+  blueprint: e.description.trim() + houseNote(e), mobile: e.phone ? String(e.phone).trim() : PHONE_FALLBACK,
+  headline: says(e.description, /\b(?:giant|huge|large|full-width|screen-wide)\s+(?:wordmark|name|logo(?:type)?)\b/i) ? 'The name itself, on one line where it fits, when the page is built on what the name means; otherwise the page\'s own idea in two lines at most.' : 'The page\'s own idea, in this client\'s words, on two lines at most (12 words or fewer).',
+  needs: e.needs?.video ? ['video'] : [], pneeds: e.needs || {}, fits: e.fits || {}, avoidWith: e.avoidWith || [],
+  split: says(e.description, /\bsplit\b|\b(?:left|right) half\b|\bhalves\b|\b50\/50\b/i),
+}));
+// A section pattern stands in for a blueprint of the role its name and description say. One that is a transition, a
+// 3D world, a camera ride, a gate, an index of other pages or a stretch the study could not read carries no role and is
+// never dealt: the scenes own the page's big held moments, every one on native scroll, and a one-page site links to
+// its own sections only.
+const NOT_A_SECTION = /\b(?:unrecorded|unseen|gate|preloader|loader|wordless|drivable|camera|3d|webgl|orbit|fly ?through|dive|world|shreds?|blob|comb edge|wave edge|wave mask|sheet slides|ground sheet|intro film|skip|globe|tunnel|portal|link index|hotspots?|cutaway|sphere|photo mode|autoscroll|scroll lock(?:ed)?)\b/i;
+// (nor a title whose letters are cut, scrambled or flown in: references/scenes.md, every frame of a word reads whole)
+const LETTERS_APART = /\beach (?:letter|character|glyph) (?:is )?(?:cut|split|sliced|broken)\b|\bletters? (?:fly|flies|scatter|tumble|assemble)\w*|\bscrambl\w*|\bflying letters\b|\bfrom fragments\b|\brandom (?:letters|characters|glyphs)\b/i;
+const NOT_A_SECTION_TEXT = new RegExp(`${/\bWebGL\b|\bshader\b|\bthree\.js\b|\bcanvas\b|\b3D (?:scene|world|model|figure|object|camera|stage|environment)\b|\bno native scroll\b|\bscroll(?:ing)? (?:is )?locked\b|\bwheel[- ](?:driven|input drives)\b/.source}|${LETTERS_APART.source}`, 'i');
+// the study's own prefixes, then words of the name, then of the description (first match wins)
+const ROLE_PREFIX = { statement: ['intro', 'about'], intro: ['intro'], stats: ['stats'], team: ['about'], testimonial: ['testimonial'], quote: ['testimonial'], process: ['how-it-works'], news: ['list'], timeline: ['how-it-works'] };
+const ROLE_RULES = [
+  [/\btestimonials?\b|\bquotes?\b|\breviews?\b/i, ['testimonial']],
+  [/\blogos?\b|\bpress\b|\bclients?\b|\bpartners?\b/i, ['proof']],
+  [/\bstats?\b|\bstatistics\b|\bnumerals?\b|\bbig numbers\b/i, ['stats']],
+  // (a "ticket-style" signup card is no price list)
+  [/\bpric(?:e|es|ing)\b|\bplans?\b|\btiers?\b|\btickets?\b(?![- ]style)/i, ['pricing']],
+  [/\bfaqs?\b|\bquestions\b/i, ['faq']],
+  [/\bcontact\b|\bsign ?up\b|\bnewsletter\b|\bbooking\b|\bmap tile\b/i, ['contact']],
+  [/\bcta\b|\bcall to action\b|\bclosing\b/i, ['cta']],
+  // (never "about": the study writes it for "roughly")
+  [/\bteam\b|\bbios?\b|\bfounders?\b|\bour people\b/i, ['about']],
+  [/\bprocess\b|\bsteps?\b|\bhow it works\b/i, ['how-it-works']],
+  [/\bprojects?\b|\bcase stud\w*|\breel\b|\blookbook\b|\bartworks?\b|\bname stack\b|\btitle rows\b|\bgiant list\b|\bwork\b/i, ['work']],
+  [/\bgallery\b|\bcollage\b|\bmosaic\b|\bmasonry\b|\bpinboard\b|\bphoto (?:pair|trio|grid|strip|band|card)\b|\bimage (?:scatter|column|stream)\b|\bfilm strip\b|\bposter wheel\b|\bportrait (?:cards?|tiles?|trio|frame)\b|\bprints\b/i, ['gallery', 'work']],
+  [/\blist\b|\bmenu\b|\bschedule\b|\bagenda\b|\bline ?up\b|\barticles?\b/i, ['list']],
+  [/\bproducts?\b|\bui windows?\b|\bapp window\b|\bdevice\b|\bobject\b|\brender\b|\bcut ?outs?\b|\bshowcase\b/i, ['showcase']],
+  [/\bfeatures?\b|\bcapabilit\w*|\bservices?\b|\bpanel cards?\b|\bthree up\b|\bgrid\b|\btiles?\b|\bcolumns?\b|\bcards?\b/i, ['features']],
+  [/\bstatement\b|\bmanifesto\b|\bparagraph\b|\bheadline\b|\bdisplay line\b|\btitle\b|\bline\b/i, ['intro', 'about']],
+];
+function sectionRoles(e) {
+  const words = `${e.id.replace(/^sec-/, '')} ${e.name || ''}`.replace(/-/g, ' ');
+  if (NOT_A_SECTION.test(words) || NOT_A_SECTION_TEXT.test(e.description)) return [];
+  // (no bento grid: the sheet's Always line)
+  if (says(`${e.name || ''}. ${e.description}`, /\bbento\b/i)) return [];
+  const known = new Set(Object.values(ROLE_ALIAS));
+  // the export may name the roles itself
+  const given = [].concat(e.roles || e.role || []).map((r) => ROLE_ALIAS[r] || r).filter((r) => known.has(r) && r !== 'footer');
+  if (given.length) return [...new Set(given)];
+  const head = e.id.replace(/^sec-/, '').split('-')[0];
+  if (ROLE_PREFIX[head]) return ROLE_PREFIX[head];
+  for (const [re, roles] of ROLE_RULES) if (re.test(words)) return roles;
+  // the description only for the roles a section cannot fake (quotes, logos, prices, questions, a form, a closing
+  // line, the team, the steps): "a title" or "a grid" in it says nothing of what the section is for
+  for (const [re, roles] of ROLE_RULES.slice(0, 9)) if (says(e.description, re)) return roles;
+  return [];
+}
+// the shape vocabulary of library/sections.json, read from the name first, then the description
+const SHAPES = [['pinned', /\bpinned\b|\bsticky\b|\bheld\b/], ['full-bleed', /\bfull[- ]bleed\b|\bfull[- ]screen\b|\bfull[- ]viewport\b|\b100vw\b/], ['split', /\bsplit\b|\bhalves\b|\b(?:left|right) half\b|\bbeside\b|\btwo[- ]columns?\b/], ['table', /\btable\b/], ['mosaic', /\bmosaic\b|\bcollage\b|\bmasonry\b|\bbento\b|\bpinboard\b|\bscatter\w*\b/], ['grid', /\bgrid\b|\bthree[- ]up\b|\b(?:three|four) (?:across|columns)\b|\bcards?\b|\btiles?\b/], ['list', /\blist\b|\brows\b|\bindex\b/], ['strip', /\bstrip\b|\bmarquee\b|\bcarousel\b|\btrack\b|\brow of\b/], ['band', /\bband\b/], ['statement', /\bstatement\b|\bheadline\b|\bquote\b|\bparagraph\b|\bline\b/]];
+function shapeOf(e) {
+  for (const t of [`${e.id} ${e.name || ''}`.replace(/-/g, ' '), e.description]) for (const [shape, re] of SHAPES) if (says(t, new RegExp(re.source, 'i'))) return shape;
+  return 'stack';
+}
+const P_SECTIONS = PATTERNS.section.map((e) => ({ e, roles: sectionRoles(e) })).filter((x) => x.roles.length).map(({ e, roles }) => ({
+  id: e.id, name: e.name || e.id, pattern: true, role: roles[0], roles, shape: shapeOf(e), tags: [], directions: [],
+  needs: e.needs?.video ? ['video'] : [], pneeds: e.needs || {}, fits: e.fits || {}, avoidWith: e.avoidWith || [],
+  blueprint: e.description.trim() + houseNote(e), mobile: patternPhone(e),
+}));
+// Small moves beyond the basics (the motion patterns not marked basic): never a WebGL world, a pin, a scroll that is not
+// native, a preloader, a counter, a cursor in place of the pointer, a drawn line, a footer uncovered from under the
+// page, a move that makes something enter on load or entry (the dealt entrance owns arrival and its rule below the
+// fold), or a hover on the buttons (section 0's button design has its own).
+const NOT_A_MOVE = /^mo-(?:3d|gl|pin|hpan|pre|nav|route|counter|drag|vector|shape|physics|scroll|colour|reveal)-/;
+function smallMove(e) {
+  if (e.basic === true || NOT_A_MOVE.test(e.id)) return false;
+  const d = `${e.name || ''}. ${e.description}`;
+  // (particles are read in its phone version too: a click burst whose phone line says particles is particles)
+  const all = `${d} ${e.phone || ''}`;
+  // a move that is the call to action or rides on a button is a button design (section 0 deals one for the page; round
+  // 12's first run dealt a ticker inside the main button on seven of thirty pages), and a theme switch recolours the
+  // dealt palette
+  if (says(all, /\bcall to action\b|\bpill-shaped link\b|\b(?:word|label|link) or button\b|\btheme switch\b/i)) return false;
+  if (/\bWebGL\b|\bshader\b|\bcanvas\b|\bpost pass\b|\b3D\b|\bno native scroll\b|\bscroll(?:er| is)? lock|\bwheel\b|\bprogress\b|\bpre-?loader\b|\bcounter\b|\bnative cursor\b|\bcustom (?:dot )?cursor\b|\bSVG\b|\bstroke\b|\bfixed footer\b|\bpage-swap\b|\broutes?\b|\bstacked scenes\b|\btimed keyframes\b/i.test(d)) return false;
+  // the house rules: no drawn shapes, decoration or illustration, no outline or glow, no colour sprawl, nothing that
+  // flickers, beeps or splits into RGB ghosts, no picture in a line of type, no hero slides on a timer
+  if (/\bparticles?\b|\bshapes?\b|\bdecor\b|\bline drawings?\b|\billustrat\w*|\bsprites?\b|\bicons?\b|\bbadge\b|\boutlined?\b|\bring\b|\bglow\b|\btheme colou?r\b|\bsound\b|\bbeep\b|\bflicker\b|\bhard-cuts?\b|\bRGB\b|\bchromatic\b|\bauto-advance\b|\bon a timer\b|\bown photo in a window\b|\bscroll hint\b|\bhow to scroll\b|\bspine\b|\bnumber tile\b/i.test(d) || says(all, /\bparticles?\b|\bconfetti\b|\bgrain\b|\bnoise tile\b/i) || /^mo-carousel-hero|^mo-video-clip-cycle/.test(e.id)) return false;
+  // no word split into flying letters (references/scenes.md: every frame reads whole)
+  if (/\bscatter\w*\b|\bcharacters apart\b|\bsplitting (?:characters|letters)\b|\bslot machine\b|\bflying letters\b/i.test(d)) return false;
+  if (says(d, /\bpinned\b|\bpins\b/i)) return false;
+  // an arrival: on load or entry, or a rise or fade that no scroll, hover, click or pointer drives
+  if (says(d, /\bon (?:load|entry|arrival)\b|\bonce\b|\bas (?:it|they) (?:enters?|arrives?)\b|\bentering\b/i) || (/\b(?:rises?|fades? in|slides? (?:up|in)|arrives?|pops?|drops?|types? in)\b/i.test(d) && !/\bscroll|\bscrub|\bhover|\bclick|\btap|\bpointer\b|\bcursor\b/i.test(d))) return false;
+  if (moveKind(e) === 'hover' && says(d, /\bbuttons?\b/i)) return false;
+  return true;
+}
+const P_MOVES = PATTERNS.motion.filter(smallMove);
+// type notes: never a monospace voice, a system with no display step or a single step
+const P_TYPES = PATTERNS.type.filter((e) => !says(`${e.name || ''}. ${e.description}`, /\bmono(?:space)?\b/i) && !/\bno display\b|\bonly one step\b|\bexactly one step\b|\bscene-level\b|\bno big display\b/i.test(e.description));
+// the kind of a move (hover, text, parallax, …): one of each kind on a page
+function moveKind(e) { const m = String(e.id).match(/^mo-([a-z0-9]+)-/); return m ? m[1] : String(e.name || e.id).toLowerCase().split(/\s+/)[0]; }
+
+// a hero pattern whose large picture is the product's own interface (the one kind a software first screen takes)
+const SHOWS_UI = /\binterface\b|\bUI\b|\bproduct (?:window|screen|shot|frame)s?\b|\bproduct in use\b|\bdevice\b|\bscreenshots?\b|\bapp (?:window|screen)s?\b|\bdemo window\b|\bdashboard\b|\bmock-?ups?\b|\bbrowser window\b/i;
+// the photographs a pattern may take on a page, by what pictures the page can honestly have (fewer where the brief says so)
+const PATTERN_PICTURE_CAP = { own: Infinity, atmosphere: 6, 'no-product-photo': 3, interface: 3 };
+// a small move that would only repeat the dealt signature move
+const SAME_AS_SIGNATURE = { 'ink-fill': /\bink fill\b|\bto full ink\b|\bpale to ink\b/i, 'edge-marquee': /\bmarquee\b|\bseamless (?:horizontal )?loop\b/i, 'sideways-gallery': /\bsideways\b|\bpans?\b/i, 'opening-window': /\b(?:widens?|grows?) to (?:full|cover)\b/i, 'sheet-over': /\bsheet\b[^.]*\bover\b/i, 'slow-crossfade': /\bcrossfades?\b/i, 'rolling-figures': /\broll\w* (?:up )?(?:digits|figures|numbers)\b/i };
+// Where each kind of small move goes, printed under it.
+const MOVE_WHERE = {
+  hover: 'Under the hand on the cards, rows or pictures it names, never on the buttons (their hover is section 0\'s); the same on focus.',
+  parallax: 'On one or two large pictures or groups, never on every one; still for reduced motion.',
+  scale: 'On one picture or group, once on the page, on native scroll; still for reduced motion.',
+  text: 'On one paragraph or heading of the page, never on every one, and never the hero\'s headline (the entrance has it); the words read whole at rest and for reduced motion.',
+  marquee: 'Once, in the section whose content it carries; it stops on hover and for reduced motion, and everything in it is also readable without it.',
+  cursor: 'For a pointer only: with touch or a keyboard the page reads the same without it, and the pointer itself stays.',
+  loop: 'Once, small, where it says; still for reduced motion.',
+  click: 'On the control it names, doing something real; with a keyboard too.',
+  carousel: 'Stepped by its arrows and keys, never dragged; on a phone the items stack or scroll natively.',
+  video: 'Only with the footage the brief has (section 0 says whether the page has video).',
+  scrub: 'On native scroll in the section it fits, without a pin; still for reduced motion.',
+};
+
 // App screens (dashboards, admin, settings) have their own library and sheet: scripts/lib/app-draw.mjs.
 const savedKind = (() => { try { return JSON.parse(readFileSync(sheetPath, 'utf8')).kind; } catch { return null; } })();
 if (opt('app') || ((opt('show') || opt('redraw')) && savedKind === 'app')) await import('./lib/app-draw.mjs');
@@ -245,7 +377,20 @@ if (opt('list')) {
   else if (what === 'scenes') { const all = existsSync(join(LIB, 'scenes.json')) ? load('scenes') : []; for (const sc of all) console.log(`${sc.id.padEnd(34)} ${sc.name} — ${sc.family}; ${sc.summary.split(/(?<=\.)\s/)[0]} Needs: ${sceneNeedsWords(sc)}.${sc.weight === 0 || NEVER_SCENES.has(sc.id) ? ' (not dealt)' : ''}`); if (!all.length) console.log('No scene library yet.'); }
   else if (what === 'techniques') { const all = existsSync(join(LIB, 'techniques.json')) ? load('techniques') : []; const scenes = existsSync(join(LIB, 'scenes.json')) ? load('scenes') : []; for (const t of all) { const sc = techniqueScene(t); const built = scenes.find((x) => x.source === t.id); console.log(`${t.id}  ${t.name} — ${t.family}; ${t.position}, ${t.energy}, hold ${t.hold}; ${t.sectors.join(', ')}. Needs: ${sceneNeedsWords(sc)}.${built ? ` (not dealt: now the tested scene ${built.id})` : ''}`); } if (!all.length) console.log('No technique library yet.'); }
   else if (what === 'entrances') { const all = existsSync(join(LIB, 'entrances.json')) ? load('entrances') : []; for (const e of all) console.log(`${e.id.padEnd(16)} ${e.name} — ${e.family}, ${e.energy}, weight ${e.weight}; ${e.summary || e.sees.split(/(?<=\.)\s/)[0]}`); if (!all.length) console.log('No entrance library yet.'); }
-  else if (what === 'frame') { for (const [part, ids] of Object.entries(FRAME_DESIGNS)) console.log(`${part.padEnd(8)} ${ids.join(', ')}`); }
+  else if (what === 'frame') {
+    const FAMILY = { nav: 'nav', footer: 'footer', cards: 'card', buttons: 'button' };
+    for (const [part, ids] of Object.entries(FRAME_DESIGNS)) { const n = PATTERNS[FAMILY[part]].filter((e) => partUsable(FAMILY[part], e)).length; console.log(`${part.padEnd(8)} ${ids.join(', ')}${n ? ` + ${n} patterns of the study (--list patterns)` : ''}`); }
+  }
+  else if (what === 'patterns') {
+    // what each family holds and what the deal can use of it (section patterns by the roles they stand in for)
+    const usable = { hero: P_HEROES, section: P_SECTIONS, nav: PATTERNS.nav.filter((e) => partUsable('nav', e)), footer: PATTERNS.footer.filter((e) => partUsable('footer', e)), card: PATTERNS.card.filter((e) => partUsable('card', e)), button: PATTERNS.button.filter((e) => partUsable('button', e)), type: P_TYPES, motion: P_MOVES };
+    if (!PATTERN_FAMILIES.some((f) => PATTERNS[f].length)) console.log('No pattern library yet (library/patterns/*.json): the deal uses the designs alone.');
+    for (const f of PATTERN_FAMILIES) {
+      console.log(`## ${f}: ${PATTERNS[f].length} in the file, ${usable[f].length} dealt${f === 'motion' ? ' as small moves (the basic ones and the big ones are not)' : ''}`);
+      if (f === 'section') { const by = {}; for (const s of P_SECTIONS) for (const r of s.roles) (by[r] ||= []).push(s.id); for (const [r, ids] of Object.entries(by)) console.log(`${r.padEnd(13)} ${ids.join(', ')}`); }
+      else if (usable[f].length) console.log(usable[f].map((e) => e.id).join(', '));
+    }
+  }
   else if (what === 'replays') { const all = existsSync(join(LIB, 'replays.json')) ? load('replays') : []; for (const r of all) console.log(`${r.id.padEnd(14)} ${r.name} — ${r.sectors.join(', ')}${r.brief ? ` (or a brief matching /${r.brief}/)` : ''}; ${r.beats}`); if (!all.length) console.log('No replay library yet.'); }
   else for (const d of load('directions')) console.log(`${d.id.padEnd(30)} ${d.name} — ${d.sectors.join(', ')}`);
   process.exit(0);
@@ -279,16 +424,20 @@ const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0;
 // prefer items not used recently, without ever emptying the pool
 const fresh = (pool, recent) => { const f = pool.filter((x) => !recent.includes(x.id)); return f.length ? f : pool; };
 // [item, weight] pairs weighed against the history (the hist entries' `key`, one id or a list of ids): one used in the
-// last four draws is out while `keep` others fit, one in the last eight a quarter as likely, and each is divided by
-// (1 + its uses in the history), so a run of draws cycles through the whole pool (round 11: one call to action on seven
-// of sixteen saas pages, one visit card on three door pages in a row). The same rule deals the frame's parts.
-// (when fewer fit, the ones of the last four come back, the longest unused first)
+// last nine draws is out while `keep` others fit, and each is divided by (1 + its uses in the history), so a run of
+// draws cycles through the whole pool and none comes back on more than about one page in ten (round 11: one call to
+// action on seven of sixteen saas pages, one visit card on three door pages in a row; round 12: the owner asked for each
+// section and component on about one page in ten). The same rule deals the frame's parts (lib/frame-deal.mjs).
+// (when fewer fit, the ones of the last nine come back, the longest unused first)
+const histHas = (h, key, id) => (Array.isArray(h?.[key]) ? h[key].includes(id) : h?.[key] === id);
+// the pairs not used in the last nine draws, each divided by its uses in the history
+const liveOf = (pairs, key) => pairs.filter(([x]) => { const at = hist.findIndex((h) => histHas(h, key, x.id)); return at < 0 || at >= RECENT_OUT; }).map(([x, wt]) => [x, wt / (1 + hist.filter((h) => histHas(h, key, x.id)).length)]);
 const awayFrom = (pairs, key, keep = 2) => {
-  const has = (h, id) => (Array.isArray(h?.[key]) ? h[key].includes(id) : h?.[key] === id);
+  const has = (h, id) => histHas(h, key, id);
   const w = pairs.map(([x, wt]) => {
     const at = hist.findIndex((h) => has(h, x.id));
     const damp = wt / (1 + hist.filter((h) => has(h, x.id)).length);
-    return [x, damp * (at < 0 ? 1 : at < 4 ? 0 : at < 8 ? 0.25 : 1), damp * 0.03 * 2 ** Math.max(0, at)];
+    return [x, damp * (at >= 0 && at < RECENT_OUT ? 0 : 1), damp * comeBack(at)];
   });
   const live = w.filter(([, v]) => v > 0);
   if (live.length >= keep) return live.map(([x, v]) => [x, v]);
@@ -333,15 +482,20 @@ if (opt('alternatives')) {
   const dir = L.directions.find((d) => d.id === saved.direction.id);
   const current = saved.sections.find((s) => s.role === role)?.id;
   const pool = sectionPool(dir, role, saved.input);
-  if (!pool.length) { console.error('No blueprints for role ' + role + '. Roles: --list roles'); process.exit(2); }
+  const pats = patternSections(dir, role, saved.input, saved).map(([s]) => s);
+  if (!pool.length && !pats.length) { console.error('No blueprints for role ' + role + '. Roles: --list roles'); process.exit(2); }
   const line = (s) => `- \`${s.id}\`${s.id === current ? ' (dealt)' : ''} — **${s.name}** (${s.shape}). ${s.blueprint.split(/(?<=\.)\s/).slice(0, 2).join(' ')}\n`;
-  console.log(`# ${role}: blueprints that suit "${dir.name}"\n`);
+  if (pool.length) console.log(`# ${role}: blueprints that suit "${dir.name}"\n`);
   for (const s of pool) console.log(line(s));
   const software = imageryMode(saved.input) === 'interface';
   const others = L.sections.filter((s) => s.role === role && !s.banned && !pool.includes(s) && (software || !softwareOnly(s)) && (s.needs || []).every((n) => saved.input.have.includes(n) || (n === 'product-ui' && software)));
   if (others.length) {
     console.log(`# Other ${role} blueprints (written for other directions; if one fits the content better, take its geometry and set it in this direction's type, colour and manner)\n`);
     for (const s of others) console.log(line(s));
+  }
+  if (pats.length) {
+    console.log(`# ${role}: patterns of the design-anatomy study that fit this page (its sector, tone and what it really has)\n`);
+    for (const s of pats) console.log(line(s));
   }
   console.log(`Choose by what the content really is (how many plans, quotes, items exist), then: node draw.mjs --redraw section:${role}=<id>   and say why in your report.`);
   process.exit(0);
@@ -360,12 +514,13 @@ if (opt('redraw')) {
     sheet = deal({ ...sheet.input, direction: null, avoid: [...(sheet.input.avoid || []), sheet.direction.id] }, sheet.redraws, scenesTried);
     Object.assign(sheet, { scenesTried, ...(sceneRedraws ? { sceneRedraws } : {}) });
   }
-  else if (what === 'hero') sheet.hero = dealHero(dir, sheet.input, [sheet.hero?.id]);
-  else if (what === 'type') sheet.type = dealType(dir, [sheet.type?.id], sheet.input.tone, isDark(sheet.palette));
+  else if (what === 'hero') sheet.hero = dealHero(dir, sheet.input, [sheet.hero?.id], sheet);
+  else if (what === 'type') { sheet.type = dealType(dir, [sheet.type?.id], sheet.input.tone, isDark(sheet.palette)); sheet.typeNote = dealTypeNote(sheet); }
+  else if (what === 'moves') sheet.moves = dealMoves(sheet, (sheet.moves || []).map((m) => m.id));
   else if (what === 'palette') {
     sheet.palette = dealPalette(dir, sheet.input, [sheet.palette?.id], nameColours(sheet.input.brief).lean);
     // the type deal leaves thin text faces off dark grounds; one dealt for a pale ground is dealt again
-    if (isDark(sheet.palette) && sheet.type && THIN_TEXT.has(sheet.type.text.family)) sheet.type = dealType(dir, [sheet.type.id], sheet.input.tone, true);
+    if (isDark(sheet.palette) && sheet.type && THIN_TEXT.has(sheet.type.text.family)) { sheet.type = dealType(dir, [sheet.type.id], sheet.input.tone, true); sheet.typeNote = dealTypeNote(sheet); }
   }
   else if (what === 'photos') sheet.photos = dealPhotos(dir, sheet.input);
   else if (what === 'scenes' || what.startsWith('scenes=')) {
@@ -433,13 +588,14 @@ if (opt('redraw')) {
     const used = sheet.sections.map((s) => s.id);
     if (wanted) {
       // a blueprint written for another role may be borrowed when its geometry fits the content better
-      const chosen = L.sections.find((s) => s.id === wanted);
+      // (a pattern of the study is taken the same way, by its id)
+      const chosen = L.sections.find((s) => s.id === wanted) || P_SECTIONS.find((s) => s.id === wanted);
       if (!chosen) { console.error(`No blueprint with id ${wanted}. List them with --alternatives <role>.`); process.exit(2); }
       if (chosen.banned) { console.error(`${wanted} is not dealt: ${chosen.bannedWhy || 'it is retired.'}`); process.exit(2); }
-      sheet.sections[i] = chosen.role === role ? chosen : { ...chosen, role, name: `${chosen.name} (borrowed from ${chosen.role})` };
-    } else sheet.sections[i] = dealSection(dir, role, used, i ? sheet.sections[i - 1]?.shape : (sheet.hero?.split ? 'split' : undefined), sheet.sections[i + 1]?.shape, sheet.input) || sheet.sections[i];
+      sheet.sections[i] = chosen.pattern ? { ...chosen, role, ...(chosen.roles.includes(role) ? {} : { name: `${chosen.name} (borrowed from ${chosen.role})` }) } : chosen.role === role ? chosen : { ...chosen, role, name: `${chosen.name} (borrowed from ${chosen.role})` };
+    } else sheet.sections[i] = dealSection(dir, role, used, i ? sheet.sections[i - 1]?.shape : (sheet.hero?.split ? 'split' : undefined), sheet.sections[i + 1]?.shape, sheet.input, sheet) || sheet.sections[i];
     }
-  } else { console.error('Unknown slot. Use hero, type, palette, photos, scenes, scenes=<id>[,<id>], scenes=none, entrance, replay, section:<role>, section:<role>=<id> or direction.'); process.exit(2); }
+  } else { console.error('Unknown slot. Use hero, type, palette, photos, scenes, scenes=<id>[,<id>], scenes=none, entrance, replay, moves, section:<role>, section:<role>=<id> or direction.'); process.exit(2); }
   // a page ends once: new scenes that close the page take a footer that does not open on its own closing line
   if (sheet.frame?.footer?.closes && closingScene(sheet)) sheet.frame.footer = redealFooter(sheet);
   // a new hero or new scenes can change what the first screen shows: keep the entrance only while it still fits
@@ -491,8 +647,8 @@ writeFileSync(sheetPath, JSON.stringify(sheet, null, 1));
 // deal must avoid (scenes taken by id, or none, included)
 const techniqueOf = (s) => (s.scenes || []).find((x) => x.technique)?.id || null;
 // a technique given up (--redraw scenes) stays in the entry, so the next draws still avoid it
-if (opt('redraw') && String(opt('redraw')) !== 'direction') patchHist(sheet.at, { sections: builtSections(sheet), ...(sheet.frame ? { frame: Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) } : {}), hero: sheet.hero?.id, scenes: (sheet.scenes || []).map((x) => x.id), technique: techniqueOf(sheet) || hist.find((h) => h.at === sheet.at)?.technique || null, entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null });
-if (!opt('redraw') || String(opt('redraw')) === 'direction') writeHist({ at: sheet.at, direction: sheet.direction.id, type: sheet.type?.id, families: sheet.type ? [...new Set([sheet.type.display.family, sheet.type.text.family])] : [], palette: sheet.palette?.id, ground: sheet.palette?.ground || null, hue: sheet.palette?.hue || null, frame: sheet.frame ? Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) : null, hero: sheet.hero?.id, sector: sheet.input.sector, sections: builtSections(sheet), scenes: (sheet.scenes || []).map((x) => x.id), technique: techniqueOf(sheet), entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null });
+if (opt('redraw') && String(opt('redraw')) !== 'direction') patchHist(sheet.at, { sections: builtSections(sheet), ...(sheet.frame ? { frame: Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) } : {}), hero: sheet.hero?.id, scenes: (sheet.scenes || []).map((x) => x.id), technique: techniqueOf(sheet) || hist.find((h) => h.at === sheet.at)?.technique || null, entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null, moves: (sheet.moves || []).map((m) => m.id), typeNote: sheet.typeNote?.id || null });
+if (!opt('redraw') || String(opt('redraw')) === 'direction') writeHist({ at: sheet.at, direction: sheet.direction.id, type: sheet.type?.id, families: sheet.type ? [...new Set([sheet.type.display.family, sheet.type.text.family])] : [], palette: sheet.palette?.id, ground: sheet.palette?.ground || null, hue: sheet.palette?.hue || null, frame: sheet.frame ? Object.fromEntries(Object.entries(sheet.frame).map(([k, v]) => [k, v.id])) : null, hero: sheet.hero?.id, sector: sheet.input.sector, sections: builtSections(sheet), scenes: (sheet.scenes || []).map((x) => x.id), technique: techniqueOf(sheet), entrance: sheet.entrance?.id || null, replay: sheet.replay?.id || null, moves: (sheet.moves || []).map((m) => m.id), typeNote: sheet.typeNote?.id || null });
 console.log(render(sheet));
 
 // ---------- dealing ----------
@@ -559,7 +715,7 @@ function deal(input, redraws, sceneExclude = []) {
   const spent = (d) => { const hs = heroPool(d, input).filter(meets); return hs.length > 0 && hs.every((h) => last8.includes(h.id)); };
   const dir = forced || wpick(fresh(pool, recent('direction', Math.min(5, pool.length - 1))).map((d) => [d, (d.weight ?? 1) * (spent(d) ? 0.3 : 1)]));
   const s = { version: 1, at: new Date().toISOString(), seed: startSeed, redraws, input, imagery: imageryMode(input), allow: dir.allow || [], direction: dir };
-  s.hero = dealHero(dir, input, []);
+  s.hero = dealHero(dir, input, [], s);
   // colour first, so a dark ground never gets a hairline text face
   // a colour or a light in the client's name decides the ground from the first deal (SKILL.md step 1)
   s.palette = input.keep.includes('palette') ? null : dealPalette(dir, input, [], nameColours(input.brief).lean);
@@ -574,7 +730,7 @@ function deal(input, redraws, sceneExclude = []) {
   s.sections = [];
   for (const role of input.sections) {
     // the first section follows the hero: a split hero counts as a split (r9-p42 ran split hero, split showcase)
-    const sec = dealSection(dir, role, s.sections.map((x) => x.id), s.sections.at(-1)?.shape ?? (s.hero?.split ? 'split' : undefined), null, input);
+    const sec = dealSection(dir, role, s.sections.map((x) => x.id), s.sections.at(-1)?.shape ?? (s.hero?.split ? 'split' : undefined), null, input, s);
     if (sec) s.sections.push(sec); else s.sections.push({ id: null, role, shape: null, name: role, blueprint: null });
   }
   s.references = dealReferences(dir, input);
@@ -599,16 +755,140 @@ function deal(input, redraws, sceneExclude = []) {
   // and with nothing still, the replay may take the proof or testimonial section (moveReplay)
   if (s.replay && !s.scenes.length && moveReplay(dir, s, sceneExclude, ['proof', 'testimonial'])) technique(false);
   if (!s.scenes.length) { s.noScenes = true; s.noScenesWhy = noSceneWhy(s); }
-  // the frames of the draws in the history (24): the navigation, footer, cards and buttons are dealt away from the
-  // last eight and from the ones it holds most, so no one design comes back on more than about one page in eight
-  // (lib/frame-deal.mjs)
+  // the frames of the draws in the history (24): the navigation, footer, cards and buttons are dealt from the designs
+  // and the study's patterns, away from the last nine and from the ones it holds most, so none comes back on more than
+  // about one page in ten (lib/frame-deal.mjs)
   const history = hist.map((h) => h.frame).filter(Boolean);
   // black-and-white pictures only where the brief asks for them (lib/frame-deal.mjs); everywhere else they keep colour
-  s.frame = dealFrame({ rnd, input, imagery: s.imagery, history, ctx: frameCtx(s), bw: asksBW(input) });
+  s.frame = dealFrame({ rnd, input, imagery: s.imagery, history, ctx: frameCtx(s), bw: asksBW(input), patterns: PATTERNS, pc: patternCtx(dir, input, s) });
   // last, because whether an entrance fits depends on the hero, the move and the scenes
   s.entrance = dealEntrance(s, []);
   settleMotion(s);
+  // two or three small moves from the study, around the signature move and the entrance; a note on how the dealt type
+  // is set, from a type pattern of the same kind
+  s.moves = dealMoves(s, []);
+  s.typeNote = dealTypeNote(s);
   return s;
+}
+// ---------- the study's patterns on this page ----------
+// What a pattern is fitted against (lib/frame-deal.mjs, fitPool): the sector, the tones (the brief's, or the
+// direction's when it gives none), whether the page is software and has footage, the photographs it can honestly show,
+// how much air it wants, and what is already dealt on the sheet (for the clashes a pattern names, avoidWith).
+function patternCtx(dir, input, s = null) {
+  const dealt = new Set(); const avoid = new Set();
+  const add = (x) => { if (!x?.id) return; dealt.add(String(x.id).toLowerCase()); for (const a of x.avoidWith || []) avoid.add(String(a).toLowerCase()); };
+  if (s) {
+    add(s.hero); (s.sections || []).forEach(add); (s.scenes || []).forEach(add); (s.moves || []).forEach(add);
+    if (s.frame) for (const k of ['nav', 'footer', 'cards', 'buttons']) add(s.frame[k]);
+    // the kinds of thing the page has, as a pattern's avoidWith may name them
+    if (s.scenes?.length) ['scene', 'scroll-scene', 'pinned', 'pinned-scene'].forEach((k) => dealt.add(k));
+    if (s.replay) ['replay', 'product-replay'].forEach((k) => dealt.add(k));
+    if (s.frame && s.frame.clip?.id !== 'none') dealt.add('video');
+    if (s.palette && isDark(s.palette)) dealt.add('dark-ground');
+    if (s.hero?.split) dealt.add('split-hero');
+  }
+  return {
+    sector: input.sector, tones: studyTones(input.tone ? [input.tone] : dir?.tones || []),
+    loud: ['bold', 'playful'].includes(input.tone) || (!input.tone && creativePage(input)),
+    software: isSoftware(input), video: (input.have || []).includes('video'),
+    pictureCap: fewPictures(input) ? 1 : PATTERN_PICTURE_CAP[imageryMode(input)] ?? Infinity,
+    // a quiet or luxurious page wants air; a site with pages beyond this one (software, shops, schools, events) may
+    // take a dense pattern; the rest a balanced one
+    density: ['quiet', 'luxury'].includes(input.tone) ? 'airy' : isSoftware(input) || ['ecommerce', 'physical-product', 'education', 'event'].includes(input.sector) ? 'dense-ok' : 'balanced',
+    dealt, avoid,
+  };
+}
+// The study's hero patterns that can open this page, as [hero, weight], by the rules the direction's heroes keep
+// (heroPool): software shows its own interface large, a product with no photographs of its own shows its kind large
+// or opens on type, a direction whose first screen has no picture takes none with one, a client named for a light gets
+// no dark first screen, and no picture is turned grey unless the brief asks.
+function patternHeroes(dir, input, exclude = [], s = null) {
+  const meets = heroMeets(input);
+  let list = fitPool(P_HEROES, patternCtx(dir, input, s), 3).filter(([h]) => !exclude.includes(h.id) && meets(h));
+  // (on software the large picture is the interface itself: a pattern hero over footage, a 3D world or a photograph
+  // took six of eight software first screens in round 12's first run)
+  if (isSoftware(input)) list = list.filter(([h]) => h.pneeds?.productUi || (heroShowsLarge(h) && SHOWS_UI.test(h.blueprint)));
+  if (imageryMode(input) === 'no-product-photo') list = list.filter(([h]) => heroNoPicture(h) || heroShowsLarge(h));
+  if (firstScreenBare(dir)) list = list.filter(([h]) => heroNoPicture(h));
+  if (!asksBW(input)) list = list.filter(([h]) => !/gr[ae]yscale|black-and-white/i.test(h.blueprint));
+  if (nameColours(input.brief).lean === 'light') list = list.filter(([h]) => !/low-key|near-black|in the dark(?! ink)|darken|brightness\(0\.|All type is white/i.test(h.blueprint));
+  return list.map(([h, w]) => [h, w * PATTERN_SHARE.hero]);
+}
+// The study's section patterns that can stand in for a blueprint of this role on this page, as [blueprint, weight].
+function patternSections(dir, role, input, s = null) {
+  if (role === 'footer') return [];
+  return fitPool(P_SECTIONS.filter((x) => x.roles.includes(role)), patternCtx(dir, input, s), 2).map(([bp, w]) => [bp.role === role ? bp : { ...bp, role }, w * PATTERN_SHARE.section]);
+}
+// Two or three small moves from the study's motion patterns (P_MOVES: beyond the basics, nothing big, nothing that
+// enters): fitted to the page, one of each kind (one hover, one scroll-linked text move, one parallax), never the
+// signature move again, only feedback under the hand on a page whose signature is stillness, and each away from the
+// last nine draws. exclude: ids not to deal (a redraw).
+function dealMoves(s, exclude = []) {
+  if (!P_MOVES.length) return [];
+  const pc = patternCtx(s.direction, s.input, { ...s, moves: [] });
+  const same = SAME_AS_SIGNATURE[s.motion?.id];
+  // (the tone narrows the pool only while ten still fit: the small moves are few, and a move suits more tones than a
+  // hero; and a move the study saw only in other sectors joins at a third of the weight, since a hover or a scrubbed
+  // line suits more sectors than it was seen in: twelve saas pages in a row otherwise ran out of moves by the fourth)
+  const fitted = fitPool(P_MOVES, pc, 10); const seen = new Set(fitted.map(([m]) => m.id));
+  const wider = P_MOVES.filter((m) => !seen.has(m.id) && !patternWhyNot({ ...m, fits: { ...(m.fits || {}), sectors: ['*'] } }, pc)).map((m) => [m, 0.3]);
+  let pool = [...fitted, ...wider].filter(([m]) => !exclude.includes(m.id) && !(same && same.test(`${m.name || ''}. ${m.description}`)));
+  if (s.motion?.id === 'stillness') pool = pool.filter(([m]) => ['hover', 'click'].includes(moveKind(m)));
+  const n = s.motion?.id === 'stillness' ? 1 : creativePage(s.input) || rnd() < 0.35 ? 3 : 2;
+  const out = [];
+  // Each away from the last nine draws. When none of those fits, the first may come back if the last six draws did
+  // not have it, and the others are left out: a page with one or two moves of its own beats a move that every other page
+  // repeats (round 12's first run dealt one move on seven of thirty pages, twice running).
+  const lastAt = (m) => hist.findIndex((h) => histHas(h, 'moves', m.id));
+  while (out.length < n) {
+    const kinds = new Set(out.map(moveKind));
+    const cands = pool.filter(([m]) => !kinds.has(moveKind(m)) && !out.includes(m));
+    const live = liveOf(cands, 'moves');
+    const back = out.length ? [] : cands.filter(([m]) => lastAt(m) < 0 || lastAt(m) >= 6);
+    if (!live.length && !back.length) break;
+    out.push(wpick(live.length ? live : awayFrom(back, 'moves', 1)));
+  }
+  return out.map((m) => ({ id: m.id, name: m.name || m.id, kind: moveKind(m), description: m.description.trim() + houseNote(m), phone: patternPhone(m), avoidWith: m.avoidWith || [] }));
+}
+// A note on how to set the dealt type, from a type pattern of the same kind: one or two families as dealt, serif or
+// sans on the display and on the text, condensed, wide or rounded as dealt, in capitals only where the type system
+// sets them; then the closer its weight and size, the likelier. Away from the last nine draws. None when nothing fits.
+function typeTraits(e) {
+  // (from the description alone: its name often says "over" too)
+  const t = String(e.description).toLowerCase();
+  const cut = t.search(/\bover\b/);
+  const disp = cut < 0 ? t : t.slice(0, cut), text = cut < 0 ? '' : t.slice(cut);
+  const first = disp.split(/(?<=\.)\s/).slice(0, 2).join(' ');
+  const serif = (x) => /(?<!sans[- ])\bserif\b|\bdidone\b|\bold-?style\b|\btransitional\b|\bslab\b/.test(x);
+  const pair = /\bover\b/.test(t) || /\bwith (?:a|an) [^.]{0,50}\b(?:text|body) (?:face|font)\b/.test(t);
+  return {
+    pair, dSerif: serif(disp), tSerif: pair ? serif(text) : serif(disp),
+    condensed: /\bcondensed\b/.test(first), wide: /\b(?:wide|extended)\b/.test(first), rounded: /\brounded\b/.test(first),
+    caps: /\bcaps\b|\bcapitals\b|\bupper-?case\b/.test(first) && !/\bmixed[- ]case\b/.test(first),
+    heavy: /\b(?:bold|black|heavy|700|800|850|900)\b/.test(first), light: /\b(?:light|thin|hairline|100|200|300)\b/.test(first),
+    giant: /\bgiant\b|\bscreen-filling\b|\b(?:1[2-9]|[2-9]\d)(?:\.\d+)?vw\b/.test(first),
+  };
+}
+function dealTypeNote(s) {
+  const t = s.type;
+  if (!t?.display || !P_TYPES.length) return null;
+  const solo = t.display.family === t.text.family;
+  const dSerif = /serif|slab/.test(t.display.cls || t.class || ''), tSerif = /serif|slab/.test(t.text.cls || '');
+  const fits = (e) => {
+    const x = typeTraits(e);
+    return x.pair === !solo && x.dSerif === dSerif && x.tSerif === tSerif && x.caps === !!t.caps
+      && x.condensed === (t.display.cls === 'condensed') && x.wide === (t.display.cls === 'wide') && (!x.rounded || t.display.cls === 'rounded');
+  };
+  // (a hairline note for a display dealt at 500 or more, or a black one for a display at 300 or less, is out)
+  const near = (e) => { const x = typeTraits(e); const w = t.display.weight || 400; if ((x.light && w >= 500) || (x.heavy && w <= 300)) return 0; return (x.heavy ? (w >= 600 ? 1.5 : 0.5) : 1) * (x.light ? (w <= 300 ? 1.5 : 0.5) : 1) * (x.giant ? (t.displayVw >= 9 ? 1.5 : 0.4) : 1); };
+  const pool = fitPool(P_TYPES.filter(fits), patternCtx(s.direction, s.input, s), 2).map(([e, w]) => [e, w * near(e)]).filter(([, w]) => w > 0);
+  // a pairing has few notes of its kind: one used in the last nine draws comes back only when none fresh fits, and
+  // never one of the last three (then the page has none)
+  const live = liveOf(pool, 'typeNote');
+  const back = pool.filter(([e]) => { const at = hist.findIndex((h) => h.typeNote === e.id); return at < 0 || at >= 3; });
+  if (!live.length && !back.length) return null;
+  const e = wpick(live.length ? live : awayFrom(back, 'typeNote', 1));
+  return { id: e.id, name: e.name || e.id, description: e.description.trim() + houseNote(e) };
 }
 // What the frame deal needs to know about the page (lib/frame-deal.mjs). One email form on the page (r9-p41 asked for
 // the address in its closing sentence and again in a sign-up footer): no newsletter footer under a section that already
@@ -627,12 +907,14 @@ function closingScene(s) { return (s.scenes || []).some((x) => x.position === 'c
 // the footer dealt in section 0 opens on the page's closing line and button: the cta section is carried by it
 function ctaByFooter(s) { return !!s.frame?.footer?.closes && s.sections.some((x) => x.role === 'cta') && !closingScene(s) && s.replay?.carries !== 'cta'; }
 // the blueprints the page really builds, for the history
-function builtSections(s) { return s.sections.filter((x) => x.id && !(x.role === 'cta' && ctaByFooter(s))).map((x) => x.id); }
+// (the footer is section 0's whenever the sheet has a frame: its blueprint is not built)
+function builtSections(s) { return s.sections.filter((x) => x.id && !(x.role === 'cta' && ctaByFooter(s)) && !(x.role === 'footer' && s.frame)).map((x) => x.id); }
 // another footer of section 0's designs, never one this sheet has had (--redraw section:footer, or new closing scenes)
 function redealFooter(s) {
   s.footersTried = [...new Set([...(s.footersTried || []), s.frame.footer.id])];
   const history = [...s.footersTried.map((id) => ({ footer: id })), ...hist.map((h) => h.frame).filter(Boolean)];
-  return dealFrame({ rnd, input: s.input, imagery: s.imagery, history, ctx: frameCtx(s), bw: asksBW(s.input) }).footer;
+  const pc = patternCtx(s.direction, s.input, { ...s, frame: { ...s.frame, footer: null } });
+  return dealFrame({ rnd, input: s.input, imagery: s.imagery, history, ctx: frameCtx(s), bw: asksBW(s.input), patterns: PATTERNS, pc }).footer;
 }
 // The first screen's entrance (library/entrances.json; the CSS is in assets/base.css). Every model built the same
 // one (lines rising out of masks, a clip-path shutter on the picture), so it had become the plainest sign of this
@@ -1098,23 +1380,26 @@ function heroPool(dir, input, dirs = [dir]) {
   return pool;
 }
 function heroMeets(input) { return (h) => (h.needs || []).every((n) => n === 'photography' || input.have.includes(n)); }
-function dealHero(dir, input, exclude) {
+function dealHero(dir, input, exclude, s = null) {
   const pool = heroPool(dir, input); const meets = heroMeets(input);
   const ok = pool.filter((h) => !exclude.includes(h.id) && meets(h));
   const cands = ok.length ? ok : pool.filter((h) => !exclude.includes(h.id)).length ? pool.filter((h) => !exclude.includes(h.id)) : pool;
-  // away from the heroes of the last eight draws, and weighed down by how often the history holds each (round 11: one
-  // hero came back on six of thirty pages, twice running). A direction with one to three heroes left after the filters
-  // (a software direction: the product large) soon has none that is fresh: then the heroes of the other directions that
-  // suit this brief, then any hero, each through the same filters, before one is repeated
-  const last8 = recent('hero', 8);
-  const freshOf = (hs) => hs.filter((h) => !exclude.includes(h.id) && meets(h) && !last8.includes(h.id) && (!firstScreenBare(dir) || heroNoPicture(h)));
-  let use = cands.filter((h) => !last8.includes(h.id));
-  if (!use.length) use = freshOf(heroPool(dir, input, directionPool(input)));
-  if (!use.length) use = freshOf(heroPool(dir, input, []));
+  // The direction's heroes and the study's hero patterns that fit the page (patternHeroes), away from the heroes of the
+  // last nine draws and weighed down by how often the history holds each (round 11: one hero came back on six of
+  // thirty pages, twice running; round 12: none on more than about one page in ten). A direction with one to three
+  // heroes left after the filters (a software direction: the product large) soon has none that is fresh: then the
+  // heroes of the other directions that suit this brief, then any hero, each through the same filters and beside the
+  // patterns, before one is repeated
+  const pats = patternHeroes(dir, input, exclude, s);
+  const fits = (h) => !exclude.includes(h.id) && meets(h) && (!firstScreenBare(dir) || heroNoPicture(h));
+  for (const tier of [cands.map((h) => [h, 1]), heroPool(dir, input, directionPool(input)).filter(fits).map((h) => [h, 1]), heroPool(dir, input, []).filter(fits).map((h) => [h, 1])]) {
+    const use = liveOf([...tier, ...pats], 'hero');
+    if (use.length) return wpick(use);
+  }
   // (and never the last draw's hero while another fits)
-  if (!use.length) use = cands.filter((h) => h.id !== last8[0]).length ? cands.filter((h) => h.id !== last8[0]) : cands;
-  const times = (id) => hist.filter((h) => h.hero === id).length;
-  return wpick(use.map((h) => [h, 1 / (1 + times(h.id))]));
+  const all = [...cands.map((h) => [h, 1]), ...pats];
+  const notLast = all.filter(([h]) => h.id !== hist[0]?.hero);
+  return wpick(awayFrom(notLast.length ? notLast : all, 'hero', 1));
 }
 // The first screen's picture: none, small or large (SMALL_PICTURE and SMALL_PICTURE_HEROES at the top).
 function heroNoPicture(h) {
@@ -1426,7 +1711,8 @@ function adjustments(bp, s) {
   const bigSentence = [...text.matchAll(/\b(?:sentence|statement|paragraph|quotation|quote)\b[^.;]{0,40}?\b(?:at|to)\s+(?:clamp\(\s*\d+(?:\.\d+)?px,\s*)?(\d+(?:\.\d+)?)(px|vw)/gi)].some((m) => (m[2] === 'px' && +m[1] > 36) || (m[2] === 'vw' && +m[1] > 2.6));
   // (a split hero's headline is 5vw or more, so the smaller statement is no way out there: split-hero-title fails it)
   if (bigSentence) notes.push(bp.split ? 'It sets a sentence large over several lines: jurors read that as a long headline. Cut it to a two-line headline at display size (5vw, 72px at 1440); beside the picture a smaller statement is not a way out (`split-hero-title`).' : 'It sets a sentence large over several lines: jurors read that as a long headline. Either cut it to a two-line headline at display size, or keep it a statement at 36px or less on three lines (24px, four lines on a phone).');
-  if (/(?:sticky|pinned|pins?\b|stays? (?:fixed|put|in place))/i.test(text) && /\b(?:three|four|five|six) (?:to (?:four|five|six) )?(?:viewports|screens)\b|\b[3-6]00svh\b/i.test(text)) notes.push('It pins something for three screens or more: hold a pin for two or three screens at most, give every screen under it its own content, and let nothing pass over the pinned words (the inspector checks all three).');
+  // (the study's patterns give the length as 450vh, a pin lasting 2700px or three steps of 1500px)
+  if (/(?:sticky|pinned|pins?\b|stays? (?:fixed|put|in place))/i.test(text) && /\b(?:three|four|five|six) (?:to (?:four|five|six) )?(?:viewports|screens)\b|\b(?:[3-9]\d\d|1\d\d\d)s?vh\b|\bpin\w*\b[^.]{0,40}\b[2-9]\d{3}px\b|\b(?:two|three|four|five|six) steps of (?:about )?[1-9]\d{3}px\b/i.test(text)) notes.push('It pins something for three screens or more: hold a pin for two or three screens at most, give every screen under it its own content, and let nothing pass over the pinned words (the inspector checks all three).');
   if (/\b(indented|stepped|staggered)\b[^.]{0,60}\b(line|heading|title)|\b(heading|title)[^.]{0,60}\b(indented|stepped|staggered)/i.test(text)) notes.push('It steps or indents the lines of a heading: set every line of a heading on one left edge. A staggered heading read as a gimmick in round 4.');
   if (/\b(paper|slip|receipt|sheet of paper|card)\b[^.]{0,80}\b(on|over) (a |the )?(contrasting|full-bleed|dark|flat)\b/i.test(text)) notes.push('It puts the content on a panel of another tone: set it on the section\'s own ground, or as the card style section 0 deals on the surface tone. A panel in a colour the palette does not name is a fourth surface (the inspector warns, surface-count).');
   if (/mix-blend-mode:\s*(?:difference|exclusion)/i.test(text)) notes.push('It blends text with `difference`: over anything but black, white or grey that gives random hues. Use a solid ink chosen for each ground instead.');
@@ -1566,15 +1852,21 @@ function sectionPool(dir, role, input) {
 // names: the direction's own weigh 1, those that suit its tags 0.6, the rest 0.3 (the sheet keeps the geometry and sets
 // it in the direction's type and colour). Then away from the last draws (awayFrom: round 11 dealt one call to action on
 // seven of sixteen saas pages and one visit card on three door pages in a row, with only the page itself checked).
-function dealSection(dir, role, usedIds, prevShape, nextShape, input) {
+// The study's section patterns that stand in for this role and fit the page join the pool (patternSections, at about
+// half a direction's own blueprint each), so a role draws on far more than its few blueprints; the page keeps its order
+// of sections, its word and picture budgets (the adjustments under each) and its closing rules.
+// s: the sheet so far, for the clashes a pattern names.
+function dealSection(dir, role, usedIds, prevShape, nextShape, input, s = null) {
   const own = sectionPool(dir, role, input);
-  if (!own.length) return null;
+  const pats = patternSections(dir, role, input, s);
+  if (!own.length && !pats.length) return null;
   const all = sectionPool({ ...dir, id: null, sectionTags: [] }, role, input);
   const tagged = (s) => (s.tags || []).some((t) => (dir.sectionTags || []).includes(t));
   const named = own.some((s) => (s.directions || []).includes(dir.id));
   let pool = [...new Set([...own, ...all])].map((s) => [s, own.includes(s) ? 1 : tagged(s) && named ? 0.6 : 0.3]);
+  pool.push(...pats);
   // a software page leans to the blueprints built from its own interface
-  if (imageryMode(input) === 'interface') pool = pool.map(([s, w]) => [s, w * ((s.tags || []).includes('ui-led') ? 2.5 : 1)]);
+  if (imageryMode(input) === 'interface') pool = pool.map(([s, w]) => [s, w * ((s.tags || []).includes('ui-led') || s.pneeds?.productUi ? 2.5 : 1)]);
   const unused = pool.filter(([s]) => !usedIds.includes(s.id)); if (unused.length) pool = unused;
   // never two of one shape side by side (split-stage's showcases for a product are both splits, after a split hero: r9-p42)
   const varies = ([s]) => s.shape !== prevShape && s.shape !== nextShape;
@@ -1630,6 +1922,13 @@ function entranceBlock(e, s, p) {
   const rule = e.below.rule;
   p(`- **Below the fold: ${e.below.label}.** ${rule}${/data-reveal/.test(rule) && /nothing else|nothing enters|stray/i.test(rule) ? '' : ' No other block gets `data-reveal`: no fade-up on every block.'}`);
 }
+// The small moves dealt from the study (dealMoves), printed after the entrance: each in full, with where it goes.
+function movesBlock(s, p) {
+  p();
+  p(`### Small moves — ${['', 'one', 'two', 'three'][s.moves.length] || s.moves.length}, dealt from the design-anatomy study`);
+  p(`A good page has more than one kind of motion. Beyond ${s.replay ? 'the product replay' : s.motion?.id === 'stillness' ? 'the stillness above' : 'the signature move'} and the entrance, build ${s.moves.length > 1 ? 'each of these once' : 'this once'}, where its line says, on native scroll or under the hand, with transform and opacity, and a reduced-motion fallback that keeps the content where it rests. None makes anything enter below the fold (the entrance's rule stands), none pins, and none replaces feedback on the controls. Each description is the spec: set it in this page's own content, type and colour.`);
+  for (const m of s.moves) p(`- **${m.name}** (\`${m.id}\`): ${m.description}${m.phone ? ` On a phone: ${m.phone}` : ''} ${MOVE_WHERE[m.kind] || 'Once, where it carries something; still for reduced motion.'}`);
+}
 // The dealt product replay, printed as the signature move of a software page.
 function replayBlock(r, s, p) {
   p(`**The product replay: ${r.name}, in the ${r.carries} section.** This is the page's big moment: the product's own window, large, acts out what the product does for the visitor, a beat at a time, while its section holds and the visitor's scroll steps the beats. ${r.sees}`);
@@ -1679,6 +1978,7 @@ function render(s) {
   p(`| Sections | ${s.sections.map((x) => x.role + (s.replay && x.role === s.replay.carries ? ' (the product replay)' : x.role === 'footer' && s.frame ? ' (as section 0)' : x.role === 'cta' && ctaFooter ? ' (the footer\'s closing line)' : x.name && x.name !== x.role ? ' (' + x.name + ')' : '')).join(' → ')} |`);
   p(`| Motion | ${s.replay ? `the product replay: ${s.replay.name}, in the ${s.replay.carries} section` : s.motion ? s.motion.name : '—'} |`);
   if (s.entrance) p(`| Entrance | ${s.entrance.name} |`);
+  if (s.moves?.length) p(`| Small moves | ${s.moves.map((m) => m.name).join(' · ')} |`);
   p(`| Photographs | ${s.photos ? 'the "' + (s.photos.title || s.photos.set) + '" set, as atmosphere' : 'none'} |`);
   if (s.frame) {
     const f = s.frame;
@@ -1691,12 +1991,13 @@ function render(s) {
   if (s.frame) {
     const f = s.frame;
     p('## 0. The frame (dealt; these replace whatever a blueprint below says about them)');
-    p('Pages built by models came out alike in exactly these parts: three button shapes, one plain bar, a one-line footer, text floating with nothing grouping it. Each part below is one of about twelve designs, dealt away from the last pages built; build it as written, at the sizes given.');
-    p(`- **Navigation (\`${f.nav.id}\`):** ${f.nav.text} ${FRAME_RULES.nav} The real sections as links and the one action.`);
+    p(`Pages built by models came out alike in exactly these parts: three button shapes, one plain bar, a one-line footer, text floating with nothing grouping it. Each part below is one of about twelve tested designs${['nav', 'footer', 'card', 'button'].some((k) => PATTERNS[k].length) ? ' or one of the patterns of the design-anatomy study (great sites read part by part)' : ''}, dealt away from the last pages built; build it as written, at the sizes given.${[f.nav, f.footer, f.cards, f.buttons].some((x) => x?.pattern) ? ' A part marked as a pattern is described as the study saw it: its description is your spec, built with this page\'s own content, in the dealt type, colour and corners (where it names a colour, a face, a radius or a size the dealt system lacks, the dealt system wins), within the rules printed after it.' : ''}${[f.nav, f.footer, f.cards, f.buttons, s.hero, ...(s.sections || [])].some((x) => x?.pattern) || s.moves?.length || s.typeNote ? ' A pattern\'s id (in code type, here and below) is only its handle for redraws: where the id names something its description leaves out (capitals, an outline, glass, mono, a nested card), the description wins; and where a description makes its content arrive (on load, or as it comes into view: it rises, fades, slides or wipes in), section 8\'s entrance decides instead, on the first screen and below the fold.' : ''}`);
+    const label = (x) => `\`${x.id}\`${x.pattern ? `, ${x.name}: a pattern of the study` : ''}`;
+    p(`- **Navigation (${label(f.nav)}):** ${f.nav.text} ${FRAME_RULES.nav} The real sections as links and the one action.`);
     const visit = visitNote(s, f.footer.text);
-    p(`- **Footer (\`${f.footer.id}\`):** ${f.footer.text}${visit ? ` ${visit}` : ''} ${FRAME_RULES.footer}`);
-    if (f.cards) p(`- **Cards (\`${f.cards.id}\`):** ${f.cards.text} ${FRAME_RULES.cards}${s.imagery === 'interface' ? ' On this software page a card\'s picture is a crop of the product\'s interface running to the card\'s edges with no frame of its own: a window inside a card is a box in a box.' : ''}`);
-    if (f.buttons) p(`- **Buttons (\`${f.buttons.id}\`):** ${f.buttons.text} ${FRAME_RULES.buttons}`);
+    p(`- **Footer (${label(f.footer)}):** ${f.footer.text}${visit ? ` ${visit}` : ''} ${FRAME_RULES.footer}${f.footer.pattern && f.footer.closes ? ' It opens on the page\'s closing line and its button: that is the call to action.' : ''}`);
+    if (f.cards) p(`- **Cards (${label(f.cards)}):** ${f.cards.text} ${FRAME_RULES.cards}${s.imagery === 'interface' ? ' On this software page a card\'s picture is a crop of the product\'s interface running to the card\'s edges with no frame of its own: a window inside a card is a box in a box.' : ''}`);
+    if (f.buttons) p(`- **Buttons (${label(f.buttons)}):** ${f.buttons.text} ${FRAME_RULES.buttons}`);
     p(`- **Corners:** ${f.corners.text} (\`--radius: ${f.corners.radius}\`${f.corners.button ? `, buttons \`${f.corners.button === 'square' ? '0' : f.corners.button}\`` : '; buttons as dealt above'}).`);
     p(`- **Space:** ${f.spacing.text}${f.spacing.gap ? ` In CSS: \`--section-gap: ${f.spacing.gap}; --margin: ${f.spacing.marginCss};\`, the gap set as \`padding-block: calc(var(--section-gap) / 2)\` on every section after the hero and as \`padding-bottom\` of the same half under the hero's last content, so it is the same on one ground or across two (references/layout.md §2).` : ''} **The first screen is the hero alone:** \`min-height: 100svh\` at every width with the navigation inside it, and nothing of the next section (its heading, text, picture or ground) in view at 1440 by 900 or 390 by 844 (\`hero-not-alone\`). The space between sections counts from the last content of one to the first content of the next, and a change of ground never shortens it (\`section-air\`). **Nothing runs into one screen edge:** whatever is not full-bleed keeps the page margin on both sides at rest; a product window that ran into the right edge while the left margin held failed a notes page (\`edge-run\`).`);
     p(`- **Pictures:** ${f.treatment.text}${f.treatment.id === 'mono' ? '' : ' Never greyed: no grayscale filter, and no stand-in whose file is black-and-white (the client\'s own pictures as they are).'}`);
@@ -1736,6 +2037,8 @@ function render(s) {
     if (d.typography) p(d.typography);
     p('The direction decides sizes and how many of them; the type system decides how this face is set. Where the two give different tracking or leading, use the values of the type system: they are tuned to this face.');
     p('These six steps are the whole scale. Map every size a blueprint names onto the nearest step; the hero headline takes `--step-display`, whatever size the hero blueprint gives.');
+    // a type pattern of the same kind as the dealt pairing (dealTypeNote): how a great site of that kind set it
+    if (s.typeNote) p(`**Type note (\`${s.typeNote.id}\`, ${s.typeNote.name}): how a site of the study set type of this kind.** ${s.typeNote.description} Take from it how the steps relate (how far they jump, where the big jump falls, which steps carry the page), and its leading, tracking and case where the type system above allows them. The faces, weights and six steps dealt above stand: map its sizes onto the steps, nothing under 13px, running text 16px or more, and no face it names in place of the dealt ones.`);
     p();
   } else { p('## 3. Type'); p('Kept from the brand. ' + (d.typography || '')); p(); }
   if (s.palette) {
@@ -1800,7 +2103,9 @@ function render(s) {
   }
   p();
   const adjust = (bp) => { const n = adjustments(bp, s); if (n.length) { p(); p('Adjusted for this page:'); for (const x of n) p(`- ${x}`); } };
-  p(`## 6. Hero — ${s.hero.name}`); p(s.hero.blueprint); p(); p(`On a phone: ${s.hero.mobile}`); if (s.hero.headline) p(`Headline: ${s.hero.headline}`);
+  p(`## 6. Hero — ${s.hero.name}${s.hero.pattern ? ` (\`${s.hero.id}\`, a pattern of the design-anatomy study)` : ''}`);
+  if (s.hero.pattern) p('Described as the study saw it on a great site: build this composition with this page\'s own words and pictures, in the dealt type, colour and corners; a backdrop it names that this page cannot honestly have (a 3D scene, footage) is a photograph of the subject or the product\'s own interface at the same size and place, or the ground itself.');
+  p(s.hero.blueprint); p(); p(`On a phone: ${s.hero.mobile}`); if (s.hero.headline) p(`Headline: ${s.hero.headline}`);
   // r9-p44 was dealt the object on a plain ground and built the stack every model builds (the judge: any café)
   const sceneHero = (s.scenes || []).some((x) => x.carries === 'hero');
   p(`**Within the house rules and the adjustments under it, this geometry is binding:** what is large, where the words sit and how the picture is cut, in the dealt type and colour; where section 2 describes the first screen otherwise, this is it${sceneHero ? '. The scene in section 9 sets the first screen\'s picture and its motion; the words keep their places here' : ''}. **It fills the first screen alone** (\`min-height: 100svh\`, the navigation inside it): nothing of the next section shows under it at 1440 by 900 or on a phone, and a part of this blueprint that would run below the fold (a peek of the next section, a row continuing under the fold) is left out. At most 30 words in it. Its largest type carries the page's own idea (the Headline above says how) or, for a name whose meaning the page is built on (Klee is clover), the name; never a bare category line with nothing of this client in it. **The headline never repeats the logo:** when the name is the headline, the bar shows no second wordmark on the first screen (the mark alone, or the wordmark arriving once the hero has scrolled away); otherwise the headline says something new and the name stays in the bar. One action appears once here: never two buttons to the same place (two Directions buttons on one first screen). Never the template stack of a centred headline and a line under it over a photograph card with round corners or a row of two or three cards, with or without actions (\`template-hero\`). Its picture shows what the headline names${hasDoor(s.input) ? ': the place itself, never the village next door under "a white house on the fjord" (with no such picture, the first screen is set in type); and the first screen names the specific place the brief gives (the fjord, the village, the district), or when the brief names only a region, a real place in it chosen with the visit block and marked as sample copy in the report, never the region alone' : ''}.`);
@@ -1825,14 +2130,17 @@ function render(s) {
     // the replay's stage is the last thing in its section and is held (replay-not-held): no second shape around it
     if (s.replay && sec.role === s.replay.carries) { p(`### ${i + 1}. ${sec.role} — the product replay (section 8)`); p(`This section is the replay's held stage: the heading that states the promise, the window, one sentence and the Replay button, with nothing after them. No other shape is built here.${['proof', 'testimonial'].includes(sec.role) ? ` It holds the ${sec.role} section so a scene has room: the product doing its task is the proof. Real quotes or names the brief gives go in a short block of their own after it; none are invented.` : ''}`); return; }
     if (!sec.blueprint) { p(`### ${i + 1}. ${sec.role}`); p('No blueprint in the library for this role. Compose it from the direction above, using a layout shape not used by its neighbours.'); return; }
-    p(`### ${i + 1}. ${sec.role} — ${sec.name} (${sec.shape})`); p(sec.blueprint); if (sec.mobile) p(`On a phone: ${sec.mobile}`); adjust(sec);
+    p(`### ${i + 1}. ${sec.role} — ${sec.name} (${sec.shape})${sec.pattern ? ` — \`${sec.id}\`, a pattern of the design-anatomy study` : ''}`);
+    if (sec.pattern) p('A pattern of the study standing in for this section\'s blueprint: its description is the spec, built with this page\'s content, in the dealt type, colour, corners and card style, within the word and picture budgets above.');
+    p(sec.blueprint); if (sec.mobile || (sec.pattern && !phoneIn(sec.blueprint))) p(`On a phone: ${sec.mobile || PHONE_FALLBACK}`); adjust(sec);
   });
   p();
-  if (s.motion || s.entrance || s.replay) {
+  if (s.motion || s.entrance || s.replay || s.moves?.length) {
     p(`## 8. Motion${s.replay ? ' — the product replay' : s.motion ? ` — ${s.motion.name}` : ''}`);
     if (s.replay) replayBlock(s.replay, s, p);
-    else if (s.motion) { p(s.motion.description); p(`This is the signature move, the one loud moment. Around it the page still needs the rest of the motion layer (SKILL.md step 9): ${s.entrance ? 'the entrance below' : 'a quiet entrance on the first screen (never a fade on every section)'} and feedback on every control; video only as section 0 deals it. The inspector fails a page that barely moves. Recipes: references/motion.md.`); }
+    else if (s.motion) { p(s.motion.description); p(`This is the signature move, the one loud moment. Around it the page still needs the rest of the motion layer (SKILL.md step 9): ${s.entrance ? 'the entrance below' : 'a quiet entrance on the first screen (never a fade on every section)'}${s.moves?.length ? ', the small moves below' : ''} and feedback on every control; video only as section 0 deals it. The inspector fails a page that barely moves. Recipes: references/motion.md.`); }
     if (s.entrance) entranceBlock(s.entrance, s, p);
+    if (s.moves?.length) movesBlock(s, p);
     p();
   }
   if (s.scenes?.length) {
@@ -1870,7 +2178,7 @@ function render(s) {
     // section 9 always prints: scenes, a technique, or none with the reason (r9-p41's sheet went from 8 to 10)
     p('## 9. Scroll scenes');
     // an entrance where nothing arrives is not motion
-    const moves = [s.entrance && s.entrance.family !== 'still' && `the entrance (${s.entrance.name})`, s.replay && `the product replay (${s.replay.name})`, !s.replay && s.motion && s.motion.id !== 'stillness' && `the signature move (${s.motion.name})`, s.frame && s.frame.clip.id !== 'none' && 'the moving picture section 0 deals'].filter(Boolean);
+    const moves = [s.entrance && s.entrance.family !== 'still' && `the entrance (${s.entrance.name})`, s.replay && `the product replay (${s.replay.name})`, !s.replay && s.motion && s.motion.id !== 'stillness' && `the signature move (${s.motion.name})`, s.frame && s.frame.clip.id !== 'none' && 'the moving picture section 0 deals', s.moves?.length && 'the small moves section 8 deals'].filter(Boolean);
     const and = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}` : xs[0]);
     const chosen = s.noScenes && !s.noScenesWhy;
     p(`**None: this page is built without a scroll scene** ${chosen ? '(`--redraw scenes=none`): no scene could be filled honestly.' : `(none dealt): ${s.noScenesWhy || noSceneWhy(s)}.`} ${moves.length ? `Its motion comes from ${and(moves)}: build ${moves.length > 1 ? 'them' : 'it'} with care, with feedback on every control, and put no pinned stretch in place of a scene.` : 'Nothing else dealt here moves (the entrance is one where nothing arrives): take a moving one with `--redraw entrance`, since the inspector fails a page that barely moves, and put no pinned stretch in place of a scene.'}`);
