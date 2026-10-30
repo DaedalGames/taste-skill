@@ -77,12 +77,13 @@
   margin: 0;
   font: var(--text-weight, 400) 16px/1.4 var(--font-text, inherit);
 }
+/* the credit reads at a glance beside the giant capitals: 18px at least, 20px on a wide screen */
 .ott-credit {
   order: 3;
   align-self: flex-end;
   max-width: 32ch;
   margin: calc(var(--ott-F) * .5) 0 0;
-  font: var(--text-weight, 400) 16px/1.4 var(--font-text, inherit);
+  font: var(--text-weight, 400) clamp(18px, 1.4vw, 20px)/1.35 var(--font-text, inherit);
   text-align: right;
 }
 .ott-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

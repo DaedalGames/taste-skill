@@ -259,8 +259,17 @@ points this way, including several above 7.5.
   names and what they do: quotes for a testimonial, logos for proof, steps for how it works, a closing
   line for the call to action) and fit the page (its sector, tone, the air it wants, what it really
   has). One is marked as a pattern and its description is the spec. The page keeps its order of
-  sections, its budgets (60 words a section, three to six pictures) and its closing rules, whichever
-  is dealt; no section or pattern comes back on more than about one page in ten.
+  sections, its budgets (60 words a section, its share of the sheet's photograph total) and its
+  closing rules, whichever is dealt; no section or pattern comes back on more than about one page in
+  ten.
+- **A section that pins is a scene.** A pinned stage, a sticky stage in a wrapper of several screens
+  or a stretch held for so many screens counts with the page's scroll scenes: no more held stretches
+  than the page takes scenes, none next to another, none on a page built without a scene. The sheet
+  deals one only where it fits and says so under it. A sticky heading or picture beside content that
+  scrolls is not a pin.
+- **The photograph total.** Section 5 of the sheet gives the photographs of the whole page and each
+  part's share (the hero, the scenes, each section, the footer). A blueprint takes its share,
+  whatever number it names; a section a scene carries is that scene and has no blueprint of its own.
 - **No two neighbours share a layout.** Use the shape of each dealt blueprint (list, split, statement,
   full-bleed, mosaic, table, strip, pinned …). Count them in the screenshot; a shape used three times
   is the template showing. Three or more full-bleed picture screens in a row, each a picture with a
@@ -305,7 +314,10 @@ points this way, including several above 7.5.
   or cut a section. In testing, pages of 26-28 screens lost on content and usability whatever their
   scenes did. On a portfolio the first piece of work at full size is on the first or second screen,
   before any statement, scene or photograph of the city (a motion designer's page opened on four
-  screens of Rotterdam before her work).
+  screens of Rotterdam before her work). The work is pictures of the work, four to six pieces, each
+  at its own ratio: never type cards in their place (another motion designer's page showed her work
+  only as titles on cards). Without the client's own pictures, each piece gets a marked slot (sheet
+  section 7) that the report lists.
 
 ### Cards
 
@@ -324,8 +336,8 @@ of loose text. Cards are wanted, varied, and kept to their job.
   tall text panel …), never a media tile with no words, an icon card, an outlined one, a generative
   canvas in place of a picture, or a row whose next card peeks in at the screen edge. Build the one
   dealt, at its sizes; another page gets another. Cards that overlap or stack
-  step their tone one by one (the surface mixed 6%, 12%, 18% toward the ink), so each edge reads with
-  no border and no shadow.
+  take the surface tone and the ink in turn, so each edge reads with no border, no shadow and no third
+  tone (`colour.md` §4).
 - **Filled, not outlined.** A card is a surface one tone step from the ground (or the ink), in the
   dealt corner, with 24-64px of padding. No border as its frame, no shadow at rest, no icon on top,
   no gradient. A hover steps its fill or moves it a few pixels, once.
@@ -390,7 +402,8 @@ of loose text. Cards are wanted, varied, and kept to their job.
   columns with a sign-up …), never one of the study's one-line, no-footer or nearly empty endings,
   nor a bento grid. It stands on its own ground (the surface tone or the ink), at least 40% of a screen tall at 1440, with the links,
   the contact, the legal links and the Image credits link at text sizes. The owner found the footers
-  of the recent pages ignored, one line each. Link columns only for real pages beyond this one; never
+  of the recent pages ignored, one line each. Build the dealt one as dealt, every part and size of
+  it: a dealt three-card footer built as one credit line fails (`footer-not-as-dealt`). Link columns only for real pages beyond this one; never
   a list the page already shows as content. Style every list: no browser bullets in a footer or a
   nav.
 - The last section carries a closing line at display size (the action as a statement, or the name),

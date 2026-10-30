@@ -20,6 +20,7 @@
     --muted: #46535a;
     --accent: #c42619;
     --accent-ink: #ffffff;
+    --surface: #e3e7e6;
     --font-display: 'Familjen Grotesk', 'Helvetica Neue', Arial, sans-serif;
     --font-text: 'Public Sans', 'Helvetica Neue', Arial, sans-serif;
     --display-weight: 600;
@@ -61,9 +62,20 @@
   .intro__facts h2 { margin: 0; font: 600 clamp(22px, 1.7vw, 26px)/1.15 var(--font-display); letter-spacing: -0.015em; }
   .intro__facts p { margin: 0; }
 
-  .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 28px; padding: 18px var(--pad); font-size: 15px; background: var(--ground); }
+  /* the footer: a section of its own after the closing frame (the scene leaves `foot` unset), where the
+     picture's "Book a demo" lands. Three filled cards in a row on the surface tone (the company, booking a
+     demo with the email and a Copy button, this season), then the links and the small print */
+  .foot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; padding: clamp(88px, 14svh, 150px) var(--pad) 32px; background: var(--ground); }
   .foot p { margin: 0; }
-  .foot nav { display: flex; gap: 24px; }
+  .foot__card { display: grid; grid-template-rows: auto 1fr auto; gap: 16px; min-height: 280px; padding: 36px; border-radius: 4px; background: var(--surface); }
+  .foot__card h2 { margin: 0; font: 600 clamp(22px, 1.7vw, 26px)/1.15 var(--font-display); letter-spacing: -0.015em; }
+  .foot__card p { max-width: 30ch; color: var(--muted); }
+  .foot__mail { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  .foot .foot__mail a { overflow-wrap: anywhere; color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+  .foot__copy { height: 40px; padding: 0 16px; border: 0; border-radius: 4px; background: var(--ink); color: var(--ground); font: 600 15px/1 var(--font-text); cursor: pointer; }
+  .foot .foot__more { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+  .foot__base { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 28px; margin-top: clamp(40px, 7svh, 72px); font-size: 16px; color: var(--muted); }
+  .foot__base nav { display: flex; flex-wrap: wrap; gap: 8px 28px; }
   .foot a, .credits-link { color: inherit; font: inherit; text-decoration: none; }
   .foot a:hover, .credits-link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .credits-link { padding: 0; border: 0; background: none; cursor: pointer; }
@@ -129,6 +141,8 @@
     .intro h1 { grid-column: 1 / -1; }
     .intro__lede { grid-column: 1 / span 5; }
     .intro__facts { grid-column: 8 / -1; }
+    .foot { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .foot__card { min-height: 0; padding: 32px; }
   }
   @media (max-width: 767px) {
     body { font-size: 17px; }
@@ -143,7 +157,8 @@
     .intro__pic--b { margin-top: 40px; }
     .intro__facts { margin-top: 16px; }
     .intro__facts { gap: 22px; }
-    .foot { padding: 16px; font-size: 14px; }
+    .foot { padding: 72px 16px 24px; }
+    .foot__card { padding: 28px; }
   }
 </style>
 </head>
@@ -173,7 +188,7 @@
     </ul>
   </section>
 
-  <section class="scene" id="close" data-scene="page-lifts-off-closing-picture" data-options='{"band":"auto","foot":".foot","lift":1,"dim":0}' style="--lift-band:#dff1ff; --lift-object:50% 52%" aria-labelledby="close-title">
+  <section class="scene" id="close" data-scene="page-lifts-off-closing-picture" data-options='{"band":"auto","lift":1,"dim":0}' style="--lift-band:#dff1ff; --lift-object:50% 52%" aria-labelledby="close-title">
     <div class="scene-stage">
       <div class="lift">
         <div class="lift-band">
@@ -196,12 +211,29 @@
 </main>
 
 <footer class="foot" id="demo">
-  <p>Demos on the harbour, weekdays 8 to 17. © 2026 Berthboard Oy</p>
-  <nav aria-label="Footer">
-    <a href="#how">How it works</a>
-    <a href="#close">Contact</a>
-    <button type="button" class="credits-link" onclick="document.getElementById('credits').showModal()">Image credits</button>
-  </nav>
+  <section class="foot__card" aria-labelledby="foot-who">
+    <h2 id="foot-who">Berthboard</h2>
+    <p>Berth bookings for small harbours, made in Korpilahti by people who keep boats there.</p>
+    <a class="foot__more" href="#how">How it works</a>
+  </section>
+  <section class="foot__card" aria-labelledby="foot-demo">
+    <h2 id="foot-demo">Book a demo</h2>
+    <p>Write with your harbour's name and we will show you its board on a call.</p>
+    <p class="foot__mail"><a href="mailto:hello@berthboard.fi">hello@berthboard.fi</a><button type="button" class="foot__copy" onclick="navigator.clipboard && navigator.clipboard.writeText('hello@berthboard.fi').then(() => { this.textContent = 'Copied'; })">Copy</button></p>
+  </section>
+  <section class="foot__card" aria-labelledby="foot-season">
+    <h2 id="foot-season">This season</h2>
+    <p>Forty-one guest harbours on the lakes take their berths on the board.</p>
+    <a class="foot__more" href="#close">See the board</a>
+  </section>
+  <div class="foot__base">
+    <nav aria-label="Footer">
+      <a href="#how">How it works</a>
+      <a href="#close">The board</a>
+      <button type="button" class="credits-link" onclick="document.getElementById('credits').showModal()">Image credits</button>
+    </nav>
+    <p>© 2026 Berthboard Oy, an invented company for a scene demo</p>
+  </div>
 </footer>
 <dialog class="credits" id="credits" aria-labelledby="credits-title">
   <h2 id="credits-title">Image credits</h2>
@@ -240,7 +272,7 @@
     const scene = document.getElementById('close');
     scene.querySelector('.lift-media').replaceWith(document.getElementById('ui-picture').content.cloneNode(true));
     scene.style.setProperty('--lift-band', '#e1e4e2');
-    scene.dataset.options = JSON.stringify({ band: 'token', foot: '.foot', lift: 1, dim: 0 });
+    scene.dataset.options = JSON.stringify({ band: 'token', lift: 1, dim: 0 });
     document.querySelector('#credits p').remove();
   }
   // the second row rises as it comes into view; nothing stays hidden if the observer never fires

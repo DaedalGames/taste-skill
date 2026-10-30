@@ -566,6 +566,114 @@ export function crops() {
   return out;
 }
 
+// Round 11b (the round-11 test pages: r11-p51, a motion designer's portfolio on seven grounds and panels, its work shown
+// as type cards, its footer read by the judge as one credit line). Each runs at the top of the page after the walk, on
+// desktop.
+//   grounds    the tones of the page's grounds and large panels: its own ground, every block across the width and every
+//              panel of 8% of a screen or more (a frame behind a picture is the picture; a product window counts by its
+//              own frame, which the sheet sets in the page's colours, and what is inside it is the product's), tones a
+//              step apart taken as one, and which of them is the page's, the ink, the accent or a dealt field (the
+//              dealt palette's, else the text's and the buttons') (surface-count)
+export function grounds(pal = null) {
+  const W = innerWidth, H = innerHeight, B = document.body, D = document.documentElement;
+  const memo = new Map(); const css = (e) => { let c = memo.get(e); if (!c) { c = getComputedStyle(e); memo.set(e, c); } return c; };
+  const rgba = (c) => { const s = String(c || ''); const k = s.match(/color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)(?:\s*\/\s*([-\d.e]+))?\s*\)/); if (k) return [k[1] * 255, k[2] * 255, k[3] * 255, k[4] != null ? +k[4] : 1]; const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+  const fromHex = (h) => (/^#[0-9a-f]{6}$/i.test(h || '') ? [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)) : null);
+  const hex = (c) => '#' + c.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+  const desc = (e) => e.tagName.toLowerCase() + (e.classList && e.classList.length ? '.' + [...e.classList].slice(0, 2).join('.') : '');
+  // (shown: laid out and at half its opacity or more, a layer faded away is not a ground)
+  const shown = (el) => { let o = 1; for (let e = el; e && e !== D; e = e.parentElement) { const cs = css(e); if (cs.display === 'none' || cs.visibility === 'hidden') return false; o *= +cs.opacity; } return o >= 0.5; };
+  // the distance between two tones in CIE Lab: under 8 is a step of one tone, under 3 the same tone to the eye
+  const lab = (c) => { const f = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; const [r, g, b] = c.slice(0, 3).map(f); const t = (v) => (v > 0.008856 ? Math.cbrt(v) : 7.787 * v + 16 / 116); const x = t((r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047), y = t(r * 0.2126 + g * 0.7152 + b * 0.0722), z = t((r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883); return [116 * y - 16, 500 * (x - y), 200 * (y - z)]; };
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  const near = (a, b) => dist(a, b) < 8;
+  const tones = []; const add = (c, area, where, wide) => { const k = hex(c); const t = tones.find((x) => x.hex === k); if (t) { t.area += area; t.wide = t.wide || wide; } else tones.push({ hex: k, lab: lab(c), area, where, wide }); };
+  const own = [B, D].map((e) => rgba(css(e).backgroundColor)).find((c) => c && c[3] >= 0.9) || [255, 255, 255, 1];
+  add(own, W * H, 'page', true);
+  let k = 0;
+  for (const el of B.querySelectorAll('*')) {
+    if (++k > 8000) break;
+    if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME|INPUT|BUTTON|SELECT|TEXTAREA|OPTION)$/.test(el.tagName) || el instanceof SVGElement) continue;
+    if (el.parentElement?.closest('[data-ui]') || el.closest('nav, dialog, [role=dialog]')) continue;
+    const c = rgba(css(el).backgroundColor); if (!c || c[3] < 0.9) continue;
+    const r = el.getBoundingClientRect(); if (Math.min(r.right, W) - Math.max(r.left, 0) < W * 0.1) continue;
+    const wide = r.width >= W * 0.94 && r.height >= 120;
+    if (!wide && r.width * r.height < W * H * 0.08) continue;
+    // (the site's bar, fixed or sticky over the page, is the navigation's business)
+    if (/fixed|sticky/.test(css(el).position) && r.height < H * 0.3) continue;
+    if (!shown(el) || [...el.querySelectorAll('img, video, canvas')].some((p) => { const q = p.getBoundingClientRect(); return q.width * q.height >= r.width * r.height * 0.85; })) continue;
+    add(c, r.width * r.height, desc(el), wide);
+  }
+  // the ink, the accent and the dealt fields: the dealt palette's, else the page's text and the fill its buttons carry most
+  let ink = fromHex(pal?.ink) || rgba(css(B).color), accent = fromHex(pal?.accent);
+  if (!accent) { const n = new Map(); for (const a of document.querySelectorAll('a, button')) { const c = rgba(css(a).backgroundColor), r = a.getBoundingClientRect(); if (!c || c[3] < 0.9 || r.height < 32 || r.height > 96 || r.width > W * 0.5) continue; n.set(hex(c), (n.get(hex(c)) || 0) + 1); } const top = [...n.entries()].sort((a, b) => b[1] - a[1])[0]; if (top) accent = fromHex(top[0]); }
+  const inkLab = ink ? lab(ink) : null, accentLab = accent ? lab(accent) : null, fieldLabs = (pal?.fields || []).map(fromHex).filter(Boolean).map(lab);
+  // tones a step apart are one, each joined to the largest tone of its group and never along a chain (greys stepped
+  // down the page one by one are each a ground): a block across the width joins a tone under 3 from it, a panel one
+  // under 8 (a card a step off its ground reads as that ground's surface)
+  const groups = [];
+  for (const t of [...tones].sort((a, b) => b.area - a.area)) {
+    const at = groups.map((g) => [g, dist(g[0].lab, t.lab)]).filter(([, d]) => d < (t.wide ? 3 : 8)).sort((a, b) => a[1] - b[1])[0];
+    if (at) at[0].push(t); else groups.push([t]);
+  }
+  return groups.map((g) => ({ hex: g[0].hex, where: g.find((x) => x.where === 'page') ? 'page' : g[0].where, n: g.length, share: +(g.reduce((s, x) => s + x.area, 0) / (W * H)).toFixed(2),
+    role: g.some((x) => x.where === 'page') ? 'page' : inkLab && g.some((x) => near(x.lab, inkLab)) ? 'ink' : accentLab && g.some((x) => near(x.lab, accentLab)) ? 'accent' : fieldLabs.some((f) => g.some((x) => near(x.lab, f))) ? 'field' : null }));
+}
+
+//   footing    the site's footer as built: the last <footer> or [role=contentinfo] outside the page's sections (else the
+//              last block named for a footer, else the last <footer> anywhere but in an article, a quote or a dialog: one
+//              built inside <main>), its height and the rows its words stand on (footer-not-as-dealt)
+export function footing() {
+  const SY = scrollY || 0;
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  const shows = (el) => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.1) return false; } return el.getClientRects().length > 0; };
+  const outside = (f) => !f.parentElement?.closest('main, section, article, footer, [data-scene], dialog, [role=dialog]');
+  const foot = [...document.querySelectorAll('footer, [role=contentinfo]')].filter((f) => outside(f) && shows(f)).pop()
+    || [...document.querySelectorAll('[class*=footer i], [id*=footer i]')].filter((f) => outside(f) && shows(f) && f.getBoundingClientRect().height >= 16).pop()
+    || [...document.querySelectorAll('footer, [role=contentinfo]')].filter((f) => !f.parentElement?.closest('article, blockquote, dialog, [role=dialog]') && shows(f)).pop();
+  if (!foot) return { found: false };
+  // its rows: the lines its words stand on, by their middles, 8px apart
+  const rows = []; const tw = document.createTreeWalker(foot, NodeFilter.SHOW_TEXT); const rg = document.createRange(); let n;
+  while ((n = tw.nextNode())) {
+    if (!norm(n.nodeValue) || !n.parentElement || n.parentElement.closest('dialog, [role=dialog], [aria-hidden=true], .sr-only, .visually-hidden') || !shows(n.parentElement)) continue;
+    rg.selectNodeContents(n); for (const q of rg.getClientRects()) { if (q.width < 2 || q.height < 2) continue; const m = (q.top + q.bottom) / 2 + SY; if (!rows.some((x) => Math.abs(x - m) <= 8)) rows.push(m); }
+  }
+  const r = foot.getBoundingClientRect();
+  return { found: true, sel: foot.tagName.toLowerCase() + (typeof foot.className === 'string' && foot.className.trim() ? '.' + foot.className.trim().split(/\s+/)[0] : ''), h: Math.round(r.height), rows: rows.length, text: norm(foot.innerText).slice(0, 60) };
+}
+
+//   work       on a portfolio page: the sections named for the work (by their id, label or first heading; never the hero,
+//              whose title is the page's, nor a heading about working, "How I work", "Let's work together", nor a block
+//              that holds other sections), the pictures of the work they show (a photograph or a film of 2% of a screen
+//              or more, each file once, shown or waiting on a hover), the slots marked for the client's own pictures
+//              anywhere on the page (data-slot="work", 2% of a screen or more, no picture in them yet) and the pieces
+//              set in type instead, a frame of words with no picture in it (portfolio-without-work)
+export function workShown() {
+  const W = innerWidth, H = innerHeight, SY = scrollY || 0;
+  const WORK = /\b(work|projects?|case[- ]stud\w*|frames?|stills?|portfolio|selected|showreel|reel|gallery)\b/i;
+  const NOT = /\b(how|way|where|why|when|what) (i|we) work\b|\bwork(ing)? (with|together)\b|\blet['’]?s work\b/gi;
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  const named = (s) => WORK.test([s.id.replace(/[-_]+/g, ' '), s.getAttribute('aria-label') || '', norm(document.getElementById(s.getAttribute('aria-labelledby') || '')?.innerText), norm(s.querySelector('h1, h2, h3')?.innerText)].join(' ').replace(NOT, ' '));
+  const hero = (s) => s.getBoundingClientRect().top + SY < H * 0.5;
+  const all = [...document.querySelectorAll('section, article, [data-scene], div[id]')].filter((s) => !s.closest('nav, footer, dialog, [role=dialog]') && !(s.tagName === 'DIV' && s.querySelector('section, [data-scene]')) && !hero(s) && named(s));
+  const secs = all.filter((s) => !all.some((o) => o !== s && o.contains(s)));
+  const files = new Set(), held = new Set(); let typeset = 0;
+  const slotted = (f) => f.closest('[data-slot="work"]') || f.querySelector('[data-slot="work"]');
+  for (const s of secs) {
+    for (const el of s.querySelectorAll('img, video, div, figure, a, li, span')) {
+      if (el.closest('[data-ui]') || getComputedStyle(el).display === 'none') continue;
+      const r = el.getBoundingClientRect(); if (r.width * r.height < W * H * 0.02) continue;
+      let src = null;
+      if (el.tagName === 'IMG') src = el.currentSrc || el.src; else if (el.tagName === 'VIDEO') src = el.currentSrc || el.getAttribute('src') || el.getAttribute('poster'); else { const m = getComputedStyle(el).backgroundImage.match(/url\(["']?([^"')]+)/); if (m) src = m[1]; }
+      if (src && !/^data:|\.svg(\?|#|$)/i.test(src)) { files.add(src.split(/[?#]/)[0]); held.add(el); }
+    }
+    for (const f of s.querySelectorAll('[data-ui], figure[role=img]')) if (!f.parentElement?.closest('[data-ui]') && !f.querySelector('img, video, picture') && !slotted(f) && norm(f.innerText)) typeset++;
+  }
+  // a marked slot counts as a piece of the work until the client's picture is in it (then the picture counts)
+  const slots = [...document.querySelectorAll('[data-slot="work"]')].filter((f) => { const r = f.getBoundingClientRect(); return r.width * r.height >= W * H * 0.02 && getComputedStyle(f).display !== 'none' && ![...held].some((e) => f.contains(e)); }).length;
+  return { sections: secs.map((s) => norm(s.querySelector('h1, h2, h3')?.innerText || s.id).slice(0, 40)), pictures: files.size, slots, typeset };
+}
+
 // deadControls: the controls of the first screen that change nothing when used (dead-control). A button, a field or a
 // link to "#" on the first screen, and in a product window anything drawn as a control (a field outlined round a few
 // words, a filled button of one to four words), is clicked once: it is alive when the page changes beyond what changes

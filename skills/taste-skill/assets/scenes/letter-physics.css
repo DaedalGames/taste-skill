@@ -1,9 +1,10 @@
-/* tasteskill / scenes / letter-physics.css — a claim bursts apart in 3D; an answer lands in the light.
+/* tasteskill / scenes / letter-physics.css — a claim bursts apart in 3D; an answer lands in paper on the dark.
    Default: the finished composition (reduced motion, no script, a phone set to 'rest'): the claim with
-   the two labels beside it, then a feathered disc of light with the answer set in it. Under .is-live:
-   the held stage, the claim at the centre, the pool of light behind it. The disc, the halo and the glow
-   are flat circles feathered by a blur, never gradients; the scrim is one flat translucent fill of the
-   ground.
+   the two labels beside it, then the answer under it, in paper on the dark. Under .is-live: the held stage,
+   the claim at the centre, the answer coming out of depth behind it. Only when the script is asked for a
+   light (light 'white', 'warm' or a colour: data-light="on") is there a disc, a halo and a glow, flat circles
+   feathered by a blur, with the answer in ink on them; the default has none. The scrim is one flat
+   translucent fill of the ground.
    Weights follow the page: --display-weight (the falling line; 750 here when the page sets none),
    --strong-weight (the label and the cue; 500 here when the page sets none) and --text-weight (the
    second line; 500 here when the page sets none). A weight the page has not loaded is never faked: the
@@ -25,6 +26,7 @@
   --lp-a-grow: 1.5;
   --lp-a-cap: min(calc(100vw - 444px), 13ch);
   --lp-lh: .92;
+  --lp-b-size: clamp(30px, 4.4vw, 64px);  /* the answer without the light: the script keeps it to two lines */
   --lp-d: min(72svh, 92vw);
   position: relative;
   background: var(--lp-g);
@@ -47,8 +49,8 @@
   padding: clamp(96px, 14svh, 160px) 48px clamp(64px, 10svh, 120px);
 }
 
-[data-scene="letter-physics"] .lp-bg { position: absolute; inset: 0; z-index: 0; opacity: .42; overflow: hidden; }
-[data-scene="letter-physics"][data-light="none"] .lp-bg { opacity: .7; }
+[data-scene="letter-physics"] .lp-bg { position: absolute; inset: 0; z-index: 0; opacity: .7; overflow: hidden; }
+[data-scene="letter-physics"][data-light="on"] .lp-bg { opacity: .42; }
 [data-scene="letter-physics"] .lp-bg-img { display: block; width: 100%; height: 100%; object-fit: cover; }
 [data-scene="letter-physics"] .lp-bg picture { display: contents; }
 [data-scene="letter-physics"] .lp-scrim {
@@ -137,9 +139,13 @@
 [data-scene="letter-physics"].is-live.is-active.is-baked .lp-halo,
 [data-scene="letter-physics"].is-live.is-active.is-baked .lp-core,
 [data-scene="letter-physics"].is-live.is-active.is-baked .lp-glow { will-change: transform, opacity; }
-[data-scene="letter-physics"][data-light="none"] .lp-disc,
-[data-scene="letter-physics"][data-light="none"] .lp-halo,
-[data-scene="letter-physics"][data-light="none"] .lp-core { display: none; }
+/* no light unless the script was asked for one (light 'white', 'warm' or a colour sets data-light="on"):
+   the default, and the finished composition without script, has no disc, halo or glow */
+[data-scene="letter-physics"]:not([data-light="on"]) .lp-disc,
+[data-scene="letter-physics"]:not([data-light="on"]) .lp-halo,
+[data-scene="letter-physics"]:not([data-light="on"]) .lp-core { display: none; }
+/* without the light the pool is only the answer's box, not a square of empty dark */
+[data-scene="letter-physics"]:not([data-light="on"]) .lp-pool { width: auto; max-width: 100%; aspect-ratio: auto; }
 
 /* the answer sits in the disc's solid core (0.6 D wide; three lines of 32px stay well inside it). 32px is
    the house ceiling for a sentence set large in a <p>; above it the inspector treats it as a headline. */
@@ -153,7 +159,16 @@
   text-align: center;
   text-wrap: balance;
 }
-[data-scene="letter-physics"][data-light="none"] .lp-b { color: var(--lp-paper); }
+/* the answer lands in paper on the dark; on the light (data-light="on") in ink. Without the disc it is not
+   held to the disc's core: set large (--lp-b-size) in two lines of up to 18em */
+[data-scene="letter-physics"]:not([data-light="on"]) .lp-b {
+  max-width: min(100%, 18em);
+  font-size: calc(var(--lp-b-px, var(--lp-b-size)) * var(--lp-b-fit, 1));
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  color: var(--lp-paper);
+}
+[data-scene="letter-physics"][data-light="on"] .lp-b { color: var(--lp-ink); }
 
 /* the labels sit beside the claim, at its middle */
 [data-scene="letter-physics"] .lp-labels { display: contents; }
@@ -200,6 +215,8 @@
   [data-scene="letter-physics"] .lp-space { grid-column: 1; }
   [data-scene="letter-physics"] .lp-pool { justify-self: stretch; width: auto; margin-inline: -16px; }
   [data-scene="letter-physics"] .lp-b { max-width: min(calc(var(--lp-d) * .58), 250px); font-size: 18px; line-height: 1.3; }
+  [data-scene="letter-physics"] { --lp-b-size: 24px; }
+  [data-scene="letter-physics"]:not([data-light="on"]) .lp-b { max-width: min(86vw, 340px); line-height: 1.2; }
   [data-scene="letter-physics"] .lp-labels { display: none; }
 }
 
@@ -270,4 +287,13 @@ html.js [data-scene="letter-physics"].is-live > .scene-stage {
   [data-scene="letter-physics"].is-live .lp-pool { perspective: 700px; }
   [data-scene="letter-physics"].is-live .lp-labels { display: none; }
   [data-scene="letter-physics"].is-live .lp-b { max-width: min(calc(var(--lp-d) * .56), 250px); font-size: 20px; }
+  [data-scene="letter-physics"].is-live:not([data-light="on"]) .lp-b { max-width: calc(100vw - 32px); font-size: calc(var(--lp-b-px, var(--lp-b-size)) * var(--lp-b-fit, 1)); }
+}
+/* live, without the light: the answer at the claim's size (--lp-b-px, set by the script) keeps the claim's
+   own measure, clear of both screen edges */
+[data-scene="letter-physics"].is-live:not([data-light="on"]) .lp-b { max-width: min(var(--lp-a-max, 86vw), 18em); line-height: 1.02; letter-spacing: -.03em; }
+/* and it lands a little above the middle, in the dark of the picture's sky, clear of the lit building under it */
+[data-scene="letter-physics"].is-live:not([data-light="on"]) .lp-pool { padding-bottom: 14svh; }
+@media (max-width: 767px) {
+  [data-scene="letter-physics"].is-live:not([data-light="on"]) .lp-b { max-width: calc(100vw - 32px); }
 }

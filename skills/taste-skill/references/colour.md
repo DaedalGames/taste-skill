@@ -58,8 +58,9 @@ Decide the shares before colouring anything and check them in the screenshot:
 - **Accent:** under 5% of any screen. It marks the action and at most one other recurring thing. The
   moment it appears in five places it stops meaning "here".
 
-Palettes with fields (flat-loud, pastel) work differently: each section is one field at full strength
-and the proportion rule applies inside each section (field, its ink, nothing else).
+Palettes with fields (flat-loud, pastel) are dealt only to bold or playful pages, with two fields at
+most, the ink and the accent: each of those sections is one field at full strength and the proportion
+rule applies inside it (field, its ink, nothing else).
 
 The accent is not for headings, icons, bullets, borders or underlines unless the direction sheet says
 so. A headline is ink.
@@ -76,9 +77,13 @@ With rules and shadows banned, a surface is told apart from the ground by tone a
 
 - One step is enough. If a panel does not read, increase padding or separate with space before
   reaching for a second tone.
-- Three grounds at most: the page ground, the surface one step from it, and the dealt field. A sheet
-  or card in any other colour (a white receipt on grey, a paper slip on black) is a fourth surface
-  (the inspector warns, `surface-count`).
+- Two grounds: the page ground and the surface one step from it. A dealt field is a band in the ink
+  or the accent for one section at most. Nothing else grounds a section, a card or a panel: no tint
+  between the two, no colour per section, no new tone for cards that overlap or stack (they take the
+  surface and the ink in turn). A portfolio page that used seven grounds and panels read as sprawl;
+  a sheet or card in any other colour, a white receipt on grey, is one more. The inspector counts the
+  tones of grounds and large panels, the ink, the accent and a dealt field aside: four warn, five fail
+  (`surface-count`). Where a palette's note names more grounds, the sheet's tokens win.
 - Do not nest a panel inside a panel.
 - Images do not need a frame. If a light photograph melts into a light ground, change the crop or set
   it on `--surface`, do not outline it.
@@ -88,14 +93,16 @@ With rules and shadows banned, a surface is told apart from the ground by tone a
 ## 5. Colour fields
 
 A section that changes the whole ground colour is the strongest colour move available, and it replaces
-dividers, cards and background decoration at once.
+dividers, cards and background decoration at once. On a page it is the band the sheet deals: the ink
+or the accent, one section at most each (§4), never a colour of its own.
 
-- Fields meet edge to edge with a hard line. Nothing fades.
+- A band meets the sections beside it edge to edge with a hard line. Nothing fades.
 - Every field has its own assigned ink from the palette. Never put `--muted` on a coloured field; use
   the field's ink at full strength, or at 70% opacity for secondary text if it still passes contrast.
-- Neighbouring fields should differ in lightness, not only in hue, or the page vibrates.
-- Order them like chapters: open strong, rest, surprise, close dark or very light.
-- The page's meta theme colour and the navigation follow the first field.
+- A band differs from its neighbours in lightness, not only in hue, or the page vibrates.
+- Put it where the page needs its one strong break (a figure, a statement, the close), never two
+  bands side by side.
+- The page's meta theme colour and the navigation follow the ground of the first screen.
 
 ## 6. Dark pages
 
@@ -118,7 +125,9 @@ dividers, cards and background decoration at once.
   gradient over a picture, no milky or dark fade (the inspector fails it): at most a flat dark scrim,
   black at 40–55%, over the text area only, on a dark page as on a light one (a pale ink scrim reads
   as fog).
-- A flat field sampled from a photograph (its sky, its shadow) makes a section sit with that image.
+- A section sits with its photograph when the band beside it is the ink or the accent the picture
+  already holds; never a new field sampled from a photograph (its sky, its shadow): that is a third
+  ground (`surface-count`).
 
 ## 8. Contrast
 

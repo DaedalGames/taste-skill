@@ -61,10 +61,18 @@
   .intro__fig--studio { grid-column: 8 / span 5; grid-row: 1 / span 2; align-self: start; margin-top: clamp(8px, 2svh, 24px); }
   .intro__fig--wheel { grid-column: 5 / span 3; grid-row: 2; align-self: start; margin-top: clamp(120px, 22svh, 240px); }
 
-  /* the footer keeps some room under the closing scene, so the page lets go of the landed jug gently */
-  .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 28px; padding: clamp(56px, 10svh, 110px) var(--pad); font-size: 15px; background: var(--ground); color: var(--ink); }
+  /* the footer: a section of its own after the closing frame, set apart from the landed jug by the ink. Large
+     links: the page's parts and the contact stacked at the h2 step in the display face on the left two thirds,
+     each moving a little and taking the accent's light tint on hover; the studio's email and town on the right
+     third; the small print at the foot */
+  .foot { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(16px, 2vw, 28px); row-gap: clamp(64px, 11svh, 120px); margin-top: clamp(48px, 8svh, 96px); padding: clamp(80px, 13svh, 140px) var(--pad) 32px; background: var(--ink); color: var(--ground); }
   .foot p { margin: 0; }
-  .foot nav { display: flex; gap: 24px; }
+  .foot__links { grid-column: 1 / span 8; display: grid; justify-items: start; gap: 4px; }
+  .foot .foot__links a { font: 700 clamp(40px, 4.4vw, 64px)/1.08 var(--font-display); font-stretch: var(--display-stretch); letter-spacing: -0.02em; transition: transform 220ms ease, color 220ms ease; }
+  .foot .foot__links a:hover { color: #a9c3e8; text-decoration: none; transform: translateX(8px); }
+  .foot__studio { grid-column: 9 / -1; align-self: end; display: grid; gap: 12px; }
+  .foot__studio .foot__mail { text-decoration: underline; text-underline-offset: 4px; }
+  .foot__base { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 28px; font-size: 16px; color: #b9c0c3; }
   .foot a, .credits-link { color: inherit; font: inherit; text-decoration: none; }
   .foot a:hover, .credits-link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .credits-link { padding: 0; border: 0; background: none; cursor: pointer; }
@@ -91,7 +99,7 @@
   @media (max-width: 767px) {
     body { font-size: 17px; }
     .bar { gap: 10px 16px; padding: 14px 16px; font-size: 16px; }
-    .bar__mark { font-size: 23px; }
+    .bar__mark { font-size: 22px; }
     .bar__order { height: 44px; padding: 0 16px; }
     .intro { min-height: calc(100svh - 72px); align-content: start; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; padding: 28px 16px 88px; }
     .intro h1 { grid-column: 1 / -1; font-size: clamp(54px, 16vw, 80px); }
@@ -100,7 +108,11 @@
     .intro__fig--studio { grid-column: 1; grid-row: 3; margin-top: 32px; }
     .intro__fig--wheel { grid-column: 2; grid-row: 3; margin-top: 32px; }
     .intro__fig figcaption { font-size: 15px; }
-    .foot { padding: 64px 16px; font-size: 15px; }
+    .foot { grid-template-columns: minmax(0, 1fr); row-gap: 48px; padding: 72px 16px 24px; }
+    .foot__links, .foot__studio { grid-column: 1; }
+    .foot__links { justify-items: stretch; }
+    .foot .foot__links a { font-size: clamp(34px, 10vw, 44px); }
+    .foot__base p { flex: 1 1 12em; }
   }
 </style>
 </head>
@@ -158,11 +170,20 @@
 </main>
 
 <footer class="foot">
-  <p>Hollin, ceramics for the table</p>
-  <nav aria-label="Footer">
+  <nav class="foot__links" aria-label="Footer">
     <a href="#jug">The jug</a>
-    <button type="button" class="credits-link" onclick="document.getElementById('credits').showModal()">Image credits</button>
+    <a href="#studio">The studio</a>
+    <a href="#order">Order</a>
+    <a href="mailto:studio@hollinceramics.com">Write to us</a>
   </nav>
+  <div class="foot__studio">
+    <p>Hollin, ceramics for the table, thrown one at a time.</p>
+    <p><a class="foot__mail" href="mailto:studio@hollinceramics.com">studio@hollinceramics.com</a></p>
+  </div>
+  <div class="foot__base">
+    <p>An invented studio, made for a scene demo</p>
+    <button type="button" class="credits-link" onclick="document.getElementById('credits').showModal()">Image credits</button>
+  </div>
 </footer>
 <dialog class="credits" id="credits" aria-labelledby="credits-title">
   <h2 id="credits-title">Image credits</h2>

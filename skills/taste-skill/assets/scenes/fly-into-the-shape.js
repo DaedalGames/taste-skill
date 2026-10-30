@@ -58,7 +58,8 @@
 // they are missing. fill-rule="evenodd" on the path is honoured.
 //
 // Options (data-options JSON; defaults, ranges):
-//   dir        "in"     "in" | "out"   prefer the data-dir attribute, which the CSS also reads
+//   dir        "in"     "in" | "out"   prefer the data-dir attribute, which the CSS also reads; only "out" is
+//                                 dealt ("in" leaves its mark riding over bare paper for about a screen)
 //   hold       1.4      1.4-2.6   screens the stage is held on desktop (both directions; "in" held 2
 //                                 before round 11, two screens of a small mark on bare paper)
 //   phoneHold  1.2      1.2-2.4   screens on a phone (under 768px)

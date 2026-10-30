@@ -135,7 +135,7 @@
   line-height: 1.36;
   text-wrap: pretty;
 }
-[data-scene="peel-tear-and-drag"] .drag-new__who { margin: 14px 0 0; font-size: 16px; line-height: 1.4; }
+[data-scene="peel-tear-and-drag"] .drag-new__who { margin: 14px 0 0; font-size: 18px; line-height: 1.4; }
 [data-scene="peel-tear-and-drag"] .drag-new__who b { font-weight: var(--strong-weight, 700); }
 [data-scene="peel-tear-and-drag"] .drag-new__aside {
   grid-column: 6 / 7;
@@ -258,17 +258,20 @@ html.js [data-scene="peel-tear-and-drag"].is-live[data-dir="rtl"] .drag-new {
 }
 html.js [data-scene="peel-tear-and-drag"].is-live[data-dir="rtl"] :is(.drag-new__inner, .drag-rig--shadow) { left: 0; }
 
-/* the veil, live: the pieces close into a deck over the photo (never over the new page). The first two sit
-   in the right half, clear of the closing line; the rest fill the frame round where the plane will cross. */
+/* the veil, live: the pieces close into a broken deck over the photo (never over the new page). The first two
+   sit in the right half, clear of the closing line; the rest fill the frame round where the plane will cross.
+   Widths are shares of a 1440 box, each at two thirds of its own cut-out's width or less, so every piece is
+   shown at 1.5x or more on a desktop (the demo's pieces are 1000-1300px: 46% for a 1000px one, 55% for 1200,
+   60% for 1300). A wider piece wants a wider cut-out. */
 html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil { inset: 0; height: auto; }
 html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece { bottom: auto; }
-html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(1) { left: 58%; top: 20%; width: 68%; }
-html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(2) { left: 58%; top: -42%; width: 68%; }
-html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(3) { left: -23%; top: -9%; width: 66%; }
-html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(4) { left: -11%; top: 38%; width: 74%; }
-html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(5) { left: 11%; top: -15%; width: 68%; }
-html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(6) { left: 17%; top: 5%; width: 40%; }
-html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(7) { left: 40%; top: 67%; width: 54%; }
+html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(1) { left: 54%; top: 22%; width: 55%; }
+html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(2) { left: 58%; top: -24%; width: 46%; }
+html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(3) { left: -9%; top: -10%; width: 46%; }
+html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(4) { left: -8%; top: 48%; width: 60%; }
+html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(5) { left: 21%; top: -8%; width: 53%; }
+html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(6) { left: 6%; top: 28%; width: 40%; }
+html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(7) { left: 36%; top: 56%; width: 54%; }
 
 /* ---------- phone: the same idea, vertical ---------- */
 @media (max-width: 767px) {
@@ -301,8 +304,8 @@ html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(7)
   [data-scene="peel-tear-and-drag"] .drag-new__title { font-size: clamp(36px, 10vw, 48px); font-stretch: 100%; }
   [data-scene="peel-tear-and-drag"] .drag-new__items { row-gap: 22px; }
   [data-scene="peel-tear-and-drag"] .drag-new__items blockquote p { font-size: 17px; }
-  [data-scene="peel-tear-and-drag"] .drag-new__who { margin-top: 8px; }
-  [data-scene="peel-tear-and-drag"] .drag-new__aside { font-size: 16px; }
+  [data-scene="peel-tear-and-drag"] .drag-new__who { margin-top: 8px; font-size: 17px; }
+  [data-scene="peel-tear-and-drag"] .drag-new__aside { font-size: 17px; }
   [data-scene="peel-tear-and-drag"] .drag-new__figure { grid-column: 1 / 4; grid-row: auto; margin: 4px 0 0; aspect-ratio: 4 / 3; }
   [data-scene="peel-tear-and-drag"][data-dense] .drag-new__items { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; }
   [data-scene="peel-tear-and-drag"][data-dense] .drag-new__items blockquote p { font-size: 16px; }
@@ -336,7 +339,7 @@ html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(7)
   /* the first two pieces come in low (in the bottom half, clear of the line at the top); the next two close the top */
   html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(1) { left: -19%; right: auto; top: 51%; width: 162%; }
   html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(2) { left: -30%; right: auto; top: 50%; width: 100%; }
-  html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(3) { left: -34%; right: auto; top: -15%; width: 198%; }
+  html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(3) { left: -20%; right: auto; top: -12%; width: 170%; }
   html.js [data-scene="peel-tear-and-drag"].is-live .drag-veil__piece:nth-child(4) { display: block; left: -26%; right: auto; top: 11%; width: 198%; }
   html.js [data-scene="peel-tear-and-drag"].is-live .drag-new__inner { grid-template-rows: auto auto auto minmax(0, 1fr); padding-bottom: 0; }
   html.js [data-scene="peel-tear-and-drag"].is-live .drag-new__figure { aspect-ratio: auto; min-height: 0; margin: 0; }

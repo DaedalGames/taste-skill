@@ -12,7 +12,7 @@
 // Needs gsap + ScrollTrigger (no SplitText), stage.js and closing-object-turns.css.
 //
 // ── DOM ───────────────────────────────────────────────────────────────────────────────────────────
-// <section class="scene" id="close" data-scene="closing-object-turns" data-options='{"foot":".foot"}'
+// <section class="scene" id="close" data-scene="closing-object-turns" data-options='{}'
 //          aria-labelledby="cot-title">
 //   <div class="scene-stage">
 //     <div class="cot">
@@ -37,7 +37,8 @@
 //     </div>
 //   </div>
 // </section>
-// <footer class="foot">…one plain line…</footer>       optional, passed as `foot`
+// <footer>…the page's designed footer, a section of its own: it follows the finished frame, on the
+//    closing ground…</footer>
 // The script adds a flat shade on each face (.cot-shade).
 //
 // ── Options (data-options JSON; a value that is not a number or not known falls back) ──────────────
@@ -62,10 +63,11 @@
 //   phoneLift 0     (0-0.06)    the same on a phone, where the object fills the width
 //   size      0.92  (0.7-0.96)  share of the stage height the object fills on a wide screen
 //   shade     0.3   (0-0.45)    how dark a face gets edge-on (a flat shade, no light moves)
-//   foot      a selector for a plain footer line after the scene. It is pulled up over the stage's foot,
-//             so the last pixel of scroll is the landed object (no stage scrolling off, no dead strip);
-//             it sits beside the object where there is room, and the object moves up to clear it where
-//             there is not (phones, tablets). Give the footer a transparent ground while live.
+//   foot      unset (the default): the scene ends at its own bottom and the page's designed footer follows
+//             it. A selector pulls that element up over the stage's foot, so the last pixel of scroll is
+//             the landed object; it sits beside the object where there is room, and the object moves up to
+//             clear it where there is not (phones, tablets). Only for a page that ends on the scene with one
+//             plain line, which a page dealt a footer never does.
 //   scrub     true (locked to the scrollbar) | seconds 0.1-1
 //   phone     'same' (default) | 'rest'
 //

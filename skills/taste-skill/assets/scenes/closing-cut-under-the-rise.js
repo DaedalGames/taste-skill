@@ -17,7 +17,7 @@
 //
 // ── DOM ───────────────────────────────────────────────────────────────────────────────────────────
 // <section class="scene" id="close" data-scene="closing-cut-under-the-rise"
-//          data-options='{"foot":".foot","place":"top-right"}' aria-labelledby="ccr-line">
+//          data-options='{"place":"top-right"}' aria-labelledby="ccr-line">
 //   <div class="scene-stage">
 //     <div class="ccr">
 //       <div class="ccr-world">                                   the camera's world: it rises and settles
@@ -44,7 +44,7 @@
 //     </div>
 //   </div>
 // </section>
-// <footer class="foot">…one plain line…</footer>                  optional, passed as `foot`
+// <footer>…the page's designed footer, a section of its own: it follows the finished frame…</footer>
 // The script adds the flat room (.ccr-ground holding .ccr-floor) inside .ccr-world.
 //
 // data-subject on the img and on each <source>: "x y", the subject's centre across and its foot, as shares
@@ -93,8 +93,10 @@
 //   tint     'auto' | 'token'   auto: the wall and floor tints are the medians of the photograph's own
 //            wall and floor (a band above and below the floor line, as cropped on this screen; the picture
 //            must be same-origin or CORS-enabled). token: --ccr-wall and --ccr-floor.
-//   foot     a selector for a plain footer line after the scene; it is pulled up over the stage's foot so
-//            the scroll ends on the finished frame (no stage scrolling off, no dead strip)
+//   foot     unset (the default): the scene ends at its own bottom and the page's designed footer follows
+//            it. A selector pulls that element up over the stage's foot so the scroll ends on the finished
+//            frame: only for a page that ends on the scene with one plain line, which a page dealt a footer
+//            never does
 //   scrub    true (locked to the scrollbar) | seconds 0.1-1
 //   phone    'same' (default) | 'rest'
 //

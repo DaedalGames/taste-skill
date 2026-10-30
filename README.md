@@ -160,7 +160,7 @@ npx skills add https://github.com/Leonxlnx/taste-skill-classics --skill "high-en
 Node 22 or newer and Chrome, Edge or Chromium. It installs nothing and uses no API keys. It needs the internet only to find pictures.
 
 **Where do the pictures come from, and can I use them?**  
-From open collections such as Wikimedia Commons, Openverse and the Met. Only public domain, CC0, CC BY and CC BY-SA files are offered, and the skill puts the credits on the page. Replace them with your own when you have them.
+From the skill's own library of modern photographs, and from open collections (Openverse for pictures, Wikimedia Commons and NASA for footage). Only public domain, CC0, CC BY and CC BY-SA files are offered, and the skill credits them in an Image credits dialog on the page. Replace them with your own when you have them.
 
 **Does it work with React, Vue, Svelte, plain HTML?**  
 Yes. The rules are about design, not a framework.

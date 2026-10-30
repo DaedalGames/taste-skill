@@ -129,10 +129,17 @@ On 29 October 2026 the owner looked at the test pages himself. What he named, an
 | An announcement or information strip above the navigation | failed (`announcement-bar`) | Nothing above the bar |
 | A sentence in the navigation | failed (`nav-sentence`, also any link or button over three words) | One- or two-word links |
 | Text floating with no card or container where it belongs to a group | critique.md | The dealt card style for the group |
-| A one-line footer | not dealt | A designed footer section |
+| A one-line footer | not dealt; where section 0 dealt a footer, one row of words or under 160px at 1440 fails (`footer-not-as-dealt`) | The footer section 0 deals, built as described |
 | Documentary or archive photographs: old Commons or museum pictures, postcards, old maps, news-like shots | banned | Modern, well-lit photographs (the library's), or none |
 | Too much text: long supporting lines, paragraphs, a heading and two sentences over every list | warned over the budget, failed past 1.5 times (`wordy-hero`, `hero-words`, `wordy-section`, `wordy-page`) | The first screen 30 words, a section 60, the page about 500 |
 | A headline that repeats the logo beside it; two buttons to the same place on one screen | critique.md | The name once on the first screen; one action once a block |
+
+The round-11 test pages (30 October 2026) showed two more:
+
+| Tell | Status | Do instead |
+| --- | --- | --- |
+| A new ground or panel colour for each section or card | warned at four tones on grounds and large panels, failed at five (`surface-count`; the ink, the accent and a dealt field do not count) | The ground and one surface tone; the ink, the accent or the field as bands |
+| A portfolio whose work is type cards, no picture of the work | warned under three pictures or marked slots in the work (`portfolio-without-work`) | Frames, stills or films of the work; `data-slot="work"` frames where the client's own are missing |
 
 ## 6. Copy tells
 

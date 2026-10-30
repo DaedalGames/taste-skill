@@ -1,6 +1,130 @@
 {
  "source": "Lorem Picsum (https://picsum.photos): photographs from Unsplash, used under the Unsplash licence",
  "url": "https://picsum.photos/id/{id}/{width}/{height}",
+ "tradesNote": "What a trade's pictures show and must not show, matched against each photograph's alt. The trade the brief names first applies; the other trades it names are its own too (a bakery and cafe shows its coffee), and so are the dishes of a restaurant or of a brief with a kitchen (dishes): their things are never banned. The deal leaves out a neighbouring trade's things (off), a landmark the brief does not name, a photograph that shows a logo, a house number or a plate (unusable), and the trade's stock shot. It deals the trade's things first, the ones least dealt lately leading, then at most two of its place; a place leads only where the library holds none of its things, and never on a product page. A portfolio is dealt none of the things (its work is its own) and one of its place at most. Where a trade lists places ([brief pattern, place pattern]), the first the brief names is its place (a guesthouse on a fjord is shown by the sea, never a whitewashed village). A brief with no listed trade is matched by its own words. A set marked matchOnly (each photograph one trade's hands or one object) gives only the photographs that name the brief's own things; the people set (marked people) never stands for a listed trade's things or place, since a person there would pass for a guest or a customer.",
+ "trades": [
+  {
+   "id": "coffee",
+   "name": "coffee",
+   "brief": "\\b(?:coffee(?! tables?\\b)|espresso|roaster(?:y|ies)?|roasting)\\b|\\bcaf[eé]s?(?!\\p{L})",
+   "show": "the coffee and its making: a cup poured at the bar, the counter, the roaster at work where it roasts its own",
+   "not": "wine, beer, cocktails or tea; a restaurant's plated food; a bakery's bread",
+   "things": "\\b(?:coffee|espresso|flat white|cappuccino|latte|barista|roast\\w*|kettle|dripper|counter)\\b|\\bcaf[eé]s?(?!\\p{L})",
+   "place": "\\b(?:city streets?|(?:wet|rainy|night) streets?|street lamps?|tram|canal|brick|alley lit)\\b",
+   "off": "\\b(?:wine|grapes?|beer|cocktails?|tea|teapot|salad|vegetables|berries|strawberries|raspberries|honey|pasta|bed|bedside|bedding|towels?)\\b"
+  },
+  {
+   "id": "bakery",
+   "name": "bread",
+   "brief": "\\b(?:bakery|bakeries|bakers?|bread|patisserie|pastry|pastries|sourdough)\\b",
+   "show": "the bread and its making: dough on the bench, loaves out of the oven, the counter",
+   "not": "coffee as the subject; a restaurant's plated food; wine or beer",
+   "things": "\\b(?:bread|loaf|loaves|dough|flour|pastry|pastries|oven|bak\\w*|croissants?)\\b",
+   "place": "\\b(?:city streets?|(?:wet|rainy) streets?|tram|canal|brick)\\b",
+   "off": "\\b(?:wine|grapes?|beer|cocktails?|salad|vegetables|bed|bedside|bedding)\\b"
+  },
+  {
+   "id": "wine",
+   "name": "wine",
+   "brief": "\\b(?:wines?|winery|wineries|vineyards?|winemak\\w*)\\b",
+   "show": "the wine and where it grows: the vines, the grapes at harvest, the cellar, a glass poured at the table",
+   "not": "beer, coffee or spirits; a cocktail bar",
+   "things": "\\b(?:wines?|grapes?|vines?|vineyards?|cellar|barrels?|harvest)\\b",
+   "place": "\\b(?:vineyards?|rolling [\\w-]+ hills|golden hills)\\b",
+   "off": "\\b(?:beer|coffee|espresso|cocktails?|tea|teapot|fog|mist|hay|balloons?|plough\\w*|tractor|sheep|frost\\w*)\\b"
+  },
+  {
+   "id": "beer",
+   "name": "beer",
+   "brief": "\\b(?:beers?|brewer(?:y|ies)|brewing|taprooms?)\\b",
+   "show": "the beer and its making: the brewhouse, the tanks, malt and hops in a hand",
+   "not": "wine, coffee or cocktails",
+   "things": "\\b(?:beers?|brew\\w*|hops|malt|barley|tanks?)\\b",
+   "place": "\\b(?:city streets?|(?:wet|rainy|night) streets?|street lamps?|tram|canal|brick|alley lit)\\b",
+   "off": "\\b(?:wine|grapes?|coffee|espresso|tea|teapot)\\b"
+  },
+  {
+   "id": "stay",
+   "name": "house",
+   "brief": "\\b(?:guest ?houses?|hotels?|inns?|hostels?|b&bs?|lodges?|cabins?|holiday homes?)\\b",
+   "show": "the house and where it stands: the shore, the mountain or the village, its rooms, the view from a window",
+   "not": "a city skyline; a pool at sunset; an office",
+   "things": "\\b(?:cabins?|cottages?|huts?|farmhouses?|guest ?houses?|(?:wooden|white|red|black) houses?)\\b",
+   "place": "\\b(?:fjords?|coast\\w*|shores?|sea|bay|harbou?r|mountains?|valley|village|snow\\w*|lake|meadow)\\b",
+   "places": [
+    [
+     "\\b(?:fjords?|coast\\w*|sea|shores?|bay|harbou?r|island)",
+     "\\b(?:fjords?|coast\\w*|sea|bay|harbou?r)\\b"
+    ],
+    [
+     "\\b(?:mountains?|alp\\w*|valley|peaks?|ski\\w*)",
+     "\\b(?:mountains?|valley|peaks?|snow\\w*|alpine)\\b"
+    ],
+    [
+     "\\b(?:lakes?|loch)",
+     "\\b(?:lakes?|shores?)\\b"
+    ],
+    [
+     "\\b(?:forest|woods?|woodland)",
+     "\\b(?:forest|woods?|pines?|trees)\\b"
+    ]
+   ],
+   "off": "\\b(?:pool|office|desk|laptop|city|street|apartment|lifeguard|cafe|balloons?|desert|dunes?|sunsets?)\\b"
+  },
+  {
+   "id": "bike",
+   "name": "bike",
+   "brief": "\\b(?:cargo ?bikes?|e-?bikes?|bicycles?|bikes?|cycling)\\b",
+   "show": "the ride and the load: a parent riding with children in the box (from behind or far off), the box with shopping or a crate, the school run, the city street; another maker's bike only cropped, unbranded or out of focus",
+   "not": "cars, vans, motorbikes or scooters; a road or racing bike; a trike when the bike has two wheels; another maker's name or logo",
+   "things": "\\b(?:bicycles?|bikes?|cycl\\w*|cargo|baskets?|crates?|shopping)\\b",
+   "place": "\\b(?:city streets?|(?:wet|rainy) streets?|canal|brick|park|school|cycle (?:lanes?|paths?))\\b",
+   "off": "\\b(?:cars?|vans?|trucks?|camper|motor\\w*|scooters?|aircraft|fuselage|balloons?|cable cars?|gondolas?|skateboard\\w*|skatepark)\\b"
+  },
+  {
+   "id": "furniture",
+   "name": "furniture",
+   "brief": "\\b(?:furniture|cabinetmak\\w*|joiner(?:y|s)?|chairs?|(?:coffee|dining|side) tables?|interior design\\w*)\\b",
+   "show": "the pieces in use in a room, the joints and the materials close (oak, linen, steel), the workshop",
+   "not": "another maker's showroom; food on a table as the subject",
+   "things": "\\b(?:chairs?|stools?|sofas?|cabinets?|shel(?:f|ves)|dining table|tufted bench)\\b",
+   "place": "\\b(?:rooms?|interiors?)\\b",
+   "off": "\\b(?:lifeguard|beach|deck|street|food|pastry|nuts|bowls?|coffee|cups?|mugs?|berries|vegetables|salad|honey|bedding)\\b"
+  },
+  {
+   "id": "motion",
+   "name": "films",
+   "brief": "\\b(?:motion (?:design\\w*|graphics)|animat(?:or|ors|ion|ions)|film ?makers?|filmmaking)\\b",
+   "show": "frames and stills of its own films, large",
+   "not": "a mixing desk or a microphone (that is sound); a camera on a tripod; a typewriter",
+   "things": "\\b(?:screens?|projector|cinema)\\b",
+   "off": "\\b(?:mixing|faders|console|microphones?|turntable|vinyl|record|cameras?|typewriter)\\b"
+  },
+  {
+   "id": "ceramics",
+   "name": "ceramics",
+   "brief": "\\b(?:pottery|potters?|ceramics?|ceramicists?|stoneware)\\b",
+   "show": "clay on the wheel, glaze, the kiln, finished pieces on a shelf or a table",
+   "not": "food on plates as the subject; another trade's hands",
+   "things": "\\b(?:clay|glaze\\w*|kiln|ceramics?|pottery|potter(?:'s wheel)?|stoneware)\\b",
+   "off": "\\b(?:food|salad|vegetables|berries|honey)\\b"
+  }
+ ],
+ "landmarks": [
+  "skyline",
+  "skyscraper",
+  "bridge",
+  "cathedral",
+  "church",
+  "ferris wheel",
+  "lighthouse",
+  "tower"
+ ],
+ "dishes": {
+  "brief": "\\b(?:kitchen|lunch|dinner|brunch|breakfast|bistro|restaurants?|dish(?:es)?|menus?)\\b",
+  "things": "\\b(?:food|plated|dish(?:es)?|salad|vegetables|berries|strawberries|raspberries|honey|pasta|soup)\\b"
+ },
+ "unusable": "\\b(?:logos?|house numbers?|licence plates?|number plates?|shop signs?)\\b",
  "sets": {
   "fog-and-quiet": {
    "title": "Fog and quiet",
@@ -4318,7 +4442,7 @@
     },
     {
      "id": 946,
-     "alt": "Yellow brick house front with a dark green door and window",
+     "alt": "Yellow brick house front with a dark green door, a window and the house number 2",
      "tone": "mid",
      "colours": [
       "ochre yellow",
@@ -5376,6 +5500,22 @@
      "ratio": 1.5,
      "by": "veeterzy",
      "page": "https://unsplash.com/photos/OJJIaFZOeX4"
+    },
+    {
+     "id": 431,
+     "alt": "Flat white with latte art in a black cup, seen from the side on a dark wooden bar beside a brass bell and printed receipts on a spike",
+     "tone": "dark",
+     "colours": [
+      "brown",
+      "cream",
+      "brass"
+     ],
+     "mono": false,
+     "calm": "top",
+     "quality": 4,
+     "ratio": 1.5,
+     "by": "Carli Jean",
+     "page": "https://unsplash.com/photos/UWRqlJcDCXA"
     }
    ]
   },
@@ -5404,6 +5544,7 @@
     "record",
     "watch"
    ],
+   "matchOnly": true,
    "photos": [
     {
      "id": 63,
@@ -5604,6 +5745,7 @@
     "physical-product",
     "ecommerce"
    ],
+   "matchOnly": true,
    "photos": [
     {
      "id": 304,
@@ -5752,6 +5894,7 @@
     "nonprofit",
     "education"
    ],
+   "people": true,
    "photos": [
     {
      "id": 177,

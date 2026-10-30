@@ -25,9 +25,11 @@
 //     <div class="scene-stage">
 //       <h2 class="ofr-heading" id="ofr-h">Section heading, two lines at most</h2>
 //       <div class="ofr-figure">                                     the one window
-//         <div class="ofr-pane" data-shape="bar">                    one pane per chapter, in order
-//           <div class="ui" data-ui role="img" aria-label="…">…</div>  the product's interface for this job,
-//         </div>                                                       its late parts marked data-build
+//         <div class="ofr-pane" data-shape="bar" data-ui role="img" aria-label="…">   one pane per chapter, in
+//                                                                      order: the accent window is the
+//                                                                      product's window (data-ui on the pane)
+//           <div class="ui">…</div>                                    its interface for this job, straight on
+//         </div>                                                       the accent, late parts marked data-build
 //         <div class="ofr-pane" data-shape="disc"><img src="…" alt="…" width="…" height="…"></div>   or a photograph
 //         …
 //       </div>
@@ -44,15 +46,19 @@
 // data-shape (on the pane, or on the article when it has no pane): bar | disc | arch | pill | slab (a wide
 // rounded slab, for a fifth chapter or wide content). Without it the chapters take bar, disc, arch, pill,
 // slab in order. Give neighbours different outlines (bar beside disc, arch beside pill).
-// Pane content: an interface fragment (data-ui) sits centred in the part of the shape a rectangle can fill
+// Pane content: an interface fragment sits centred in the part of the shape a rectangle can fill
 // without meeting a curve (the script sets --ofr-px, --ofr-py, --ofr-pw, --ofr-ph); size it for the
 // narrowest shape it lands in (a pill leaves about 0.7 of its width), 14-16px text and labels, never
-// under 14px (no initials in small discs), and let rows drop on phones. Mark one or two of its parts
-// data-build (or data-build="1", "2" to group them): they build in, in order, while the window draws into
-// its shape, on room the fragment keeps free for them (a status tag beside a status, a matched row under
-// the total), never over its own words; the first chapter's are there from the start. Each pane
-// is a different interface; never the same picture twice. A photograph (an <img> as the pane's only child)
-// fills the whole window.
+// under 14px (no initials in small discs), and let rows drop on phones. It sits straight on the accent:
+// the pane carries data-ui (the window is the product's window), the fragment no card of its own (the CSS
+// takes its surface off and sets it in --ofr-on-accent) and no filled rows, pills or bands, its parts set
+// apart by space, size and weight (a card on the accent window, or boxes in it, is a box in a box: the
+// inspector's framed-elements and boxed-list). Mark one or two of
+// its parts data-build (or data-build="1", "2" to group them): they build in, in order, while the window
+// draws into its shape, on room the fragment keeps free for them (a status line beside a status, a matched
+// line under the total), never over its own words; the first chapter's are there from the start. Each
+// pane is a different interface; never the same picture twice. A photograph (an <img> as the pane's only
+// child) fills the whole window.
 // Key figure: a real figure about the chapter (a rate, a time, a fee), never a restated line. It sits under
 // the heading on wide screens, beside the name over its lines on a tablet held upright, above the name on a
 // phone, and changes with the name.
@@ -76,13 +82,14 @@
 // default (dwell 0.33), so with four chapters the window rests 0-0.1, 0.3-0.4, 0.6-0.7, 0.9-1 and re-forms
 // in between (sine.inOut). The chapter swaps when the window is half re-formed: the old name, lines and key
 // figure fade out (0.12s), then the new ones rise in from the side the scroll is heading (0.5s), always to
-// the chapter the scroll is in. At the same moment the panes overlap: the old pane, whole with its late
-// parts, leaves (0.12s) as the new one rises in (0.45s, from 0.04s), so the window is never empty. Its
-// data-build parts follow on a clock, one by one right behind it (0.05s after the pane starts in, then
-// 0.07s apart, 0.28s each), while the window is still drawing into its shape; scrolling back, a pane
-// returns whole. So the window lands on a finished composition and every rest holds it whole, from its
-// first frame to its last, and a reader who stops mid re-form sees the card whole about 0.3s after the
-// swap; the first chapter is whole from the start.
+// the chapter the scroll is in. At the same moment the panes hand over: the old pane, whole with its late
+// parts, leaves (0.12s), then the new one rises in (0.45s), so an interface on the bare accent never lies
+// on the words of the one before; two photographs overlap (the new from 0.04s), so a photographed window
+// is never empty. Its data-build parts follow on a clock, one by one right behind it (0.05s after the
+// pane starts in, then 0.07s apart, 0.28s each), while the window is still drawing into its shape;
+// scrolling back, a pane returns whole. So the window lands on a finished composition and every rest
+// holds it whole, from its first frame to its last, and a reader who stops mid re-form sees the
+// interface whole about 0.5s after the swap; the first chapter is whole from the start.
 // Phone: the same timeline, the window smaller above the words, each name fitted to the width.
 // Reduced motion, no script, a failed CDN, or fewer than three chapters: the finished composition (every
 // chapter as a row: its key figure, name and lines beside its own window, shape drawn with border-radius,
@@ -92,7 +99,9 @@
   const ID = 'one-figure-reforms';
   const ORDER = ['bar', 'disc', 'arch', 'pill', 'slab'];
   const OUT = 0.12, IN = 0.45;        // seconds: things leave, then arrive
-  const OVERLAP = 0.04;               // seconds: the new pane starts this soon after the old one sets off
+  const OVERLAP = 0.04;               // seconds: a new photograph starts this soon after the old one sets off
+                                      // (an interface waits until the old pane has gone: on the bare accent
+                                      // two sets of words would lie on each other)
   const num = (v, d, lo, hi) => { const n = Number(v); return v === undefined || v === null || v === '' || !Number.isFinite(n) ? d : Math.min(hi, Math.max(lo, n)); };
 
   // ---- the family: rounded rectangles standing on the floor of the window's zone, centred across it.
@@ -253,7 +262,7 @@
         swapTl.add(() => parts(from, false), OUT);
       }
       const p = panes[c];
-      const pin = paneOut ? OVERLAP : 0;
+      const pin = paneOut ? (photo[c] && photo[from] ? OVERLAP : OUT) : 0;
       if (p) swapTl.fromTo(p, { autoAlpha: 0, y: photo[c] ? 0 : 16 }, { autoAlpha: 1, y: 0, duration: photo[c] ? IN * 0.6 : IN, ease: photo[c] ? 'power1.out' : 'power3.out', immediateRender: false }, pin);
       // going on: its late parts land one by one just after it, on a clock, well before the window lands
       if (down) steps[c].forEach((group, j) => swapTl.fromTo(group, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: BUILD_IN, ease: 'power3.out', immediateRender: false }, pin + BUILD0 + j * BUILD_GAP));

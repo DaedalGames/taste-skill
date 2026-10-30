@@ -68,6 +68,12 @@
 // wordy-section, wordy-page, hero-words). The template stack counts a row of two or three cards under the line, actions
 // or not (template-hero), and a picture cut hard while it carries lettering or shows the work warns (cropped-lettering).
 //
+// Round 11b (r11-p51, a portfolio on seven grounds and panels with its work as type cards): on desktop, four tones on the
+// page's grounds and large panels warn and five fail, the ink, the accent and the dealt fields aside (surface-count, now
+// one measurement); where section 0 dealt a footer, one that is a single row of words or under 160px tall fails
+// (footer-not-as-dealt); a portfolio whose work shows fewer than three pictures of the work or slots marked for them
+// warns (portfolio-without-work).
+//
 // --app judges an app screen (dashboard, admin, settings) by the rules in references/app-screens.md; a
 // direction dealt with draw.mjs --app switches it on by itself.
 //
@@ -83,7 +89,7 @@ import { judge, judgeLayout, judgeApp, APP_SKIP } from './lib/rules.mjs';
 import { extra, controls, replayState, photoText, photoTextDone, photoContrast, splitLetters, tileFills } from './lib/probe-extra.mjs';
 import { judgeExtra, judgeBuild } from './lib/rules-extra.mjs';
 import { restLook, restStops, restGo, heroStack, visitBlocks } from './lib/probe-rest.mjs';
-import { pageBuild, deadControls, space, navBar, crops } from './lib/probe-page.mjs';
+import { pageBuild, deadControls, space, navBar, crops, grounds, footing, workShown } from './lib/probe-page.mjs';
 import { viewportClass as name, screenshotLabel, isInspectionScreenshot } from './lib/inspection-files.mjs';
 
 const args = process.argv.slice(2);
@@ -98,6 +104,10 @@ let film = has('film');
 let dealtFonts = []; // the faces the saved sheet dealt, to catch a build that quietly fell back to a default
 let dealtEntrance = null; // the entrance the saved sheet dealt, to catch a build that quietly went back to the old rise
 let dealtReplay = null; // the product replay the saved sheet dealt (software pages), to catch a build without it
+let dealtFooter = null; // the footer section 0 dealt, to catch a build that went back to one line
+let dealtPalette = null; // the dealt ink, accent and fields, which may stand as bands beside the ground and its surface
+let sector = null; // the brief's sector: a portfolio shows its work in pictures
+const PORTFOLIO = ['studio-portfolio', 'personal-portfolio', 'agency', 'architecture']; // (as draw.mjs deals them)
 const target = args[0];
 if (!target || target === '-h' || target.startsWith('--')) {
   console.error('usage: node inspect.mjs <url | file.html> [--out DIR] [--widths 1440,768,390] [--allow rule,rule] [--app] [--film] [--json]');
@@ -105,7 +115,7 @@ if (!target || target === '-h' || target.startsWith('--')) {
 }
 // Allowances granted by the drawn direction (written by draw.mjs) apply automatically.
 for (const p of ['.taste-skill/direction.json', join(outDir, '..', 'direction.json')]) {
-  if (existsSync(p)) { try { const d = JSON.parse(readFileSync(p, 'utf8')); allow = [...new Set([...allow, ...(d.allow || [])])]; if (d.kind === 'app') appMode = true; if (Array.isArray(d.scenes) && d.scenes.length) film = true; dealtFonts = (d.input?.keep || []).includes('type') ? [] : d.kind === 'app' ? [d.style?.tokens?.font?.family].filter(Boolean) : [d.type?.display?.family, d.type?.text?.family].filter(Boolean); dealtEntrance = d.kind === 'app' ? null : d.entrance?.id || null; dealtReplay = d.kind === 'app' ? null : d.replay || null; } catch {} break; }
+  if (existsSync(p)) { try { const d = JSON.parse(readFileSync(p, 'utf8')); allow = [...new Set([...allow, ...(d.allow || [])])]; if (d.kind === 'app') appMode = true; if (Array.isArray(d.scenes) && d.scenes.length) film = true; dealtFonts = (d.input?.keep || []).includes('type') ? [] : d.kind === 'app' ? [d.style?.tokens?.font?.family].filter(Boolean) : [d.type?.display?.family, d.type?.text?.family].filter(Boolean); dealtEntrance = d.kind === 'app' ? null : d.entrance?.id || null; dealtReplay = d.kind === 'app' ? null : d.replay || null; dealtFooter = d.kind === 'app' ? null : d.frame?.footer?.id ? d.frame.footer : null; dealtPalette = d.palette ? { ink: d.palette.ink, accent: d.palette.accent, fields: (d.palette.fields || []).map((f) => f.bg) } : null; sector = d.input?.sector || null; } catch {} break; }
 }
 // A local file is served over http from a throwaway server on 127.0.0.1, so the browser never has to
 // open a file path (some sandboxes show Node and the browser different views of the disk) and relative
@@ -420,6 +430,12 @@ try {
       build.space = await page.eval(space).catch((e) => { frameErrors.push('space: ' + String(e.message).slice(0, 160)); return null; });
       build.nav = navAtLoad;
       build.crops = await page.eval(crops).catch((e) => { frameErrors.push('crops: ' + String(e.message).slice(0, 160)); return null; });
+      // round 11b, on desktop: the grounds and panels, the footer against the one section 0 dealt, and a portfolio's work
+      if (w >= 1100) {
+        build.grounds = await page.eval(grounds, dealtPalette).catch((e) => { frameErrors.push('grounds: ' + String(e.message).slice(0, 160)); return null; });
+        if (dealtFooter) build.foot = await page.eval(footing).then((f) => ({ ...f, dealt: dealtFooter })).catch((e) => { frameErrors.push('footer: ' + String(e.message).slice(0, 160)); return null; });
+        if (PORTFOLIO.includes(sector)) build.work = await page.eval(workShown).catch((e) => { frameErrors.push('work: ' + String(e.message).slice(0, 160)); return null; });
+      }
     }
     const appM = appMode ? await page.eval(app).catch(() => null) : null;
     if (appM) appM.colourShare = await helper.eval(colourShare, 'data:image/jpeg;base64,' + frames[0]).catch(() => null);

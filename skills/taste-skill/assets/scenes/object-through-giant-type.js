@@ -4,9 +4,10 @@
 // a clock face, a stone, a watch head) falls down the wall: each line parts at its word gap and the halves
 // open around the object in a bell-shaped wake, then close behind it; each line turns from a muted tone
 // to full ink as the object reaches it, while the wall itself climbs. In the last line the object swells
-// toward the camera and smashes the lines around it into letters that tumble out across the stage, none
-// over another (two of them swell to giant size low at its sides), while it tips and drops out behind
-// them; then every letter flies home and the whole quote stands closed, in full ink, with its credit.
+// toward the camera as far as the stage allows, then tips and falls away through the line into the page,
+// and the whole quote stands closed, in full ink, with its credit (exit 'fall', the default). With exit
+// 'break' it smashes the last lines into letters that tumble out across the stage instead and drops out
+// behind them; then every letter flies home.
 // Use it once per page, for a statement
 // worth reading slowly, paired with one clean cut-out (or a photograph of a round thing, see below).
 //
@@ -80,9 +81,12 @@
 //                        first frame is the whole quote, closed; 'inside': it starts in line 1 (the spec's
 //                        first frame; that line must then fit the margins parted, which costs type size)
 //   tilt        [-9, 15] object rotation in degrees at the first and at the last line; 17 more on the exit
-//   exit        'break'  'break': the swelling object smashes the last lines into tumbling letters that
-//                        fly home once it has gone; 'fall': it only swells, tips and drops out while the
-//                        wall opens around it (never past the stage edge) and closes behind it
+//   exit        'fall'   'fall': it swells in the last line as far as the stage and the parted words allow
+//                        (never cut by an edge, never over a word), then tips and falls away through the
+//                        line into the page while the halves close behind it; 'break': the swelling
+//                        object smashes the last lines into tumbling letters that fly home once it has
+//                        gone (louder, but letters cross letters on the way and it leaves through the
+//                        stage foot)
 //   shatter     3        break: how many lines, counted up from the last, break into letters (1-6); the
 //                        throw weakens line by line away from the object. Two lines in five always stay
 //                        whole (a 3-line quote breaks only its last line), so the quote is never all letters
@@ -90,7 +94,8 @@
 //                        the room under the whole lines allows, set back in a faint tone while swollen (0-3)
 //   seed        7        break: the throw is seeded, so scrubbing back and forth shows the same picture;
 //                        another number deals another throw
-//   grow        2.4      scale the object swells to as it leaves (1.2-2.8)
+//   grow        2.4      scale the object swells to as it leaves (1.2-2.8); with 'fall', at most this,
+//                        cut down to what the stage and the parted line leave room for
 //   tip         45       degrees it tips toward the camera as it drops (0-70)
 //   drift       0.07     the wall climbs 2 x drift x stage height over the hold (0-0.12); phoneDrift 0.09
 //   rest        0.5      opacity of the lines the object has not reached yet (0.42-0.7)
@@ -99,8 +104,8 @@
 // Type size: min(11.1vw, 17.8vh) on desktop and 20vw on the phone, then smaller if needed so the widest
 // closed line fills `fill` of the width at most, the block (or six lines of a travelling wall) fits the
 // height clear of the credit, and parted lines stay on the stage: inside the page margins in the first
-// frame, inside half a margin for the line the object sits in (the one being read), and past the stage
-// edge by 5% of the width at most (24px on the phone) for a line only partly open. The object box is
+// frame and for the line the object sits in (the one being read), and past the stage edge by 5% of the
+// width at most (24px on the phone) for a line only partly open. The object box is
 // `size` times that. The phone re-wraps the author's halves and keeps the wrap that fills the screen
 // best at the largest size without cutting a word (the author's own lines win a near tie).
 //
@@ -115,22 +120,45 @@
 // it is kept); two dim in their place and swell to giant size low at its sides, in a faint tone, until
 // they are home; from the break the object is drawn
 // behind the burst; 62-74% it tips, falls and leaves; 70-79% every letter flies home (power3.inOut) and
-// the lines close; 79-89% the credit comes in; 79-100% the closed quote is held in ink. Exit 'fall': the
-// object swells (1.9x by 65%) while the last lines open wide, then drops out by 74%; credit 74-84%.
+// the lines close; at 79% the credit comes in; 79-100% the closed quote is held in ink. Exit 'fall' (the
+// default) runs the same map 13% later and slower, so its last beat lands near the end of the hold: 8% in
+// line 1, one line every 16% (line 2 at 24%, line 3 at 40%, line 4 at 57%), 73% in the last line; 73-86%
+// the object swells there under the scroll, as far as the stage and each line's own clearance allow
+// (about 1.3-1.5x; no line closes nearer to it than it stood at the object's own size); past 86.3% it
+// tips and falls away into the page on a clock (0.6s, back in 0.35s when the scroll returns), drawn behind
+// the words, which close over it, so a reader who stops sees it whole in its line or gone; at 87% the
+// credit comes in and the closed quote holds in ink (a still eighth of the hold). Flip: the coin dwells
+// face-on round each line and passes edge-on in about 3% of the step between two lines (a steep S-curve
+// in each half turn), so no resting frame shows it as a grey bar.
+// The object starts whole on the
+// first frame: where the wall leaves too little room above line 1 it starts lower, in line 1's wake. The
+// credit is never scrubbed: it lands on a clock (0.55s) once the scroll passes its moment.
 // The phone: the same with phone lines and a longer hold. A travelling wall: the object falls through
 // the middle third of the stage while the taller wall climbs past it, lines fading as the stage edge cuts
-// into them; 74-84% the wall pulls back (scales down) until the whole quote fits, centred, and holds.
+// into them; 74-84% (exit 'fall': 87-97%) the wall pulls back (scales down) until the whole quote fits,
+// centred, and holds.
 // Reduced motion, a failed CDN and phone 'rest': one poster frame, the object resting in the middle
 // line that parts at a word gap, the wake around it held still, every line in ink. No script: the object
 // above the closed quote.
 (() => {
   const ID = 'object-through-giant-type';
-  const TRAVEL = 0.6;   // the object meets the last line here
+  // (exit 'break' keeps these; exit 'fall' runs the same map LATE later, see make())
+  const TRAVEL_AT = 0.6;   // the object meets the last line here
   const EXIT = 0.14;    // and has left the stage this much later
   const ENTER = 0.08;   // from just above the wall into line 1 (or held in line 1)
   const BREAK = 0.603;  // the first letters leave here (exit 'break')
   const HOME = 0.79;    // and every letter is back in its place here
-  const FIT0 = 0.74, FIT1 = 0.84;   // a travelling wall pulls back to show the whole quote
+  const FIT_AT = [0.74, 0.84];   // a travelling wall pulls back to show the whole quote
+  // Exit 'fall' (the default) meets the last line 0.13 later (0.73) and swells there for 95% of the exit, so
+  // its last beat comes near the end of the hold: the swollen object at 0.83-0.86, the fall away at 0.863,
+  // the credit at 0.87, and only about an eighth of the hold is still (no dead hold).
+  const LATE_FALL = 0.13, SWELL_FALL = 0.95, SWELL_BREAK = 0.55;
+  // flip: within each half turn the angle follows a steep S-curve (x^6 against (1-x)^6), so the coin dwells
+  // face-on round each line and passes edge-on in about 3% of the step between two lines: a reader who stops
+  // there sees a face turned 60 degrees or less, never a thin grey bar
+  const FLIP_K = 6;
+  const halfTurn = (x) => { const a = Math.pow(x, FLIP_K), b = Math.pow(1 - x, FLIP_K); return a / (a + b); };
+  const stair = (t, m) => { if (t <= 0) return 0; if (t >= 1) return 1; const k = Math.min(m - 1, Math.floor(t * m)); return (k + halfTurn(t * m - k)) / m; };
   const ASIDE = 1.15;   // a word that steps aside stops this many object radii from the object's centre
   const WALL = 7, PHONE_WALL = 8;   // more lines than this travel through the stage
   const TIP = -1;       // rotationX sign that tips the object's top edge toward the viewer
@@ -173,7 +201,7 @@
       follow: num(o.follow, 0.4, 0, 1),
       enter: o.enter === 'inside' ? 'inside' : 'above',
       tilt: pair(o.tilt, [-9, 15], -45, 45),
-      exit: o.exit === 'fall' ? 'fall' : 'break',
+      exit: o.exit === 'break' ? 'break' : 'fall',
       shatter: Math.round(num(o.shatter, 3, 1, 6)),
       giants: Math.round(num(o.giants, 2, 0, 3)),
       seed: Math.round(num(o.seed, 7, 0, 2147483647)),
@@ -243,6 +271,9 @@
 
   const make = (root, opts = {}) => {
     const o = settings(opts || {});
+    const LATE = o.exit === 'fall' ? LATE_FALL : 0;
+    const TRAVEL = TRAVEL_AT + LATE, FIT0 = FIT_AT[0] + LATE, FIT1 = FIT_AT[1] + LATE;
+    const SWELL = o.exit === 'fall' ? SWELL_FALL : SWELL_BREAK;
     const stage = root.querySelector(':scope > .scene-stage') || root.firstElementChild;
     const quote = root.querySelector('.ott-quote');
     const obj = root.querySelector('.ott-object');
@@ -369,8 +400,9 @@
     // Everything the script moved goes back to the stylesheet's place.
     const clear = () => {
       const els = [quote, obj, credit, rimBar, ...S.lines, ...S.A, ...S.B].filter(Boolean);
-      if (window.gsap) gsap.set(els, { clearProps: 'transform,opacity,visibility' });
+      if (window.gsap) { if (credit) gsap.killTweensOf(credit); if (S.away) gsap.killTweensOf(S.away); gsap.set(els, { clearProps: 'transform,opacity,visibility' }); }
       else for (const el of els) { el.style.transform = ''; el.style.opacity = ''; el.style.visibility = ''; }
+      S.away = null;
       for (const L of S.L) { L.el.style.transform = ''; L.el.style.opacity = ''; L.tr = ''; L.op = ''; }
       obj.style.zIndex = '';
       for (const l of S.lines) l.classList.remove('is-broken');
@@ -469,9 +501,10 @@
     };
 
     // The largest type size at which parted lines stay on the stage, sampled over the whole fall (all in
-    // type sizes, so it holds at any size): lines open in the first frame stay inside the page margins; a
-    // line the object sits in, the one being read, stays inside half a margin; a line only partly open
-    // may pass the stage edge by `allow` (5% of the width, 24px on the phone). A word that steps aside
+    // type sizes, so it holds at any size): lines open in the first frame stay inside the page margins, and
+    // so does a line the object sits in, the one being read (half a margin left the tablet's parted line
+    // about 20px off the screen edge); a line only partly open may pass the stage edge by `allow` (5% of the
+    // width, 24px on the phone). A word that steps aside
     // fits on one side of the object.
     const partLimit = (ref, cyE, Pm, side, k, W, phone, above) => {
       const n = ref.length, r1 = k / 2, R = o.radius * r1;
@@ -489,7 +522,7 @@
           const [xa, xb] = wakeAt(gE, yb, 1, xo, i);
           const ext = Math.max(-(ref[i].le + xa), ref[i].re + xb);
           const d = yb - cyE[i], f = d * d < R * R ? Math.pow(1 - (d * d) / (R * R), o.falloff) : 0;
-          const lim = j === 0 ? W / 2 - gut : W / 2 + allow * (1 - f) - (gut / 2) * f;
+          const lim = j === 0 ? W / 2 - gut : W / 2 + allow * (1 - f) - gut * f;
           if (ext > 0) F = Math.min(F, lim / ext);
         }
       }
@@ -522,12 +555,12 @@
         xa = bias - p;
         xb = bias + p;
         // as the object swells on its way out the halves are thrown wider, but never past the stage edge,
-        // so no word is left standing half cut: each half stops half a margin inside it (or where it
-        // already was at full size, if that was further out)
+        // so no word is left standing half cut or run into one screen edge: each half stops a full page margin
+        // inside it (or where it already was at full size, if that was further out); was half a margin
         if (s > 1 && gut != null && g.le) {
           const p1 = g.push * g.r * Math.pow(Math.max(0, 1 - (d * d) / Math.pow(o.radius * g.r, 2)), o.falloff);
-          xa = Math.max(xa, Math.min(bias - p1, gut / 2 - g.le[i]));
-          xb = Math.min(xb, Math.max(bias + p1, g.W - gut / 2 - g.re[i]));
+          xa = Math.max(xa, Math.min(bias - p1, gut - g.le[i]));
+          xb = Math.min(xb, Math.max(bias + p1, g.W - gut - g.re[i]));
         }
       }
       // ink: from half a line above the line to its centre, and it stays
@@ -799,6 +832,46 @@
       return [1.06 * a, f.pin ? Math.pow(a, 2.5) : a, f.pin ? 1.06 * a : 1.06 * a * a];
     };
 
+    // Exit 'fall': how far the object may swell in the last line. It stays whole on the stage (clear of
+    // every edge by a small margin, so nothing opaque is ever cut by the screen) and off the words: the
+    // halves of every line it reaches part with it but stop a page margin inside the stage, so past some
+    // size they cannot clear it; the swell stops there (never less than its own size, never past `grow`).
+    const swellOf = (g) => {
+      // (pad: the clear space kept between the swollen object and the nearest letter, a fifth of the type)
+      const m = Math.max(12, 0.02 * g.H), pad = 0.2 * g.F;
+      const yb = g.cy[g.n - 1], yS = g.yA, xo = leanAt(g, yb), ox = g.cx + xo;
+      // how far the object, swollen to s, lies on the parted words of each line (px; 0 when clear)
+      const onWords = (s) => {
+        const rr = g.r * s;
+        const over = [];
+        for (let i = 0; i < g.n; i++) {
+          const t0 = g.cy[i] - g.capH / 2, b0 = g.cy[i] + g.capH / 2;
+          const dy = yb < t0 ? t0 - yb : yb > b0 ? yb - b0 : 0;
+          if (dy >= rr) { over.push(0); continue; }
+          const hw = Math.sqrt(rr * rr - dy * dy) + pad;
+          const [xa, xb] = wakeAt(g, yb, s, xo, i, g.gut);
+          const aL = g.le[i] + xa, aR = g.le[i] + g.aw[i] + xa;
+          if (g.side[i] || !S.B[i]) { over.push(Math.max(0, Math.min(aR - (ox - hw), ox + hw - aL))); continue; }
+          const bL = 2 * g.sp[i] - g.le[i] - g.aw[i] + xb;
+          over.push(Math.max(0, aR - (ox - hw), ox + hw - bL));
+        }
+        return over;
+      };
+      // each line keeps the clearance it had at the object's own size: a line that was clear stays clear
+      // (comparing every line with the worst line at size 1 let the last line close onto the swollen object)
+      const base = onWords(1);
+      const ok = (s) => {
+        const rr = g.r * s;
+        if (yS + rr > g.H - m || yS - rr < m || ox - rr < m || ox + rr > g.W - m) return false;
+        return onWords(s).every((v, i) => v <= base[i] + 0.5);
+      };
+      if (!ok(1)) return 1;
+      if (ok(o.grow)) return o.grow;
+      let lo = 1, hi = o.grow;
+      for (let i = 0; i < 14; i++) { const mid = (lo + hi) / 2; if (ok(mid)) lo = mid; else hi = mid; }
+      return lo;
+    };
+
     // Type size and geometry, measured with every transform cleared.
     const measure = () => {
       const W = stage.clientWidth, H = stage.clientHeight;
@@ -974,6 +1047,10 @@
         // gone below the stage, and far enough past the last line that the wake has closed
         yEnd: Math.max(H + 1.1 * o.grow * r + 10, cy[n - 1] + byEnd + o.radius * r * (1 + (o.grow - 1) / 2) + 4),
       };
+      // the first frame shows the object whole: where the wall leaves too little room above line 1, it
+      // starts lower, already in the top of line 1's wake, never sliced by the top of the stage
+      g.y0 = Math.min(g.y1, Math.max(g.y0, r + Math.max(12, 0.02 * H)));
+      g.swell = posed || o.exit !== 'fall' ? o.grow : swellOf(g);
       g.fl = S.L.length && !posed ? throwOf(g, Lm, cap) : [];
       // a giant is set at its swollen size and scaled down to its glyph at rest, so the browser draws it
       // sharp at the size it is seen at (a small glyph scaled up six times is drawn soft on a phone)
@@ -1027,6 +1104,25 @@
       const g = S.geo;
       if (!g || !S.live || !window.gsap) return;
       if (S.putVer !== S.ver || !S.put) setters();
+      const p = S.tl ? S.tl.progress() : 0;
+      // exit 'fall': the swell follows the scroll; the fall away plays on a clock (0.6s) once the scroll
+      // passes the swell, and back (0.35s) before it. Falling away it tips, shrinks into the page, fades
+      // and is drawn behind the words, which close over it.
+      if (o.exit === 'fall' && S.away) {
+        const go = p >= TRAVEL + EXIT * SWELL;
+        if (go !== S.awayOn) {
+          S.awayOn = go;
+          if (now === true) { gsap.killTweensOf(S.away); S.away.v = go ? 1 : 0; }
+          else gsap.to(S.away, { v: go ? 1 : 0, duration: go ? 0.6 : 0.35, ease: go ? 'power2.in' : 'power2.out', overwrite: true, onUpdate: () => wake() });
+        }
+        const a = S.away.v, ex = clamp((p - TRAVEL) / (EXIT * SWELL), 0, 1);
+        const sw = 1 + (g.swell - 1) * (1 - (1 - ex) * (1 - ex));
+        const vars = { scale: sw * (1 - 0.92 * a), opacity: 1 - smooth(clamp((a - 0.3) / 0.6, 0, 1)), rotationX: TIP * o.tip * a };
+        if (p >= TRAVEL) { vars.y = g.yA + 0.3 * g.r * a; vars.rotation = o.tilt[1] + 17 * a; }
+        gsap.set(obj, vars);
+        const z = a > 0.02 ? '0' : '';
+        if (obj.style.zIndex !== z) obj.style.zIndex = z;
+      }
       const yo = gsap.getProperty(obj, 'y'), s = gsap.getProperty(obj, 'scale') || 1;
       const by = gsap.getProperty(quote, 'y'), sq = gsap.getProperty(quote, 'scale') || 1;
       // the object's centre in the wall's own coordinates (the wall may be climbing and, at the end of a
@@ -1035,8 +1131,12 @@
       const xo = leanAt(g, yb);
       S.setX(Math.round(xo * 10) / 10);
       const back = g.scale < 1 ? clamp((1 - sq) / (1 - g.scale), 0, 1) : 0;
+      // exit 'fall': as the object falls away its wake goes with it, so every line (a word that stepped
+      // aside too) is home and closed once it has gone
+      const stay = o.exit === 'fall' && S.away ? 1 - S.away.v : 1;
       for (let i = 0; i < g.n; i++) {
-        const [xa, xb, ink] = wakeAt(g, yb, s, xo, i, g.gut);
+        let [xa, xb, ink] = wakeAt(g, yb, s, xo, i, g.gut);
+        xa *= stay; xb *= stay;
         S.put(i, Math.round(xa * 10) / 10, Math.round(xb * 10) / 10, now === true);
         let op = o.rest + (1 - o.rest) * ink;
         // a travelling wall: a line fades as the stage edge cuts into it, so no half-cut line is left
@@ -1057,7 +1157,6 @@
       }
       // the break: the lines in letters while their throw lasts, each letter where its throw has it
       if (g.fl.length) {
-        const p = S.tl ? S.tl.progress() : 0;
         const hx = new Map();
         S.lines.forEach((l, i) => {
           const on = !!g.brk[i] && p > g.brk[i][0] && p < g.brk[i][1];
@@ -1093,6 +1192,15 @@
         const z = p >= BREAK ? '0' : '';
         if (obj.style.zIndex !== z) obj.style.zIndex = z;
       }
+      // the credit, on a clock: in once the scroll passes its moment, out again before it
+      if (credit && S.credOn !== undefined) {
+        const on = p >= (o.exit === 'break' ? HOME : TRAVEL + EXIT) - 0.002;
+        if (on !== S.credOn) {
+          S.credOn = on;
+          if (now === true) gsap.set(credit, { autoAlpha: on ? 1 : 0, y: on ? 0 : 16 });
+          else gsap.to(credit, { autoAlpha: on ? 1 : 0, y: on ? 0 : 16, duration: on ? 0.55 : 0.2, ease: on ? 'power2.out' : 'power1.in', overwrite: 'auto' });
+        }
+      }
       // the bar across the edge shows only near edge-on; face-on it would read as a line across the face
       if (rimBar) {
         const a = Math.abs(Math.sin((gsap.getProperty(obj, 'rotationY') * Math.PI) / 180));
@@ -1119,21 +1227,34 @@
         // in: from just above the wall into line 1 (or held in line 1 when it starts there)
         .fromTo(obj, { y: () => G().y0, scale: 1, rotationX: 0 }, { y: () => G().y1, duration: ENTER }, 0)
         .fromTo(obj, { y: () => G().y1 }, { y: () => G().yA, duration: TRAVEL - ENTER, immediateRender: false }, ENTER)
-        .fromTo(obj, { rotation: t0 }, { rotation: t1, duration: TRAVEL }, 0)
-        // the exit: it swells toward the camera while it still hangs in the last line (the wall breaks or
-        // bursts open around it), then tips and falls out of the stage
-        .fromTo(obj, { y: () => G().yA }, { y: () => G().yEnd, duration: EXIT, ease: 'power3.in', immediateRender: false }, TRAVEL)
-        .fromTo(obj, { scale: 1 }, { scale: o.grow, duration: EXIT, ease: 'power2.out', immediateRender: false }, TRAVEL)
-        .fromTo(obj, { rotation: t1, rotationX: 0 }, { rotation: t1 + 17, rotationX: TIP * o.tip, duration: EXIT, ease: 'power2.in', immediateRender: false }, TRAVEL);
+        .fromTo(obj, { rotation: t0 }, { rotation: t1, duration: TRAVEL }, 0);
+      if (o.exit === 'fall') {
+        // the exit 'fall' is set in wake(): it swells in the last line under the scroll, as far as the
+        // stage and the parted words allow, then, on a clock once the scroll passes the swell, tips and
+        // falls away through the line into the page while the halves close behind it. It never reaches an
+        // edge of the stage, and wherever the reader stops it is whole in its line or gone.
+        S.away = { v: 0 };
+        S.awayOn = false;
+      } else {
+        // the exit 'break': it swells toward the camera while it still hangs in the last line (the wall
+        // breaks around it), then tips and falls out of the stage
+        tl.fromTo(obj, { y: () => G().yA }, { y: () => G().yEnd, duration: EXIT, ease: 'power3.in', immediateRender: false }, TRAVEL)
+          .fromTo(obj, { scale: 1 }, { scale: o.grow, duration: EXIT, ease: 'power2.out', immediateRender: false }, TRAVEL)
+          .fromTo(obj, { rotation: t1, rotationX: 0 }, { rotation: t1 + 17, rotationX: TIP * o.tip, duration: EXIT, ease: 'power2.in', immediateRender: false }, TRAVEL);
+      }
       if (o.mode === 'flip') {
         const turn = () => 180 * Math.max(1, G().n - 1);
         // a face at every line, edge-on between lines (half a turn on the way in when it enters from above)
-        tl.fromTo(obj, { rotationY: () => (G().enter ? -180 : 0) }, { rotationY: 0, duration: ENTER }, 0)
-          .fromTo(obj, { rotationY: 0 }, { rotationY: turn, duration: TRAVEL - ENTER, immediateRender: false }, ENTER)
-          .fromTo(obj, { rotationY: turn }, { rotationY: () => turn() + 180, duration: EXIT, ease: 'power2.in', immediateRender: false }, TRAVEL);
+        tl.fromTo(obj, { rotationY: () => (G().enter ? -180 : 0) }, { rotationY: 0, duration: ENTER, ease: (t) => stair(t, 1) }, 0)
+          .fromTo(obj, { rotationY: 0 }, { rotationY: turn, duration: TRAVEL - ENTER, ease: (t) => stair(t, Math.max(1, G().n - 1)), immediateRender: false }, ENTER);
+        // 'break' turns it once more as it drops out; 'fall' keeps its face to the camera as it falls away,
+        // so it never leaves as a grey edge
+        if (o.exit === 'break') tl.fromTo(obj, { rotationY: turn }, { rotationY: () => turn() + 180, duration: EXIT, ease: 'power2.in', immediateRender: false }, TRAVEL);
       }
-      // the credit comes in once the object has gone (and, after a break, once the letters are nearly home)
-      if (credit) tl.fromTo(credit, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.1, ease: 'power2.out' }, o.exit === 'break' ? HOME : TRAVEL + EXIT);
+      // the credit comes in once the object has gone (and, after a break, once the letters are nearly home):
+      // on a clock as the scroll passes that moment, so wherever the reader stops it is either out or
+      // whole, never half faded in (wake() plays it)
+      if (credit) { gsap.killTweensOf(credit); gsap.set(credit, { autoAlpha: 0, y: 16 }); S.credOn = false; }
       tl.eventCallback('onUpdate', wake);
       wake(true);
     };

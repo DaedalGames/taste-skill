@@ -72,26 +72,23 @@ export function dealPaletteV25({ rnd, tone, recent = [] }) {
     let tries = 0; while (contrast(accent, bg) < 3 && tries++ < 12) { aL += light ? -0.03 : 0.03; accent = hex(oklch(aL, range(chroma[1]), accentHue[1])); }
     accentWord = `${chroma[0]} ${accentHue[0]}`;
   }
-  // fields: most pages have none or one
+  // fields: none or one, and only a band in a colour the page already has: the ink as ground, or on a loud page the
+  // accent (never a deep shade of it: a third colour). The page keeps its ground and one surface tone, never a third
+  // tone between them (r11-p51 used seven grounds and panels and read as colour sprawl)
+  const loud = tone === 'bold' || tone === 'playful';
   const fields = [];
-  const nf = wpick([[0, 5], [1, 4], [2, tone === 'bold' || tone === 'playful' ? 1.2 : 0.4]])[0];
-  const fieldKinds = shuffleW(rnd, [['invert', 3], ['accent-deep', 1.5], ['tint', 1.2], ['accent', tone === 'bold' || tone === 'playful' ? 1.5 : 0.3]]);
-  for (let i = 0; i < nf; i++) {
-    const k = fieldKinds[i];
-    if (k === 'invert') fields.push({ bg: ink, ink: bg, kind: 'the ink as ground' });
-    else if (k === 'accent-deep' && !mono) { const f = hex(oklch(light ? 0.28 : 0.26, 0.06, accentHue[1])); fields.push({ bg: f, ink: contrast('#ffffff', f) > 7 ? '#ffffff' : '#f3f3f3', kind: `deep ${accentHue[0]}` }); }
-    else if (k === 'tint') { const f = hex(oklch(light ? bgL - 0.07 : bgL + 0.08, Math.max(bgC, 0.02), groundHue)); fields.push({ bg: f, ink, kind: 'a darker step of the ground' }); }
-    else if (k === 'accent' && !mono) fields.push({ bg: accent, ink: accentInk, kind: `the ${accentHue[0]} accent` });
-  }
+  const nf = wpick([[0, 5], [1, 4]])[0];
+  const k = nf ? wpick([['invert', 3], ['accent', loud && !mono ? 2.5 : 0]].filter((x) => x[1] > 0))[0] : null;
+  if (k === 'invert') fields.push({ bg: ink, ink: bg, kind: 'the ink as ground' });
+  else if (k === 'accent') fields.push({ bg: accent, ink: accentInk, kind: `the ${accentHue[0]} accent` });
   const name = `${gWord}${tint[0] !== 'neutral' && ['off-white', 'stone', 'near-black'].includes(gid) ? ` (${tint[0]})` : ''}, ${mono ? 'ink only' : accentWord}`;
   const checks = { inkOnBg: +contrast(ink, bg).toFixed(1), mutedOnBg: +contrast(muted, bg).toFixed(1), accentInk: +contrast(accentInk, accent).toFixed(1), accentOnBg: +contrast(accent, bg).toFixed(1) };
   if (checks.mutedOnBg < 4.5) muted = hex(oklch(light ? 0.42 : 0.8, inkC, groundHue));
   const note = [
     `${gWord} ground${gid === 'white' ? '' : ` (${bg})`}, ${light ? 'dark' : 'light'} ink, ${mono ? 'and no accent hue: the action is set in the ink, solid' : `one ${accentWord} accent`}.`,
     mono ? 'Colour comes only from the pictures.' : 'The accent is for the primary action, links and at most one other thing on a screen; it is never a ground for text blocks, never a second headline colour and never spread across cards.',
-    nf ? `Fields: ${fields.map((f) => f.kind).join(' and ')}, each used for one section at most.` : 'No coloured fields: sections are told apart by space, size and pictures, with at most one change to --surface.',
+    fields.length ? `Two grounds and one band: the page ground and --surface, and ${fields[0].kind} for one section at most.` : 'Two grounds, no field: the page ground and --surface; sections are told apart by space, size and pictures.',
     'Every other colour on the page comes from photographs or the product, never from added tints, badges or chips.',
   ].join(' ');
   return { id: `gen:${gid}:${accentHue[0]}:${mono ? 'mono' : chroma[0]}`, name, generated: true, ground: gid, hue: mono ? null : accentHue[0], tags: [light ? 'light' : 'dark', gid], bg, surface, ink, muted, accent, accentInk, fields, note, checks };
 }
-function shuffleW(rnd, pairs) { const out = []; const p = [...pairs]; while (p.length) { const t = p.reduce((s, x) => s + x[1], 0); let r = rnd() * t; let i = 0; for (; i < p.length; i++) { r -= p[i][1]; if (r <= 0) break; } out.push(p.splice(Math.min(i, p.length - 1), 1)[0][0]); } return out; }

@@ -38,9 +38,9 @@ Five rounds of blind tests against a no-skill baseline and another design skill 
 SKILL.md                 the run, the house rules, the laws
 references/              copy, type, colour, layout, imagery, motion, critique, tells, research
 scripts/draw.mjs         deal options / a direction / reprint / redraw; --alternatives, --photos, --site
-scripts/assets.mjs       search open image collections (Openverse, Wikimedia Commons, Art Institute of
-                         Chicago, the Met) and, with --video, real footage (Wikimedia Commons, Internet
-                         Archive, NASA); --get downloads with the credit, --credits prints them
+scripts/assets.mjs       search open image collections (Openverse by default; the museum sources only
+                         when named) and, with --video, real footage (Wikimedia Commons and NASA by
+                         default); --get downloads with the credit, --credits prints them
 scripts/lint.mjs         static scan for banned patterns and stock phrases
 scripts/inspect.mjs      render, measure, photograph
 scripts/lib/             zero-dependency Chrome DevTools client, the in-page probe, the rules

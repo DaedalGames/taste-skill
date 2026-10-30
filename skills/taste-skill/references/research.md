@@ -377,3 +377,25 @@ export, 1,097 ship; in thirty test draws over seven briefs no hero, navigation, 
 button or section came back on more than three pages (most on two at most). The small moves are the
 thin family: only about thirty of the 195 motions beyond the basics are small, safe moves, so one of
 them still came back on four pages in thirty.
+
+## 15. The round-11 test pages (round 11b)
+
+Four blind tests on the round-11 skill, plus a count of twenty draws, found what still repeated and
+what still lost. A café was dealt the same photographs, led by the same one, ten times in ten; one
+technique, one entrance and the split hero came back on four or five pages in ten. A cargo-bike page
+with no product photograph shipped none and lost. A portfolio won but was marked down for seven grounds
+and panels, its work shown as type cards, a dealt three-card footer built as one credit line, and stock
+photographs of other trades (a mixing desk for a motion designer).
+
+So the deal now keeps the photographs, techniques, entrances and hero shapes in its history, and also
+remembers each sector's last draw, since other briefs drawn between two of the same kind pushed them out
+of the shorter windows. Pictures are matched to the trade the brief names, with a line on the sheet for
+what they show and never show. A product page is never without pictures: its kind in use, the load and
+the place, and one slot marked for the client's own shot. The sheet gives a photograph total for the
+whole page, allows two grounds (the page and one surface; the ink, the accent or a dealt field as one
+band), asks a portfolio for pictures of its work, counts a section that pins as a scene, and tells the
+builder to build the footer as dealt. The inspector checks the last three (`surface-count`,
+`portfolio-without-work`, `footer-not-as-dealt`). In thirty draws over seven briefs no direction, hero,
+technique, entrance, lead photograph or hero shape came back on two draws of one brief in a row (the
+round-12 skill did so 16 times), the entrance where nothing arrives fell from nine pages to seven, and
+the split hero from six to three.

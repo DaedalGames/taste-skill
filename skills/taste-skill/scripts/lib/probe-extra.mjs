@@ -567,22 +567,7 @@ export function extra(opts = {}) {
     }
   }
 
-  // --- surface-count: the grounds a visitor sees (body, bands, panels of 8% of a screen or more)
-  {
-    const grounds = []; const add = (c, why) => { if (!c) return; const g = grounds.find((x) => !differs(x.c, c, 7)); if (g) g.n++; else grounds.push({ c, why, n: 1 }); };
-    add(opaqueBg(B) || opaqueBg(D) || [255, 255, 255], 'page');
-    let m = 0;
-    for (const el of B.querySelectorAll('*')) {
-      if (++m > 6000) break;
-      if (/^(IMG|VIDEO|CANVAS|PICTURE|svg|IFRAME|INPUT|BUTTON|SELECT|TEXTAREA)$/.test(el.tagName) || el.closest('[data-ui], svg, dialog, [role=dialog]')) continue;
-      const c = opaqueBg(el); if (!c) continue;
-      const r = el.getBoundingClientRect(); if (r.width * r.height < W * H * 0.08 || !visible(el)) continue;
-      // a frame behind a picture is the picture
-      if ([...el.querySelectorAll('img, video, canvas')].some((p) => { const pr = p.getBoundingClientRect(); return pr.width * pr.height >= r.width * r.height * 0.85; })) continue;
-      add(c, el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/)[0] : ''));
-    }
-    out.surfaces = grounds.map((g) => ({ colour: '#' + g.c.map((v) => v.toString(16).padStart(2, '0')).join(''), where: g.why }));
-  }
+  // (surface-count, the grounds a visitor sees, is measured once on desktop by grounds() in probe-page.mjs)
 
   // --- empty-box: a filled or outlined box with nothing at all in it (a leftover, or a picture that failed)
   out.emptyBoxes = [];

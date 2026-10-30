@@ -62,6 +62,9 @@
 //   swap       0.3      share of the hold the hand-overs take together (0.3-0.55); the rest are the beats where a
 //                       picture rests whole with its name. Raise it for slower hand-overs and shorter rests.
 //   trail      4        places in the trail (1-4); older stamps leave at the far end
+//   phoneTrail 2        places on phones under 768px (1-4); 1 with fewer than five pictures. The phone's chip
+//                       and stamps are about one size, so a longer trail shows a picture on three screens of the
+//                       scroll, small each time (the inspector's repeated-picture at 390)
 //   peek       0.74     share of its photograph's width the waiting chip shows (0.5-1): the whole subject, small
 //   crop       0.56     share of its photograph's width a stamp shows (0.35-0.9): a tall crop through the subject
 //   radius     page     one corner radius in px for every frame, chip and stamp (0-24); defaults to the page's
@@ -72,11 +75,11 @@
 //
 // Phone plan (under 768px, and any portrait screen): the same relay rearranged. The window takes the full
 // width at the photographs' own 4:3 (75vw tall, two thirds of the screen at most), so every subject rests
-// whole, with the chip in its top left corner; the heading sits just above it, the trail runs along the
-// window's bottom edge, newest stamp at the right, and the name and line sit under the trail, so the stamp
-// that slides out of the window's lower right corner never crosses them. The group is centred on the
-// screen. On a screen under 620px tall the heading is kept for screen readers while it runs. Hold 2.2 for
-// five. Touch scrolling is never smoothed.
+// whole, with the chip in its top left corner; the heading sits just above it, the trail (two places on a
+// phone) runs along the window's bottom edge, newest stamp at the right, and the name and line sit under the
+// trail, so the stamp that slides out of the window's lower right corner never crosses them. The group is
+// centred on the screen. On a screen under 620px tall the heading is kept for screen readers while it runs.
+// Hold 2.2 for five. Touch scrolling is never smoothed.
 //
 // Reduced motion, no script, a failed CDN, or phone: 'rest': the finished composition, the heading over the
 // pieces in a row (two columns on tablets with the first piece across both, one column on phones), each with
@@ -149,6 +152,7 @@
       phone: opts.phone === 'rest' ? 'rest' : 'same',
       swap: num(opts.swap, 0.3, 0.3, 0.55),
       trail: Math.round(num(opts.trail, 4, 1, 4)),
+      phoneTrail: Math.round(num(opts.phoneTrail, n >= 5 ? 2 : 1, 1, 4)),
       peek: num(opts.peek, 0.74, 0.5, 1),
       crop: num(opts.crop, 0.56, 0.35, 0.9),
       scrub: opts.scrub,
@@ -162,7 +166,7 @@
       plan.className = 'wr-plan';
       plan.setAttribute('aria-hidden', 'true');
       for (const c of ['main', 'chip']) { const b = document.createElement('div'); b.className = 'wr-at-' + c; plan.appendChild(b); }
-      for (let i = 0; i < o.trail; i++) { const b = document.createElement('div'); b.className = 'wr-at-stamp'; b.style.setProperty('--i', String(i)); plan.appendChild(b); }
+      for (let i = 0; i < Math.max(o.trail, o.phoneTrail); i++) { const b = document.createElement('div'); b.className = 'wr-at-stamp'; b.style.setProperty('--i', String(i)); plan.appendChild(b); }
       stage.appendChild(plan);
     }
     // later pieces lie over earlier ones: the arriving window over the current picture, the next chip over both
@@ -177,8 +181,9 @@
 
     const scrub = o.scrub === true ? true : typeof o.scrub === 'number' ? clamp(o.scrub, 0, 1) : Stage.lenis ? true : 0.5;
 
-    const build = (tl) => {
+    const build = (tl, ctx) => {
       let g = null;
+      const places = ctx && ctx.phone ? o.phoneTrail : o.trail;
       const box = (el, s) => { const r = el.getBoundingClientRect(); return { x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height }; };
       const measure = () => {
         const s = stage.getBoundingClientRect();
@@ -186,7 +191,7 @@
         const at = (c) => plan.querySelector(':scope > .wr-at-' + c);
         const M = box(at('main'), s);
         let C = box(at('chip'), s);
-        const S = [...plan.querySelectorAll(':scope > .wr-at-stamp')].map((el) => box(el, s));
+        const S = [...plan.querySelectorAll(':scope > .wr-at-stamp')].slice(0, places).map((el) => box(el, s));
         if (!M.w || !M.h || !S.length) return null;
         if (C.w < 2 || C.h < 2) C = { x: M.x, y: M.y, w: M.w * 0.22, h: M.h * 0.22 };
         // one step past the far end of the trail: where the oldest stamp leaves

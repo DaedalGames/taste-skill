@@ -24,7 +24,7 @@
 //
 // ── DOM ───────────────────────────────────────────────────────────────────────────────────────────
 // <section class="scene" id="order" data-scene="object-lowered-onto-the-last-line"
-//          data-options='{"foot":".foot"}' aria-labelledby="olo-line">
+//          data-options='{}' aria-labelledby="olo-line">
 //   <div class="scene-stage">
 //     <div class="olo">
 //       <div class="olo-set">
@@ -50,7 +50,7 @@
 //     </div>
 //   </div>
 // </section>
-// <footer class="foot">…one plain line…</footer>       optional, passed as `foot`
+// <footer>…the page's designed footer, a section of its own: it follows the finished frame…</footer>
 //
 // ── Options (data-options JSON; a value that is not a number or not known falls back) ──────────────
 //   hold        0.8   (0.6-1.6)  screens the stage is held for; under 0.6 (a section under 1.6 screens)
@@ -72,9 +72,10 @@
 //   phoneDrift  0     (0-16)     the same on a phone
 //   side        'auto' | 'left' | 'right'   the side it drifts in from (auto: from the line's start)
 //   nav         a selector for a fixed bar; the line's top is never measured under it
-//   foot        a selector for a plain footer line after the scene. It is pulled up over the stage's
-//               foot, so the last pixel of scroll is the landed object, and the stage keeps its height
-//               clear under the action. Give the footer the page's ground (or none).
+//   foot        unset (the default): the scene ends at its own bottom and the page's designed footer
+//               follows it. A selector pulls that element up over the stage's foot, so the last pixel of
+//               scroll is the landed object, and the stage keeps its height clear under the action: only
+//               for a page that ends on the scene with one plain line, which a page dealt a footer never does.
 //   scrub       true (locked to the scrollbar) | seconds 0.1-1
 //   phone       'same' (default) | 'rest'
 // Scene tokens (CSS): --olo-size (the object's height, share of the screen: 0.3; 0.26 on a tablet; 0.2 on a phone),

@@ -230,9 +230,10 @@ empty, and that the navigation or the one action is in reach after the hero.
    one that carries only a title about one (the letter bar's 1.1). A scene on the work holds three screens at most, so the work itself is not kept waiting. The
    walk through rooms holds about nine screens and is a whole page on its own: the draw does not deal
    it (see its entry). When a dealt scene's sheet entry gives a shorter hold than its file's default, set the
-   sheet's in `data-options`. **A closing scene holds about one screen.** A scene whose only content is a line or two
-   of type is done in about one screen: the line has been read (the inspector fails a short line held
-   over 1.2 screens with nothing new, `line-holds`).
+   sheet's in `data-options`. **A closing scene holds about one screen**, and the page's designed footer
+   follows its finished frame as a section of its own (leave `foot` unset). A scene whose only content
+   is a line or two of type is done in about one screen: the line has been read (the inspector fails a
+   short line held over 1.2 screens with nothing new, `line-holds`).
 3. **Native scroll only.** No wheel capture, no locking the page, no scenes that only run on a click.
    Smoothing only through `Stage.smooth()`.
 4. **Readable at its rest points.** The statement on screen reads whole; nothing passes over text while
@@ -320,7 +321,7 @@ contract. Each entry's `needs` says what the scene really takes, and the draw de
 brief has it: *product-photo* (photographs or renders of the client's own product, building or work,
 `--have product-photo`), *pictures:N* (N distinct photographs of one family), *series:N* (N
 photographs shot or chosen as one series), *names:N* (N real names of its rooms, dishes, places,
-clients or products), *mark* (the brand's own solid mark, `--have mark`), *route* (a real route with
+projects or products), *mark* (the brand's own solid mark, `--have mark`), *route* (a real route with
 stops), *product-ui* (the product's interface), *plan* (a real plan or exploded drawing), *video*
 (footage of the product). A page with no photographs of its own product, and a software page, can
 honestly show about three photographs of its subject and no series, and a page with no photographs of
@@ -509,12 +510,12 @@ hinged sheets followed, and round 11 retired the raster cut (weight 0 in `scenes
 - **Window relay with a trail of stamps** (`window-relay-with-stamps`): the next picture waits as a
   small window in the main picture's corner and opens over it until it covers the slot, the name beside
   it changing in one step, while the old picture shrinks into a stamp that joins a trail of four at most
-  along the caption band. Four to six photographs of one family in one light and ground, each subject
-  whole in the middle with the top left corner plain, and a name of one or two words and one line each
-  (*pictures:4*). In the middle, after a quiet section that introduces the set; not the page's main
-  showcase of the work, where the chip would lie on the piece (take sheets that tip in and away
-  there). Five hold 2.4 screens. Built from the researched technique `lib-0237`, which is no longer
-  dealt to build fresh.
+  along the caption band (two on a phone, one with fewer than five pictures). Four to six photographs
+  of one family in one light and ground, each subject whole in the middle with the top left corner
+  plain, and a name of one or two words and one line each (*pictures:4*). In the middle, after a quiet
+  section that introduces the set; not the page's main showcase of the work, where the chip would lie
+  on the piece (take sheets that tip in and away there). Five hold 2.4 screens. Built from the
+  researched technique `lib-0237`, which is no longer dealt to build fresh.
 
 **Object scrub**
 - **Fixed hero object** (`fixed-hero-object`): one product turns on its own layer while the chapters
@@ -527,9 +528,11 @@ hinged sheets followed, and round 11 retired the raster cut (weight 0 in `scenes
 - **Re-forming window** (`one-figure-reforms`): one window in the accent re-forms through three to five
   chapters (a bar rounds into a disc, rises into an arch, draws in to a pill), carrying each chapter's
   own interface, whose late parts land right behind it at the hand-over, so every rest holds a whole
-  card; the name, one or two lines and one key figure swap beside it. The interface rides the window
-  whole while it re-forms and hands over at the half-way point, so the window is never empty. One
-  interface fragment a chapter, each a different screen (*product-ui*). Four hold two screens.
+  interface; the name, one or two lines and one key figure swap beside it. The interface rides the
+  window whole while it re-forms and hands over at the half-way point, so the window is never empty.
+  One interface fragment a chapter, each a different screen (*product-ui*), set straight on the accent:
+  no card of its own and no boxes inside it (a card on the window is a box in a box). Four hold two
+  screens. Dealt less often than most (weight 0.7).
 - **Closing object turns over** (`closing-object-turns`): the one object the page is about rises in the
   last screen, turns over in 3D while the closing ground comes up behind it, and lands on its plain
   back, set in the page's type with the closing line and the one action. One cut-out photograph of its
@@ -560,9 +563,14 @@ hinged sheets followed, and round 11 retired the raster cut (weight 0 in `scenes
   strong loop or picture.
 
 **Section transition**
-- **Peel, tear and drag** (`peel-tear-and-drag`): a plane drags the next page in behind it, a sticker
-  peels off, or the ground tears away. A top-down cut-out of a plane for the drag; nothing for the
-  tear. Not dealt: judged cheap twice (a page curl, a torn-paper seam).
+- **Peel, tear and drag** (`peel-tear-and-drag`): a plane breaks out of a cloud deck on a clock, drags
+  the next page in behind it, slowing over the middle, and speeds away on a clock, so no frame shows a
+  sliver of nose or tail; the peel and the tear (judged cheap twice: a page curl, a torn-paper seam) are
+  no longer dealt. A real top-down cut-out of a plane, cloud cut-outs at 1.5 times their shown size and
+  two photographs (*pictures:2*); a page without the cut-outs takes another scene, never the drawn
+  jet. Only for a brand that flies things or people (sector other). In the middle, bringing in two
+  quotes or a short list; hold 3. Dealt at half weight (0.5): the demo's cloud stands below the 1.5x
+  the content asks for (about 1.3x on a tablet held upright).
 - **Raster cut between chapters** (`raster-cut`): the next chapter prints over the current one through
   slats while the title changes ink line by line. A full-bleed picture for the next chapter (a title
   alone on two flat grounds reads as an empty screen) and a title of 2-4 words. Not dealt (round 11):
@@ -596,15 +604,19 @@ hinged sheets followed, and round 11 retired the raster cut (weight 0 in `scenes
   0.8). Built from the researched technique `lib-0330`.
 
 **Type choreography**
-- **Letter physics** (`letter-physics`): a claim bursts apart in 3D and an answer lands in a disc of
-  light. A claim of 12-36 characters and one sentence, no pictures.
+- **Letter physics** (`letter-physics`): a claim bursts apart in 3D and a short answer comes out of
+  depth and lands at the claim's size on the dark, the picture behind coming up like lights. A claim of
+  12-36 characters and an answer about as long (36 characters at most); a dark photograph of a lit
+  building is optional.
 - **Object rides through giant type** (`object-through-giant-type`): a cut-out object falls through a
-  wall of capitals that parts around it. A quote of 12-20 words in three to five short lines, so the
-  capitals are giant (about 10vw), and one clean cut-out about a third of the stage high. A longer
-  sentence stays a static statement; the scene carries one phrase of it.
+  wall of capitals that parts around it, swells in the last line and falls away into the page. A quote
+  of 12-20 words in three to five short lines, so the capitals are giant (about 10vw), and one clean,
+  present-day cut-out in full colour about a third of the stage high, never an archive or grainy
+  black-and-white photograph. A longer sentence stays a static statement; the scene carries one phrase
+  of it.
 - **Scroll-turned drum** (`scroll-turned-drum`): names turn on a 3D drum like a slot reel, with a
   drum of pictures beside it, and nothing else on the front line (no count, no clock). 8-20 real names
-  of the client's own rooms, dishes, places, clients or products (`--have names`, or a sector that has
+  of the client's own rooms, dishes, places, projects or products (`--have names`, or a sector that has
   such lists).
 - **Type re-layout** (`type-flip-relayout`): a list in giant capitals spreads, folds into an index and
   hands its size to the heading. A one-word heading and 3-6 short items, no pictures. Not dealt: its

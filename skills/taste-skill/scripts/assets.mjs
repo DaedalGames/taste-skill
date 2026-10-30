@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 // tasteskill / assets: find real, openly licensed pictures of the subject's world, and keep their credits.
 //
-// A page without photographs of its own does not have to draw everything. Archives, museums and open
-// collections hold the subject's city and street, its maps, its materials, its trade's history and the
-// museum objects of its kind, free to use with a credit. This searches them without keys and prints what
-// an agent needs to use a picture honestly: a direct image URL, the page it comes from, its size, its
-// creator, its licence and a one-line credit. Then it downloads the chosen ones into the project and
-// records their credits, so the page works offline and credits every picture.
+// A page without photographs of its own still needs sharp, modern pictures of its world: the subject's city
+// and street as they are today, its materials, its kind of work and its kind of product in use, free to use
+// with a credit. This searches the open collections without keys and prints what an agent needs to use a
+// picture honestly: a direct image URL, the page it comes from, its size, its creator, its licence and a
+// one-line credit. Then it downloads the chosen ones into the project and records their credits, so the
+// page works offline and credits every picture.
 //
-//   node assets.mjs "<query>"                     search every source, licences safe for commercial use
-//        [--source all|openverse|commons|aic|met|museums]    one or several, comma-separated
+// By default it searches the sources references/imagery.md allows: Openverse for pictures, Wikimedia Commons
+// and NASA for footage. The archive and museum sources are the documentary look the owner ruled out (October
+// 2026); `--source all` or a named source still reaches them.
+//
+//   node assets.mjs "<query>"                     search Openverse, licences safe for commercial use
+//        [--source openverse|commons|aic|met|museums|all]    one or several, comma-separated
 //        [--license safe|pd|all|cc0,pd,by,by-sa,...]        safe = CC0, public domain, CC BY, CC BY-SA
 //        [--orientation landscape|portrait|square]  [--min-width 1800]  [--width 1920]  [--limit 5]
 //        [--no-check]                              skip checking that each image loads (faster)
@@ -55,7 +59,7 @@ const AIC_HEADERS = { 'AIC-User-Agent': UA };
 const USAGE = `Find real, openly licensed pictures of the subject's world, download them, keep their credits.
 
   ${CMD} "<query>" [options]
-      --source all|openverse|commons|aic|met|museums   comma-separated; default all
+      --source openverse|commons|aic|met|museums|all   comma-separated; default openverse (the archive and museum sources are the documentary look, ruled out)
       --license safe|pd|all|cc0,pd,by,by-sa,...        default safe: CC0, public domain, CC BY, CC BY-SA
       --orientation landscape|portrait|square
       --min-width <px>       smallest acceptable full width, default 1800 (a picture is used at most at about half its width)
@@ -64,7 +68,7 @@ const USAGE = `Find real, openly licensed pictures of the subject's world, downl
       --no-check             do not check that every image loads (faster, less reliable)
       --json                 machine-readable results
   ${CMD} "<query>" --video [options]   real footage: Wikimedia Commons, Internet Archive, NASA
-      --source all|commons|archive|nasa
+      --source commons|archive|nasa|all                default commons,nasa (the archive's old films are left out)
       --res <p>              largest rendition to pick, by its short side, default 720
       --max-mb <n>           clips over this are flagged and --get refuses them, default 25
       --min-width <px>       default 640 for video
@@ -72,9 +76,8 @@ const USAGE = `Find real, openly licensed pictures of the subject's world, downl
   ${CMD} --credits [--to assets]
   ${CMD} --logo <brand>[,<brand>...] [--to assets]   the real logos of known products (Simple Icons), saved to <to>/logos
 
-Queries work best in the subject's own words and a medium: "ghent postcard", "ghent old map", "azulejo tiles",
-"botanical engraving fig", "rotterdam harbour 1920", "basalt texture". The museum sources match one or two
-words best ("fig", "harbour"). For footage, name the action or the process: "coffee roasting", "timber
+Queries work best in the subject's own words, as it is today: "gent korenmarkt", "azulejo tiles", "basalt
+texture", "cargo bike school run". For footage, name the action or the process: "coffee roasting", "timber
 construction", "river", "city street night".`;
 
 // ---------- arguments ----------
@@ -135,7 +138,8 @@ function pickOrientation(value) {
   return o;
 }
 const o = {
-  sources: pickSources(args.source ?? args.sources ?? 'all'),
+  // the sources references/imagery.md allows (§3, §11), unless named
+  sources: pickSources(args.source ?? args.sources ?? (VIDEO ? 'commons,nasa' : 'openverse')),
   licences: pickLicences(args.license ?? args.licence ?? 'safe'),
   orientation: pickOrientation(args.orientation),
   minWidth: number('min-width', VIDEO ? 640 : 1800, 0, 20000),
@@ -681,25 +685,26 @@ async function search(query, opts) {
   }
   console.log('');
   if (results.every((r) => r.error)) {
-    console.log('No source could be reached. Check the network and try again; if this machine has no internet access, draw the');
-    console.log('pictures instead (references/imagery.md) and say in your report that the open collections could not be searched.');
+    console.log('No source could be reached. Check the network and try again; if this machine has no internet access, use the dealt');
+    console.log('photographs and type (references/imagery.md §3) and say in your report that the open collections could not be searched.');
     return 1;
   }
   if (!shown && opts.video) {
     console.log('Nothing usable came back. Name the action or the process ("coffee roasting", "timber framing", "river"); use fewer');
-    console.log('words; try a smaller --min-width or another --source. A page does not need video: a still picture or a drawing is fine.');
+    console.log('words; try a smaller --min-width. A page does not need video: a still picture is fine.');
     return 1;
   }
   if (!shown) {
-    console.log('Nothing usable came back. Try fewer words; the place\'s own name for things ("azulejo", not "blue tile"); the place and a');
-    console.log('medium ("ghent postcard", "ghent old map", "ghent engraving"); a decade ("rotterdam harbour 1920"); a smaller --min-width;');
-    console.log('or another --source. The museum sources match one or two words best ("fig", "harbour"). If nothing honest exists, draw it.');
+    console.log('Nothing usable came back. Try fewer words; the place\'s own name for things ("azulejo", not "blue tile"); a smaller');
+    console.log('--min-width. For a physical product, search its use, its load and its place instead ("child seat bike", "shopping');
+    console.log('crate", "school street"): a product page is never without pictures. Anything else: if two or three honest queries');
+    console.log('find nothing sharp and fitting, leave the slot to type (references/imagery.md §3).');
     return 1;
   }
   if (opts.video) console.log('Next. Watch before you choose: --get downloads the clip and a poster frame into the project and records the credit.');
   else console.log('Next. Look before you choose: --get downloads into the project and records the credit; open the file to see it.');
   console.log(`  ${CMD} --get <ref>[,<ref>...]${o.toArg}`);
-  console.log(`  ${CMD} --credits${o.toArg}     the footer credit line and the list for your report`);
+  console.log(`  ${CMD} --credits${o.toArg}     the Image credits dialog and the list for your report`);
   console.log(`These ${opts.video ? 'clips' : 'pictures'} show the subject's world. Never present one as the client's own product, room, dish, person or team.`);
   return 0;
 }
@@ -913,5 +918,5 @@ if (args.logo || args.logos) process.exit(await getLogos(String(args.logo || arg
 if (args.credits) process.exit(printCredits(o));
 if (args.get) process.exit(await getAll(String(args.get).split(',').map((s) => s.trim()).filter(Boolean), o));
 const query = words.join(' ').trim();
-if (!query) fail('Give a search query, for example: node assets.mjs "ghent postcard"');
+if (!query) fail('Give a search query, for example: node assets.mjs "azulejo tiles"');
 process.exit(await search(query, o));

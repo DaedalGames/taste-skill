@@ -111,8 +111,9 @@ its kind in use, large, of one configuration and build (the sheet says how), at 
 people it is for, never claimed as this model, never retouched to pass for it (a cargo-bike page
 painted another maker's name off a box) and never replaced by a picture of what its name means. The
 brief decides what the product is: a two-wheeled cargo bike stays two-wheeled whatever the search
-returns, and with no photograph of the right kind the page uses fewer pictures and type, and the
-report says so.
+returns. With no clean photograph of the right kind, the page shows the use, the load and the place
+with the product cropped, unbranded or out of focus, and marks one slot for the client's product shot
+(`data-slot="product-photo"`); never a page without pictures (a cargo-bike page with none lost).
 
 If the request is vague, decide and state your reading in one line instead of asking. Ask only when a
 missing fact blocks the work (for example, no product name).
@@ -173,7 +174,7 @@ and say why in the report.
   pieces or rooms passes `photography,product-photo`), `product-ui` (real screenshots), `illustration`,
   `video`, `mark` (the brand's own solid mark), `route` (a real route with stops the subject travels),
   `plan` (a real floor plan or exploded drawing), `names` (eight or more real names of its rooms,
-  dishes, places, clients or products), `document` (a document the product really makes, such as an
+  dishes, places, projects or products), `document` (a document the product really makes, such as an
   invoice or a contract, when the brief does not name it). Leave it out if you have none: the draw then avoids compositions that depend on them and
   the sheet says how to fill picture slots honestly (software shows its own interface built in HTML; a
   product with no photographs of its own is shown by real photographs of its kind in use, never
@@ -405,11 +406,14 @@ not finished. Order of work:
       fails, labels or not, so say a process in words (references/imagery.md §8);
    6. type and space alone. An empty slot is better than a bad picture.
 
-   Rules: every picture shows this subject's world, never the category's stock shot unless it is
-   art-directed (full-frame beans, hands on a laptop: `references/imagery.md` §2), and is requested
-   at least 1.5 times the size it is shown (twice for the hero); one treatment for all (section 0);
-   three to six good pictures of the subject and its world beat twelve weak ones (the rooms, dishes or
-   products a page pictures are their own set, one each), and none beats a bad one. **Never documentary or
+   Rules: every picture shows this subject's own trade and world, as the sheet's "What the pictures
+   show" line says, never a neighbouring trade's things (a mixing desk for a motion designer) or a
+   landmark the brief does not name, never the category's stock shot unless it is art-directed
+   (full-frame beans, hands on a laptop: `references/imagery.md` §2), and is requested at least 1.5
+   times the size it is shown (twice for the hero); one treatment for all (section 0); no more
+   pictures of the subject and its world than the sheet's photograph total (section 5): a few good
+   ones beat twelve weak ones (the rooms, dishes or products a page pictures are their own set, one
+   each), and none beats a bad one. **Never documentary or
    archive photographs:** no old Commons or museum pictures, history photographs, postcards, old maps
    or engravings, no news-like or snapshot shots; the owner found they made pages look serious, old and
    cheap. Every photograph is modern, well lit and professional-looking (a good Unsplash or Pexels
@@ -451,9 +455,12 @@ not finished. Order of work:
    sentence on the page. When the project has footage or a real picture of its own product, the first screen shows it,
    large. A portfolio shows its work on the first or second screen, before any statement, scene or
    photograph of its city, with one place photograph on the whole page at most (a motion designer's
-   page opened on four screens of Rotterdam before her work). Work invented for the brief is shown as
-   a finished still of each piece (its title card, an end frame, a poster), with real detail; a stock
-   or location photograph never stands in for a piece of work (work slots showing skylines lost a test).
+   page opened on four screens of Rotterdam before her work). The work is pictures of the work, never
+   type cards (`portfolio-without-work` warns). Work invented for the brief is shown as a finished
+   still of each piece (its title card, an end frame, a poster), with real detail, in a frame marked
+   `data-slot="work"` that the report lists; without one, the slot holds a close photograph of the
+   trade's material or making, never a stock or location photograph posing as a piece of work (work
+   slots showing skylines lost a test), never an empty frame.
 
    **Logos of known products are the real ones, never drawn.** When the page names products it works
    with or the brief names (Gmail, Google Calendar, Figma, Slack, Teams, Chrome, ChatGPT, Claude),
@@ -472,7 +479,8 @@ not finished. Order of work:
    stands above it (no announcement or information strip, `announcement-bar`) and nothing in it is a
    sentence (a manuscript tool put a sentence in its bar and the page read as chaos; `nav-sentence`
    fails it, and any link or button there over three words). The footer is a designed
-   section on its own ground, never a single line: links, contact, legal and the Image credits link at
+   section on its own ground, built as dealt, never a single line or a credit row
+   (`footer-not-as-dealt`): links, contact, legal and the Image credits link at
    text sizes, never a giant name or email, never a list the page already shows as content. A page
    ends once: a footer that opens on its own closing line carries the call to action (the sheet then
    builds no cta section), and the visit details of a place stand in one place only. **The
@@ -501,10 +509,12 @@ not finished. Order of work:
    `scenes.mjs` warns a settled step whose heading's letters are turned or off their line
    (`tilted-letters`) or whose picture or filled box the screen edge cuts to a sliver (`edge-sliver`).
    A software page gets one scroll scene at most. A page built without one (`--redraw scenes=none`) is
-   about 8-12 screens, with nothing pinned in a scene's place. About one page in two, one of its scenes
-   is a researched technique instead (`library/techniques.json`): a principle, a direction to take and
-   what breaks it, with no files and no demo. Build it on the shared stage as `references/scenes.md` §8
-   shows, in this page's own type, colour, pictures and words, never as a copy of any site. Avoid what
+   about 8-12 screens, with nothing pinned in a scene's place. A section that pins counts with the
+   scenes: the sheet deals one only where a scene would fit, and says so under it. About one page in
+   two, one of its scenes is a researched technique instead (`library/techniques.json`): a principle,
+   a direction to take and what breaks it, with no files and no demo. Build it on the shared stage as
+   `references/scenes.md` §8 shows, in this page's own type, colour, pictures and words, never as a
+   copy of any site. Avoid what
    breaks it first, and make every frame of its hold a finished, readable composition: never one strip
    on an empty screen, a fan that hides the texts or a text a screen away from its title. A hold that
    steps (a technique or a scene of your own), where its steps carry pictures, gives each step its own
@@ -673,14 +683,14 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **No icon-topped cards, no outlined cards.** | Filled cards in the style section 0 deals, where things belong together. |
 | **No glass.** No backdrop blur, no translucent panels or bars. | Opaque surfaces one tone step from the ground; the navigation section 0 deals (a floating pill too is opaque). |
 | **No bar above the navigation, no sentence in it.** No announcement or information strip over the bar. | The dealt navigation: the wordmark, one- or two-word links, one action. |
-| **The footer is a designed section,** never a single line. | The footer section 0 deals, on its own ground: links, contact, legal, Image credits. |
+| **The footer is a designed section,** never a single line. | The footer section 0 deals, built as dealt (`footer-not-as-dealt`), on its own ground: links, contact, legal, Image credits. |
 | **No documentary or archive photographs.** No old Commons or museum pictures, history photographs, postcards, old maps, engravings, news-like shots. | Modern, well-lit, professional photographs (the library's first), or none: the product, the type, the colour. |
 | **No emoji, no gradient blobs, no decorative shapes, no drawn diagrams, charts or illustrations, no fake dashboards of grey bars.** | A real picture, a real interface fragment, the process said in words, or nothing. |
 | **No styled accent word** in a headline (italic, serif, coloured, underlined). | One face, one colour. The words carry the emphasis. |
 | **The dealt type system:** its faces, its weights, its six steps. Two families at most. | Map every other size onto the nearest step. |
 | **No pictures in headlines or sentences.** No photograph between the words of a headline, no picture inside the letters, no thumbnails inside running text. | The picture gets its own place, beside, above or behind the words, at a size that shows what it is. |
 | **No headline in a card, no template stack.** The hero headline stands on the page ground or on its picture, never in a panel, card or box; and never a centred headline and a line over a round-cornered photograph card or a row of two or three cards, with or without actions (`template-hero`). | The first screen as one composition in the dealt hero's geometry, built round the page's idea: headline, one sentence, the action, the picture. |
-| **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges. | Neutral ground (white, off-white, near-black); colour from the pictures; the accent on the action. |
+| **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges, no ground or panel colour per section or card (`surface-count`). | Neutral ground (white, off-white, near-black) and one surface tone; the ink, the accent or the dealt field as one band; colour from the pictures; the accent on the action. |
 | **No giant name or email anywhere, no credit walls.** | The email at the h3 step or smaller, with a Copy button and a mailto link; the dealt footer with its links, contact and legal at text sizes; picture credits behind one small "Image credits" link. |
 | **No drag rails or progress bars** outside a working tool, no range sliders, no line with a knob or dots on it that reads as one, and no switch, checkbox or toggle that changes nothing: a length or a count is a row of stepped buttons; no sideways scrollers on desktop. | A list or grid that fits the width; stepped buttons of real values; features as lines of text at full ink; a control only where it does what it says. |
 | **No page built only of boxes, no boxes in boxes,** no box laid over a photograph, no outlined boxes in a row, no bento grids, no wall of tiles in several fills, no staggered folder tabs, no heading alone in its column or on its screen, no empty half-rows (nothing on the left, text on the right) (`framed-elements`, `boxed-list`, `boxed-page`, `bento`). | Filled cards in the dealt style where things belong together, in two or three sections, side by side and never one inside another; the rest on the ground, separated by space and size: questions as plain rows, specs as name and figure; the heading over its content; the key content in the open, tabs or an accordion only for secondary detail. The product's window holds no card inside it. |
@@ -731,7 +741,8 @@ Short form. Numbers are from the study unless marked as house style.
   Professional sites put almost no page area on coloured grounds; colour comes from their pictures.
 - Running text in the full ink. A page set in soft grey reads unfinished.
 - Surfaces are separated by a small step in tone, never by a line or a shadow.
-- At most one section changes to a field colour (the sheet deals it). Nothing fades into anything.
+- Two grounds: the page ground and one surface tone. At most one section changes to a field in the
+  ink or the accent (the sheet deals it). Nothing fades into anything.
 
 **Imagery**
 - One dominant, sharp picture beats six small ones. On the top-scored sites the hero media covers at

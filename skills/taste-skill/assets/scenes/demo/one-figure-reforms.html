@@ -90,7 +90,8 @@
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 26px; }
   .actions .more { font-size: 16px; text-underline-offset: 4px; }
 
-  /* the product's own interface, built as fragments (data-ui) at its real size */
+  /* the product's own interface, built as fragments (data-ui) at its real size: one surface, its parts set
+     apart by space and type, never filled rows, pills or bands inside it */
   .ui {
     padding: 18px 20px 16px;
     border-radius: 14px;
@@ -107,16 +108,16 @@
   .ui-muted { color: #575c55; font-weight: 400; }
   .ui-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 12px 0 16px; }
   .ui-balance { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
-  .ui-tag { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--ground); font-size: 14px; white-space: nowrap; }
+  .ui-tag { font-size: 14px; white-space: nowrap; color: #575c55; }
   .ui-tag.is-in { color: var(--accent); }
   .ui-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; }
   .ui-row dt, .ui-row > span:first-child { color: #575c55; }
   .ui-row dd, .ui-row b { font-weight: 600; white-space: nowrap; }
-  .ui-band { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--ground); }
+  .ui-band { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; font-size: 1.2em; }
 
   /* the account (first screen) */
-  .ui-pots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
-  .ui-pot { padding: 10px 12px; border-radius: 10px; background: var(--ground); font-size: 16px; font-weight: 600; }
+  .ui-pots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 14px; }
+  .ui-pot { font-size: 16px; font-weight: 600; }
   .ui-pot::before { content: attr(data-k); display: block; font-size: 14px; font-weight: 400; color: #575c55; }
   .ui-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto 6.6em; align-items: center; column-gap: 12px; padding: 7px 0; }
   .ui-list li > span { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -124,34 +125,36 @@
   .ui-in { color: var(--accent); }
   .intro .ui { justify-self: end; width: min(100%, 540px); margin-right: calc(-1 * var(--pad)); padding: 20px var(--pad) 16px; }
 
-  /* the four windows of the scene: each pane is its own container, so a fragment drops rows when its
-     shape leaves it little room (a phone's pill) */
+  /* the four windows of the scene: each fragment sits straight on the accent with no card of its own (the
+     scene's CSS takes the surface off and sets it in --ofr-on-accent, and the muted parts and the bars here
+     are drawn from it). Each pane is its own container, so a fragment drops rows when its shape leaves it
+     little room (a phone's pill) */
   .ofr-pane { container-type: inline-size; }
-  .ofr-pane .ui { padding: 20px 22px 18px; font-size: 16px; }
+  .ofr-pane .ui { padding: 0; border-radius: 0; font-size: 16px; }
+  .ofr-pane :is(.ui-muted, .ui-tag, .ui-axis, .ui-row dt, .ui-row > span:first-child) { color: color-mix(in srgb, var(--ofr-on-accent) 80%, transparent); }
   .ofr-pane .ui-top .ui-muted { font-size: 14px; }
   .ofr-pane .ui-balance { font-size: 40px; }
   .ofr-pane .ui-row { padding: 7px 0; }
-  .ofr-pane .ui-band { padding: 12px 14px; }
   .ui-to { margin: 8px 0 12px !important; font-size: 26px; font-weight: 700; letter-spacing: -0.015em; }
-  /* the parts that build in while the window rests: solid bands, so each one reads at a glance */
-  .ui .ui-done { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; padding: 13px 16px; border-radius: 10px; background: var(--ink); color: var(--surface); font-weight: 600; }
-  .ui .ui-done.is-in { background: var(--accent); color: #fff; }
+  /* the parts that build in while the window rests: a line of larger, heavier type each, so it reads at a
+     glance */
+  .ui .ui-done { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; font-size: 20px; font-weight: 700; line-height: 1.2; }
+  .ui .ui-done > span + span { white-space: nowrap; }
   .ui-state { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px !important; }
   .ui-run li { grid-template-columns: minmax(0, 1fr) auto auto; }
   .ui-bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; margin: 4px 0 6px; }
-  .ui-bars i { flex: 1; height: calc(var(--h) * 100%); border-radius: 4px 4px 0 0; background: #c9cdc7; }
-  .ui-bars i:last-child { background: var(--accent); }
-  .ui-axis { display: flex; justify-content: space-between; font-size: 14px; color: #575c55; }
+  .ui-bars i { flex: 1; height: calc(var(--h) * 100%); border-radius: 4px 4px 0 0; background: color-mix(in srgb, var(--ofr-on-accent) 40%, transparent); }
+  .ui-bars i:last-child { background: var(--ofr-on-accent); }
+  .ui-axis { display: flex; justify-content: space-between; font-size: 14px; }
   @container (max-width: 300px) {
-    .ofr-pane .ui { padding: 14px 14px 12px; font-size: 14px; }
+    .ofr-pane .ui { font-size: 14px; }
     .ofr-pane .ui-top .ui-muted { font-size: 14px; }
     .ui-to { font-size: 18px; }
     .ofr-pane .ui-balance { font-size: 26px; }
-    .ui .ui-done { margin-top: 8px; padding: 9px 10px; }
+    .ui .ui-done { margin-top: 8px; font-size: 16px; }
     .ui-run li { grid-template-columns: minmax(0, 1fr) auto; }
     .ui-run .ui-tag, .ui-hide-narrow { display: none; }
     .ofr-pane .ui-row { padding: 4px 0; }
-    .ofr-pane .ui-band { padding: 9px 10px; }
     .ui-run .ui-band { display: none; }
     .ui-run li { padding: 5px 0; }
     .ui-bars { height: 64px; gap: 5px; }
@@ -192,25 +195,33 @@
   }
   @keyframes rise { from { opacity: 0; transform: translateY(18px); } }
 
+  /* the footer, a contact block on the ink: the heading on the left half, the email at the h3 step with a
+     Copy button and when it is answered on the right half, then the links and the small print */
   footer {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px 32px;
-    padding: 32px var(--gutter) 40px;
-    font-size: 16px;
-    color: var(--muted);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(64px, 11vh, 120px) 6vw;
+    padding: clamp(96px, 15vh, 160px) var(--gutter) 32px;
+    background: var(--ink);
+    color: var(--ground);
   }
-  footer strong { color: var(--ink); }
-  footer nav { display: flex; flex-wrap: wrap; gap: 8px 24px; }
-  footer nav a { text-underline-offset: 4px; }
+  footer h2 { margin: 0; max-width: 8em; font-size: clamp(40px, 5vw, 80px); font-weight: 700; line-height: 0.98; letter-spacing: -0.035em; }
+  footer p { margin: 0; }
+  .foot__reach { align-self: end; display: grid; gap: 20px; justify-items: start; }
+  .foot__mail { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .foot__mail a { overflow-wrap: anywhere; font-size: clamp(20px, 2.2vw, 32px); font-weight: 600; letter-spacing: -0.01em; text-underline-offset: 6px; }
+  .foot__copy { height: 44px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--ground); color: var(--ink); font: 600 16px/1 var(--font-text); cursor: pointer; }
+  .foot__copy:hover { background: #fff; }
+  .foot__base { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; font-size: 16px; color: #b8bbb4; }
+  .foot__base nav { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+  .foot__base a { color: var(--ground); text-underline-offset: 4px; }
 
   @media (max-width: 900px) {
     .intro { grid-template-columns: 1fr; min-height: 0; }
     .intro h1 { font-size: clamp(44px, 11.5vw, 104px); }
     .intro .ui { justify-self: stretch; width: auto; margin-inline: calc(-1 * var(--pad)); }
     .plan { grid-template-columns: 1fr; }
+    footer { grid-template-columns: 1fr; }
   }
   @media (max-width: 767px) {
     :root { --pad: 16px; }
@@ -270,8 +281,8 @@
     <div class="scene-stage">
       <h2 class="ofr-heading" id="ofr-h">One account, four jobs</h2>
       <div class="ofr-figure">
-        <div class="ofr-pane" data-shape="bar">
-          <div class="ui" data-ui role="img" aria-label="Invoice 0412 to Halden &amp; Co. for £3,200, paid on 21 October and matched to its payment">
+        <div class="ofr-pane" data-shape="bar" data-ui role="img" aria-label="Invoice 0412 to Halden &amp; Co. for £3,200, paid on 21 October and matched to its payment">
+          <div class="ui">
             <div class="ui-top"><span>Invoice 0412</span><span class="ui-muted">Due 28 Oct</span></div>
             <p class="ui-to">Halden &amp; Co.</p>
             <dl>
@@ -284,8 +295,8 @@
             <p class="ui-done is-in" data-build="2"><span>Matched to its payment</span></p>
           </div>
         </div>
-        <div class="ofr-pane" data-shape="disc">
-          <div class="ui ui-run" data-ui role="img" aria-label="Friday's payment run: three payees, £5,190 in all, approved and sent">
+        <div class="ofr-pane" data-shape="disc" data-ui role="img" aria-label="Friday's payment run: three payees, £5,190 in all, approved and sent">
+          <div class="ui ui-run">
             <div class="ui-top"><span>Payment run</span><span class="ui-muted">Friday 24 Oct</span></div>
             <ul class="ui-list">
               <li><span>Mara Lind</span><em class="ui-tag">Design</em><b>£3,100.00</b></li>
@@ -297,8 +308,8 @@
             <p class="ui-done is-in" data-build="2"><span>Sent, arriving today</span></p>
           </div>
         </div>
-        <div class="ofr-pane" data-shape="arch">
-          <div class="ui" data-ui role="img" aria-label="The tax pot: £9,640 set aside, the VAT return due on 7 November and ready to file">
+        <div class="ofr-pane" data-shape="arch" data-ui role="img" aria-label="The tax pot: £9,640 set aside, the VAT return due on 7 November and ready to file">
+          <div class="ui">
             <div class="ui-top"><span>Tax pot</span><span class="ui-muted">VAT due 7 Nov</span></div>
             <p class="ui-balance" style="margin: 12px 0 10px">£9,640.00</p>
             <dl>
@@ -309,8 +320,8 @@
             <p class="ui-done" data-build="2"><span>VAT return ready to file</span></p>
           </div>
         </div>
-        <div class="ofr-pane" data-shape="pill">
-          <div class="ui" data-ui role="img" aria-label="Savings: £12,300, growing every month since May, with £1,240 moved in today">
+        <div class="ofr-pane" data-shape="pill" data-ui role="img" aria-label="Savings: £12,300, growing every month since May, with £1,240 moved in today">
+          <div class="ui">
             <div class="ui-top"><span>Savings</span><span class="ui-muted ui-hide-narrow">Since May</span></div>
             <p class="ui-balance" style="margin: 12px 0 14px">£12,300</p>
             <div class="ui-bars"><i style="--h:.34"></i><i style="--h:.45"></i><i style="--h:.52"></i><i style="--h:.61"></i><i style="--h:.7"></i><i style="--h:.86" data-build="1"></i></div>
@@ -355,14 +366,20 @@
   </section>
 </main>
 
-<footer>
-  <strong>Corbel</strong>
-  <nav aria-label="Footer">
-    <a href="#how">How it works</a>
-    <a href="#plan">Pricing</a>
-    <a href="#plan">Open an account</a>
-  </nav>
-  <span>Business banking for small studios.</span>
+<footer aria-labelledby="foot-h">
+  <h2 id="foot-h">Talk to a person</h2>
+  <div class="foot__reach">
+    <p class="foot__mail"><a href="mailto:hello@corbelbanking.co.uk">hello@corbelbanking.co.uk</a><button type="button" class="foot__copy" onclick="navigator.clipboard && navigator.clipboard.writeText('hello@corbelbanking.co.uk').then(() => { this.textContent = 'Copied'; })">Copy</button></p>
+    <p>Answered within the hour, weekdays 8 to 6, from our office in Leeds.</p>
+  </div>
+  <div class="foot__base">
+    <nav aria-label="Footer">
+      <a href="#how">How it works</a>
+      <a href="#plan">Pricing</a>
+      <a href="#plan">Open an account</a>
+    </nav>
+    <p>Corbel, business banking for small studios. An invented bank, made for a scene demo.</p>
+  </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>

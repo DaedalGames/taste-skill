@@ -20,6 +20,7 @@
     --muted: #474f47;
     --accent: #a8182a;
     --accent-ink: #ffffff;
+    --surface: #e2e2da;
     --font-display: 'Fraunces', Georgia, serif;
     --font-text: 'Figtree', 'Helvetica Neue', Arial, sans-serif;
     --display-weight: 500;
@@ -57,9 +58,22 @@
   .intro__cup img { width: 100%; height: auto; border-radius: 2px; }
   .intro__cup figcaption { margin-top: 12px; max-width: 30ch; font-size: 16px; line-height: 1.4; color: var(--muted); }
 
-  .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 28px; padding: 18px var(--pad); font-size: 15px; background: var(--ink); color: var(--ground); }
+  /* the footer: a section of its own after the closing frame (the scene leaves `foot` unset), on the page's
+     ground. A newsletter card: the kiln days in one filled card on the surface tone, the email field and its
+     button in one row; the studio's contact and links beside it; the small print under both */
+  .foot { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(16px, 2vw, 28px); row-gap: clamp(48px, 8svh, 88px); padding: clamp(88px, 14svh, 150px) var(--pad) 32px; background: var(--ground); color: var(--ink); }
   .foot p { margin: 0; }
-  .foot nav { display: flex; gap: 24px; }
+  .foot__card { grid-column: 1 / span 7; display: grid; gap: 28px; align-content: start; padding: clamp(32px, 3.4vw, 52px); border-radius: 4px; background: var(--surface); }
+  .foot__ask { max-width: 20ch; font: 500 clamp(28px, 2.6vw, 40px)/1.1 var(--font-display); letter-spacing: -0.02em; }
+  .foot__row { display: flex; gap: 12px; max-width: 520px; }
+  .foot__row input { flex: 1; min-width: 0; height: 52px; padding: 0 16px; border: 0; border-radius: 4px; background: var(--ground); color: var(--ink); font: 400 18px/1 var(--font-text); }
+  .foot__row button { height: 52px; padding: 0 22px; border: 0; border-radius: 4px; background: var(--accent); color: var(--accent-ink); font: 600 17px/1 var(--font-text); cursor: pointer; transition: background-color 180ms ease; }
+  .foot__row button:hover { background: color-mix(in srgb, var(--accent) 84%, var(--ink)); }
+  .foot__card.is-sent .foot__row { display: none; }
+  .foot__studio { grid-column: 9 / -1; align-self: end; display: grid; gap: 16px; }
+  .foot__studio nav { display: grid; gap: 8px; margin-top: 12px; }
+  .foot__studio .foot__mail { text-decoration: underline; text-underline-offset: 4px; }
+  .foot__base { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 28px; font-size: 16px; color: var(--muted); }
   .foot a, .credits-link { color: inherit; font: inherit; text-decoration: none; }
   .foot a:hover, .credits-link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .credits-link { padding: 0; border: 0; background: none; cursor: pointer; }
@@ -94,7 +108,10 @@
     .intro h1 { font-size: clamp(56px, 17vw, 80px); }
     .intro__cup { margin-top: 40px; }
     .intro__cup figcaption { font-size: 15px; }
-    .foot { padding: 16px; }
+    .foot { grid-template-columns: minmax(0, 1fr); row-gap: 40px; padding: 72px 16px 24px; }
+    .foot__card, .foot__studio { grid-column: 1; }
+    .foot__row { flex-direction: column; }
+    .foot__row input { flex: none; }
   }
 </style>
 </head>
@@ -122,7 +139,7 @@
     </figure>
   </section>
 
-  <section class="scene" id="close" data-scene="closing-cut-under-the-rise" data-options='{"foot":".foot","place":"bottom-left","hold":1.6,"size":0.46,"rise":1,"dip":0.15,"phoneDip":0.06,"cut":0.28,"from":0.32,"to":0.86}' aria-labelledby="ccr-line">
+  <section class="scene" id="close" data-scene="closing-cut-under-the-rise" data-options='{"place":"bottom-left","hold":1.6,"size":0.46,"rise":1,"dip":0.15,"phoneDip":0.06,"cut":0.28,"from":0.32,"to":0.86}' aria-labelledby="ccr-line">
     <div class="scene-stage">
       <div class="ccr">
         <div class="ccr-world">
@@ -150,11 +167,26 @@
 </main>
 
 <footer class="foot">
-  <p>Hollis Pottery, Leeds</p>
-  <nav aria-label="Footer">
-    <a href="#teapot">The teapot</a>
+  <form class="foot__card" onsubmit="event.preventDefault(); this.classList.add('is-sent'); this.querySelector('.foot__sent').hidden = false;">
+    <label class="foot__ask" for="kiln-mail">Hear when the kiln opens.</label>
+    <div class="foot__row">
+      <input id="kiln-mail" type="email" name="email" autocomplete="email" required>
+      <button type="submit">Tell me</button>
+    </div>
+    <p class="foot__sent" role="status" hidden>Thank you. The next kiln day comes to you first.</p>
+  </form>
+  <div class="foot__studio">
+    <p>Hollis Pottery, Leeds. Stoneware thrown, glazed and posted in two days.</p>
+    <p><a class="foot__mail" href="mailto:studio@hollispottery.co.uk">studio@hollispottery.co.uk</a></p>
+    <nav aria-label="Footer">
+      <a href="#teapot">The teapot</a>
+      <a href="#close">Order</a>
+    </nav>
+  </div>
+  <div class="foot__base">
+    <p>An invented pottery, made for a scene demo</p>
     <button type="button" class="credits-link" onclick="document.getElementById('credits').showModal()">Image credits</button>
-  </nav>
+  </div>
 </footer>
 <dialog class="credits" id="credits" aria-labelledby="credits-title">
   <h2 id="credits-title">Image credits</h2>

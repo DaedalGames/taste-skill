@@ -96,7 +96,7 @@
   /* the scene's title, in the wide cut of the same family */
   .scene .portal-title { font-stretch: 112%; letter-spacing: -0.02em; }
 
-  /* the chapter inside: the same night ground the world ends on */
+  /* the night chapter: the same night ground the way out starts from */
   .night-plan {
     background: var(--portal-night);
     color: #e7ebf3;
@@ -123,9 +123,6 @@
   .night-plan figure { margin: 0; }
   .night-plan figure img { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: 20% 50%; }
   .night-plan figcaption { margin-top: 14px; font-size: 16px; color: #8a93a8; }
-
-  /* the way in looks up at the sky: the summit stays low in the frame */
-  #nights { --portal-focus: 50% 0%; }
 
   /* the footer: the night ground again, no card. The booking on the left, at the h2 step with the
      one action; the sections and the way up in two short columns on the right; the small print at
@@ -167,6 +164,20 @@
   .foot-cols a:hover { text-decoration: underline; }
   .foot .credit { grid-column: 1 / -1; margin: 0; font-size: 15px; color: #8a93a8; }
 
+  /* the entrance, dealt from the library (focus, in base.css): the first screen comes into focus like a lens
+     finding it, the picture from soft and a touch large, then the headline from half strength, with no travel;
+     the sentence is sharp from the first frame. Below the fold only the chapter headings sharpen, once */
+  [data-entrance="focus"] { --lens: 8px; }
+  @media (max-width: 47.99em) { [data-entrance="focus"] { --lens: 0px; } }
+  @media (prefers-reduced-motion: no-preference) {
+    .js [data-entrance="focus"] [data-e="picture"] > :not(figcaption) { animation: e-focus-lens 1000ms cubic-bezier(.33, 1, .68, 1) backwards; }
+    .js [data-entrance="focus"] [data-e="headline"] { animation: e-focus-type 700ms cubic-bezier(.33, 1, .68, 1) 260ms backwards; }
+    .js [data-entrance="focus"] [data-reveal="heading"] { opacity: 0.45; filter: blur(4px); transition: opacity 700ms cubic-bezier(.22, 1, .36, 1), filter 700ms cubic-bezier(.33, 1, .68, 1); }
+    .js [data-entrance="focus"] [data-reveal="heading"].is-in { opacity: 1; filter: none; }
+  }
+  @keyframes e-focus-lens { from { filter: blur(var(--lens, 8px)); transform: scale(1.03); } }
+  @keyframes e-focus-type { from { filter: blur(4px); opacity: 0.5; } }
+
   @media (max-width: 1000px) {
     .opening { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
     .opening-text { padding: 32px 0 32px; }
@@ -187,13 +198,12 @@
   }
 </style>
 </head>
-<body>
+<body data-entrance="focus">
 
 <header class="bar">
   <a class="brand" href="#top"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#skarfjell-dome"/></svg><span>Skarfjell<span class="brand-rest"> Observatory</span></span></a>
   <nav aria-label="Main">
-    <a href="#nights">Nights</a>
-    <a href="#night-plan">Getting up</a>
+    <a href="#night-plan">Nights</a>
     <a href="#close">Prices</a>
     <a class="book" href="#close">Book a night</a>
   </nav>
@@ -202,40 +212,18 @@
 <main>
   <section class="opening" id="top">
     <div class="opening-text">
-      <h1>Nights at 1,420 metres</h1>
-      <p>A public observatory on the Skarfjell ridge, an hour above the valley by the last cable car, open on clear winter nights.</p>
+      <h1 data-e="headline">Nights at 1,420 metres</h1>
+      <p data-e="lead">A public observatory on the Skarfjell ridge, an hour above the valley by the last cable car, open on clear winter nights.</p>
     </div>
-    <figure class="opening-pic">
+    <figure class="opening-pic" data-e="picture">
       <img src="https://picsum.photos/id/866/1600/1067" alt="A snow ridge at dusk with a sharp peak behind it under pink cloud" width="1600" height="1067">
     </figure>
   </section>
 
-  <!-- the doorway into the night chapter -->
-  <section class="scene" data-scene="fly-into-the-shape" data-dir="in" id="nights" aria-labelledby="nights-title">
-    <div class="scene-stage">
-      <div class="portal-outside">
-        <p class="portal-aside">Winter nights, October to March</p>
-      </div>
-      <h2 class="portal-title portal-title--out" id="nights-title"><span class="portal-line">Lights off,</span> <span class="portal-line">eyes up</span></h2>
-      <div class="portal-world">
-        <picture>
-          <source media="(max-width: 767px)" srcset="https://picsum.photos/id/869/900/1600" width="900" height="1600">
-          <img class="portal-media" src="https://picsum.photos/id/869/2000/1800" alt="The Milky Way over the ridge, with the summit just catching the last of the light below it" width="2000" height="1800">
-        </picture>
-        <div class="portal-scrim" aria-hidden="true"></div>
-        <div class="portal-tint" aria-hidden="true"></div>
-        <svg class="portal-mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#skarfjell-dome"/></svg>
-        <p class="portal-sub">At ten the ridge goes dark, the east dome turns, and the sky you came for opens.</p>
-      </div>
-      <svg class="portal-src" viewBox="0 0 100 100" width="0" height="0" aria-hidden="true">
-        <path id="skarfjell-dome" d="M 7.37 96 L 7.37 84.78 L 14.1 84.78 L 14.1 48.88 L 5.12 48.88 C 5.12 26.48 21.64 7.51 43.83 4.43 L 43.83 26.44 L 56.17 26.44 L 56.17 4.43 C 78.36 7.51 94.88 26.48 94.88 48.88 L 85.9 48.88 L 85.9 84.78 L 92.63 84.78 L 92.63 96 Z" data-anchor="50 61.2" data-rin="34.7"/>
-      </svg>
-    </div>
-  </section>
-
+  <!-- the night chapter, on the night ground (the scene is dealt "out" only: no doorway "in" here) -->
   <section class="night-plan" id="night-plan" aria-labelledby="plan-title">
     <div>
-      <h2 id="plan-title">How a night on the ridge runs</h2>
+      <h2 id="plan-title" data-reveal="heading">How a night on the ridge runs</h2>
       <ol class="times">
         <li><time>17:40</time><p>The last cable car leaves Hallsdal. Wear boots: the path from the top station is ten minutes on packed snow, lit at ankle height.</p></li>
         <li><time>19:00</time><p>Soup and rye bread in the hut while the domes cool to the night air, and a short talk on what is up tonight.</p></li>
@@ -265,6 +253,9 @@
         <div class="portal-tint" aria-hidden="true"></div>
         <svg class="portal-mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#skarfjell-dome"/></svg>
       </div>
+      <svg class="portal-src" viewBox="0 0 100 100" width="0" height="0" aria-hidden="true">
+        <path id="skarfjell-dome" d="M 7.37 96 L 7.37 84.78 L 14.1 84.78 L 14.1 48.88 L 5.12 48.88 C 5.12 26.48 21.64 7.51 43.83 4.43 L 43.83 26.44 L 56.17 26.44 L 56.17 4.43 C 78.36 7.51 94.88 26.48 94.88 48.88 L 85.9 48.88 L 85.9 84.78 L 92.63 84.78 L 92.63 96 Z" data-anchor="50 61.2" data-rin="34.7"/>
+      </svg>
     </div>
   </section>
 
@@ -274,12 +265,12 @@
      small print -->
 <footer class="foot" id="close" aria-labelledby="close-title">
   <div class="foot-book">
-    <h2 id="close-title">Book a clear night</h2>
+    <h2 id="close-title" data-reveal="heading">Book a clear night</h2>
     <p>Thursday to Saturday, October to March. 640 kr with the cable car, soup and two hours under the domes. A cloudy night moves to the next clear one.</p>
     <a class="action" href="#close">Book a night</a>
   </div>
   <div class="foot-cols">
-    <nav aria-label="Footer"><a href="#nights">Nights</a><a href="#night-plan">Getting up</a><a href="#close">Prices</a></nav>
+    <nav aria-label="Footer"><a href="#night-plan">Nights</a><a href="#close">Prices</a></nav>
     <p><span>Last car up at 17:40</span><span>Hallsdal valley station</span><a href="#close">nights@skarfjell.no</a></p>
   </div>
   <p class="credit">Photographs from Unsplash via Lorem Picsum. Skarfjell Observatory is invented for this demo.</p>
@@ -291,6 +282,15 @@
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
 <script src="../stage.js"></script>
 <script src="../fly-into-the-shape.js"></script>
-<script>Stage.smooth(); Stage.init();</script>
+<script>
+  Stage.smooth(); Stage.init();
+  // below the fold the chapter headings sharpen as they come into view; none stays soft if the observer never fires
+  (() => {
+    const els = document.querySelectorAll('[data-reveal]');
+    if (!('IntersectionObserver' in window)) { els.forEach((el) => el.classList.add('is-in')); return; }
+    const io = new IntersectionObserver((list) => { for (const e of list) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+    els.forEach((el) => io.observe(el));
+  })();
+</script>
 </body>
 </html>

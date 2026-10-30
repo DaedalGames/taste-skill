@@ -1,17 +1,26 @@
 // tasteskill / scenes / peel-tear-and-drag.js — a physical object brings in the next section.
 //
 // Three modes (data-options "mode"), each at most once on a page, the scene itself at most twice:
-//   drag (default)  a plane drags the next chapter in behind it: for the middle of a page (below).
-//   peel            a sticker peels off the page and shows what it covered: for a hero or a footer.
-//   tear            the old chapter's ground rips along a ragged line and rolls away: for a chapter change.
-// Peel and tear are documented after the drag's options.
+//   drag (default)  a plane drags the next chapter in behind it: for the middle of a page (below). The only
+//                   mode the draw deals.
+//   peel            a sticker peels off the page and shows what it covered. Retired: never dealt.
+//   tear            the old chapter's ground rips along a ragged line and rolls away. Retired: never dealt.
+// Peel and tear both paint a shaded, shadowed paper tube (drawn bands and soft shadows, a 2010s skeuomorph
+// beside flat type); they still run for pages that already use them, and are documented after the drag's
+// options, but a new page takes the drag or another scene.
 //
 // DRAG. Cloud closes in over the old chapter until it is a deck, then a huge
 // photographed plane, seen from straight below or above, breaks out of it, crosses the held stage and pulls
 // the next page in behind it. The page arrives through a chevron clip whose point stays under the fuselage
-// and whose two slanted sides run under the two wings (measured from the cut-out's own pixels); the plane
-// casts a soft shadow, on the new page only. The clip and the plane are driven by the same number (the edge,
-// the clip's point as a % of the stage) in the same linear tween window, so the seam never comes loose.
+// and whose two slanted sides run under the two wings (measured from the cut-out's own pixels). No shadow
+// by default (shadow: true still casts a soft one on the new page, for old pages; a drop shadow is a house
+// ban). The clip and the plane are driven by the same number (the edge, the clip's point as a % of the
+// stage), so the seam never comes loose. The plane comes in and goes away on a clock, never on the scroll:
+// it breaks out of the deck until about three fifths of it is on screen in about half a second, the scroll
+// carries it across, and from about three fifths still on screen it speeds away. Words move on a clock too:
+// the old chapter's closing line lifts away as the plane sets off, and each block of the new page lands (in
+// about 0.4s) once the plane's outline has passed it, and leaves again, faster, when the scroll goes back.
+// Wherever the reader stops, the plane shows most of itself or none, and a block is whole or not there.
 // The cloud comes in as the view climbs: every piece slides in from outside the frame towards the middle,
 // shrinking as it comes, always at full opacity (no half-clear sheet ever lies over the photo), until the deck
 // closes. A piece placed in the right half comes in from the right and never crosses into the left one. The deck
@@ -32,7 +41,9 @@
 //         <p class="drag-old__line">We fly when the ferries can't.</p>       4-10 words
 //         <div class="drag-veil" aria-hidden="true">            optional, 0-7 pieces (the phone uses the first 4);
 //           <img class="drag-veil__piece" src="cloud-1.webp" alt="">        the first two sit in the right half.
-//              Soft-edged alpha cut-outs of cloud seen from above, about 1000-1300px wide, with a solid core and
+//              Soft-edged alpha cut-outs of cloud seen from above, at least 1.5 times the width they are shown
+//              (the CSS shows the demo's 1000-1300px pieces at 40-60% of a 1440 screen, 1.5x or more; a 768px
+//              tablet crops a wider deck, so give 2000px pieces for it), with a solid core and
 //              their half-transparent edge pixels in the cloud's own colour (no dark fringe where one lies on
 //              another). The CSS places seven; give other pieces their own left/top/width, as shares of a
 //              1440 x 900 box (390 x 844 on the phone) that the scene fits over the stage.
@@ -56,8 +67,9 @@
 //   above or below, nose pointing right, no shadow, its box tight around it; a plane's wingspan about equal to
 //   its length. A plane photographed against clear sky keys cleanly. The scene draws the shadow, and reads the
 //   cut-out's outline (same origin or CORS) to put the clip's point under the fuselage and its sides under the
-//   wings, and to know when the tail has passed each block of words. Without a .drag-object the scene paints
-//   a plain drawn jet as a fallback: fine for a sketch, but a real page gives it a photograph.
+//   wings, and to know when the tail has passed each block of words. Without a .drag-object the scene runs as
+//   a bare wipe (object: 'jet' paints a plain drawn jet, for a sketch only: a drawn illustration never ships).
+//   A page without its own cut-out of a plane, and the cloud's, takes another scene.
 //
 // Options (data-options JSON), name: values [default] what it does
 //   dir:       'ltr' | 'rtl'      ['ltr']   direction on desktop; 'rtl' for a second use on one page
@@ -65,22 +77,30 @@
 //   phoneHold: 1.5-3.5            [2.2]     (keep the drag itself, 0.75 of it, at 1.5 screens or more)
 //   phone:     'vertical' | 'rest' ['vertical']  the phone flies bottom to top, or keeps the finished composition
 //   scrub:     true | seconds     [true with Lenis, else 0.6]
-//   object:    'jet' | 'none'     ['jet']   what to paint when the page has no .drag-object ('none': a bare wipe)
+//   pace:      'surge' | 'even'   ['surge'] the scrolled crossing between the two clocks (0.085-0.90 of the hold,
+//                                           the phone's climb 0.12-0.88): quicker out of the clock in, slower over
+//                                           the middle, quicker into the clock out, never more than three times
+//                                           faster in one place than another; 'even' is linear
+//   object:    'none' | 'jet'     ['none']  what to paint when the page has no .drag-object: nothing (a bare
+//                                           wipe), or a drawn jet for a sketch, never shipped
 //   len:       0.3-0.9            [0.8]     object length as a share of the stage width
 //   phoneLen:  0.4-0.8            [0.62]    the same on the phone, as a share of the stage height
-//   grow:      1-1.35             [1.25]    scale the object reaches as it climbs (phoneGrow [1.15])
+//   grow:      1-1.35             [1.25]    scale the object reaches as it climbs (phoneGrow [1.15]; tallGrow
+//                                           [1.12] caps it on a stage taller than wide, a tablet held upright)
 //   apex:      0.2-0.65           [measured] where the clip's point sits, as a share of the length behind the nose
 //   sweep:     0-45 (degrees)     [measured] slant of the clip's sides: 0 is a square edge (a truck's bumper);
 //                                           give apex and sweep for an object whose pixels cannot be read
 //   bleed:     true | false       [true]    lengthen the object so its wings run off both long edges at any aspect
-//   shadow:    true | false       [true]    the cast shadow, on the new page
+//   shadow:    false | true       [false]   a soft cast shadow on the new page (old pages only: a drop shadow is
+//                                           a house ban, and it read as a grey slab on the phone)
 //   veil:      true | false       [true]    false skips the cloud, drops the hold to 2, starts the drag at 0.10
 //   tint:      0-0.7              [0.35]    how much of the flat colour lies over the photo at the start (for the
 //                                           closing line); it deepens to 0.75 as the cloud comes in
 //
 // House rules over the spec: the new page's words land in the object's wake. Each block of text appears once
-// the object's own outline (not just its box) has passed it, and never before the block above it, so the plane
-// never crosses words being read and they arrive in reading order; the words lie above the shadow. The
+// the object's own outline (not just its box) has passed it, so the plane never crosses words being read; on a
+// desktop never before the block above it (they arrive in reading order), on the phone, where the plane climbs
+// past the lower blocks first, each as soon as the tail has passed it; the words lie above any shadow. The
 // picture along the bottom of the page shows from the first frame of the opening clip.
 // The new page has to fit one screen; where it does not (a long list in a short window) the scene keeps its
 // finished composition there, and goes live again when the window grows.
@@ -138,9 +158,16 @@
   if (!window.Stage) { console.warn(ID + ': load stage.js before this file'); return; }
 
   const DEFAULTS = {
-    dir: 'ltr', hold: null, phoneHold: 2.2, phone: 'vertical', scrub: null, object: 'jet',
-    tint: 0.35, len: 0.8, phoneLen: 0.62, grow: 1.25, phoneGrow: 1.15, apex: null, sweep: null, bleed: true, shadow: true, veil: true,
+    dir: 'ltr', hold: null, phoneHold: 2.2, phone: 'vertical', scrub: null, object: 'none', pace: 'surge',
+    tint: 0.35, len: 0.8, phoneLen: 0.62, grow: 1.25, phoneGrow: 1.15, tallGrow: 1.12, apex: null, sweep: null, bleed: true, shadow: false, veil: true,
   };
+  // The scrolled part of the drag's pace ('surge', the default): the plane leaves its clock in at 1.6 times its
+  // mean speed, slows over the middle of the stage while the page arrives under it (to 0.6) and speeds up again
+  // (to 1.8) into its clock out. Smooth: the speed changes continuously, never in a jump, and never by more than
+  // three times (a wider swing reads as a stall, then a dart). 'even' keeps a linear pace.
+  const SURGE_A = 0.5, SURGE_B = 0.2, SURGE_C = 0.1;
+  const SHOW = 0.6;   // the share of the object's outline on screen where each clock hands over to the scroll
+  const surge = (u) => u + (SURGE_A * Math.sin(2 * Math.PI * u)) / (2 * Math.PI) + (SURGE_B * Math.sin(4 * Math.PI * u)) / (4 * Math.PI) - SURGE_C * u * (1 - u);
   const DPR = () => Math.min(2, window.devicePixelRatio || 1);
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   // scroll on to the end of a running scene (where every block of words has landed)
@@ -354,7 +381,7 @@
     let shade = newEl && newEl.querySelector('.drag-shadow');
     let srig = shade ? shade.closest('.drag-rig') : null;
     const { shadow: castShadow } = o;
-    if (!shade && obj && newEl && castShadow !== false && (isJet || obj.tagName === 'IMG')) {
+    if (!shade && obj && newEl && castShadow === true && (isJet || obj.tagName === 'IMG')) {
       srig = document.createElement('div'); srig.className = 'drag-rig drag-rig--shadow'; srig.setAttribute('aria-hidden', 'true'); newEl.insertBefore(srig, newEl.firstChild);
       shade = bitmap('drag-shadow', 600);
       srig.appendChild(shade);
@@ -386,6 +413,9 @@
     };
     paintJet(0.8 * W() * 0.62, 1);
 
+    // the scale the object reaches: on a stage taller than wide (a tablet held upright) the plane is longer than
+    // the screen is wide, so it grows less there and its tail clears the far edge in one step of the scroll
+    const growOf = (v) => (v ? o.phoneGrow : H() > W() ? Math.min(o.grow, o.tallGrow) : o.grow);
     const pieces = veil && o.veil !== false ? [...veil.querySelectorAll(':scope > .drag-veil__piece')].slice(0, 7) : [];
     if (veil && o.veil === false) veil.hidden = true;
     const veilOn = pieces.length > 0;
@@ -407,7 +437,7 @@
     // (each fading element gets its own layer while the scene is near, so a fade step is not a repaint)
     ink.forEach((l, i) => l.forEach((e, k) => { if (!nested[i][k]) e.setAttribute('data-ink', ''); }));
     const shown = ink.map(() => -1);   // last value written, so an unchanged block is left alone
-    const FADE = 0.05, GAP = 0.015;    // in drag progress: how long a block takes to land, and the step between blocks
+    const GAP = 0.015;    // in drag progress: the step between two blocks landing (each lands on a 0.4s clock)
     // A block that takes keyboard focus before it has landed shows at once (CSS: [data-block]:focus-within), and
     // the page scrolls on to the end of the scene, where it has landed.
     words.forEach((b) => b.setAttribute('data-block', ''));
@@ -418,11 +448,11 @@
 
     // geometry, measured on every refresh: object length in px, the seam (point and the depth of each side),
     // the edge's range in %, and when (in drag progress) each block of words may land
-    const geo = { L: 0, apex: 0.5, d1: 0, d2: 0, from: -60, to: 160, vertical: false, landAt: [], enter: [] };
+    const geo = { L: 0, apex: 0.5, d1: 0, d2: 0, dp: 0, from: -60, to: 160, uIn: 0.3, uOut: 0.7, vertical: false, landAt: [], enter: [] };
     const measure = () => {
       if (!root.classList.contains('is-live')) return;
       const v = geo.vertical, along = v ? H() : W(), across = v ? W() : H();
-      const grow = v ? o.phoneGrow : o.grow;
+      const grow = growOf(v);
       const sp = Math.max(0.2, span());
       let L = (v ? o.phoneLen : o.len) * along;
       if (o.bleed !== false && obj) L = Math.max(L, (across * 1.04) / sp);
@@ -442,6 +472,31 @@
       geo.dp = (Math.max(geo.d1, geo.d2) / along) * 100;
       geo.from = -apex * Lp - 4;                    // nose just outside the frame
       geo.to = 100 + (1 - apex) * Lp * grow + 2;     // tail just outside the far side
+      // how far each clock carries the object (see the pace in drag()): in until SHOW of its outline is on screen,
+      // and away from the last moment that much still is (a little less where the object is too long for the
+      // screen to show that much at once, a tablet held upright)
+      const onScreen = (u) => {
+        const len = L * (1 + (grow - 1) * u), nose = ((geo.from + (geo.to - geo.from) * u) / 100) * along + apex * len;
+        const f0 = Math.max(0, (nose - along) / len), f1 = Math.min(1, nose / len);
+        if (f1 <= f0) return 0;
+        if (!bands) return f1 - f0;
+        const gE = across / 2 / (sp * len);   // the share of the span on screen either side of the fuselage
+        let all = 0, on = 0;
+        for (const bd of bands) {
+          const h = bd.g1 - bd.g0, inside = clamp((Math.min(bd.g1, gE) - Math.max(bd.g0, -gE)) / h, 0, 1);
+          for (const [a0, a1] of bd.runs) { all += (a1 - a0) * h; on += Math.max(0, Math.min(a1, f1) - Math.max(a0, f0)) * h * inside; }
+        }
+        return all ? on / all : 0;
+      };
+      let top = 0, most = 0;
+      for (let k = 0; k <= 50; k++) { const f = onScreen(k / 50); if (f > most) { most = f; top = k / 50; } }
+      const want = Math.min(SHOW, most * 0.9);
+      const find = (lo, hi, rising) => {
+        for (let k = 0; k < 20; k++) { const m = (lo + hi) / 2; if ((onScreen(m) >= want) === rising) hi = m; else lo = m; }
+        return rising ? hi : lo;
+      };
+      geo.uIn = find(0, top, true);
+      geo.uOut = find(top, 1, false);
       root.style.setProperty('--drag-len', L.toFixed(1) + 'px');
       root.style.setProperty('--drag-d', geo.d1.toFixed(1) + 'px');
       root.style.setProperty('--drag-d2', geo.d2.toFixed(1) + 'px');
@@ -474,7 +529,9 @@
         const ar = v ? VEIL_PHONE : VEIL_DESK, bw = Math.max(w0, h0 * ar), bh = Math.max(h0, w0 / ar);
         const bx = (w0 - bw) / 2, by = (h0 - bh) / 2;
         Object.assign(veil.style, { left: bx.toFixed(1) + 'px', top: by.toFixed(1) + 'px', right: 'auto', bottom: 'auto', width: bw.toFixed(1) + 'px', height: bh.toFixed(1) + 'px' });
-        const s0 = v ? 1.4 : 1.5, m = 0.02 * Math.max(w0, h0);
+        // at the size it lands (was 1.15, and 1.5 before that): the pieces are placed at two thirds of their
+        // own width or less on a 1440 screen, and stay so while they come in
+        const s0 = 1, m = 0.02 * Math.max(w0, h0);
         geo.enter = used().map((p) => {
           const hw = p.offsetWidth / 2, hh = p.offsetHeight / 2, cx = bx + p.offsetLeft + hw, cy = by + p.offsetTop + hh;
           let ux = cx / w0 - 0.5, uy = cy / h0 - 0.5;
@@ -533,15 +590,25 @@
             u = hi;
           }
         }
-        prev = Math.max(u, prev + GAP);
+        // in reading order across a desktop; on the phone the plane climbs past the lower blocks first, and
+        // they land in its wake at once (waiting for the heading at the top left a screen of bare page)
+        prev = geo.vertical ? u : Math.max(u, prev + GAP);
         return prev;
       });
     };
-    const land = (u) => geo.landAt.forEach((at, i) => {
-      const v = u >= 1 ? 1 : Math.round(clamp((u - at) / FADE, 0, 1) * 100) / 100;
+    // Each block lands on a clock once the drag passes its moment (never half-faded wherever the scroll
+    // stops), and goes back two and a half times as fast when the scroll returns before it. `instant` (after
+    // a refresh) sets the state without the fade.
+    let landTw = [];
+    const land = (u, instant) => geo.landAt.forEach((at, i) => {
+      const v = u >= 1 || u >= at ? 1 : 0;
       if (v === shown[i]) return;
       shown[i] = v;
-      ink[i].forEach((e, k) => { e.style.opacity = String(nested[i][k] ? (v > 0 ? 1 : 0) : v); });
+      const t = landTw[i];
+      if (!t) { ink[i].forEach((e) => { e.style.opacity = String(v); }); return; }
+      if (instant) t.timeScale(1).progress(v).pause();
+      else if (v) t.timeScale(1).play();
+      else t.timeScale(2.5).reverse();
     });
 
     // The incoming page has to fit one held screen. When it does not (a long list, a short window), the
@@ -562,7 +629,7 @@
       toRest();
     };
 
-    let liveEdge = null, trig = null;
+    let liveEdge = null, trig = null, resync = null;
     const track = { u: 0 };   // the drag's progress, 0-1
     const drag = (vertical) => (tl) => {
       trig = tl.scrollTrigger || null;
@@ -588,17 +655,22 @@
         onToggle: (self) => root.classList.toggle('is-near', self.isActive),
       });
       const s = rtl && !vertical ? -1 : 1;
-      const grow = vertical ? o.phoneGrow : o.grow;
-      // The drag's pace is linear on both (an eased plane visibly brakes or lurches mid-frame; the scrub gives the
-      // weight). Desktop: 0.66 of a 3-screen hold. Phone: 0.75 of a 2.2-screen hold (1.65 screens), ending at 0.92,
-      // so the words land just as the tail leaves and only a short still hold (0.18 screens) follows.
-      const t0 = veilOn ? (vertical ? 0.17 : 0.28) : 0.1, t1 = vertical ? 0.92 : 0.94, dur = t1 - t0;
+      // The pace. The object comes in and goes away on a clock, never on the scroll, so no frame the reader
+      // stops on shows a sliver of nose or of tail. As the scroll passes t0 the clock in runs (about 0.6s): the
+      // closing line lifts, the rest of the cloud closes round the nose and the object breaks out of it until
+      // about three fifths of it is on screen (geo.uIn). From there the scroll carries it across: sideways it
+      // surges (see `surge`: quicker in, slower over the middle while the page arrives under it, quicker
+      // away), 'even' keeps a linear pace, and the phone climbs at the same pace. As the scroll passes t1, with
+      // about three fifths of it still on screen (geo.uOut), the clock out runs (0.45s) and it speeds away out
+      // of the frame. Scrolling back runs each clock backwards, two and a half times as fast. Sideways 0.085-0.90
+      // of a 3-screen hold, the phone 0.12-0.88 of a 2.2-screen hold. The object, the page's clip and the words
+      // all follow one number (place), so the seam never comes loose.
+      const t0 = veilOn ? (vertical ? 0.12 : 0.085) : 0.1, t1 = vertical ? 0.88 : 0.9, dur = t1 - t0;
+      const pace = o.pace !== 'even' ? surge : 'none';
       const tint0 = clamp(+o.tint || 0, 0, 0.7);
-      const at = (edge) => t0 + clamp((edge - geo.from) / (geo.to - geo.from), 0, 1) * dur;   // when the edge reaches a value
 
-      // the old chapter closes: the line leaves, the view climbs and darkens, cloud closes into a deck
-      // (text and pages fade by opacity, never visibility, so they stay in the accessibility tree)
-      if (line) tl.fromTo(line, { opacity: 1, y: 0 }, { opacity: 0, y: () => -0.04 * H(), duration: vertical ? 0.08 : 0.09 }, 0.04);
+      // the old chapter closes: the view climbs and darkens, the first two pieces of cloud come in beside the
+      // closing line (text and pages fade by opacity, never visibility, so they stay in the accessibility tree)
       if (ground) tl.fromTo(ground, { scale: vertical ? 1.10 : 1.14 }, { scale: 1, duration: vertical ? 0.36 : 0.40 }, 0);
       if (tint && ground) {
         // the flat tint is the old panel's own colour showing through the photo: one layer fewer to composite
@@ -606,52 +678,102 @@
         gsap.set(tint, { display: 'none' });
         tl.fromTo(ground, { opacity: 1 - tint0 }, { opacity: 0.25, duration: 0.26 }, 0.05);
       } else if (tint) tl.fromTo(tint, { opacity: tint0 }, { opacity: 0.75, duration: 0.26 }, 0.05);
+      const use = veilOn ? used() : [], late = use.slice(2);
       if (veilOn) {
-        const use = used();
         if (pieces.length > use.length) gsap.set(pieces.slice(use.length), { autoAlpha: 0 });
-        // the first two (in the right half on a desktop, the bottom half on a phone) come while the line is still
-        // there; the rest once it is below 0.2. Each slides in from outside the frame at full opacity (see
-        // measure), decelerating into place; the deck is closed as the nose breaks out of it.
-        const when = vertical ? [0.03, 0.06, 0.105, 0.12] : [0.04, 0.07, 0.115, 0.13, 0.145, 0.16, 0.175];
-        const d = vertical ? 0.12 : 0.125;
-        use.forEach((p, i) => {
+        // the first two (in the right half on a desktop, the bottom half on a phone) slide in from outside the
+        // frame at full opacity while the line is still there (see measure), decelerating into place, both in
+        // before t0; the rest come with the clock in
+        use.slice(0, 2).forEach((p, i) => {
           const e = (k) => () => (geo.enter[i] ? geo.enter[i][k] : k === 's' ? 1 : 0);
-          tl.fromTo(p, { x: e('x'), y: e('y'), scale: e('s') }, { x: 0, y: 0, scale: 1, duration: d, ease: 'power1.out' }, when[i] ?? when[when.length - 1]);
+          tl.fromTo(p, { x: e('x'), y: e('y'), scale: e('s') }, { x: 0, y: 0, scale: 1, duration: vertical ? 0.075 : 0.06, ease: 'power1.out' }, (vertical ? 0.02 : 0) + 0.02 * i);
         });
         // the deck drifts back against the flight as the plane passes over it
-        tl.fromTo(veil, { scale: 1, x: 0, y: 0 }, vertical ? { scale: 0.88, y: () => 0.1 * H(), duration: t1 - t0 - 0.08 } : { scale: 0.9, x: () => -0.09 * W() * s, duration: t1 - t0 - 0.08 }, t0 + 0.08);
+        tl.fromTo(veil, { scale: 1, x: 0, y: 0 }, vertical ? { scale: 0.88, y: () => 0.1 * H(), duration: dur - 0.08 } : { scale: 0.9, x: () => -0.09 * W() * s, duration: dur - 0.08 }, t0 + 0.08);
       }
 
       // THE DRAG. One number, the edge (the chevron's point as a % of the stage), places the object's rig and the
-      // new page's sheet: each is moved by it, by transform, in the same window at the same pace, so the seam
-      // never comes loose. The sheet's content moves back by the same amount and stays put. The object scales
-      // about the chevron's point.
+      // new page's sheet: each is moved by it, by transform, so the seam never comes loose. The sheet's content
+      // moves back by the same amount and stays put. The object scales about the chevron's point.
       const rigPos = (e) => (vertical || rtl ? 100 - e : e);
       const sheetPos = (e) => rigPos(e) - (vertical || rtl ? 0 : 100);   // the sheet's point is its far edge
       const axis = vertical ? 'y' : 'x', along = () => (vertical ? H() : W());
       gsap.set(rig, { x: 0, y: 0, xPercent: 0, yPercent: 0 });
       if (words.length) { gsap.set(ink.flat(), { opacity: 0 }); shown.fill(0); }
-      // the words follow the drag's progress, kept on a plain object (a custom property tweened on the page
-      // would restyle the whole page every frame for nothing)
-      track.u = 0;
-      liveEdge = gsap.fromTo(track, { u: 0 }, { u: 1, duration: dur, ease: 'none', onUpdate: () => land(track.u) });
-      tl.add(liveEdge, t0);
-      tl.fromTo(rig, vertical ? { yPercent: () => rigPos(geo.from) } : { xPercent: () => rigPos(geo.from) }, vertical ? { yPercent: () => rigPos(geo.to), duration: dur } : { xPercent: () => rigPos(geo.to), duration: dur }, t0);
-      tl.fromTo(newEl, { [axis]: () => (sheetPos(geo.from) / 100) * along() }, { [axis]: () => (sheetPos(geo.to) / 100) * along(), duration: dur }, t0);
-      if (inner) tl.fromTo(inner, { [axis]: () => (-sheetPos(geo.from) / 100) * along() }, { [axis]: () => (-sheetPos(geo.to) / 100) * along(), duration: dur }, t0);
-      if (obj) tl.fromTo(obj, { scaleX: s, scaleY: 1 }, { scaleX: grow * s, scaleY: grow, duration: dur }, t0);
-      if (shade) {
-        tl.fromTo(shade,
-          vertical ? { x: () => -0.05 * W(), y: () => 0.04 * H(), scale: 0.92, opacity: 0.30 } : { x: () => -0.03 * W() * s, y: () => 0.06 * H(), scaleX: 0.92 * s, scaleY: 0.92, opacity: 0.32 },
-          vertical ? { x: () => -0.05 * W(), y: () => 0.09 * H(), scale: 0.66, opacity: 0.14, duration: dur } : { x: () => -0.08 * W() * s, y: () => 0.12 * H(), scaleX: 0.62 * s, scaleY: 0.62, opacity: 0.14, duration: dur },
-          t0);
+      // one clock a block: the elements that hold its text fade up together (an element inside another one
+      // that fades only switches, so the two opacities never multiply)
+      landTw = ink.map((l, i) => {
+        const fade = l.filter((e, k) => !nested[i][k]), sw = l.filter((e, k) => nested[i][k]);
+        const t = gsap.timeline({ paused: true });
+        if (sw.length) t.fromTo(sw, { opacity: 0 }, { opacity: 1, duration: 0.01, immediateRender: false }, 0);
+        if (fade.length) t.fromTo(fade, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'power2.out', immediateRender: false }, 0);
+        return t;
+      });
+      // where the drag is: the clock in, the scroll and the clock out, each 0-1, and the late cloud's clock (kept
+      // on a plain object: a custom property tweened on the page would restyle the whole page every frame)
+      const pos = { in: 0, sc: 0, out: 0, deck: 0 };
+      const setRig = gsap.quickSetter(rig, vertical ? 'yPercent' : 'xPercent');
+      const setSheet = gsap.quickSetter(newEl, axis, 'px'), setInner = inner && gsap.quickSetter(inner, axis, 'px');
+      const setSx = obj && gsap.quickSetter(obj, 'scaleX'), setSy = obj && gsap.quickSetter(obj, 'scaleY');
+      let oldOn = -1;
+      const place = (instant) => {
+        const u = clamp(pos.in * geo.uIn + pos.sc * (geo.uOut - geo.uIn) + pos.out * (1 - geo.uOut), 0, 1);
+        const e = geo.from + (geo.to - geo.from) * u, g = 1 + (growOf(vertical) - 1) * u;
+        setRig(rigPos(e));
+        setSheet((sheetPos(e) / 100) * along());
+        if (setInner) setInner((-sheetPos(e) / 100) * along());
+        if (obj) { setSx(g * s); setSy(g); }
+        if (shade) {
+          gsap.set(shade, vertical
+            ? { x: -0.05 * W(), y: (0.04 + 0.05 * u) * H(), scale: 0.92 - 0.26 * u, opacity: 0.3 - 0.16 * u }
+            : { x: -(0.03 + 0.05 * u) * W() * s, y: (0.06 + 0.06 * u) * H(), scaleX: (0.92 - 0.3 * u) * s, scaleY: 0.92 - 0.3 * u, opacity: 0.32 - 0.18 * u });
+        }
+        // the new page needs no switch: until the clip's point enters, its polygon has no area (and the layers in
+        // it are painted ahead, so its first frame waits for nothing). The old chapter goes once the clip is fully
+        // open, so its cloud is no longer composited.
+        const on = u < 1 && e < 100 + geo.dp ? 1 : 0;
+        if (oldEl && on !== oldOn) { oldOn = on; oldEl.style.opacity = String(on); }
+        track.u = u;
+        land(u, instant);
+      };
+      // the late cloud, on the clock in: each piece slides in from outside the frame (see measure), a little
+      // after the one before, decelerating into place
+      const deck = () => late.forEach((p, i) => {
+        const k = clamp(pos.deck * 1.3 - (0.3 * i) / Math.max(1, late.length - 1), 0, 1), q = (1 - k) * (1 - k), g = geo.enter[i + 2];
+        if (g) gsap.set(p, { x: g.x * q, y: g.y * q, scale: 1 });
+      });
+      const clockIn = gsap.timeline({ paused: true });
+      if (line) {
+        gsap.set(line, { opacity: 1, y: 0 });
+        clockIn.fromTo(line, { opacity: 1, y: 0 }, { opacity: 0, y: () => -0.04 * H(), duration: 0.36, ease: 'power2.in', immediateRender: false }, 0);
       }
+      if (late.length) { deck(); clockIn.to(pos, { deck: 1, duration: 0.4, ease: 'none', onUpdate: deck }, 0); }
+      clockIn.to(pos, { in: 1, duration: 0.5, ease: 'power2.out', onUpdate: () => place() }, 0.12);
+      const clockOut = gsap.timeline({ paused: true }).to(pos, { out: 1, duration: 0.45, ease: 'power2.in', onUpdate: () => place() });
+      // the clocks follow the scroll's two moments, read from a plain number on the timeline: a scrub that passes
+      // a moment runs its clock, and one that returns above it runs the clock back
+      const watch = { t: 0 };
+      let inOn = false, outOn = false;
+      const run = (c, on) => (on ? c.timeScale(1).play() : c.timeScale(2.5).reverse());
+      tl.fromTo(watch, { t: 0 }, { t: 1, duration: 1, onUpdate: () => {
+        const a = watch.t >= t0, b = watch.t >= t1;
+        if (a !== inOn) { inOn = a; run(clockIn, a); }
+        if (b !== outOn) { outOn = b; run(clockOut, b); }
+      } }, 0);
+      track.u = 0;
+      liveEdge = gsap.fromTo(pos, { sc: 0 }, { sc: 1, duration: dur, ease: pace, onUpdate: () => place() });
+      tl.add(liveEdge, t0);
+      place();
+      // after a refresh, which renders the timeline without its callbacks: the clocks and the words go straight to
+      // where the scroll is, without their fades
+      resync = () => {
+        inOn = watch.t >= t0; outOn = watch.t >= t1;
+        clockIn.pause().progress(inOn ? 1 : 0, true); clockOut.pause().progress(outOn ? 1 : 0, true);
+        deck();
+        place(true);
+      };
       // the new page lags and settles, as if towed
       if (inner) tl.fromTo(inner, vertical ? { yPercent: 5 } : { xPercent: -6 * s }, { xPercent: 0, yPercent: 0, duration: 0.5, ease: 'power2.out' }, t0 + 0.1);
-      // the new page needs no switch: until the clip's point enters, its polygon has no area (and the layers in
-      // it are painted ahead, so its first frame waits for nothing). The old chapter goes once the clip is fully
-      // open (0.95 at the latest), so its cloud is no longer composited.
-      if (oldEl) tl.fromTo(oldEl, { opacity: 1 }, { opacity: 0, duration: 0.001 }, Math.min(0.95, at(100 + geo.dp) + 0.01));
       // a still hold on the finished page
       tl.to({}, { duration: 1 - t1 }, t1);
     };
@@ -666,7 +788,7 @@
       gsap.set(touched, { clearProps: 'all' });
       touched.forEach((el, i) => (own[i] == null ? el.removeAttribute('style') : el.setAttribute('style', own[i])));
       shown.fill(-1);
-      liveEdge = trig = null;
+      liveEdge = trig = resync = null;
     };
     const built = (vertical) => { const b = drag(vertical); return (tl) => { clean(); b(tl); }; };
     const toRest = () => { root.classList.remove('is-live'); root.classList.add('is-rest'); root.style.removeProperty('--hold'); clean(); };
@@ -688,7 +810,7 @@
       let m = start();
       // a refresh (resize, fonts) re-renders the timeline without callbacks, so the words are set again after it
       const onRefreshInit = () => measure();
-      const onRefresh = () => { if (liveEdge && root.classList.contains('is-live')) { shown.fill(-1); land(track.u); } };
+      const onRefresh = () => { if (resync && root.classList.contains('is-live')) { shown.fill(-1); resync(); } };
       // a window that has shrunk below the new page falls back to the finished composition, and one that has
       // grown enough for it gets the live scene back
       let wait = 0;

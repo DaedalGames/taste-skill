@@ -39,8 +39,9 @@
   .hero img { aspect-ratio: 16 / 7; object-fit: cover; }
 
   .ott { --ott-stretch: 85%; }
-  /* the clock is a photograph, not a cut-out: the page crops it square on the dial and rounds it */
-  .ott-object img { aspect-ratio: 1; object-fit: cover; object-position: 15.8% 50%; border-radius: 50%; }
+  /* the cup is a photograph, not a cut-out: a white cup seen from straight above on a red table, cropped
+     square on the cup and rounded, so it turns like a red coin with the cup on its face */
+  .ott-object img { aspect-ratio: 1; object-fit: cover; object-position: 50% 50%; border-radius: 50%; }
 
   .close { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 32px 24px; padding: 160px var(--gutter) 72px; }
   .close h2 { grid-column: 1 / 7; margin: 0; font: 600 clamp(36px, 4.6vw, 68px)/.95 var(--font-display); font-stretch: 75%; letter-spacing: -.015em; }
@@ -55,7 +56,8 @@
 
   @media (max-width: 767px) {
     .bar { gap: 16px; padding: 18px var(--gutter); }
-    .bar nav { display: none; }
+    .bar nav { gap: 14px; font-size: 16px; }
+    .bar__long { display: none; }
     .bar__action { padding: 10px 14px; font-size: 16px; }
     .hero { display: block; padding-top: 48px; }
     .hero p { margin-top: 24px; font-size: 18px; }
@@ -72,7 +74,7 @@
 <body>
 <header class="bar">
   <a class="bar__name" href="#">Holm</a>
-  <nav aria-label="Main"><a href="#coffee">Coffee</a><a href="#visit">Visit the roastery</a></nav>
+  <nav aria-label="Main"><a href="#coffee">Coffee</a><a href="#visit">Visit<span class="bar__long"> the roastery</span></a></nav>
   <a class="bar__action" href="#visit">Order beans</a>
 </header>
 
@@ -88,7 +90,7 @@
     </figure>
   </section>
 
-  <section class="scene ott" data-scene="object-through-giant-type" data-options='{"mode": "flip", "rim": "#8d8a85", "thick": 0.1}' aria-label="No one here is in a rush. Not the drum, not the beans, and not you.">
+  <section class="scene ott" data-scene="object-through-giant-type" data-options='{"mode": "flip", "rim": "#9f1a1f", "thick": 0.1, "exit": "fall"}' aria-label="No one here is in a rush. Not the drum, not the beans, and not you.">
     <div class="scene-stage">
       <blockquote class="ott-quote">
         <p class="ott-line"><span class="ott-half">No one</span> <span class="ott-half">here is</span></p>
@@ -98,7 +100,7 @@
         <p class="ott-line"><span class="ott-half">and not</span> <span class="ott-half">you.</span></p>
       </blockquote>
       <div class="ott-object" aria-hidden="true">
-        <img class="ott-object__img" src="https://picsum.photos/id/175/1400/940" srcset="https://picsum.photos/id/175/1000/671 1000w, https://picsum.photos/id/175/1400/940 1400w" sizes="(max-width: 767px) 330px, 700px" width="1000" height="1000" alt="">
+        <img class="ott-object__img" src="https://picsum.photos/id/63/1400/1400" srcset="https://picsum.photos/id/63/800/800 800w, https://picsum.photos/id/63/1400/1400 1400w" sizes="(max-width: 767px) 330px, 700px" width="1000" height="1000" alt="">
       </div>
       <p class="ott-credit">Ingrid Holm, head roaster</p>
     </div>
@@ -115,7 +117,7 @@
   <figure class="close__tall">
     <img src="https://picsum.photos/id/1060/800/1000" width="800" height="1000" loading="lazy" alt="A kettle pouring water over a pour-over coffee dripper on a dark counter">
   </figure>
-  <p class="close__small">Photographs by Padurariu Alexandru, petradr, Luke Chesser and Karl Fredrickson on Unsplash. Holm is an invented roastery for this demo.</p>
+  <p class="close__small">Photographs by Padurariu Alexandru, Justin Leibow, Luke Chesser and Karl Fredrickson on Unsplash. Holm is an invented roastery for this demo.</p>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>

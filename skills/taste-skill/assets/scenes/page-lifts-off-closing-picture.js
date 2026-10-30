@@ -17,7 +17,7 @@
 //
 // ── DOM ───────────────────────────────────────────────────────────────────────────────────────────
 // <section class="lifting-sheet">…the last content section, a screen tall or more…</section>
-// <section class="scene" data-scene="page-lifts-off-closing-picture" data-options='{"foot":".foot"}'
+// <section class="scene" data-scene="page-lifts-off-closing-picture" data-options='{}'
 //          aria-labelledby="close-title">
 //   <div class="scene-stage">
 //     <div class="lift">
@@ -43,7 +43,7 @@
 //     </div>
 //   </div>
 // </section>
-// <footer class="foot">…one plain line…</footer>
+// <footer>…the page's designed footer, a section of its own: it follows the finished frame…</footer>
 //
 // ── Options (data-options JSON; a value that is not a number or not known falls back) ──────────────
 //   mode         'photo' | 'ui'   default: 'ui' when .lift-media carries data-ui, else 'photo'
@@ -65,9 +65,10 @@
 //                and the picture, or the interface's app bar, keep meeting on the same row of pixels)
 //   label        'foot' | 'centre'   where the label sits on the picture (foot)
 //   sheet        a selector for the section that lifts away (default: the element just before the scene)
-//   foot         a selector for a plain footer line after the scene. It is pulled up over the picture's
-//                foot, so the last pixel of scroll is the settle's last frame (no stage scrolling off,
-//                no dead strip). Without it the scene ends at its own bottom.
+//   foot         unset (the default): the scene ends at its own bottom and the page's designed footer
+//                follows it. A selector pulls that element up over the picture's foot, so the last pixel of
+//                scroll is the settle's last frame: only for a page that ends on the scene with one plain
+//                line, which a page dealt a footer never does.
 //   scrub        true (default: locked to the scrollbar, the sheet is native scroll) | seconds 0.1-1
 //   phone        'same' (default) | 'rest'
 //

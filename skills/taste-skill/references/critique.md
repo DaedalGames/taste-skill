@@ -47,12 +47,15 @@ sheets. Make each pass on its own; do not blend them.
 7. **Colour.** Name the proportions: which colour holds most of the surface, which supports, where is
    the accent? An accent that appears in ten places means nothing. One that appears on the single
    action and one detail means "here".
-8. **Images.** Count the real pictures: three to six good ones, each doing a job (showing the thing,
-   setting the place, proving the claim)? Does any look documentary, archival, old or news-like? Out
-   with it: modern, well-lit photographs or none. A page of drawings looks unfinished; a page of type
-   and colour can be finished. Do the crops share ratios, and does any crop cut a picture's own
-   lettering? Is anything a grey box, a stretched photo, a fake screen made of bars? Does the
-   photography share one light and one grade, or is it a stock mix?
+8. **Images.** Count the real pictures: no more than the sheet's photograph total, each doing a job
+   (showing the thing, setting the place, proving the claim)? Does any look documentary, archival, old
+   or news-like? Out with it: modern, well-lit photographs or none (a product page never none: its
+   kind, its use, its load). Does each show the client's own trade and world, as the sheet's "What the
+   pictures show" line says? A neighbouring trade's things (a mixing desk for a motion designer) or a
+   landmark the brief does not name goes, however good it is. A page of drawings looks unfinished; a
+   page of type and colour can be finished. Do the crops share ratios, and does any crop cut a
+   picture's own lettering? Is anything a grey box, a stretched photo, a fake screen made of bars?
+   Does the photography share one light and one grade, or is it a stock mix?
 9. **Sameness.** Write one word for each section's layout (split, list, full-bleed, grid, statement,
    index …). The same word twice in a row, or three times on the page, is the template showing.
 10. **Phone.** Is the mobile screen a composition of its own, with its own crop and its own line
@@ -136,8 +139,9 @@ These override the arithmetic.
 - The idea passes for the nearest competitor (pass 14): creativity cannot exceed **7**.
 - A picture that is soft, random or off subject in a large slot, or pictures inside a headline or a
   sentence: design cannot exceed **6.5**.
-- More than one accent hue, or the page on a coloured ground with a second hue on it: design cannot
-  exceed **6.5**.
+- More than one accent hue, grounds and panels in more tones than the ground and one surface (the ink,
+  the accent and a dealt field aside), or the page on a coloured ground with a second hue on it:
+  design cannot exceed **6.5**.
 - A giant name or email in the footer, or picture credits spread across it: design cannot exceed **7**.
 - The next section in view on the first screen, sections crowding with no air between them, or
   anything run into one screen edge: design cannot exceed **6.5**.
@@ -148,10 +152,13 @@ These override the arithmetic.
   first screen over 30 words: content cannot exceed **6.5**.
 - A page that barely moves (the inspector's `still-page`), or motion that is one identical fade on
   every block: design cannot exceed **7**.
-- Any placeholder (grey box, lorem, "Image here"): content cannot exceed **5**.
+- Any placeholder (grey box, lorem, "Image here"): content cannot exceed **5**. A slot marked for the
+  client's own picture (`data-slot`, listed in the report) is not a placeholder.
 - Two or more desktop screens that are mostly empty ground, or a page whose running text is small and
   grey: design cannot exceed **6.5**.
 - A section the brief asked for that is missing or reduced to a few words: content cannot exceed **6**.
+- A portfolio whose work is type cards or a list, with no pictures of the work: content cannot exceed
+  **6**.
 - No real button for the primary action on the first screen: usability cannot exceed **7**.
 - The five-second pass fails (no clear title saying what this is on the first screen): usability
   cannot exceed **6**.

@@ -1,11 +1,13 @@
-// tasteskill / scenes / letter-physics.js — a claim bursts apart in true 3D; an answer lands in the light.
+// tasteskill / scenes / letter-physics.js — a claim bursts apart in true 3D; an answer lands out of the dark.
 //
 // A bold claim (headline A) sits readable on a dark stage, breathes in, then flies apart: every letter
 // leaves along its own vector from the headline's centre, with drag, spin, tumble and a little gravity,
-// the centre letters rushing nearest the viewer. From that same centre a feathered disc of light opens,
-// and a one-sentence answer (B) flies out of depth into the light and lands dark on white. A hero or a
-// chapter opener for a 12-36 character claim; it needs no picture, and one dark photograph with a light
-// source at its centre makes it richer.
+// the centre letters rushing nearest the viewer, each fading before the screen's edge can cut it. From
+// that same centre a one-sentence answer (B) comes out of depth, whole, and lands large in paper on the
+// dark, while the picture behind comes up like a room's lights. A chapter opener for a 12-36 character
+// claim; it needs no picture, and one dark photograph of a lit building or room, its centre dark where
+// the answer lands, makes it richer. (light 'white' or 'warm' still opens the older feathered disc of
+// light with the answer in ink on it; the house no longer deals it: it reads as a glow.)
 //
 // DOM (the finished composition is this markup with the default CSS; no script needed to read it):
 //
@@ -26,10 +28,11 @@
 //     </div>
 //   </section>
 //
-// While it runs, the script splits A and B into word and letter spans (B's readable copy moves to a hidden
-// sibling <p class="lp-sr">, and B itself is aria-hidden), adds the glow (<div class="lp-core">) under the
-// disc and paints each light into an <img class="lp-glow">. The finished composition puts the text back
-// unsplit, and its CSS hides the glow and the painted images.
+// While it runs, the script splits A into word and letter spans (B too when answer is 'letters': its
+// readable copy moves to a hidden sibling <p class="lp-sr">, and B itself is aria-hidden); with a light it
+// adds the glow (<div class="lp-core">) under the disc and paints each light into an <img class="lp-glow">.
+// The finished composition puts the text back unsplit, and its CSS hides the glow and the painted images.
+// The disc and halo divs may stay in the markup: without a light they are never shown.
 //
 // A: one claim, 12-36 characters (hard cap 40); it is fitted to two lines at most, inside 86% of the
 // width (and clear of the side labels), never taller than half the stage. A short claim also grows while
@@ -38,9 +41,13 @@
 // characters at 40px, so on a 390px phone a longer claim is set below 40px (measured in a normal-width
 // grotesk at 750: 31-32 characters 42-46px, 33 characters 40px, 37-41 characters 33-38px; a wide face
 // drops sooner, from about 26). A claim of 12-20 characters in short words usually reaches 70-74px. Keep
-// claims for the phone short, or accept the smaller size there. B: one sentence, 40-90 characters
-// (longer B flies in by words), set at 0.047 D (22-32px; 32px is the house ceiling for a sentence set
-// large) and 20px on the phone, inside the disc's solid core. Labels: 1-3 words each, sentence case;
+// claims for the phone short, or accept the smaller size there. B: one short answer of about A's length
+// (16-36 characters, six words or fewer). Without the light it is the payoff and lands at A's own size
+// (option match; the claim and the answer read as a pair at every width), kept to two lines by the script
+// (it steps down until it sets in two, and A comes down with it). A longer B (40-80 characters) still
+// works with match false: --lp-b-size (clamp(30px, 4.4vw, 64px); 24px on the phone), never below a
+// statement paragraph, 36/32/24px, where it may take three or four lines. On the light it
+// is set at 0.047 D (22-32px) and 20px on the phone, inside the disc's solid core. Labels: 1-3 words each, sentence case;
 // they sit beside A on desktop, live and at rest, and are hidden on the phone, where there is no room
 // beside it (and at 768-1099px when no script runs to measure A against them).
 // Colours come from custom properties, set on the section or the page: --lp-ground (the stage; when it
@@ -49,26 +56,35 @@
 // flat fill of the ground over the picture); faces from the page's --font-display and --font-text.
 //
 // Options (data-options JSON). Default, then range:
-//   hold       1.8       screens the stage is held on desktop (1.4-2.4): the claim, the burst, the answer
-//   phoneHold  1.5       screens held under 768px (1.2-2.2)
+//   hold       1.4       screens the stage is held on desktop (1.4-2.4): the claim, the burst, the answer
+//   phoneHold  1.2       screens held under 768px (1.2-2.2)
 //   phone      'same'    'same' runs the scene with phone numbers; 'rest' shows the finished composition
 //   scrub      auto      true when Lenis smooths the page, else 0.8 (seconds of catch-up); set to override
 //   exit       'burst'   how A leaves: 'burst' (3D, drag, spin, gravity), 'detonate' (flung flat, wider,
 //                        fast spin, shrinking at the end of its life) or 'crumble' (letters drop away in
 //                        place, no push, no depth, the middle of the claim first; every letter is gone by
-//                        0.44, and the light opens later, from 0.30, out of the hole they leave)
+//                        0.44, and the answer comes from 0.40, out of the hole they leave)
 //   spread     0.36      burst radius as a share of the stage width (0.3-0.45; 240-600px on desktop)
 //   depth      520       how near the centre letters come, px (380-540; perspective is 900)
 //   gravity    0.22      fall over the burst as a share of the stage height (0.12-0.3)
-//   light      'white'   the disc: 'white', 'warm' (#fff6e8), any CSS colour, or 'none' (no pool: B lands
-//                        in the paper colour on the dark ground, flying in from 0.30 instead of 0.36 so
-//                        it meets A's last letters (0.42 with crumble), and the picture dims only to 0.7)
-//   disc       1.1       disc diameter as a share of the stage height on desktop (0.5-1.2; at most 1.1
+//   light      'none'    'none' (the default: no disc, halo or glow; B lands large in paper on the dark,
+//                        from 0.22 to 0.80, and the picture comes up from 0.3, to 0.5 as the claim
+//                        bursts and to full over 0.80-0.86), or the
+//                        older disc of light: 'white', 'warm' (#fff6e8) or any CSS colour (B lands in
+//                        ink on the light from 0.36, the picture dims to 0.42). The disc's feather reads
+//                        as a glow and a radial gradient: the house deals 'none'
+//   answer     'whole'   how B arrives: 'whole' (one paragraph out of depth, whole at every frame) or
+//                        'letters' (the older flight, letter by letter, scrambled until it lands)
+//   disc       1.1       (light only) disc diameter as a share of the stage height on desktop (0.5-1.2; at most 1.1
 //                        of the width): the outer edge of the feather; the light reads about 0.87 of the
 //                        stage tall once open, and keeps opening to about 1.08 while B is read: it
 //                        floods the stage from top to bottom at the payoff
 //   phoneDisc  1.15      disc diameter as a share of the stage width on the phone (0.9-1.3)
-//   payoff     'land'    'land' holds B to the end; 'pass' carries B through the screen plane and away
+//   match      true      (no light) B is set at A's own size, in two lines; where it cannot reach it in two
+//                        lines A comes down to meet it (to 0.72 of A's fitted size at most). Write B about
+//                        as long as A (16-36 characters) so both stay large; false: the older --lp-b-size
+//   payoff     'land'    'land' holds B to the end (it lands at 0.80, 0.88 on the light); 'pass' carries B
+//                        through the screen plane and away
 //                        over 0.84-0.98 (only when the next section continues the statement)
 //   intro      false     true: when the scene opens the page and it loads unscrolled, the letters gather
 //                        from a loose cloud over 1.1s; the first scroll ends it
@@ -76,13 +92,22 @@
 //                        the device has 4 cores or fewer)
 //   seed       0         any integer; changes every letter's path (paths are always the same on every pass)
 //
-// Progress map (desktop 1440x900, hold 1.8; the phone runs the same fractions): 0-6% A at rest, labels
+// Progress map, light 'none' and answer 'whole' (the defaults; desktop 1440x900, hold 1.4; the phone runs
+// the same fractions): 0-6% A at rest, labels in, the picture at 0.3 (0.5 by 40%); 6-16% A breathes in to 95.5%;
+// 16-60% the burst (A unreadable from about 25%, mid-air in 3D at 20%, every letter gone by about 40%:
+// a letter fades as it nears the screen's edge, 0.4 or less where the edge would cut it, and letters
+// rising into the top 96px are at 0.4 or less, for a sticky nav); 22-80% B comes out of depth from the
+// centre once A's middle has cleared, whole, in full paper by 30%, from about 18px, growing at an even
+// pace to the claim's own size (match) at 80%, a little above the middle, a clear change at every step;
+// 80-86% the second beat: the picture comes up from 0.5 to full under the landed answer in one quick cue,
+// like a room's lights switched on; 86-100% a still read (about a sixth of a screen).
+// Progress map with a light (hold 1.8): 0-6% A at rest, labels
 // in; 6-16% A breathes in to 95.5%; 16-60% the burst (A unreadable from about 25%, every letter gone by
 // 51%; letters rising into the top 96px are at 0.4 or less, for a sticky nav); 20-30% the light comes on
 // at the centre: a soft glow, white at its heart with no edge at any size, in a wide faint halo; 35-41%
 // the disc condenses in that glow once it is half grown (so it never shows as a small coin), and opens
 // to about 0.87 of the stage height by 54%, the halo with it, the picture dims to 0.42; 36-74% B flies in
-// from depth in reading order and lands word by word on the light as it opens (it starts once A's
+// from depth (with answer 'letters': in reading order, landing word by word) on the light as it opens (it starts once A's
 // letters have left the middle, so no letter of A ever lies on it, and the stage is never left with
 // only the glow); 58-90% the light keeps opening, disc and halo to 1.24 (it floods the stage from top to
 // bottom) while B is read, ink on light; 90-100% a still read.
@@ -104,18 +129,20 @@
   const navFade = (top) => clamp01((top - 32) / 160);
 
   const settings = (o) => ({
-    hold: num(o.hold, 1.8, 1.4, 2.4),
-    phoneHold: num(o.phoneHold, 1.5, 1.2, 2.2),
+    hold: num(o.hold, 1.4, 1.4, 2.4),
+    phoneHold: num(o.phoneHold, 1.2, 1.2, 2.2),
     phone: o.phone === 'rest' ? 'rest' : 'same',
     scrub: typeof o.scrub === 'boolean' || typeof o.scrub === 'number' ? o.scrub : null,
     exit: pick(o.exit, ['burst', 'detonate', 'crumble'], 'burst'),
     spread: num(o.spread, 0.36, 0.3, 0.45),
     depth: num(o.depth, 520, 380, 540),
     gravity: num(o.gravity, 0.22, 0.12, 0.3),
-    light: typeof o.light === 'string' && o.light.trim() ? o.light.trim() : 'white',
+    light: typeof o.light === 'string' && o.light.trim() ? o.light.trim() : 'none',
+    answer: pick(o.answer, ['whole', 'letters'], 'whole'),
     disc: num(o.disc, 1.1, 0.5, 1.2),
     phoneDisc: num(o.phoneDisc, 1.15, 0.9, 1.3),
     payoff: pick(o.payoff, ['land', 'pass'], 'land'),
+    match: o.match !== false,
     intro: o.intro === true,
     particles: pick(o.particles, ['auto', 'chars', 'words'], 'auto'),
     seed: Number.isInteger(o.seed) ? o.seed : 0,
@@ -256,7 +283,41 @@
     // phone), for as long as it still fits.
     const cssNum = (name, d) => parseFloat(getComputedStyle(root).getPropertyValue(name)) || d;
     const lineHeight = () => cssNum('--lp-lh', 0.92);
-    const fitA = () => {
+    // Without the light the answer is the payoff on its own and is set large (--lp-b-size, up to 64px): it
+    // keeps to two lines, stepping down until it does, but never below the size of a statement paragraph
+    // (36px from 1100px wide, 32px from 600px, 24px under), where it may take three or four lines instead.
+    // match (the default): the answer is set at the claim's own size, so the payoff lands as large as the
+    // claim it answers at every width; in two lines, it steps down until it fits, and the claim comes down to
+    // meet it (to 0.72 of its fitted size at most: a long answer keeps the older, smaller look).
+    const fitB = () => {
+      if (!b || lightOn) return;
+      root.style.setProperty('--lp-b-fit', '1');
+      if (o.match) {
+        root.style.removeProperty('--lp-b-px');
+        const fa = parseFloat(getComputedStyle(a).fontSize) || 0;
+        if (fa) root.style.setProperty('--lp-b-px', fa.toFixed(1) + 'px');
+      }
+      const fs = parseFloat(getComputedStyle(b).fontSize) || 16;
+      const vw = window.innerWidth, stmt = vw < 600 ? 24 : vw < 1100 ? 32 : 36;
+      const lines = () => { const cs = getComputedStyle(b); return Math.round(b.offsetHeight / (parseFloat(cs.lineHeight) || 1.1 * parseFloat(cs.fontSize))); };
+      if (fs > stmt && lines() > 2) {
+        let lo = stmt / fs, hi = 1;
+        for (let i = 0; i < 9; i++) {
+          const m = (lo + hi) / 2;
+          root.style.setProperty('--lp-b-fit', m.toFixed(4));
+          if (lines() <= 2) lo = m; else hi = m;
+        }
+        root.style.setProperty('--lp-b-fit', lo.toFixed(4));
+      }
+      if (!o.match) return;
+      const fa = parseFloat(getComputedStyle(a).fontSize) || 0, fb = parseFloat(getComputedStyle(b).fontSize) || 0;
+      if (fa && fb && fb < fa - 0.5) {
+        const fit = parseFloat(getComputedStyle(root).getPropertyValue('--lp-fit')) || 1;
+        root.style.setProperty('--lp-fit', (fit * Math.max(0.72, fb / fa)).toFixed(4));
+      }
+    };
+    const fitA = () => { fitClaim(); fitB(); };
+    const fitClaim = () => {
       // marks the claim as measured, which lets the CSS keep the labels beside it at any desktop width
       // (set first, so the measure below sees the labels where they will be)
       root.dataset.fit = '';
@@ -303,7 +364,8 @@
     const prepare = (phone) => {
       S.phone = phone;
       const sa = split(a);
-      const sb = b ? split(b, true) : null;
+      // the answer is split only when it flies in by letters; whole, it stays one paragraph
+      const sb = b && o.answer === 'letters' ? split(b, true) : null;
       const byWords = o.particles === 'words' || (o.particles === 'auto' && phone && ([...textA].length > 36 || (navigator.hardwareConcurrency || 8) <= 4));
       const rnd = prng(seed);
       const sgn = () => (rnd() < 0.5 ? -1 : 1);
@@ -342,7 +404,10 @@
       if (o.exit === 'detonate') Object.assign(c, { R: (ph ? 0.75 : 0.52) * W, Zc: 0, Ze: 0, L: 0.1 * H, spin: [180, 360], tilt: false });
       c.P = (space && parseFloat(getComputedStyle(space).perspective)) || (ph ? 700 : 900);
       const aw = a.clientWidth, ah = a.clientHeight;
-      const pts = S.pa.map((p) => { const q = offset(p.el, a); return { x: q.x + p.el.offsetWidth / 2 - aw / 2, y: q.y + p.el.offsetHeight / 2 - ah / 2, hh: p.el.offsetHeight / 2 }; });
+      const pts = S.pa.map((p) => { const q = offset(p.el, a); return { x: q.x + p.el.offsetWidth / 2 - aw / 2, y: q.y + p.el.offsetHeight / 2 - ah / 2, hw: p.el.offsetWidth / 2, hh: p.el.offsetHeight / 2 }; });
+      // a letter fades as it nears the screen's edge, so the edge never cuts an opaque letter: 1 while it is
+      // 1.6 of its own radius inside, 0.4 as it touches the edge, gone with its centre 0.6 of a radius inside
+      const edgeFade = (X, Y, r) => clamp01((Math.min(X, W - X, Y, H - Y) - 0.6 * r) / r);
       const dmax = Math.max(1, ...pts.map((q) => Math.hypot(q.x, q.y)));
       const av = pts.map((q, i) => {
         const d = Math.hypot(q.x, q.y);
@@ -353,7 +418,9 @@
         // f0: that fade at rest, so a letter that starts high is never dimmed on the first frame;
         // cs: when it starts to crumble (crumble only): the middle of the claim first, where the light
         // will open, the edges last, every letter gone by 0.44
-        return { nx: nx * cs - ny * sn, ny: nx * sn + ny * cs, dn, by: q.y, hh: q.hh, f0: navFade(H / 2 + q.y - q.hh), cs: Math.min(0.16 + 0.15 * dn + 0.1 * p.cr, 0.44 - p.cd) };
+        // e0: the edge fade at rest, so a letter that starts near an edge is never dimmed on the first frame
+        const r0 = Math.hypot(q.hw, q.hh);
+        return { nx: nx * cs - ny * sn, ny: nx * sn + ny * cs, dn, bx: q.x, by: q.y, hh: q.hh, r0, f0: navFade(H / 2 + q.y - q.hh), e0: edgeFade(W / 2 + q.x, H / 2 + q.y, r0), cs: Math.min(0.16 + 0.15 * dn + 0.1 * p.cr, 0.44 - p.cd) };
       });
       let bv = [];
       if (b && S.pb.length) {
@@ -363,7 +430,7 @@
           return { x: x * 0.5 + p.s * (20 + 40 * p.r), y: y * 0.5 + (20 + 40 * p.r), z: -(800 + 600 * p.zr) };
         });
       }
-      S.geo = { c, a: av, b: bv, W, H };
+      S.geo = { c, a: av, b: bv, W, H, edgeFade };
       if (S.live) bake();
       return S.geo;
     };
@@ -455,7 +522,7 @@
       // A's own scale at this u, from the release tween (0.955 → 1.06 over 0.16-0.40, power2.out), worked
       // out rather than read, so a reverse scrub (which renders the timeline's tweens in reverse order)
       // gives exactly the same frame
-      const tr0 = clamp01((0.44 * u) / 0.24), sA = 0.955 + 0.105 * (1 - (1 - tr0) * (1 - tr0)), H2 = g.H / 2;
+      const tr0 = clamp01((0.44 * u) / 0.24), sA = 0.955 + 0.105 * (1 - (1 - tr0) * (1 - tr0)), H2 = g.H / 2, W2 = g.W / 2;
       for (const p of S.pa) {
         const q = g.a[p.i];
         const x = q.nx * c.R * p.k * s;
@@ -467,9 +534,12 @@
         tr += ` rotateZ(${(p.spinS * (c.spin[0] + c.spin[1] * p.spinR) * u).toFixed(2)}deg)`;
         if (o.exit === 'detonate' && life > 0.85) { const f = clamp01((life - 0.85) / 0.15); tr += ` scale(${(1 - 0.2 * f * f).toFixed(3)})`; }
         let op = 1 - clamp01(life);
-        if (op > 0 && q.f0 > 0) {
-          const top = H2 + sA * (q.by + y - q.hh) * (c.P / Math.max(c.P * 0.2, c.P - z));
-          op *= Math.min(1, navFade(top) / q.f0);
+        if (op > 0) {
+          const f = c.P / Math.max(c.P * 0.2, c.P - z);
+          if (q.f0 > 0) op *= Math.min(1, navFade(H2 + sA * (q.by + y - q.hh) * f) / q.f0);
+          // the screen's edge: the letter's projected centre and radius against the nearest edge
+          const e = g.edgeFade(W2 + sA * (q.bx + x) * f, H2 + sA * (q.by + y) * f, q.r0 * sA * f);
+          op *= q.e0 > 0 ? Math.min(1, e / q.e0) : e;
         }
         p.el.style.transform = tr;
         p.el.style.opacity = op.toFixed(3);
@@ -497,9 +567,21 @@
       tl.fromTo(S.P, { u: 0 }, { u: 1, duration: 0.44, ease: 'none', immediateRender: false, onUpdate: () => renderA(S.P.u) }, 0.16)
         .set(a, { visibility: 'hidden' }, 0.6);
       // T6 the picture dims as the light opens, and drifts closer over the whole hold
+      // (without the light the picture does the reverse: it stays low, 0.3, under the claim, comes up to 0.5
+      // as the claim bursts (0.20-0.40), so the answer arrives over the picture and not over empty dark, and
+      // to full in one cue, 0.70-0.78, as the answer lands, like a room's lights coming on: the last beat)
       if (bg) {
-        tl.fromTo(bg, { opacity: 1 }, { opacity: lightOn ? 0.42 : 0.7, duration: 0.42, ease: 'power1.inOut', immediateRender: false }, 0.18)
-          .fromTo(bg, { scale: 1 }, { scale: 1.04, duration: 1, ease: 'none' }, 0);
+        if (lightOn) tl.fromTo(bg, { opacity: 1 }, { opacity: 0.42, duration: 0.42, ease: 'power1.inOut', immediateRender: false }, 0.18);
+        else if (o.answer === 'whole' && o.exit !== 'crumble') {
+          // the second beat: as the answer lands (0.80), the room's lights come up under it in one quick cue
+          // (0.80-0.86, scrubbed), like a switch; then a still read
+          tl.fromTo(bg, { opacity: 0.3 }, { opacity: 0.5, duration: 0.2, ease: 'power1.inOut' }, 0.2)
+            .to(bg, { opacity: 1, duration: 0.06, ease: 'power1.inOut' }, 0.8);
+        } else {
+          tl.fromTo(bg, { opacity: 0.3 }, { opacity: 0.5, duration: 0.2, ease: 'power1.inOut' }, 0.2)
+            .to(bg, { opacity: 1, duration: 0.08, ease: 'power1.inOut' }, 0.7);
+        }
+        tl.fromTo(bg, { scale: 1 }, { scale: 1.04, duration: 1, ease: 'none' }, 0);
       }
       // The light, written for a window of 0.20 → full at 0.62 and run in the default window 0.20 → 0.54
       // (at() maps it). Crumble keeps its letters in place longer, so there the same moves run later
@@ -539,6 +621,21 @@
       // stage is never left with only the glow. Without the light nothing else fills the middle of the
       // scene, so there B starts at 0.30, while A's last letters are still leaving the frame, and focuses in
       // word by word until 0.80 (crumble: 0.42-0.80, as its letters stand at the centre until about 0.42).
+      // answer 'whole' (the default): the sentence comes out of depth as one paragraph, whole from its first
+      // frame (never letters in flight, never half its words), from the time A's middle has cleared (0.22;
+      // 0.40 with crumble, 0.36 on the light), in full ink by 0.30 and coming nearer at an even pace of size
+      // (a paragraph facing the camera: its scale is its distance) until it lands at 0.86 (on the light 0.88)
+      if (b && o.answer === 'whole') {
+        // without the light it comes out of depth over 0.22-0.80 at an even pace of size, from about 18px to the
+        // claim's size, so every step shows a clear change of size up to its landing, where the lights come up
+        // under it (see the picture above); on the light 0.36-0.88
+        const b0 = crumble ? 0.4 : lightOn ? 0.36 : 0.22, b1 = lightOn ? 0.88 : 0.8;
+        // it starts at about 18-20px whatever its size (0.18-0.8 of it), so it is a sentence from its first frame
+        const s0 = clamp((lightOn ? 20 : 18) / (parseFloat(getComputedStyle(b).fontSize) || 32), lightOn ? 0.4 : 0.18, 0.8);
+        tl.fromTo(b, { scale: s0 }, { scale: 1, duration: b1 - b0, ease: 'none' }, b0)
+          .fromTo(b, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08, ease: 'power1.out' }, b0);
+        if (o.payoff === 'pass') tl.to(b, { z: 220, opacity: 0, duration: 0.14, ease: 'power1.in' }, 0.84);
+      }
       if (b && S.pb.length) {
         const b0 = lightOn ? (crumble ? 0.44 : 0.36) : crumble ? 0.42 : 0.3;
         const span = Math.max(1, S.nW - 1), bw = lightOn ? (crumble ? 0.16 : 0.18) : crumble ? 0.18 : 0.3;
@@ -599,7 +696,8 @@
 
     // Late fonts, resizes and refreshes: mark the geometry dirty, refit and re-measure, then redraw the
     // burst where the scroll left it.
-    const redraw = () => { if (S.live && S.pa.length) { S.clean = false; renderA(S.P.u); } };
+    // (at progress 0 renderA draws nothing, so a late font refits the claim here: it must still set in two lines)
+    const redraw = () => { if (S.live && S.pa.length) { if (S.dirty) G(); S.clean = false; renderA(S.P.u); } };
     if (window.ScrollTrigger) {
       ScrollTrigger.addEventListener('refreshInit', () => { S.dirty = true; });
       ScrollTrigger.addEventListener('refresh', redraw);

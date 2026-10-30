@@ -109,15 +109,27 @@ never a small figure in a landscape.
   in use, never named as this model and never retouched to pass for it (one builder painted another
   maker's name off a box); children only from behind, far off or unrecognisable. A product parked in
   an empty street says nothing about who it is for.
-- **When no photograph of the right kind exists,** use fewer pictures and let the page be led by type
-  or by the product's own facts (the specifications large, a real interface where there is one), and
-  say in the report that no matching photograph was found and which slots wait for the client's own.
+- **When no clean photograph of the right kind exists,** show the use, the load and the place with the
+  product cropped, unbranded or out of focus: the children in the box from behind, the box with the
+  shopping, the street of the school run. Never a page without pictures: a cargo-bike page that found
+  no usable photograph and shipped none lost its blind test as undesigned.
+- **One slot is marked for the client's product shot:** the large picture of the product (the hero,
+  or the section about it), at its real ratio, with `data-slot="product-photo"` on it and named in the
+  report. Until the client's photograph arrives it holds the best stand-in above, never an empty or
+  grey box, a drawing or a silhouette, and never a claim that it is this model.
 
 **The quality bar, for every picture before it goes on the page.** Open it at full size and look:
 
 - Sharp at the size it is shown: the source is at least 1.5 times the shown width (twice for the
   hero). The inspector fails pictures shown more than 1.25 times their own size.
 - It shows this subject's world, and would not fit the nearest competitor's page or any page at all.
+- **It shows this trade, never a neighbouring one.** The sheet names what the pictures show for the
+  brief (the trade, its things, its place) and what they never show: a mixing desk is sound, not a
+  motion designer's work; wine and tea are not a coffee bar; a car or a scooter is not a cargo bike;
+  a skyline, a bridge or a landmark the brief does not name is a postcard. A portfolio lost marks for
+  both. What the brief itself names is never banned: a bakery and café shows its coffee, a café with a
+  lunch kitchen its dishes. The look-and-fix drops a picture that does not show the client's own world,
+  however good it is.
 - **It is not the category's stock shot,** unless it is art-directed for this page (its own light, a
   crop chosen for the slot, a detail only this client has). Coffee: full-frame beans, burlap sacks,
   top-down latte art. Bakeries: flour dusted over a board. Wine: a glass swirled against the light.
@@ -134,8 +146,10 @@ never a small figure in a landscape.
   tourist snapshot or a museum scan.
 - It belongs to one family with the others: one light, one treatment.
 - No watermark, burned-in text, frame, scanner edge, noise or heavy compression.
-- **Fewer.** Three to six photographs of the subject and its world on a page, scenes included, each
-  earning its slot; none at all is a real option (the product, the type, the colour, the interface).
+- **Fewer.** No more photographs of the subject and its world than the sheet's photograph total
+  (section 5), scenes included, each earning its slot; none at all is a real option (the product, the
+  type, the colour, the interface), except on a product page, which shows its kind, its use and its
+  load (above).
   The rooms, dishes or products a page pictures are their own set, one photograph each beside its
   facts; a gallery or a wall of work is cut to six.
 - Nothing in it that is not the client's to show, stand-ins and open-collection finds above all: no
@@ -173,7 +187,8 @@ node <skill>/scripts/assets.mjs --credits                             # the cred
 By default it keeps only licences that allow commercial use (CC0, public domain, CC BY, CC BY-SA) and
 pictures at least 1800 pixels wide, and checks that every image it prints actually loads.
 `--license pd` keeps only pictures that need no credit; `--orientation`, `--min-width` and `--limit`
-narrow the list; `--source` picks the sources; `--json` gives the raw results. Each result has a ref
+narrow the list; `--source` picks the sources (Openverse by default, Commons and NASA for footage; the
+archive and museum sources only when named); `--json` gives the raw results. Each result has a ref
 (`commons:36649959`) that `--get` takes.
 
 **What to search for.** The inventory (SKILL.md step 1), not the category: "bakery" finds other
@@ -265,7 +280,18 @@ footage with `--video` (section 11).
 
 ## 4. The dealt photographs
 
-- The sheet lists eight from one set so they share a subject and a light. Use three to six.
+- The sheet lists up to eight from one set, so they share a subject and a light. Use no more than its
+  photograph total.
+- Every photograph dealt and every first one is kept in the history, so the next project's sheet
+  leads with others (one café was dealt the same set and the same first picture ten times in ten).
+- For a trade the library knows (coffee, bread, wine, beer, a place to stay, a bike, furniture, film,
+  ceramics) the list comes from every set: its things first, the ones other pages were dealt least
+  leading, then at most two of its place; never its stock shot, a neighbouring trade, a landmark the
+  brief does not name, or a logo or a house number. A place leads only where the library has none of
+  its things, and never on a product page. A portfolio is dealt none of the things, since its work is
+  its own, and one picture of its place at most.
+- With fewer than six of the trade's things the sheet says how many there are and sends you to the
+  open collections for the rest; with none it says so, or deals none at all.
 - Each line says where the calm area is. Put text there or keep text off the image.
 - More from the same or another set: `node scripts/draw.mjs --photos list`, `--photos <set>`, or
   `--photos "fog coast"` to search descriptions.
@@ -482,7 +508,7 @@ A moving picture of the subject's world can carry a section the way a photograph
 the end of the street, the roaster's drum turning, a timber frame going up. `assets.mjs --video`
 searches real footage without keys: Wikimedia Commons (every video there comes with web-sized
 transcodes; the best source for short clips), the Internet Archive's Prelinger Archives and NASA (the
-Earth from orbit, launches). Take only modern, well-shot clips (`--source commons,nasa`): the
+Earth from orbit, launches). Take only modern, well-shot clips (`--source commons,nasa`, the default): the
 Prelinger films (industrial and home films from the 1920s to the 1970s) and any old or news-like
 footage are the documentary look ruled out for pictures (section 2). The rest of the Internet Archive
 is left out: anyone can upload there, and the licence claims are unchecked.

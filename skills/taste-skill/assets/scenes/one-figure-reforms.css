@@ -17,6 +17,8 @@
      --ofr-ink         heading, names and key figures (the page's ink)
      --ofr-muted       the chapters' lines and captions (the page's muted ink; keep 4.5:1 on the ground)
      --ofr-accent      the window (the page's accent), the only colour on the stage
+     --ofr-on-accent   the words of an interface fragment, set straight on the window (#fff; the page's ink
+                       on a light accent)
      --ofr-gx          side margin (clamp(16px, 5vw, 80px))
      --ofr-top         live: where the heading starts (6svh; 4.5svh tablet; 5svh phone)
      --ofr-floor       live: the floor the window and the words stand on, from the stage's foot (6svh)
@@ -38,6 +40,7 @@
   --ofr-ink: var(--ink, #121412);
   --ofr-muted: var(--muted, #4b4f49);
   --ofr-accent: var(--accent, #2440e0);
+  --ofr-on-accent: #fff;
   --ofr-gx: clamp(16px, 5vw, 80px);
   --ofr-top: 6svh;
   --ofr-floor: 6svh;
@@ -132,7 +135,10 @@
   background: var(--ofr-accent);
 }
 [data-scene="one-figure-reforms"] .ofr-pane > :is(img, picture) { display: block; width: 100%; height: 100%; object-fit: cover; }
-[data-scene="one-figure-reforms"] .ofr-pane > [data-ui] { width: 100%; max-width: var(--ofr-card-max, 440px); max-height: 100%; overflow: hidden; }
+/* an interface fragment sits straight on the window (the pane, data-ui, is the product's window): no card of
+   its own (a card on the accent is a box in a box), its parts set apart by space and type, its words in
+   --ofr-on-accent */
+[data-scene="one-figure-reforms"] .ofr-pane > :not(img, picture) { width: 100%; max-width: var(--ofr-card-max, 440px); max-height: 100%; overflow: hidden; background: none; box-shadow: none; color: var(--ofr-on-accent); }
 [data-scene="one-figure-reforms"] .ofr-pane:nth-child(5n + 1), [data-scene="one-figure-reforms"] .ofr-pane[data-shape="bar"] { width: min(100%, 400px); aspect-ratio: 0.6; border-radius: 14px; padding: 28px; }
 [data-scene="one-figure-reforms"] .ofr-pane:nth-child(5n + 2), [data-scene="one-figure-reforms"] .ofr-pane[data-shape="disc"] { width: min(100%, 460px); aspect-ratio: 1; border-radius: 50%; padding: 14.6%; }
 [data-scene="one-figure-reforms"] .ofr-pane:nth-child(5n + 3), [data-scene="one-figure-reforms"] .ofr-pane[data-shape="arch"] { width: min(100%, 420px); aspect-ratio: 0.82; border-radius: 50% 50% 0 0 / 41% 41% 0 0; padding: 14.6% 14.6% 28px; }

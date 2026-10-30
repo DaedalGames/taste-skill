@@ -58,9 +58,21 @@
   .intro__cover--a { grid-column: 7 / span 3; align-self: start; margin-top: clamp(24px, 6svh, 64px); }
   .intro__cover--b { grid-column: 10 / span 3; align-self: start; margin-top: clamp(96px, 20svh, 200px); }
 
-  .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 28px; padding: 18px var(--pad); font-size: 15px; background: var(--ink); color: var(--ground); }
+  /* the footer: a section of its own after the closing frame (the scene leaves `foot` unset), on the ink
+     the book turned over onto. Hours and place: the reading room's hours as a real table on the left, the
+     way there on the right, the links and the small print under both */
+  .foot { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(16px, 2vw, 28px); row-gap: clamp(56px, 9svh, 96px); padding: clamp(64px, 10svh, 112px) var(--pad) 32px; background: var(--ink); color: var(--ground); }
   .foot p { margin: 0; }
-  .foot nav { display: flex; gap: 24px; }
+  .foot__hours { grid-column: 1 / span 5; }
+  .foot__title { margin: 0 0 28px; font: 500 clamp(32px, 3vw, 44px)/1.05 var(--font-display); letter-spacing: -0.02em; }
+  .foot__hours table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .foot__hours :is(th, td) { padding: 10px 0; text-align: left; vertical-align: baseline; }
+  .foot__hours th { font-weight: 400; }
+  .foot__hours td { text-align: right; font-weight: 600; white-space: nowrap; }
+  .foot__where { grid-column: 8 / -1; align-self: end; display: grid; gap: 16px; max-width: 34ch; }
+  .foot .foot__where a { text-decoration: underline; text-underline-offset: 4px; }
+  .foot__base { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 28px; font-size: 16px; }
+  .foot__base nav { display: flex; flex-wrap: wrap; gap: 8px 28px; }
   .foot a, .credits-link { color: inherit; font: inherit; text-decoration: none; }
   .foot a:hover, .credits-link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .credits-link { padding: 0; border: 0; background: none; cursor: pointer; }
@@ -98,7 +110,9 @@
     .intro__cover--a, .intro__cover--b { grid-column: auto; margin-top: 40px; }
     .intro__cover--b { margin-top: 88px; }
     .intro__cover figcaption { font-size: 15px; }
-    .foot { padding: 16px; font-size: 15px; }
+    .foot { grid-template-columns: minmax(0, 1fr); row-gap: 40px; padding: 72px 16px 24px; }
+    .foot__hours, .foot__where { grid-column: 1; }
+    .foot__where { align-self: start; }
   }
 </style>
 </head>
@@ -128,7 +142,7 @@
     </figure>
   </section>
 
-  <section class="scene" id="close" data-scene="closing-object-turns" data-options='{"foot":".foot","tilt":0,"drift":4,"lean":4,"lift":0.28}' aria-labelledby="cot-title">
+  <section class="scene" id="close" data-scene="closing-object-turns" data-options='{"tilt":0,"drift":4,"lean":4,"lift":0.28}' aria-labelledby="cot-title">
     <div class="scene-stage">
       <div class="cot">
         <div class="cot-rise">
@@ -152,12 +166,29 @@
   </section>
 </main>
 
-<footer class="foot">
-  <p>Northgate Library, Halbridge</p>
-  <nav aria-label="Footer">
-    <a href="#covers">The covers</a>
-    <button type="button" class="credits-link" onclick="document.getElementById('credits').showModal()">Image credits</button>
-  </nav>
+<footer class="foot" aria-labelledby="foot-title">
+  <div class="foot__hours">
+    <h2 class="foot__title" id="foot-title">Reading Room 2</h2>
+    <table>
+      <tr><th scope="row">Tuesday to Friday</th><td>10:00 to 17:00</td></tr>
+      <tr><th scope="row">Saturday</th><td>10:00 to 16:00</td></tr>
+      <tr><th scope="row">Sunday and Monday</th><td>Closed</td></tr>
+    </table>
+  </div>
+  <div class="foot__where">
+    <p>Northgate Library, Castle Street, in the old town of Halbridge.</p>
+    <p>Five minutes up the hill from the station; the 12 stops at the door.</p>
+    <p><a href="https://www.openstreetmap.org/search?query=Castle%20Street%20Halbridge">Directions</a></p>
+    <p><a href="mailto:tickets@northgatelibrary.org.uk">tickets@northgatelibrary.org.uk</a></p>
+  </div>
+  <div class="foot__base">
+    <nav aria-label="Footer">
+      <a href="#covers">The covers</a>
+      <a href="#close">Book a ticket</a>
+      <button type="button" class="credits-link" onclick="document.getElementById('credits').showModal()">Image credits</button>
+    </nav>
+    <p>An invented library, made for a scene demo</p>
+  </div>
 </footer>
 <dialog class="credits" id="credits" aria-labelledby="credits-title">
   <h2 id="credits-title">Image credits</h2>
