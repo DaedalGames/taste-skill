@@ -23,7 +23,7 @@
     --strong-weight: 500;
     --margin: clamp(20px, 2.8vw, 48px);
     --radius: 0px;
-    --size-hero: clamp(44px, 11vw, 176px);
+    --size-hero: clamp(56px, 10vw, 168px);
     --size-head: clamp(40px, 5.2vw, 84px);
     --size-lead: clamp(18px, 1.4vw, 20px);
   }
@@ -43,10 +43,12 @@
   .button:active { transform: scale(0.97); }
   .button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
-  /* before the scene: the course, set large, with one sentence and two facts; the scene's first picture
-     already shows under it on the first screen */
-  .intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 26vw); align-items: end; gap: 40px 48px; padding: clamp(56px, 11svh, 132px) var(--margin) clamp(56px, 8svh, 88px); }
-  .intro h1 { font: var(--display-weight) var(--size-hero)/0.9 var(--font-display); letter-spacing: -0.03em; }
+  /* before the scene: the course across the top, then one sentence and two facts beside the first
+     evening's bowl; it fills the first screen alone, and the relay opens on the same bowl */
+  .intro { box-sizing: border-box; min-height: calc(100svh - 88px); display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); gap: clamp(32px, 5svh, 56px) 48px; padding: clamp(16px, 3svh, 32px) var(--margin) var(--margin); }
+  .intro h1 { grid-column: 1 / -1; font: var(--display-weight) var(--size-hero)/0.9 var(--font-display); letter-spacing: -0.03em; }
+  .intro .foot { align-self: end; }
+  .intro__pic { grid-column: 2; grid-row: 2; align-self: end; width: min(40vw, calc((100svh - 104px - 1.8 * var(--size-hero) - 8svh - var(--margin)) * 1.25)); min-width: 280px; height: auto; aspect-ratio: 5 / 4; object-fit: cover; object-position: 50% 57%; }
   .intro h1 .ln { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
   .intro h1 .ln > span { display: block; }
   .intro .foot { display: grid; gap: 28px; padding-bottom: 0.2em; }
@@ -72,7 +74,8 @@
     .bar > :nth-child(3) { animation-delay: 0.1s; }
     .intro h1 .ln > span { animation: rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) both; }
     .intro h1 .ln + .ln > span { animation-delay: 0.08s; }
-    .intro .foot p, .facts > div { animation: settle 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 0.3s; }
+    .intro .foot p, .facts > div, .intro__pic { animation: settle 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 0.3s; }
+    .intro__pic { animation-delay: 0.2s; }
     .facts > div:nth-child(2) { animation-delay: 0.38s; }
     html.js :is(.evenings, .foot-note) [data-in] { opacity: 0; transform: translateY(18px); transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
     html.js :is(.evenings, .foot-note) [data-in].is-in { opacity: 1; transform: none; }
@@ -81,8 +84,11 @@
   @keyframes settle { from { opacity: 0; transform: translateY(14px); } }
 
   @media (max-width: 1099px) {
-    .intro { grid-template-columns: minmax(0, 1fr); }
-    .intro .foot { grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 28px 48px; }
+    /* one column: the headline, the bowl taking the rest of the first screen, then the sentence and the
+       facts; each of the headline's two lines still on one line */
+    .intro { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(220px, 1fr) auto; --size-hero: 14vw; }
+    .intro__pic { grid-column: 1; width: 100%; height: 100%; min-width: 0; min-height: 220px; aspect-ratio: auto; contain: size; }
+    .intro .foot { grid-row: 3; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 28px 48px; }
   }
   @media (max-width: 899px) {
     .steps { grid-template-columns: 1fr; gap: 32px; }
@@ -93,7 +99,7 @@
     .bar nav { margin-left: auto; }
     .bar nav a + a { display: none; }
     .bar .button { min-height: 44px; padding: 0 16px; }
-    .intro { gap: 32px; }
+    .intro { gap: 32px; min-height: calc(100svh - 76px); }
     .intro .foot { grid-template-columns: 1fr; }
     .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 20px; }
   }
@@ -109,8 +115,9 @@
 <main id="top">
   <section class="intro" aria-label="The course">
     <h1><span class="ln"><span>Five Raku bowls,</span></span> <span class="ln"><span>one each evening</span></span></h1>
+    <img class="intro__pic" src="https://cdn.jsdelivr.net/gh/Leonxlnx/taste-skill@scene-media/window-relay-with-stamps/chojiro-amadera.jpg" width="2000" height="1612" alt="Amadera, a black Raku tea bowl by Chōjirō, the first evening's bowl" fetchpriority="high">
     <div class="foot">
-      <p>Five winter Tuesdays, each spent with one tea bowl made by the Raku family of Kyoto.</p>
+      <p>Five winter Tuesdays, one Raku tea bowl each.</p>
       <dl class="facts">
         <div><dt>First evening</dt><dd>13 January</dd></div>
         <div><dt>All five</dt><dd>€180</dd></div>
@@ -118,7 +125,7 @@
     </div>
   </section>
 
-  <section class="scene" id="bowls" data-scene="window-relay-with-stamps" data-options='{"hold":2.4,"phoneHold":2.2}' aria-labelledby="bowls-title">
+  <section class="scene" id="bowls" data-scene="window-relay-with-stamps" data-options='{"hold":2.4,"phoneHold":2.2,"swap":0.3}' aria-labelledby="bowls-title">
     <div class="scene-stage">
       <h2 class="wr-title" id="bowls-title">Two hundred years of one family</h2>
       <ol class="wr-set">

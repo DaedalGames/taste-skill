@@ -97,13 +97,14 @@ say how many pictures and words it takes; these hold for all of them:
   scene whose pictures or drawings are still the demo's, or the script's stand-in, is unfinished.
 - **On the work, the scene is the work.** A scene that carries the work shows the pieces themselves:
   each card, chapter or picture is one piece (its title card, its building, its product), shown once,
-  linking to the piece. Pictures of the world around the work (the city, the archive, the materials)
-  go on the intro or the about. However the work is told, each piece stops on screen flat-on (turned
-  10° or less), at 60% of the width or more, with its title on the same element, for half a screen of
-  scroll, and the stage lets go within half a screen of the last piece; the first piece is on screen by
-  about the third screen. Sheets that tip in and away do this with `{"rest": 0.5}`: each piece lies
-  flat on a full-screen sheet with its name on it for half a screen, three pieces in 2.5 screens
-  (scenes.mjs fails a piece that never stops flat and large, `piece-unseen`).
+  linking to the piece. Pictures of the world around the work (the studio, the materials, the work in
+  use) go on the intro or the about, never screens of stock city views before the work. However the
+  work is told, each piece stops on screen flat-on (turned 10° or less), at 60% of the width or more,
+  with its title on the same element, for half a screen of scroll, and the stage lets go within half
+  a screen of the last piece; the first piece is on screen by about the third screen. Sheets that tip
+  in and away do this with `{"rest": 0.5}`: each piece lies flat on a full-screen sheet with its name
+  on it for half a screen, three pieces in 2.5 screens (scenes.mjs fails a piece that never stops flat
+  and large, `piece-unseen`).
 - **Each picture once.** A scene's card count is the number of distinct pictures it has. Never repeat a
   picture to fill a ring or a deck, take at most two from one source (one film, one shoot, one
   building) and never put those two side by side; with too few, take fewer cards or redraw.
@@ -129,7 +130,7 @@ say how many pictures and words it takes; these hold for all of them:
   `--font-display`, `--font-text`, and the weights `--display-weight`, `--strong-weight` and
   `--text-weight` (with fallbacks). Set them on `:root` from the sheet and the scene takes the page's
   colour and type. Colours a page does not otherwise have (the deeper tone of the openings' sheets,
-  the two grounds of a raster cut) are the scene's own tokens, named in its file's header.
+  the wall and floor tints of the closing cut) are the scene's own tokens, named in its file's header.
   Check the demo against your page, not the other way round.
 - Display type in a scene uses the dealt display face and the two-line headline rule; statements stay
   at statement size.
@@ -226,9 +227,9 @@ empty, and that the navigation or the one action is in reach after the hero.
    19-28 screens for 700-1,500 words read as long and thin, whatever the scenes did. About one screen
    per beat of the story; a hold with nothing new to show is cut, not padded. A hand-over between two
    chapters holds about two screens at most (three for the drag, which brings a page of its own), and
-   one that carries only a title about one (the raster cut's 1.2). A scene on the work holds three screens at most, so the work itself is not kept waiting. The
-   walk through rooms holds ten screens and is a whole page on its own: the draw does not deal it (see
-   its entry). When a dealt scene's sheet entry gives a shorter hold than its file's default, set the
+   one that carries only a title about one (the letter bar's 1.1). A scene on the work holds three screens at most, so the work itself is not kept waiting. The
+   walk through rooms holds about nine screens and is a whole page on its own: the draw does not deal
+   it (see its entry). When a dealt scene's sheet entry gives a shorter hold than its file's default, set the
    sheet's in `data-options`. **A closing scene holds about one screen.** A scene whose only content is a line or two
    of type is done in about one screen: the line has been read (the inspector fails a short line held
    over 1.2 screens with nothing new, `line-holds`).
@@ -312,7 +313,7 @@ stock (`repeated-picture`).
 
 ## 9. The catalogue
 
-Forty-six scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
+Forty-nine scenes in eleven families. The draw deals from `library/scenes.json`, which holds each
 scene's full entry (where it goes, its content, its options, its phone plan);
 `node <skill>/scripts/draw.mjs --list scenes` prints the list, and each scene file's header is the full
 contract. Each entry's `needs` says what the scene really takes, and the draw deals it only when the
@@ -327,19 +328,19 @@ its own at all about six, so the scenes dealt there need no more between them; n
 page, a scene on the first screen, which shows the product large.
 `--list scenes` prints each scene's needs. A scene marked *not dealt* stays in the library as a
 reference and is never dealt, nor taken by id; its entry says why. The round 10 audit retired seven,
-and hinged sheets followed (weight 0 in `scenes.json`).
+hinged sheets followed, and round 11 retired the raster cut (weight 0 in `scenes.json`).
 
 **Camera through space**
 - **Closing cut under the rise** (`closing-cut-under-the-rise`): the one thing the page is about,
   masked out of the closing photograph, stands in a flat room of that photograph's own wall and floor
-  and rises steadily out of the frame while the camera ducks under it; at the cut, in one frame, the
-  flat room gives way to the photograph itself, the same thing back in its own place on the same floor
+  and rises steadily, whole, onto its own row while the camera ducks under it; at the cut, in one frame,
+  the flat room gives way to the photograph itself, the same thing in the same place on the same floor
   line, and the last sentence arrives in two or three phrases on a short band of the floor's tint, with
   the one action. One photograph of the subject standing clear on a floor or a table, and the rising
-  cut-out masked from that same photograph (*product-photo*); never a drawing or a lookalike. Set the
-  cut where the cut-out is still about half in the frame (0.35 for a short thing standing low, like the
-  demo's teapot). The end of the page, for one physical thing, once; hold 2. Built from the researched
-  technique `lib-0241`, which is no longer dealt to build fresh.
+  cut-out masked from that same photograph (*product-photo*); never a drawing or a lookalike. Cut at
+  0.28 for a short thing standing low, like the demo's teapot. The end of the page, for one physical
+  thing, once; hold 1.6. Built from the researched technique `lib-0241`, which is no longer dealt to
+  build fresh.
 - **Descend through the weather** (`descend-through-weather`): the first screen sinks through cloud
   from a peak above the weather onto the place below. Two photographs of the place, from above and
   below the cloud. First screen only.
@@ -351,9 +352,10 @@ and hinged sheets followed (weight 0 in `scenes.json`).
   title under it for half a screen; phones get the pieces stacked full width. Not dealt (round 10
   audit): a counter, skewed cards and slivers at the screen's edges, and the pass along the edges is the
   design.
-- **Powers-of-ten pull-back** (`powers-of-ten-pullback`): a film becomes a screen on a wall, then the
-  place becomes a framed print. The product's own film, still or interface (never a stock picture of
-  another maker's), and a place photographed straight on with an opening that can be measured.
+- **Powers-of-ten pull-back** (`powers-of-ten-pullback`): a film becomes a screen on the wall of a real
+  place, and the pull-back ends full-bleed in that place with the copy on a band of ground. The
+  product's own film, still or interface (never a stock picture of another maker's), and a place
+  photographed straight on with an opening that can be measured.
 - **Route journey** (`route-journey`): a parked traveller rides a tilted map along a route of 3-5 stops
   to a destination that lights up. A real route and a real unit to count. The map is drawn for this
   place as the page's own `.route-art`: the water, the coast and the relief where the route really runs
@@ -399,7 +401,7 @@ and hinged sheets followed (weight 0 in `scenes.json`).
   beside the one before, and on the last word the ground and the ink swap in one jump while the next
   chapter's first picture, already rising, settles whole under the line. A closing photograph, an
   opening picture and one line of 3-5 words (*pictures:2*); a line alone on flat colour reads as an
-  empty screen. Between two sections, once; hold 1.2. Never for a client named for a light or a pale
+  empty screen. Between two sections, once; hold 1. Never for a client named for a light or a pale
   colour: its ink chapter ends on a dark photograph. Built from the researched technique `lib-0240`,
   which is no longer dealt to build fresh.
 - **Shaped edge carries the new ground** (`shaped-edge-ground-change`): the sky's colour rises over its
@@ -414,9 +416,9 @@ and hinged sheets followed (weight 0 in `scenes.json`).
 **Grid reassembly**
 - **Parts lock into the whole** (`parts-lock-into-the-whole`): one huge word or number steps back while
   the product's own interface flies in as its panels and locks into the screen; layers of detail (data,
-  comments, an agent's edit) ink in one by one under one rewriting caption; it ends as a column beside a
-  short spec list. The product built as an HTML fragment (`data-ui`), or a real plan cut along its
-  walls; never a drawing made for the page. Hold 1.6.
+  comments, an agent's edit) ink in one by one under one caption that changes its line; it ends as a
+  column beside a short spec list. The product built as an HTML fragment (`data-ui`), or a real plan cut
+  along its walls; never a drawing made for the page. Hold 1.6.
 - **Orbit to formation** (`orbit-to-formation`): square photographs ride one wheel from an arch to a
   ring to a half-wheel beside the figures. 12-16 distinct photographs in one grade, none repeated, and
   four real figures about the subject (never constants of its medium). Four screens, so it carries the
@@ -450,7 +452,7 @@ and hinged sheets followed (weight 0 in `scenes.json`).
   `lib-0023`, which is no longer dealt to build fresh.
 - **Sideways walk through rooms** (`room-walk-track`): a row of coloured rooms walked sideways, each
   with its own moment, ending on the contact. Fourteen of the client's own photographs
-  (*product-photo*). It holds about ten screens and is a whole page on its own, so the draw does not
+  (*product-photo*). It holds about nine screens and is a whole page on its own, so the draw does not
   deal it beside other scenes; build it only when the client's own photographs carry the whole page,
   as the work, the about and the contact in one, with no other scene.
 
@@ -467,16 +469,28 @@ and hinged sheets followed (weight 0 in `scenes.json`).
   arrives. One photograph a piece of the client's own work, one family with a clear change of colour
   between neighbours (*product-photo*). Three hold about two screens; on the work set `{"rest": 0.5}`,
   half a screen flat each, and three hold 2.5.
+- **Window names its parts** (`window-names-its-parts`): the product's own window steps back and tips
+  about 15 degrees while its parts lift apart in depth, tier by tier; a band in the accent crosses it,
+  and each part it reaches fills with the accent for a beat while its name, said as what it does for
+  the user, drops into a list beside the window; then the window settles flat beside the full list.
+  The product's real screen rebuilt as 12-18 separate `data-ui` parts told apart by flat fills and
+  gaps, never borders or shadows, and a plain sentence-case name for each ('Receipts read from a
+  photo'), never 'Sidebar' or 'Card' (*product-ui*). In the middle of a software page, on the features
+  or how it works, in another section than the product replay and with another view of the product;
+  hold 1.5. Phones get the central parts flat, without tilt or lift. Dealt less often than most
+  (weight 0.7). Built from the researched technique `lib-0365`, which is no longer dealt to build
+  fresh.
 
 **Mask and reveal**
 - **Fly into the shape** (`fly-into-the-shape`): the brand's mark, a clean mask of its true shape with
   the next chapter's photograph already inside it, rises with the title on its face, and the camera
   flies into it. Never extruded or bevelled. An ownable solid mark and one dark photograph of the
-  chapter's world.
+  chapter's world. Dealt as 'out', the way back out at a dark chapter's end, until the way in passes the
+  inspector.
 - **Shape-shifting window over a fixed world** (`shaped-window-over-fixed-world`): two level windows in
   a shutter, one picture through a mullion, widen, merge and push through into a photograph of a place.
-  One wide photograph of the place. First screen. Its scrims stay dark: recoloured to a pale ground
-  they are a veil over the photograph (`gradient`).
+  One wide photograph of the place. First screen. Its dim behind the word stays dark: recoloured to a
+  pale ground it is a veil over the photograph (`gradient`).
 - **Twin-image scanner** (`twin-image-scanner`): a scan line rewrites a photograph of a thing into the
   drawing of its structure. The subject's own photograph or render and a registered line drawing
   (*product-photo*). Not dealt (round 10 audit): its signature devices, a scan line and a drawn line
@@ -486,11 +500,11 @@ and hinged sheets followed (weight 0 in `scenes.json`).
 - **Instrument dial stage** (`instrument-dial-stage`): a dial reads off 3-6 items, each name huge on
   the horizon with its picture standing under it. One 4:5 picture and one number an item. Not dealt:
   the dial is a drawing (rule 7).
-- **Lens over a thumbnail stream** (`lens-over-thumbnail-stream`): a strip of thumbnails slides under
-  a playhead and each project blooms into a collage. Five or six of the client's own projects, five to
-  ten pictures each (*product-photo*); five hold about three screens.
+- **Lens over a thumbnail stream** (`lens-over-thumbnail-stream`): a strip of colour thumbnails slides
+  under an unseen lens and each project blooms into a collage, the first already open. Five or six of
+  the client's own projects, five to ten pictures each (*product-photo*); five hold about three screens.
 - **Pinned chapter switcher** (`pinned-chapter-switcher`): 3-6 full-bleed picture chapters change by
-  hard wipes, the words swapping at the seam, the chapter names under them (no progress bars). One
+  hard wipes, the words swapping at the seam; no count, no lit chapter names, no progress bars. One
   picture a chapter, shot or chosen as one series.
 - **Window relay with a trail of stamps** (`window-relay-with-stamps`): the next picture waits as a
   small window in the main picture's corner and opens over it until it covers the slot, the name beside
@@ -508,14 +522,14 @@ and hinged sheets followed (weight 0 in `scenes.json`).
   hero and the two sections after it in about five and a half screens. Not dealt while its dock draws a
   gauge (rule 7).
 - **Scrubbed transformation sequence** (`scrubbed-transformation-sequence`): an object changes state
-  as a scrubbed frame sequence while the ground opens to a new colour. 80-250 frames with alpha of the
-  change (*product-photo*).
+  as a scrubbed frame sequence on the page's own ground, short labels landing beside the finished
+  object. 80-250 frames with alpha of the change (*product-photo*).
 - **Re-forming window** (`one-figure-reforms`): one window in the accent re-forms through three to five
   chapters (a bar rounds into a disc, rises into an arch, draws in to a pill), carrying each chapter's
-  own interface, whose late parts build in while it rests; the name, one or two lines and one key
-  figure swap beside it. The interface rides the window whole while it re-forms and hands over at the
-  half-way point, so the window is never empty. One interface fragment a chapter, each a different
-  screen (*product-ui*). Four hold two screens.
+  own interface, whose late parts land right behind it at the hand-over, so every rest holds a whole
+  card; the name, one or two lines and one key figure swap beside it. The interface rides the window
+  whole while it re-forms and hands over at the half-way point, so the window is never empty. One
+  interface fragment a chapter, each a different screen (*product-ui*). Four hold two screens.
 - **Closing object turns over** (`closing-object-turns`): the one object the page is about rises in the
   last screen, turns over in 3D while the closing ground comes up behind it, and lands on its plain
   back, set in the page's type with the closing line and the one action. One cut-out photograph of its
@@ -551,13 +565,15 @@ and hinged sheets followed (weight 0 in `scenes.json`).
   tear. Not dealt: judged cheap twice (a page curl, a torn-paper seam).
 - **Raster cut between chapters** (`raster-cut`): the next chapter prints over the current one through
   slats while the title changes ink line by line. A full-bleed picture for the next chapter (a title
-  alone on two flat grounds reads as an empty screen) and a title of 2-4 words.
+  alone on two flat grounds reads as an empty screen) and a title of 2-4 words. Not dealt (round 11):
+  its slats leave slivers at the edges (r10-p47), and after the audit's fix a flat sky still prints as
+  a flat bar at 40-50% of the hold.
 - **Page lifts off a closing picture** (`page-lifts-off-closing-picture`): the last content section
-  lifts away like a sheet, a little smaller and dimmer as it goes, and uncovers a picture held under it
-  all along, which settles from a close 1.35x zoom to its framing as the scroll runs out; a band in the
-  picture's own top-edge colour carries the closing line and the contact. One photograph with an even
-  top edge (fog, sky, a plain wall), or a full-bleed crop of the product's interface (`data-ui`). The
-  end of the page, once; hold 1.
+  lifts away like a sheet at its full width and uncovers a picture held under it all along, which
+  settles from a close 1.35x zoom to its framing as the scroll runs out; a band in the picture's own
+  top-edge colour carries the closing line and the contact. One photograph with an even top edge (fog,
+  sky, a plain wall), or a full-bleed crop of the product's interface (`data-ui`). The end of the page,
+  once; hold 1.
 - **Section seam bends into a cup that gathers the scattered words**
   (`seam-pocket-gathers-the-words`): eight to twelve short words lie scattered, small and tilted, under
   a section's heading; the scroll carries them one by one into two short columns while the next
@@ -567,6 +583,17 @@ and hinged sheets followed (weight 0 in `scenes.json`).
   rooms; no pictures; never on a software page. On the list, into an order, an offer or the contact
   on the ink; once; hold 1.4. Built from the researched technique `lib-0301`, which is no longer dealt
   to build fresh.
+- **A still closing line in a field of words** (`closing-line-in-a-field-of-words`): the closing line
+  holds still at the lower left at display size, the one action after its last word, while single words
+  of the subject come out of a vanishing point above it, grow along six to eight fixed lanes and fade
+  while still whole, six at most at once; the last word grows out of the same point and stops over the
+  line as the section's heading. 16-30 real words of nine letters or fewer, the page's dishes, places,
+  materials or services (*names:16*), a last word of 4-9 letters that can carry the close ('Tonight',
+  'Visit'), a closing line of 9-12 words in two clauses of about 22 characters each, a `<br>` between
+  them, so it holds two lines at display size on a phone too, and one button; no pictures. The end of
+  the page, once, never right after another scene and never on a software page; hold 1. scenes.mjs warns
+  `empty-steps` over the flat ground between the words. Dealt a little less often than most (weight
+  0.8). Built from the researched technique `lib-0330`.
 
 **Type choreography**
 - **Letter physics** (`letter-physics`): a claim bursts apart in 3D and an answer lands in a disc of
@@ -575,15 +602,28 @@ and hinged sheets followed (weight 0 in `scenes.json`).
   wall of capitals that parts around it. A quote of 12-20 words in three to five short lines, so the
   capitals are giant (about 10vw), and one clean cut-out about a third of the stage high. A longer
   sentence stays a static statement; the scene carries one phrase of it.
-- **Scroll-turned drum** (`scroll-turned-drum`): names turn on a 3D drum like a slot reel, with an
-  optional drum of pictures beside it. 8-20 real names of the client's own rooms, dishes, places,
-  clients or products (`--have names`, or a sector that has such lists).
+- **Scroll-turned drum** (`scroll-turned-drum`): names turn on a 3D drum like a slot reel, with a
+  drum of pictures beside it, and nothing else on the front line (no count, no clock). 8-20 real names
+  of the client's own rooms, dishes, places, clients or products (`--have names`, or a sector that has
+  such lists).
 - **Type re-layout** (`type-flip-relayout`): a list in giant capitals spreads, folds into an index and
   hands its size to the heading. A one-word heading and 3-6 short items, no pictures. Not dealt: its
   mid-hold frames show scrambled half-words and a lone fragment over ghost text, and it ran about eight
   screens for five words (round 8).
-- **Wordmark under strain** (`wordmark-under-strain`): a closing word is crushed, echoed, and drops
-  a letter that becomes the button. A word of 4-8 letters with a straight letter, never the brand's name
-  (no giant name anywhere), no pictures. For a loud brand (a band, a launch, a sports brand, a studio that
-  shouts); on a calm house, a craft or a care practice the strain reads as a broken word, so redraw. At
-  rest the word reads whole.
+- **Wordmark under strain** (`wordmark-under-strain`): a closing word is crushed onto its baseline and
+  springs back, and its full stop falls out and lands as the button. A word of 4-8 letters, never the
+  brand's name (no giant name anywhere), no pictures. For a loud brand (a band, a sports brand, a studio
+  that shouts); on a calm house, a craft or a care practice the strain reads as a broken word, so
+  redraw. At rest the word reads whole.
+- **The dot becomes the full stop** (`dot-becomes-the-full-stop`): one large dot, the display face's
+  own full stop set very large, drops onto the page's ground, and a claim grows out of it to the left
+  one whole word at a time across nearly the full width, the dot stepping right and a step smaller with
+  each word until it is the sentence's own full stop as the last word lands; an optional second beat
+  cuts the ground to ink and sets one supporting line under it. One claim of 4-5 words ending on its
+  full stop, in a display face whose full stop is a round dot, and an optional line of 8-16 words; no
+  pictures, labels or accent on the dot (*pictures:0*). In the middle, after the hero (the intro, the
+  about or the proof, never the call to action), the one claim the page stands on: a page short of
+  pictures, services above all; once; hold 0.6.
+  scenes.mjs warns `empty-steps` while the finished sentence holds over the ground change. Dealt a
+  little less often than most (weight 0.8). Built from the researched technique `lib-0370`, which is
+  no longer dealt to build fresh.

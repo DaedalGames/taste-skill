@@ -6,25 +6,26 @@
 
    Tokens it takes from the page: --ink (the stage colour), --ground (the text on it), --font-display,
    --font-text. Its own, all optional:
-     --sl-bg         stage colour (default: the page's ink, else #0e0e0c; ideally the photo's darkest tone)
+     --sl-bg         stage colour (default since fix-002: a mid-dark tone, the page's ink lifted 14% toward
+                     its ground, about #2b302e on a near-black ink, so the photograph's darkest pieces
+                     never read as holes in the locked grid; set it to a mid-dark tone of the photo)
      --sl-ink        title and caption colour
      --sl-gutter     side margin of the title and caption (6vw; 16px on phones)
-     --sl-W          frame width (default min(72vw, 120svh), 16:9; portrait min(88vw, 56svh), 4:5)
+     --sl-W          frame width (default min(72vw, 120svh), 16:9; portrait min(90vw, 56svh), 4:5)
      --sl-word-size  poster word size (7.5cqi of the frame; 12cqi on portrait art)
-     --sl-word-x/y   where the word's centre sits on the poster (50% / 50%). Keep it inside one row band
-                     of the grid (4 rows: 12.5%, 37.5%, 62.5%, 87.5%; 5 rows: 10%, 30%, 50%, 70%, 90%),
-                     and on the 4:5 art inside the middle 60% of the width: a phone's full-bleed end
-                     keeps only that much of it
+     --sl-word-x/y   where the word's centre sits on the poster (50% / 50%); on the 4:5 art keep it inside
+                     the middle 60% of the width: a phone's full-bleed end keeps only that much of it. The
+                     word is never cut into the shards: it fades in whole on the poster after the lock
      --sl-word-ink   poster word colour (#f4f4f1)
      --sl-scrim      a flat translucent fill over the whole picture, for a word on a light photograph
-     --sl-flash      the lock flash colour (#fff)
+     --sl-flash      the lock flash colour (#fff; the flash is off unless the flash option is set)
    Weights follow the page: --display-weight (the headline and the words; 600 here when the page sets
    none). A weight the page has not loaded is never faked: the nearest loaded one shows. */
 
 [data-scene="scatter-and-lock"] { font-synthesis-weight: none; }
 
 [data-scene="scatter-and-lock"] {
-  --sl-bg: var(--ink, #0e0e0c);
+  --sl-bg: color-mix(in srgb, var(--ink, #0e0e0c) 86%, var(--ground, #f1f1ee));
   --sl-ink: var(--ground, #f1f1ee);
   --sl-W: min(72vw, 120svh);
   --sl-gutter: 6vw;
@@ -196,7 +197,8 @@ html.js [data-scene="scatter-and-lock"].is-live > .scene-stage { padding: 0; }
   width: calc(var(--cols) * 100%);
   height: calc(var(--rows) * 100%);
 }
-[data-scene="scatter-and-lock"] .sl-cell [data-sl-text]::before { content: attr(data-sl-text); }
+[data-scene="scatter-and-lock"] .sl-cell [data-sl-text]::before,
+.sl-still[data-scene="scatter-and-lock"] .sl-still-pic [data-sl-text]::before { content: attr(data-sl-text); }
 [data-scene="scatter-and-lock"].sl-pending .sl-cell > .sl-art { visibility: hidden; }
 [data-scene="scatter-and-lock"] .sl-flash {
   position: absolute;
@@ -237,16 +239,16 @@ html.js [data-scene="scatter-and-lock"].is-live > .scene-stage { padding: 0; }
 .scene[data-scene="scatter-and-lock"].is-live.sl-released > .scene-stage { visibility: hidden; }
 .scene[data-scene="scatter-and-lock"]:not(.is-live) + .sl-still > .sl-still-pic { display: none; }
 
-/* ---- portrait: a 4:5 poster, a 4 x 5 grid, the title across the top ---- */
+/* ---- portrait: a 4:5 poster, a 3 x 4 grid, the title across the top ---- */
 @media (max-width: 767px), (orientation: portrait) {
-  [data-scene="scatter-and-lock"] { --sl-W: min(88vw, 56svh); --sl-word-size: 12cqi; }
+  [data-scene="scatter-and-lock"] { --sl-W: min(90vw, 56svh); --sl-word-size: 12cqi; }
   [data-scene="scatter-and-lock"] > .scene-stage { padding: 8vh var(--sl-gutter) 8vh; }
   [data-scene="scatter-and-lock"] .sl-title { max-width: none; }
   [data-scene="scatter-and-lock"] .sl-headline { font-size: clamp(30px, 6.4vw, 56px); }
   [data-scene="scatter-and-lock"] .sl-frame { aspect-ratio: 4 / 5; }
   [data-scene="scatter-and-lock"] .sl-caption { width: var(--sl-W); max-width: none; margin: 3vh auto 0; }
   [data-scene="scatter-and-lock"].is-live .sl-title { right: var(--sl-gutter); top: 8vh; }
-  [data-scene="scatter-and-lock"].is-live .sl-frame { top: calc(50% + 4vh - var(--sl-W) * 5 / 8); }
+  [data-scene="scatter-and-lock"].is-live .sl-frame { top: calc(50% + 6vh - var(--sl-W) * 5 / 8); }
   [data-scene="scatter-and-lock"].is-live.sl-grow .sl-solid {
     --sl-full: calc(max(100cqw, 100cqh * 4 / 5) * 1.004);
     top: calc(50% - var(--sl-full) * 5 / 8);

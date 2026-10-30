@@ -53,17 +53,18 @@ In order of preference:
    modern photographs of places, light, texture and materials, free of credits. Use them where an
    honestly generic picture fits (the open sea for a house on the sea, stone for a mason). They never
    stand in for a person or a screen, and for a room, a dish or a product only as below.
-4. **Sharp modern photographs from the open collections** (section 3), 1800px or wider, of the
-   subject's world as it looks now: its city, its materials, its kind of work. Honest means nobody
-   could take one for the client's own building, premises, person, team or customers. Two exceptions,
-   both listed in the report as stand-ins for the client's own: rooms, dishes and products (below),
-   and a product with no photographs of its own, shown by real photographs of its kind in use, large,
-   never named or priced as this model (the direction sheet's imagery section says how). Archive
-   photographs, old maps and engravings only when they are the idea itself (the history this subject
-   continues: a century-old firm's first workshop, the slip boxes behind a notes app), sharp, large and
-   of one family: in the October 2026 review, random archive scans on about half the pages were the most
-   common reason a page looked cheap, while sharp archive photographs that carried the idea were what
-   blind judges praised most.
+4. **Sharp modern photographs from the open collections** (section 3), 1800px or wider, only for what
+   the library lacks (a kind of room, a dish, the product's kind in use): modern, well lit,
+   professional-looking. Honest means nobody could take one for the client's own building, premises,
+   person, team or customers. Two exceptions, both listed in the report as stand-ins for the client's
+   own: rooms, dishes and products (below), and a product with no photographs of its own, shown by
+   real photographs of its kind in use, large, never named or priced as this model (the direction
+   sheet's imagery section says how).
+   **Never documentary or archive photographs:** no old Commons or museum pictures, no history
+   photographs, postcards, old maps or engravings, no news-like or snapshot-looking shots. In October
+   2026 the owner looked at the test pages himself and named them first: serious, old-looking pictures
+   made the pages look bad, even where they carried an idea (a card catalogue for a notes app). Say
+   the history in words, if at all.
 5. **What the subject makes, built in HTML** (section 7), for what no honest picture exists of: the
    document a tool produces, the interface of a piece of software, at true size with real words and
    figures. Never a drawing of an object, a product or a place in its stead (section 8).
@@ -128,8 +129,15 @@ never a small figure in a landscape.
   first; without the client's own, the work in close-up (hands at the roaster's drum, a cup being
   poured), never passed off as its staff. For software, the product's own interface and the
   customer's world come first.
-- It belongs to one family with the others: one light, one era, one treatment.
+- **It looks like a photograph made this decade for a brand:** well lit, sharp, composed, colour
+  clean, the quality of a good Unsplash or Pexels photograph. Not documentary, archival, news-like, a
+  tourist snapshot or a museum scan.
+- It belongs to one family with the others: one light, one treatment.
 - No watermark, burned-in text, frame, scanner edge, noise or heavy compression.
+- **Fewer.** Three to six photographs of the subject and its world on a page, scenes included, each
+  earning its slot; none at all is a real option (the product, the type, the colour, the interface).
+  The rooms, dishes or products a page pictures are their own set, one photograph each beside its
+  facts; a gallery or a wall of work is cut to six.
 - Nothing in it that is not the client's to show, stand-ins and open-collection finds above all: no
   other maker's brand name or logo, no shop or company sign, no readable house number or licence
   plate, no words that would embarrass the client (a sticker, a slogan, a scrawl), and no child who
@@ -148,20 +156,17 @@ found in the open collections are not the project's own: do not pass `photograph
 
 ## 3. Real pictures from the open collections
 
-`scripts/assets.mjs` searches four open sources without keys and prints, for each find, a direct image
-URL, the page it comes from, its size, its creator, its licence and a credit line:
-
-- **Openverse**: one index over Flickr, Wikimedia Commons, museums and libraries.
-- **Wikimedia Commons**: archival photographs, old maps, scans of prints and books, places as they
-  look now.
-- **The Art Institute of Chicago** and **The Metropolitan Museum of Art**: public-domain paintings,
-  prints, drawings, photographs, textiles and objects, in large scans.
+`scripts/assets.mjs` searches open sources without keys and prints, for each find, a direct image
+URL, the page it comes from, its size, its creator, its licence and a credit line. Search
+**Openverse** (one index over Flickr, StockSnap, rawpixel and others): `--source openverse`. Its
+modern photographs are what a page can use; the archive and museum sources (Wikimedia Commons'
+historical scans, the Art Institute of Chicago, the Metropolitan Museum) are the documentary look the
+owner ruled out, so leave them out of the search.
 
 ```bash
-node <skill>/scripts/assets.mjs "gent korenmarkt"
-node <skill>/scripts/assets.mjs "basalt texture" --min-width 2400 --source openverse,commons
-node <skill>/scripts/assets.mjs "fig" --source museums --orientation portrait   # historical subjects
-node <skill>/scripts/assets.mjs --get commons:36649959,met:707892     # download, record the credits
+node <skill>/scripts/assets.mjs "guest room fjord view" --source openverse
+node <skill>/scripts/assets.mjs "basalt texture" --min-width 2400 --source openverse
+node <skill>/scripts/assets.mjs --get openverse:<id>,openverse:<id>    # download, record the credits
 node <skill>/scripts/assets.mjs --credits                             # the credits dialog and report list
 ```
 
@@ -179,9 +184,8 @@ people's bakeries. The subject's world is specific:
 - **Its materials,** close enough to read as a surface: the stone of its quay, the grain of its oak,
   its glaze, its tiles ("azulejo tiles", "basalt cobblestones", "oak grain").
 - **Its kind of work, today:** hands at the craft, the tools in use, the landscape it works in.
-- **Only when the history is the idea:** old photographs of the subject's own lineage (the first
-  workshop, the tool it replaces, the people who invented its kind), museum objects of its kind
-  (`--source museums`). Sharp, large, one family; never random old pictures of the place.
+- **Never its history in pictures:** no old photographs, postcards, maps or engravings, however well
+  they fit; a history the page needs is told in one line of text.
 
 Search in the place's own words (azulejo, not "blue tile"; Korenmarkt, not "market square") and try
 two or three queries per idea. If nothing sharp and fitting turns up, do not fill the slot.
@@ -193,18 +197,16 @@ two or three queries per idea. If nothing sharp and fitting turns up, do not fil
   open the file. A title is not a picture.
 - It is large enough: twice the width it is shown at for anything full-bleed (the script prints the
   largest size available). A 1024-pixel Flickr photograph is a half-width picture at most.
-- It belongs to one family with the others on the page: all engravings, or all photographs from one
-  era, or all close surfaces in one light. A 1900 postcard beside a modern stock photograph beside a
-  botanical plate reads as a scrapbook.
+- It belongs to one family with the others on the page: modern photographs in one light, or all close
+  surfaces in one light. A postcard beside a modern photograph beside a botanical plate reads as a
+  scrapbook, and old pictures are out anyway.
 - No watermark, no burned-in text or logo, no frame or scanner edge you cannot crop away, and no
   recognisable living person who could be taken for the client's staff or customers. Look at it at
   full size for what the quality bar in §2 rules out (another maker's name or logo, a sign, a house
   number or plate, embarrassing words, a recognisable child) and crop or drop it.
 - In colour, unless the brief asks for black and white (section 6). A stand-in whose file is
   black-and-white is left out however well it fits, since a grey dish, room, product or season tells
-  the visitor nothing; the client's own pictures are shown as they are. The one other exception is an
-  old photograph that is itself the idea (the history above), shown as a document of that history,
-  never in a slot that shows the food, the room, the product or the season.
+  the visitor nothing; the client's own pictures are shown as they are.
 
 **Use it with intent.** One sharp picture of the place, large, beats a row of small ones; a material
 close-up can hold a whole section behind its text. Each picture appears once on the page, never again
@@ -212,8 +214,8 @@ as a crop. Treatments stay within section 6 and the treatment the sheet deals.
 
 **Stay honest.**
 
-- **A found picture is never the client's own.** It may show the client's city, its materials, its
-  history, the kind of thing it makes; it may never stand in for the client's building, premises,
+- **A found picture is never the client's own.** It may show the client's city as it is today, its
+  materials, the kind of thing it makes; it may never stand in for the client's building, premises,
   people, team or customers (a bakery counter, the house from outside, a smiling barista, a chef at
   the pass). Rooms, dishes and products are shown with a photograph of their kind, and a product with
   no photographs of its own by its kind in use, never named or priced as this model; a stand-in sits
@@ -223,8 +225,8 @@ as a crop. Treatments stay within section 6 and the treatment the sheet deals.
   names none, or mark it as a placeholder in the Image credits and the report (a guesthouse's rooms
   were real hotels' rooms from the open collections, and one of them had no credit at all).
 - **Say what and where it is.** A photograph of a place that is not the client's own is captioned
-  with what and where it is, as its source names it ("Suðureyri in June", "Gand, unloading a steamer,
-  1905"), never with a place the source does not name and never in words that tie it to the client; a
+  with what and where it is, as its source names it ("Suðureyri in June", "The Korenmarkt, Ghent"),
+  never with a place the source does not name and never in words that tie it to the client; a
   stand-in for a room, a dish or a product has its own facts beside it (bed, view, rate; name, price),
   never a line saying it is the client's photograph.
   A picture under or beside a line shows what the line names: a guesthouse set "A white house on the
@@ -255,10 +257,11 @@ as a crop. Treatments stay within section 6 and the treatment the sheet deals.
 - **List them in the report:** file, title, creator, licence, source page. `--credits` prints that
   list too.
 
-If two or three honest queries per idea find nothing sharp that fits, leave the slot out or draw it
-with care (section 8). A picture that is merely nearby is worse than none. If the script cannot reach any
-source (no network), draw, and say so in the report. For moving pictures, the same script searches
-real footage with `--video` (section 11).
+If two or three honest queries per idea find nothing sharp, modern and fitting, leave the slot out
+and let type, colour or the product carry it (section 9); never a drawing (section 8). A picture that
+is merely nearby is worse than none. If the script cannot reach any source (no network), use the
+library and type, and say so in the report. For moving pictures, the same script searches real
+footage with `--video` (section 11).
 
 ## 4. The dealt photographs
 
@@ -285,12 +288,17 @@ real footage with `--video` (section 11).
   subject sits where the composition needs it (off-centre, on a third, against the text side). The
   first screen's crop shows the subject recognisably (the place with its water and its house, the
   building), not a texture of it.
-- **Keep a picture's own type inside the crop.** A film, a poster or a product shot with type in it
-  (a title card, a gauge, an interface) is shown at its own ratio, or cropped so its type stays inside
-  the middle 90% at every width (`object-position` per breakpoint, `contain` on narrow screens). A
-  blind cover crop that cuts its words reads as broken.
-- **Let images touch edges.** Full-bleed, or bleeding off one side, reads as designed. An image
-  floating with equal margins on all sides reads as placed by default.
+- **Keep a picture's own lettering whole, or out of the frame.** A film still, a poster, a sign, a
+  label or a product shot with type in it (a title card, a gauge, an interface) is shown at its own
+  ratio, or cropped so its lettering stays inside the middle 90% at every width (`object-position` per
+  breakpoint, `contain` on narrow screens), or cropped so the lettering leaves the frame entirely. A
+  blind cover crop that cuts its words reads as broken: a portfolio cut its own work titles to
+  "Pelik", "ZUIDKAI" and "KAAP" (round 10), and the inspector warns on heavy crops of such pictures
+  (`cropped-lettering`: 15% or more of the width or height cut away).
+- **Full-bleed or inside the margins, never into one edge.** A picture at full bleed runs to both
+  edges and reads as designed; every other picture keeps the page margin on both sides. A picture,
+  window or strip cut by one side of the screen while the other side keeps its margin reads as a
+  mistake (`edge-run`).
 - **Overlap sparingly and on purpose:** a headline whose last line runs over the top edge of the
   picture, a small image overlapping a large one by a fixed 40–80px. One overlap per screen at most.
 - **Square corners** unless the direction or the one-motif shape says otherwise. If rounded, one radius
@@ -319,9 +327,8 @@ One treatment for the whole page:
   black-and-white (a monochrome photograph from the open collections, a library line marked
   black-and-white, an old print) is left out like a grey filter would be, even when every other picture
   is in colour: check the file, not only the CSS. The client's own pictures are shown as they are (a
-  photographer's black-and-white work stays black-and-white), and section 3 names the other exception,
-  an old photograph that is itself the idea. A blueprint that turns its pictures grey (a mosaic, a wall of portraits)
-  keeps them in colour.
+  photographer's black-and-white work stays black-and-white). A blueprint that turns its pictures grey
+  (a mosaic, a wall of portraits) keeps them in colour.
 - **Multiply on a field.** On a light flat ground, `mix-blend-mode: multiply` makes a white studio
   background vanish so a product sits directly on the colour.
 - **Darkened for a dark page.** `filter: brightness(0.85) contrast(1.05)` so the image edges sink into
@@ -356,12 +363,14 @@ test.
   alignment. Grey bars standing in for text are worse than no image.
 - Put the fragment directly on the page or on one flat stage colour. No laptop, no phone frame unless
   the product is a phone app and the frame is a plain rounded rectangle.
-- **The interface sits in the page's own ground,** in the page's colours, cropped or bleeding off an
-  edge of the screen or its section; at most one framed window on the whole page (the replay's, when
-  one is dealt). Never the black ground with a white interface slab in every section: a blind judge
-  called it generic dark SaaS.
+- **The interface sits in the page's own ground,** in the page's colours, cropped inside the page
+  margins or within its section, never run into one screen edge (a notes app's window ran into the
+  right edge and the owner named it first: `edge-run`); at most one framed window on the whole page
+  (the replay's, when one is dealt). Never the black ground with a white interface slab in every
+  section: a blind judge called it generic dark SaaS.
 - **One picture that is not interface** and carries the product's idea is worth more than another
-  panel: on a notes app's page, a photograph of a card catalogue carried the idea in a blind test.
+  panel: a modern photograph of what the product works on, or the object that carries its idea, shot
+  today (never an archive photograph).
 - **No form controls as decoration.** Switches, checkboxes and sliders appear only where they do what
   the product does; a row of greyed toggles beside nothing reads as a template.
 - Inside a fragment the product's own interface conventions apply (its small radii, its 1px control
@@ -422,10 +431,10 @@ and they hold their own: a median panel score of 7.5 against 7.2 for the whole s
 
 - Make the typography the image: one statement at 10–14vw, a list set at 5vw, numerals at display size.
 - Use colour at scale: a full field, an inverted section, a two-field split.
-- Use the subject's own shape as one flat motif if the direction calls for it (a circle, an arc, a
-  notch), drawn in CSS, cropped by the viewport.
-- Do not add: icons in squares, abstract gradients, dot grids, wave dividers, floating shapes, emoji,
-  generic line illustrations, or an empty box where a picture "will go".
+- Use cards with a fill (the dealt style) to group the facts, so the page has hierarchy without
+  pictures.
+- Do not add: drawn shapes or motifs, icons in squares, abstract gradients, dot grids, wave dividers,
+  floating shapes, emoji, generic line illustrations, or an empty box where a picture "will go".
 
 ## 10. Markup and credits
 
@@ -449,7 +458,7 @@ opens a dialog. Nothing about the pictures' sources appears anywhere else on the
 ```html
 <button type="button" class="credits-link" onclick="document.getElementById('credits').showModal()">Image credits</button>
 <dialog id="credits" aria-label="Image credits"><form method="dialog"><button aria-label="Close">Close</button></form>
-  <ul><li><a href="https://commons.wikimedia.org/wiki/File:…">“Korenmarkt, Ghent”</a> by …, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via Wikimedia Commons</li></ul>
+  <ul><li><a href="https://www.flickr.com/photos/…">“Korenmarkt, Ghent”</a> by …, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>, via Openverse</li></ul>
 </dialog>
 ```
 
@@ -458,7 +467,7 @@ opens a dialog. Nothing about the pictures' sources appears anywhere else on the
   a picture that an entrance reveal or a scene shows as it arrives: give that one `loading="eager"`,
   or the reveal opens on an empty box.
 - `alt` describes the picture in plain words. Decorative repeats get `alt=""`. The script's suggested
-  alt is the archive's title; rewrite it to say what the picture shows.
+  alt is the source's title; rewrite it to say what the picture shows.
 - A coloured `background-color` on the image container (the ground or surface tone) so the layout is
   whole before the image arrives.
 - The "Image credits" link sits with the legal links at their size; the dialog is plain (the page's
@@ -472,13 +481,14 @@ opens a dialog. Nothing about the pictures' sources appears anywhere else on the
 A moving picture of the subject's world can carry a section the way a photograph does: the river at
 the end of the street, the roaster's drum turning, a timber frame going up. `assets.mjs --video`
 searches real footage without keys: Wikimedia Commons (every video there comes with web-sized
-transcodes; the best source for short clips), the Internet Archive's Prelinger Archives (industrial,
-educational, city and home films from the 1920s to the 1970s, mostly public domain and mostly long)
-and NASA (the Earth from orbit, launches, aircraft, laboratories). The rest of the Internet Archive is
-left out: anyone can upload there, and the licence claims are unchecked.
+transcodes; the best source for short clips), the Internet Archive's Prelinger Archives and NASA (the
+Earth from orbit, launches). Take only modern, well-shot clips (`--source commons,nasa`): the
+Prelinger films (industrial and home films from the 1920s to the 1970s) and any old or news-like
+footage are the documentary look ruled out for pictures (section 2). The rest of the Internet Archive
+is left out: anyone can upload there, and the licence claims are unchecked.
 
 ```bash
-node <skill>/scripts/assets.mjs "coffee roasting" --video
+node <skill>/scripts/assets.mjs "coffee roasting" --video --source commons,nasa
 node <skill>/scripts/assets.mjs "river" --video --source commons,nasa --orientation landscape
 node <skill>/scripts/assets.mjs --get commons:49769620        # the clip, a poster frame, the credit
 ```
@@ -559,8 +569,8 @@ shorter clip. Licences, credits and honesty work exactly as for pictures (sectio
   one second can be bright at the next. If any frame drops below 4.5:1 (3:1 for 24px and up), use the
   scrim in section 6 or move the text off the clip. Nothing lies on top of a headline or a statement.
 - It is motion: let it be the page's one moving thing, or sit in a section where nothing else moves.
-- Credit it with the pictures: `--credits` prints one footer line for both ("Pictures and footage:")
-  and the list for the report, with each clip's length.
+- Credit it with the pictures: `--credits` prints one credits line for both ("Pictures and footage:")
+  for the Image credits dialog, and the list for the report, with each clip's length.
 - Where footage goes (hero background, inline loop, the frame that grows, a docked card), and what
   the study measured about it: section 12. Nothing that matters plays on hover only, and a full film
   with sound sits behind a play button that opens a player with controls.
@@ -713,11 +723,12 @@ Each entry gives when to use it, the geometry at 1440×900, the phone version an
 **Horizontal gallery**
 
 - *When.* A set people browse in any order: products, rooms, events, a team.
-- *Geometry.* Cards 25–35% of the width (435×326 with 20px gaps at 1440: three in full and a fourth
-  cut by the edge), or a strip at one fixed height with mixed widths (576px tall in the study), or a
-  slider whose centre slide is about 73% of the width with 170–180px of each neighbour showing. Always
-  cut by the right edge so it reads as more. A marquee of pictures moves slowly: 60–120s per loop.
-- *Phone.* One card at 75–80% of the width (290–300px of 390) with the next one showing; swipe.
+- *Geometry.* In the study: cards 25–35% of the width with a fourth cut by the right edge, or a
+  slider with its neighbours showing. Here a row fits the width inside the margins (three or four
+  cards in full, in the dealt card style), since nothing runs into one screen edge and there are no
+  sideways scrollers on desktop; a marquee of pictures that crosses both edges, moving slowly (60–120s
+  per loop), is the one exception.
+- *Phone.* The cards stack, one to a row, or two narrow ones for a long list.
 - *Fails.* Arrows and no drag or swipe; a marquee of things people need to read; a carousel holding the
   page's one important picture.
 
@@ -732,7 +743,8 @@ Each entry gives when to use it, the geometry at 1440×900, the phone version an
 
 **Even grid**
 
-- *When.* An archive only (layout.md §5): a shop range, the team, a menu, the full list of work.
+- *When.* A set of one kind (layout.md §6, Cards): a shop range, the rooms, the team, the full list
+  of work, in the dealt card style.
 - *Geometry.* Two, three or four across, equal cells, 8–16px gaps, one ratio (4:5 is the commonest),
   the caption under each picture.
 - *Phone.* Two across for products, one for work and people.
@@ -785,7 +797,7 @@ their own under it at a size that shows what each is.
 
 - *When.* Products and objects. The highest mean score in the table, on 7 of the 36 top sites.
 - *Geometry.* The object at 35–60% of the width on a flat ground taken from its own colours, standing
-  on the bottom edge or running off one side, with the type behind or beside it.
+  on the bottom edge, inside the page margins or cut by both sides alike, with the type beside it.
 - *Phone.* The object at 80–90% of the width under the headline.
 - *Fails.* A render floating in a void with no ground; a drop shadow added to a cut-out (no resting
   shadows here; keep a contact shadow only if it was photographed).
@@ -923,21 +935,23 @@ on the phone only, where the type covers more of the picture.
    screens are 0% and 19% are 90% or more.
 3. **Three to five placements per page,** and no two neighbouring sections with the same one. Sites
    with two or fewer average 7.31, sites with three or more about 7.5.
-4. **Six to twelve pictures, never fewer than four.** Study median 7; top sites 4–27; lowest 2.
+4. **Three to six good pictures,** more only when they are the client's own (study median 7; top
+   sites 4–27; lowest 2). Fewer, chosen better, beats a page filled with stand-ins.
 5. **Two ratios for at least 75% of the pictures** (76% in the study), a third only for a deliberate
    exception. Defaults: 4:5 for portraits, 16:9 or 3:2 for landscapes.
 6. **Square corners on every picture** (94% in the study). If the direction rounds them, one radius of
    4px for every picture and clip.
-7. **Split pictures take 42–50% of the width, or two-thirds,** at the full height of the section and
-   touching the viewport on their outer side; the text starts on the 50% line. On the phone the
-   picture goes first, full width.
+7. **Split pictures take 42–50% of the width, or two-thirds,** at the full height of the section,
+   inside the page margins (the study's sites often touch the viewport on the outer side; here nothing
+   runs into one edge, so a picture that must reach the edge goes full-bleed behind the words); the
+   text starts on the 50% line. On the phone the picture goes first, full width inside the margins.
 8. **Full-bleed bands are 100% wide and 100–150vh tall,** one every three or four screens, oversized by
    10% at most for parallax, with text only in one corner at least 32px in. On the phone, re-crop to a
    full-screen portrait.
 9. **One inset frame that grows per page,** from 35–50% of the width to the full screen over
    720–2,700px of scroll, with nothing else moving on that screen.
-10. **Horizontal galleries show three cards and a cut fourth:** cards 25–35% of the width with 16–20px
-    gaps; on the phone one card at 75–80% of the width with the next one showing.
+10. **A row of cards fits the width:** three or four in full inside the margins, 16–24px gaps, in the
+    dealt card style; on the phone they stack. Never a fourth cut by the edge.
 11. **One moving picture per screen.** Clips of 5–15s (median 10s), muted, looped, inline, with a
     poster, paused out of view; a hero source of 1920×1080 under 10MB, inline clips at 1280×720 or
     smaller under 5MB.

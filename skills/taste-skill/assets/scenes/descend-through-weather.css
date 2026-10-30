@@ -11,7 +11,8 @@
    --below-pos (object-position of the two photographs), --title-stretch (font-stretch of the title),
    --wx-letters (letters in the title, 10 by default: sizes the title when there is no script),
    --tagline-top / --phone-tagline-top (46svh / 54svh: put the tagline on the calmest part of the sky).
-   No gradients: every soft edge is a keyed photograph of cloud or a blurred flat fill.
+   No gradients and no blur: every soft edge is a keyed photograph of cloud (the blurred flat fills and the
+   blurred copies of the title are gone; without cloud art the seam is a flat band of mist).
    Weights follow the page: --display-weight (the title, the note and the statement; 700 and 600 here
    when the page sets none). A weight the page has not loaded is never faked: the nearest loaded one
    shows. */
@@ -129,17 +130,16 @@
   text-wrap: balance;
   color: var(--wx-on-mist);
 }
-/* without the script: a blurred flat fill, never a gradient */
+/* without the script: a flat band of mist across the seam, never blurred, never a gradient */
 [data-scene="descend-through-weather"] .wx-note::before {
   content: "";
   position: absolute;
   z-index: -1;
-  left: -60%;
-  right: -60%;
+  left: 0;
+  right: 0;
   top: calc(var(--wx-seam) * 0.36);
   bottom: calc(var(--wx-seam) * 0.36);
   background: var(--wx-mist);
-  filter: blur(2.4svh);
 }
 /* with the script: the deck parks in the seam, keyed cloud tops above, the cloud turned over below */
 [data-scene="descend-through-weather"]:not(.is-live) .wx-deck {
@@ -158,17 +158,8 @@
 [data-scene="descend-through-weather"].wx-art:not(.is-live) .wx-note::before { display: none; }
 [data-scene="descend-through-weather"]:not(.is-live) .wx-deck__soft { display: none; }
 
-/* the place below: the ground band darkens its foot so the statement reads and the next section joins */
-[data-scene="descend-through-weather"] .wx-below::after {
-  content: "";
-  position: absolute;
-  left: -60%;
-  right: -60%;
-  top: 76%;
-  bottom: -40%;
-  background: var(--wx-ground);
-  filter: blur(9svh);
-}
+/* the place below: the statement sits on its dark, calm foot (the picture's contract). The blurred ground
+   band that used to darken it is gone: a soft edge made with blur reads as a gradient. */
 [data-scene="descend-through-weather"] .wx-statement {
   grid-area: 4 / 1;
   align-self: end;
@@ -246,28 +237,14 @@
   visibility: hidden;
   pointer-events: none;
 }
+/* The copies are sharp (no blur on text): the name leaves by dissolving under the rising cloud, the cloud
+   layers drawn over it, while the copies carry its fade to a ghost and out. --wx-blur is no longer read. */
 [data-scene="descend-through-weather"].is-live .wx-title__ghost::before { content: attr(data-word); display: block; }
-[data-scene="descend-through-weather"].is-live .wx-title__ghost.is-soft::before { filter: blur(calc(var(--wx-blur) * 0.36)); }
-[data-scene="descend-through-weather"].is-live .wx-title__ghost.is-lost::before { filter: blur(var(--wx-blur)); }
 
-/* soft flat fills: haze over the top of the place below, ground band over its foot. Each runs about
-   three blur radii past the sides of the screen, no further. As with the title copies, the blur sits on
-   the fill inside the layer that fades, so it is drawn once, not on every frame. */
-[data-scene="descend-through-weather"].is-live .wx-haze,
-[data-scene="descend-through-weather"].is-live .wx-ground {
-  left: -30svh;
-  width: calc(100% + 60svh);
-}
-[data-scene="descend-through-weather"].is-live :is(.wx-haze, .wx-ground)::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  filter: blur(9svh);
-}
-[data-scene="descend-through-weather"].is-live .wx-haze { top: -20svh; height: 62svh; }
-[data-scene="descend-through-weather"].is-live .wx-haze::before { background: var(--wx-mist); }
-[data-scene="descend-through-weather"].is-live .wx-ground { top: 75svh; height: 70svh; opacity: 0; }
-[data-scene="descend-through-weather"].is-live .wx-ground::before { background: var(--wx-ground); }
+/* The haze and the ground band were blurred flat fills (a soft edge made with blur reads as a gradient):
+   they are no longer drawn. The cloud ceiling and the deck's own cloud art carry the clearing, and the
+   statement sits on photo B's dark, calm foot (its contract), in --on-ground. */
+[data-scene="descend-through-weather"].is-live :is(.wx-haze, .wx-ground) { display: none; }
 
 /* cloud layers: canvases of keyed cloud, wide enough that their feathered ends never come on screen */
 [data-scene="descend-through-weather"] .wx-cloud { display: none; }
@@ -299,14 +276,14 @@
   height: calc(var(--wx-body, 100svh) + 4px);
   background: var(--wx-mist);
 }
-/* until the cloud art is cut (or if it cannot be), the deck's edges are soft flat mist */
+/* until the cloud art is cut (or if it cannot be), the deck's edges are flat mist (no blur: a soft edge
+   made with blur reads as a gradient) */
 [data-scene="descend-through-weather"] .wx-deck__soft {
   position: absolute;
   left: calc(var(--wx-feather) * -0.3);
   width: calc(100% + var(--wx-feather) * 0.6);
   height: calc(var(--wx-feather) * 0.85);
   background: var(--wx-mist);
-  filter: blur(calc(var(--wx-feather) * 0.1));
 }
 [data-scene="descend-through-weather"] .wx-deck__soft--top { top: calc(var(--wx-feather) * 0.55); }
 [data-scene="descend-through-weather"] .wx-deck__soft--bottom { bottom: calc(var(--wx-feather) * 0.55); }

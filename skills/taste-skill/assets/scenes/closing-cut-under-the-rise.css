@@ -2,8 +2,9 @@
    Default rules are the finished composition (no script, reduced motion, a failed CDN, a phone set to
    rest): an ordinary section a screen tall, the closing photograph full bleed with the closing line and
    the one action on its calm area, nothing hidden. With .is-live the stage is held for the hold, a flat
-   room of two tints stands over the photograph with the cut-out in it, the cut-out rises out of the top
-   and, half-way, the room and the cut-out are gone in one frame (closing-cut-under-the-rise.js).
+   room of two tints stands over the photograph with the cut-out low in it, the cut-out rises, whole,
+   onto its own row in the photograph and there the room and the cut-out are gone in one frame
+   (closing-cut-under-the-rise.js).
 
    Tokens it reads: --ground --ink --accent --accent-ink --font-display --font-text --display-weight
    (the closing line, 500 when the page sets none) --strong-weight (the action, 600) --text-weight (400)
@@ -35,7 +36,7 @@
   --ccr-btn-radius: 4px;
   --ccr-pad: var(--pad, clamp(16px, 4vw, 64px));
   --ccr-ratio: 0.72;
-  --ccr-size: 0.8;
+  --ccr-size: 0.5;
   position: relative;
   color: var(--ccr-ink);
   font-family: var(--font-text, inherit);
@@ -143,8 +144,9 @@
 .scene[data-scene="closing-cut-under-the-rise"] .ccr-action:hover { background: color-mix(in srgb, var(--accent, #1f4fa3) 84%, var(--ink, #000)); }
 .scene[data-scene="closing-cut-under-the-rise"] .ccr-action:focus-visible { outline: 3px solid var(--ccr-ink); outline-offset: 3px; }
 
-/* ── portrait screens (phones, an upright tablet): the portrait crop, the line over the action ──── */
-@media (max-aspect-ratio: 4/5) {
+/* ── portrait phones: the portrait crop, the line over the action. An upright tablet keeps the line
+   beside the action, so the band stays short and is not a field of empty tint while the phrases arrive ── */
+@media (max-aspect-ratio: 4/5) and (max-width: 767px) {
   .scene[data-scene="closing-cut-under-the-rise"] .ccr-words { flex-direction: column; align-items: flex-start; }
   .scene[data-scene="closing-cut-under-the-rise"][data-ccr-place$="right"] .ccr-words { flex-direction: column; }
   .scene[data-scene="closing-cut-under-the-rise"] .ccr-line { max-width: 16ch; }
@@ -204,7 +206,7 @@ html.js .scene.is-live[data-scene="closing-cut-under-the-rise"] > .scene-stage {
   bottom: calc(var(--ccr-tail, 0px) + clamp(24px, 4svh, 40px));
   max-width: 18ch;
   margin: 0;
-  font-size: 17px;
+  font-size: clamp(17px, 1.35vw, 20px);   /* reads on the flat floor, not a footnote */
   line-height: 1.35;
   font-weight: var(--text-weight, 400);
   color: var(--ccr-ink);

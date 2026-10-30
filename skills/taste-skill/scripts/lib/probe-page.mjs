@@ -21,7 +21,8 @@ export async function pageBuild(opts = {}) {
   const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
   const words = (t) => (norm(t).match(/\S+/g) || []).length;
   const textOf = (el) => norm(el.innerText || el.textContent || '');
-  const rgba = (c) => { const m = c && c.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+  // (a fill set with color-mix(), the dealt overlapping cards' tone steps, computes to color(srgb r g b), 0 to 1)
+  const rgba = (c) => { const s = String(c || ''); const k = s.match(/color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)(?:\s*\/\s*([-\d.e]+))?\s*\)/); if (k) return [k[1] * 255, k[2] * 255, k[3] * 255, k[4] != null ? +k[4] : 1]; const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
   const groundOf = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const c = rgba(css(e).backgroundColor); if (c && c[3] >= 0.9) return c; } return [255, 255, 255, 1]; };
   const differs = (a, b, d = 6) => !!a && !!b && [0, 1, 2].some((i) => Math.abs(a[i] - b[i]) >= d);
   const sides = (el) => { const cs = css(el); return ['Top', 'Right', 'Bottom', 'Left'].filter((s) => parseFloat(cs[`border${s}Width`]) >= 1 && cs[`border${s}Style`] !== 'none' && (rgba(cs[`border${s}Color`]) || [0, 0, 0, 0])[3] > 0.05).length; };
@@ -39,17 +40,63 @@ export async function pageBuild(opts = {}) {
   // --- the sections: the page's parts, the nearest section, scene or footer (or a child of main when there is none)
   const sectionOf = (el) => el.closest('section, [data-scene], footer') || [...(document.querySelector('main') || B).children].find((c) => c.contains(el)) || null;
 
-  // --- framed elements, per section
+  // --- framed elements, per section. Round 11 (Leon: cards are wanted, they show what belongs together): a card on a
+  // fill, a picture-led card, a product window are fine in any number. What is reported: a frame with another frame
+  // inside it (boxes in boxes), a box laid on a photograph, a box cut to a shape by a mask or a clip-path (a perforated
+  // ticket, a notch), and frames drawn by their outline alone.
   out.framed = [];
   {
     // (a card set as a link counts like any card; buttons and fields are controls)
     const SKIP = /^(BUTTON|INPUT|SELECT|TEXTAREA|LABEL|OPTION|IMG|VIDEO|PICTURE|CANVAS|IFRAME|SVG|HR|BR|SCRIPT|STYLE|SUMMARY)$/i;
     const picTile = (e, r) => [...e.querySelectorAll('img, video, picture, canvas')].some((p) => { const q = p.getBoundingClientRect(); return q.width * q.height >= r.width * r.height * 0.6; });
+    // the photographs on the page (an img, a film, a canvas, a box with a photograph for its background), by their frame
+    // (a canvas is a scene's field, the dither opener's, not a photograph: as hero-in-card has it)
+    const photos = [...B.querySelectorAll('img, video, div, section, figure, span, a, li, article')].filter((p) => {
+      if (p.closest('nav, dialog, [role=dialog], [data-ui]') || !visible(p)) return false;
+      if (/^(IMG|VIDEO)$/.test(p.tagName)) return !/\.svg(\?|#|$)/i.test(p.currentSrc || p.src || '');
+      const bi = css(p).backgroundImage; return !!bi && /url\(/.test(bi) && !/\.svg/i.test(bi) && /cover|contain|%/.test(css(p).backgroundSize);
+    }).map((p) => ({ p, r: p.getBoundingClientRect() })).filter((x) => x.r.width * x.r.height >= W * H * 0.04);
+    // a box laid on a photograph: half of it or more over a picture that is not inside it and is half as large again (the
+    // picture is a frame, so the box is a box in a box: r9-p43's note in the corner of the fjord). A card that overlaps a
+    // picture's corner with less than half of itself is the overlapping card the sheet deals.
+    const onPhoto = (e, r) => photos.find(({ p, r: q }) => {
+      if (e.contains(p) || q.width * q.height < r.width * r.height * 1.5) return false;
+      // (a band across the picture's whole width at its foot or its top, a third of its height at most, is a card's foot:
+      // R2's poster card, its name on a solid foot of the surface tone)
+      if (r.width >= q.width * 0.95 && (Math.abs(r.bottom - q.bottom) <= 4 || Math.abs(r.top - q.top) <= 4) && r.height <= q.height * 0.35) return false;
+      const ix = Math.min(q.right, r.right) - Math.max(q.left, r.left), iy = Math.min(q.bottom, r.bottom) - Math.max(q.top, r.top);
+      return ix > 0 && iy > 0 && ix * iy >= r.width * r.height * 0.5;
+    });
+    // a box cut to a shape: a mask, or a clip-path that is not a rectangle (rounded corners are a radius, not a shape)
+    const plainClip = (v) => v === 'none' || /^inset\(/.test(v) || (/^polygon\(/.test(v) && v.replace(/^polygon\(|\)$/g, '').split(',').every((pt) => pt.trim().split(/\s+/).every((n) => /^(0|0px|0%|100%|calc\(100%\s*[-+]\s*0px\))$/.test(n))));
+    const shapedBy = (e, r) => { for (let x = e, i = 0; x && i < 3; i++) { const c = css(x); if ((c.maskImage && c.maskImage !== 'none') || (c.webkitMaskImage && c.webkitMaskImage !== 'none')) return 'a mask'; if (!plainClip(c.clipPath)) return 'a clip-path'; const kids = [...x.children].filter(visible); if (kids.length !== 1) break; const q = kids[0].getBoundingClientRect(); if (q.width * q.height < r.width * r.height * 0.8) break; x = kids[0]; } return null; };
     const framed = (e) => {
       if (e.matches('[data-ui]') && !e.parentElement?.closest('[data-ui]')) { const g = groundOf(e.parentElement || B), drawn = (x) => { const c = rgba(css(x).backgroundColor); return (c && c[3] >= 0.5 && differs(c, g)) || sides(x) >= 3 || css(x).boxShadow !== 'none'; }; return drawn(e) || (e.children.length === 1 && drawn(e.children[0])) ? 'a product window' : null; }
       const c = rgba(css(e).backgroundColor);
       if (c && c[3] >= 0.5 && differs(c, groundOf(e.parentElement || B))) return 'filled ' + hex(c);
       if (sides(e) >= 3) return 'outlined';
+      // (a box in the ground's own colour still reads as a box where it lies on a photograph)
+      if (c && c[3] >= 0.5 && onPhoto(e, e.getBoundingClientRect())) return 'ground ' + hex(c);
+      return null;
+    };
+    // a frame inside a frame: a box of its own size class (a fifth of the outer's width or 120px, 40px tall), not a
+    // control, not a chip, and not the outer box drawn again (nine tenths of it)
+    const innerFrame = (outer, ro) => {
+      let k2 = 0;
+      for (const x of outer.querySelectorAll('*')) {
+        if (++k2 > 600) break;
+        if (SKIP.test(x.tagName) || x instanceof SVGElement || /^(TABLE|THEAD|TBODY|TFOOT|TR|TD|TH|CAPTION)$/.test(x.tagName)) continue;
+        // (a button drawn as a link inside the card is a control; a table's striped rows are the table's)
+        const ctl = x.closest('a, button, [role=button]'); if (ctl && ctl !== outer && outer.contains(ctl) && ctl.getBoundingClientRect().height < 64) continue;
+        const q = x.getBoundingClientRect();
+        if (q.width < Math.max(80, ro.width * 0.2) || q.height < 40 || q.width * q.height >= ro.width * ro.height * 0.9 || !visible(x)) continue;
+        // (a field drawn as one box with its button, a newsletter card's email pill, is a control)
+        if (q.height <= 96 && (x.matches('form, [role=search]') || x.querySelector('input:not([type=hidden]), select, textarea'))) continue;
+        if (x.parentElement?.closest('[data-ui]') && x.parentElement.closest('[data-ui]') !== outer) continue;
+        if (!x.matches('[data-ui]') && picTile(x, q)) continue;
+        const how = x.matches('[data-ui]') ? 'a product window' : (() => { const c = rgba(css(x).backgroundColor); if (c && c[3] >= 0.5 && differs(c, groundOf(x.parentElement || outer))) return 'filled ' + hex(c); return sides(x) >= 3 ? 'outlined' : null; })();
+        if (how && (textOf(x) || x.querySelector('img, video, canvas, picture'))) return `${textOf(x).slice(0, 24) || desc(x)} (${how}, ${Math.round(q.width)}x${Math.round(q.height)})`;
+      }
       return null;
     };
     const bySec = new Map(); const counted = [];
@@ -62,13 +109,20 @@ export async function pageBuild(opts = {}) {
       const cs = css(e); if (/fixed|sticky/.test(cs.position) && e.getBoundingClientRect().height < H * 0.3) continue;
       const r = e.getBoundingClientRect();
       if (r.width < 120 || r.height < 56 || r.width * r.height < W * H * 0.012 || r.width >= W * 0.94) continue;
+      // (a link drawn as a button, a few words in a box up to 64px tall, is a control)
+      if (e.matches('a, [role=button]') && r.height <= 64 && (textOf(e).match(/\S+/g) || []).length <= 5) continue;
       const how = framed(e); if (!how || !visible(e)) continue;
       if (how !== 'a product window' && picTile(e, r)) continue;
       if (!textOf(e) && !e.querySelector('img, video, canvas, picture')) continue;
       const sec = sectionOf(e); if (!sec || sec === e) continue;
       counted.push(e);
-      const list = bySec.get(sec) || []; list.push({ e, r, how }); bySec.set(sec, list);
+      const it = { e, r, how };
+      // (a field that runs to the screen's side and holds the product's window is a ground for it, not a box round it)
+      const field = (r.left <= 1 || r.right >= W - 1) && r.width >= W * 0.4;
+      if (how !== 'a product window') { it.nested = field ? null : innerFrame(e, r); const ph = onPhoto(e, r); if (ph) it.photo = desc(ph.p); it.shaped = shapedBy(e, r); }
+      const list = bySec.get(sec) || []; list.push(it); bySec.set(sec, list);
     }
+    const label = (it) => `${textOf(it.e).slice(0, 28) || desc(it.e)} (${it.how}, ${Math.round(it.r.width)}x${Math.round(it.r.height)})`;
     for (const [sec, items] of bySec) {
       // (boxes that touch are drawn as one frame: a ticket's body and its stub, a window's panes)
       const groups = [];
@@ -76,10 +130,22 @@ export async function pageBuild(opts = {}) {
         const g = groups.find((x) => x.some((y) => y.e.parentElement === it.e.parentElement && Math.max(y.r.left - it.r.right, it.r.left - y.r.right, y.r.top - it.r.bottom, it.r.top - y.r.bottom) <= 3));
         if (g) g.push(it); else groups.push([it]);
       }
-      if (groups.length < 2) continue;
+      const nested = items.filter((x) => x.nested), photo = items.filter((x) => x.photo), shaped = items.filter((x) => x.shaped);
+      const outlined = groups.filter((g) => g.every((x) => x.how === 'outlined'));
+      if (groups.length < 2 && !nested.length && !photo.length && !shaped.length) continue;
       const parents = new Map(); for (const g of groups) parents.set(g[0].e.parentElement, (parents.get(g[0].e.parentElement) || 0) + 1);
-      out.framed.push({ head: headOf(sec), n: groups.length, list: Math.max(...parents.values()) >= 3, y: Math.round(sec.getBoundingClientRect().top + sy), items: groups.slice(0, 5).map((g) => `${textOf(g[0].e).slice(0, 28) || desc(g[0].e)} (${g[0].how}, ${Math.round(g[0].r.width)}x${Math.round(g[0].r.height)})`) });
+      out.framed.push({ head: headOf(sec), n: groups.length, list: Math.max(...parents.values()) >= 3, y: Math.round(sec.getBoundingClientRect().top + sy), items: groups.slice(0, 5).map((g) => label(g[0])),
+        outlined: outlined.length, nested: nested.slice(0, 3).map((x) => `${label(x)} holds ${x.nested}`), onPhoto: photo.slice(0, 3).map((x) => `${label(x)} on ${x.photo}`), shaped: shaped.slice(0, 3).map((x) => `${label(x)} cut by ${x.shaped}`), shapedN: shaped.length });
       if (out.framed.length >= 8) break;
+    }
+    // the product windows on the first screen, at the top of the page (r8-p38: four windows round the title, "cluttered,
+    // nowhere to look"): the [data-ui] roots that meet the first screen, a clear one drawn by its parts included (two
+    // of r8-p38's four are clear wrappers round filled query cards)
+    out.heroWindows = [];
+    if (!opts.scenes && sy < 2) for (const e of B.querySelectorAll('[data-ui]')) {
+      if (e.parentElement?.closest('[data-ui]') || e.closest('nav, dialog, [role=dialog], [aria-hidden=true]') || !visible(e)) continue;
+      const r = e.getBoundingClientRect(); if (r.width < 120 || r.height < 56 || r.top >= H || r.bottom <= 0) continue;
+      out.heroWindows.push(`${textOf(e).slice(0, 24) || desc(e)} (${Math.round(r.width)}x${Math.round(r.height)})`);
     }
   }
   if (opts.scenes) return out;
@@ -253,6 +319,253 @@ export async function pageBuild(opts = {}) {
   return out;
 }
 
+// Round 11 (Leon, 29 October: "you scroll and the next section is already there, sometimes already in the first view"):
+// space() is run at the top of the page after the walk, so every reveal has landed where it rests.
+//   hero   the first screen: the block that holds the h1 (the page's blocks as layout() takes them) and what of the block
+//          after it shows on the first screen: its words, a picture, a box, or its ground where it differs from the
+//          hero's, 8px or more above the foot of the screen (hero-not-alone)
+//   air    on desktop, the empty height between one block's last content and the next one's first (words, pictures,
+//          controls, boxes), under 12% of the screen; a scene or a pinned stage, whose content moves, is left out, and
+//          so are the parts of one block (section-air)
+export function space() {
+  const W = innerWidth, H = innerHeight, SY = scrollY || 0, B = document.body, D = document.documentElement;
+  const memo = new Map(); const css = (e) => { let c = memo.get(e); if (!c) { c = getComputedStyle(e); memo.set(e, c); } return c; };
+  const shown = (el) => { for (let p = el, i = 0; p && p !== B && i < 30; p = p.parentElement, i++) { const cs = css(p); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.05) return false; if (i < 4 && (cs.clip === 'rect(0px, 0px, 0px, 0px)' || /inset\(50%\)/.test(cs.clipPath))) return false; } return true; };
+  const layered = (el) => { for (let p = el; p && p !== B; p = p.parentElement) if (/fixed/.test(css(p).position)) return true; return false; };
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  const rgba = (c) => { const s = String(c || ''); const k = s.match(/color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)(?:\s*\/\s*([-\d.e]+))?\s*\)/); if (k) return [k[1] * 255, k[2] * 255, k[3] * 255, k[4] != null ? +k[4] : 1]; const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+  const groundOf = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const c = rgba(css(e).backgroundColor); if (c && c[3] >= 0.9) return c; if (css(e).backgroundImage !== 'none' && /url\(/.test(css(e).backgroundImage)) return 'picture'; } return [255, 255, 255, 1]; };
+  const same = (a, b) => (a === 'picture' || b === 'picture' ? a === b : [0, 1, 2].every((i) => Math.abs(a[i] - b[i]) < 6));
+  const sel = (el) => (el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.') : '')).slice(0, 50);
+  const headOf = (s) => { const h = s.querySelector('h1, h2, h3, [role=heading]'); return norm(h ? h.innerText : s.innerText).slice(0, 48); };
+  // the page's blocks: down through single wrappers, a tall block split into its parts (the parts of one block keep its
+  // group), the site's bar and fixed layers left out
+  // (a site bar 120px tall or more, a masthead laid over the hero, is the bar, not a block)
+  const tall = (c) => { const r = c.getBoundingClientRect(); return r.height >= 120 && r.width >= W * 0.6 && css(c).position !== 'fixed' && shown(c) && !(c.matches('header, [role=banner]') && !c.querySelector('h1') && r.height < H * 0.3); };
+  let root = B;
+  for (let i = 0; i < 12; i++) { const kids = [...root.children].filter(tall); if (kids.length === 1) root = kids[0]; else break; }
+  let blocks = [...root.children].filter(tall).map((el) => ({ el, group: el }));
+  // (the parts of a section are one section; the parts of a wrapper, main or a div, are blocks of their own)
+  const SECTION = 'section, article, aside, footer, [data-scene], [data-hero]';
+  for (let pass = 0; pass < 2; pass++) blocks = blocks.flatMap((b) => { const k = [...b.el.children].filter(tall); return b.el.getBoundingClientRect().height > H * 1.6 && k.length >= 2 ? k.map((el) => ({ el, group: b.group !== b.el ? b.group : b.el.matches(SECTION) ? b.el : el })) : [b]; });
+  blocks.sort((a, b) => a.el.getBoundingClientRect().top - b.el.getBoundingClientRect().top);
+  // what a block shows: its words, pictures, controls and boxes (a fill narrower than the screen), in the flow
+  const contentOf = (blk) => {
+    const out = []; const tw = document.createTreeWalker(blk, NodeFilter.SHOW_TEXT); const rg = document.createRange(); let n, k = 0;
+    while ((n = tw.nextNode()) && k < 1500) {
+      const el = n.parentElement; if (!norm(n.nodeValue) || !el || el.closest('script, style, noscript, template, [aria-hidden=true]') || layered(el) || !shown(el)) continue;
+      k++; rg.selectNodeContents(n); for (const q of rg.getClientRects()) if (q.width > 2 && q.height > 2) out.push({ what: el.closest('h1, h2, h3, h4') ? 'heading' : 'text', el, t: q.top, b: q.bottom, l: q.left, r: q.right, text: norm(el.closest('h1, h2, h3, h4, p, li, a, button, figcaption, blockquote, dt, dd, span, div')?.innerText || n.nodeValue).slice(0, 40) });
+    }
+    let m = 0;
+    for (const el of blk.querySelectorAll('img, video, canvas, picture, iframe, svg, input, select, textarea, button, div, section, figure, a, li, article, span, aside')) {
+      if (++m > 3000) break;
+      if (el.parentElement?.closest('svg') || layered(el)) continue;
+      const r = el.getBoundingClientRect(); if (r.width < 24 || r.height < 24) continue;
+      let what = null;
+      if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME|svg)$/.test(el.tagName)) what = 'picture';
+      else if (/^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(el.tagName)) what = 'control';
+      else { const cs = css(el); if (/url\(/.test(cs.backgroundImage)) what = 'picture'; else if (r.width < W * 0.94) { const c = rgba(cs.backgroundColor); if (c && c[3] >= 0.5 && !same(c, groundOf(el.parentElement || B))) what = 'box'; } }
+      if (what && shown(el)) out.push({ what, el, tag: el.tagName, t: r.top, b: r.bottom, l: r.left, r: r.right, text: (el.getAttribute('alt') || norm(el.innerText) || sel(el)).slice(0, 40) });
+    }
+    return out;
+  };
+  const moving = (el) => !!(el.closest('.scene, [data-scene], .pin-spacer') || el.querySelector('.scene, [data-scene], .pin-spacer') || [...el.querySelectorAll('*')].slice(0, 400).some((e) => css(e).position === 'sticky' && e.getBoundingClientRect().height > H * 0.5));
+  const out = { blocks: blocks.length, hero: null, air: [] };
+  // --- the first screen alone
+  const h1 = [...document.querySelectorAll('h1')].find((h) => { const r = h.getBoundingClientRect(); return r.width > 2 && r.top + SY < H * 0.9 && shown(h); });
+  // (a title set in a bar between two parts of the first screen, r8-p38's rail: the last block that starts on the top half)
+  let hi = h1 ? blocks.findIndex((b) => b.el.contains(h1)) : -1;
+  if (hi < 0) blocks.forEach((b, i) => { if (b.el.getBoundingClientRect().top + SY < H * 0.5) hi = i; });
+  // (on a phone the first screen is the small viewport, the address bar shown: 100svh)
+  let F = H;
+  if (W < 600) { const p = document.createElement('div'); p.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:100svh;visibility:hidden;pointer-events:none'; B.appendChild(p); const v = p.getBoundingClientRect().height; p.remove(); if (v > 200 && v < H) F = Math.round(v); }
+  if (hi >= 0 && SY < 2) {
+    const hero = blocks[hi], next = blocks.slice(hi + 1).find((b) => b.group !== hero.group && b.el.getBoundingClientRect().top + SY >= hero.el.getBoundingClientRect().top + SY + 40);
+    out.hero = { sel: sel(hero.el), bottom: Math.round(hero.el.getBoundingClientRect().bottom + SY), fold: F, next: null, cut: null };
+    if (next) {
+      const nr = next.el.getBoundingClientRect();
+      let seen = null;
+      if (nr.top < F - 8) {
+        // (shown where it lies: a layer of the next scene held behind the hero, a fixed world, is under it, not in view)
+        const hitStyle = document.createElement('style'); hitStyle.textContent = '*, *::before, *::after { pointer-events: auto !important; }'; document.head.appendChild(hitStyle);
+        // (the item itself is what paints first at one of five points: a sheet or a cover of the scene's own laid over it,
+        // through-the-openings' arch sheet over its cloister photograph, hides it)
+        const paints = (e) => { const cs = css(e); if (+cs.opacity < 0.35) return false; if (/^(IMG|VIDEO|CANVAS|IFRAME|PICTURE|OBJECT|EMBED)$/.test(e.tagName) || e instanceof SVGElement) return true; if (cs.backgroundImage !== 'none') return true; const c = rgba(cs.backgroundColor); return !!c && c[3] >= 0.6; };
+        const onTop = (c) => { const l = Math.max(c.l, 0), r = Math.min(c.r, W), t = Math.max(c.t, 0), b = Math.min(c.b, F - 1); if (r - l < 2 || b - t < 2) return false; for (const [fx, fy] of [[0.5, 0.5], [0.2, 0.2], [0.8, 0.2], [0.2, 0.8], [0.8, 0.8]]) { for (const e of document.elementsFromPoint(l + (r - l) * fx, t + (b - t) * fy)) { if (layered(e) || e === D || e === B) continue; if (e === c.el || c.el.contains(e)) { if (next.el.contains(e)) return true; break; } if (e.contains(c.el)) continue; if (paints(e)) break; } } return false; };
+        let inView = [];
+        // (named by what reads first: a heading, then words, then a picture or a box)
+        const rank = { heading: 0, text: 1, picture: 2, box: 3, control: 4 };
+        try { inView = contentOf(next.el).filter((c) => c.t < F - 8 && c.b > 0 && c.r > 0 && c.l < W && onTop(c)).sort((a, b) => rank[a.what] - rank[b.what] || a.t - b.t); } finally { hitStyle.remove(); }
+        if (inView.length) seen = { what: inView[0].what, text: inView[0].text, px: Math.round(F - Math.max(0, inView[0].t)) };
+        // its ground, where it differs from the hero's: what paints at the foot of the screen belongs to it
+        if (!seen) {
+          const hg = groundOf(hero.el);
+          for (const fx of [0.1, 0.3, 0.5, 0.7, 0.9]) {
+            const at = document.elementsFromPoint(W * fx, F - 6).find((e) => !layered(e) && e !== D && e !== B);
+            if (!at || !next.el.contains(at)) continue;
+            const g = groundOf(at);
+            if (!same(g, hg)) { seen = { what: 'ground', text: g === 'picture' ? 'a picture' : `rgb(${g.slice(0, 3).join(', ')})`, px: Math.round(F - Math.max(0, nr.top)) }; break; }
+          }
+        }
+      }
+      out.hero.next = { sel: sel(next.el), head: headOf(next.el), top: Math.round(nr.top + SY), seen };
+    }
+    // the first screen's foot cutting through what comes next inside the hero: a line of words across the fold, or a
+    // picture or box that starts in the lowest fifth of the screen and runs on under it (r9-p41: "2.6 Markdown Offline"
+    // showing the tops of its letters under the product window)
+    // (a canvas or a drawing may paint nothing where its box lies, and a layer laid on a picture that fills the first
+    // screen is part of that picture: words are looked at there, not boxes)
+    const hc = contentOf(hero.el);
+    const filledBy = hc.some((c) => c.what === 'picture' && c.tag !== 'CANVAS' && c.tag !== 'svg' && (Math.min(c.r, W) - Math.max(c.l, 0)) * (Math.min(c.b, F) - Math.max(c.t, 0)) >= W * F * 0.9);
+    // (display type of 56px or more that shows half its line or more is cropped at the foot on purpose, as the library deals
+    // it; under half shows only the tops of the letters of what comes next)
+    const cut = hc.filter((c) => (c.what === 'text' || c.what === 'heading' ? c.t < F - 8 && c.b > F + 2 && !((c.b - c.t) >= 56 && F - c.t >= (c.b - c.t) * 0.5) : !filledBy && !/^(CANVAS|svg|IFRAME)$/.test(c.tag) && c.t >= F * 0.8 && c.t < F - 8 && c.b > F + 2) && c.r > 0 && c.l < W).sort((a, b) => a.t - b.t);
+    if (cut.length) out.hero.cut = { what: cut[0].what, text: cut[0].text, px: Math.round(F - cut[0].t), n: cut.length };
+  }
+  // --- the air between blocks (desktop)
+  if (W >= 1100) {
+    const parts = blocks.map((b) => { const c = contentOf(b.el).map((x) => ({ ...x, t: x.t + SY, b: x.b + SY })); return { ...b, moving: moving(b.el), first: c.length ? Math.min(...c.map((x) => x.t)) : null, last: c.length ? Math.max(...c.map((x) => x.b)) : null }; });
+    for (let i = 1; i < parts.length; i++) {
+      const a = parts[i - 1], b = parts[i];
+      if (a.group === b.group || a.moving || b.moving || a.last == null || b.first == null) continue;
+      const gap = Math.round(b.first - a.last);
+      if (gap < H * 0.12) out.air.push({ a: headOf(a.el), b: headOf(b.el), aSel: sel(a.el), bSel: sel(b.el), gap, y: Math.round(a.last) });
+      if (out.air.length >= 8) break;
+    }
+  }
+  return out;
+}
+
+// navBar: the site's bar on the first screen (round 11; Leon: an info strip over the navigation is not modern, and r8-p38
+// carried a sentence in its bar). The bar is the <header> outside the page's sections, the [role=banner], or the strip
+// round the first <nav> with two links or more; when it is taller than a strip, the strip round its links.
+//   items     links and buttons in the bar of more than three words (the wordmark's own link aside)
+//   sentences text in the bar that is not a link: four words or more, or a sentence that ends in a full stop
+//   above     words above the bar's row of links, when that row sits near the top of the page: an announcement or info
+//             strip (the wordmark of a bar stacked in two rows aside)
+export function navBar() {
+  const W = innerWidth, H = innerHeight, SY = scrollY || 0, B = document.body;
+  const shows = (el) => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.1 || e.hidden) return false; } const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return false; const cs = getComputedStyle(el); return !(cs.clip === 'rect(0px, 0px, 0px, 0px)' || /inset\(50%\)/.test(cs.clipPath) || (r.width <= 2 && r.height <= 2)); };
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  // (a word has a letter: a phone number or opening hours, "+49 30 1234 5678", are not a sentence)
+  const words = (t) => (norm(t).match(/\S*\p{L}\S*/gu) || []).length;
+  const strip = (el) => { const r = el.getBoundingClientRect(); return r.width >= W * 0.5 && r.height <= Math.max(160, H * 0.25) && r.height >= 16; };
+  const home = (a) => { const h = (a.getAttribute('href') || '').trim(); if (['#', '#top', '/', './', 'index.html', './index.html'].includes(h) || a.matches('[data-wordmark], [rel=home]')) return true; try { const u = new URL(h, location.href); return u.origin === location.origin && u.pathname.replace(/index\.html?$/, '') === location.pathname.replace(/index\.html?$/, '') && (!u.hash || u.hash === '#top'); } catch { return false; } };
+  const inSections = (el) => !!el.parentElement?.closest('main, section, article, [data-scene]');
+  const linksIn = (el) => [...el.querySelectorAll('a[href], button')].filter((a) => !a.closest('dialog, [role=dialog], [hidden], [aria-hidden=true]') && shows(a));
+  const heads = [...document.querySelectorAll('header, [role=banner]')].filter((h) => !inSections(h) && shows(h) && linksIn(h).length >= 1 && h.getBoundingClientRect().top < H);
+  const nav = [...document.querySelectorAll('nav')].find((n) => !n.closest('dialog, [role=dialog], [hidden], footer') && shows(n) && linksIn(n).length >= 2 && n.getBoundingClientRect().top < H);
+  // (the header that holds the nav first; a hero set in a <header> with one button, the nav standing apart, is not the bar)
+  let bar = (nav && heads.find((h) => h.contains(nav))) || heads.find((h) => !nav || strip(h) || linksIn(h).length >= 2) || null;
+  if (!bar && nav) { bar = nav; for (let e = nav; e && e !== B; e = e.parentElement) { if (strip(e)) bar = e; else if (e.getBoundingClientRect().height > Math.max(160, H * 0.25)) break; } }
+  if (!bar) return null;
+  // a bar taller than a strip (a hero set in the header): the strip round its links, or round its first link or button
+  // at its top when the links are folded away (a phone); none there, no bar to judge
+  if (!strip(bar)) {
+    const top0 = bar.getBoundingClientRect().top;
+    const anchor = nav && bar.contains(nav) ? nav : linksIn(bar).filter((a) => a.getBoundingClientRect().top < top0 + 120).sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)[0];
+    if (!anchor) return null;
+    let s = null; for (let e = anchor; e && e !== bar; e = e.parentElement) if (strip(e)) s = e;
+    bar = s || anchor;
+  }
+  const br = bar.getBoundingClientRect();
+  const out = { bar: (bar.tagName.toLowerCase() + (bar.className && typeof bar.className === 'string' ? '.' + bar.className.trim().split(/\s+/)[0] : '')).slice(0, 40), top: Math.round(br.top + SY), h: Math.round(br.height), items: [], sentences: [], above: [] };
+  const links = linksIn(bar);
+  // (an article is not counted: "Ask for a room" is three words; an icon button's label nobody sees is not read)
+  for (const a of links) { if (a.matches('a') && home(a)) continue; const t = norm(a.innerText || ''); if (words(t.replace(/\b(a|an|the)\b/gi, ' ')) > 3) out.items.push(t.slice(0, 60)); }
+  // the words in the bar outside its links and buttons, by block
+  const seen = new Set(); const tw = document.createTreeWalker(bar, NodeFilter.SHOW_TEXT); let n;
+  while ((n = tw.nextNode())) {
+    const el = n.parentElement; if (!norm(n.nodeValue) || !el || el.closest('a, button, script, style, dialog, [role=dialog], [hidden], [aria-hidden=true], .sr-only, .visually-hidden') || !shows(el)) continue;
+    let blk = el; while (blk.parentElement && blk.parentElement !== bar && /^inline/.test(getComputedStyle(blk).display)) blk = blk.parentElement;
+    if (seen.has(blk)) continue; seen.add(blk);
+    if (blk.closest('a, button')) continue;
+    const t = norm(blk.innerText || blk.textContent); const nw = words(t);
+    if (nw >= 4 || (nw >= 2 && /[.!?](\s|$)/.test(t))) out.sentences.push(t.slice(0, 70));
+  }
+  // the bar's row of links (the row with the most), and anything with words above it while it sits near the top
+  const rows = []; for (const a of links) { const r = a.getBoundingClientRect(), c = (r.top + r.bottom) / 2; const row = rows.find((x) => Math.abs(x.c - c) <= 12); if (row) { row.n++; row.top = Math.min(row.top, r.top); row.els.push(a); } else rows.push({ c, n: 1, top: r.top, els: [a] }); }
+  const row = rows.sort((a, b) => b.n - a.n || b.c - a.c)[0];
+  // (a row of two items or more, the wordmark and a menu button at least; the box that holds the row is the bar's own,
+  // and words in it are the bar's, not a strip over it: a side index stacks its links and has no row)
+  let rowBox = row ? row.els[0] : null; if (row) while (rowBox && !row.els.every((a) => rowBox.contains(a))) rowBox = rowBox.parentElement;
+  // (the wordmark's own row is the bar's too: a bar that wraps on a phone sets the name and the action over the links)
+  const mark = links.find((a) => a.matches('a') && home(a)) || bar.querySelector('[data-wordmark]');
+  const markC = mark ? (() => { const q = mark.getBoundingClientRect(); return (q.top + q.bottom) / 2; })() : null;
+  if (row && row.n >= 2 && row.top + SY >= 20 && row.top + SY <= 200) {
+    const tw2 = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); const rg = document.createRange(); const blocks = new Set();
+    while ((n = tw2.nextNode())) {
+      const el = n.parentElement; if (!norm(n.nodeValue) || !el || el.closest('script, style, noscript, template, dialog, [role=dialog], [hidden], [aria-hidden=true]') || !shows(el)) continue;
+      rg.selectNodeContents(n); const q = rg.getBoundingClientRect(); if (q.bottom > row.top + 2 || q.top < -2 || q.width < 2) continue;
+      const a = el.closest('a'); if ((a && home(a)) || (rowBox && rowBox !== B && rowBox.contains(el)) || (markC != null && bar.contains(el) && Math.abs((q.top + q.bottom) / 2 - markC) <= 14)) continue;
+      const blk = el.closest('p, div, li, span, a, button, h1, h2, h3, h4, h5, h6, aside, section') || el;
+      if (blocks.has(blk)) continue; blocks.add(blk);
+      out.above.push(norm(blk.innerText || n.nodeValue).slice(0, 60));
+      if (out.above.length >= 4) break;
+    }
+  }
+  return out;
+}
+
+// crops: pictures whose crop cuts away a large part of them while they carry lettering, or are the work itself (round 11,
+// r10-p47: ZUIDKAI, KAAP and "Pelik" shown cut). A picture carries lettering when its alt text speaks of a name, a word,
+// letters, capitals, a title, a logo or a sign; it is the work when it sits under a heading or in a block named for the
+// work (work, projects, case studies, frames, stills, portfolio, selected). The crop: what object-fit cover and the boxes that
+// clip it take off its width or height, or, for a file that is a crop of another the page loaded (pelikaan-tall.png of
+// pelikaan.png), how much of the other's width or height it keeps.
+export function crops() {
+  const W = innerWidth, H = innerHeight;
+  // (not "type", "text" or "caps": a camera turned toward the text or a row of bottle caps has no words to cut)
+  const LETTER = /\b(names?|words?|letters?|lettering|capitals|typeface|titles?|headline|logo|wordmark|signs?|signage|poster|ident|captions?)\b/i;
+  // (not "works" or "cases": "How it works" and "Use cases" are not the work)
+  const WORK = /\b(work|projects?|case[- ]stud\w*|frames?|stills?|portfolio|selected|showreel|reel|gallery)\b/i;
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  const shows = (el) => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.1) return false; } return true; };
+  const fileOf = (u) => { try { return decodeURIComponent(new URL(u, location.href).pathname); } catch { return String(u).split(/[?#]/)[0]; } };
+  const SUFFIX = /[-_.](tall|wide|square|portrait|landscape|crop|cropped|phone|mobile|desktop|tablet|vertical|horizontal|sm|md|lg|xl|small|medium|large|thumb|card|cover|hero|\d{2,4}w|\d{2,4}x\d{2,4})$/i;
+  const stemOf = (f) => { let s = f.replace(/\.(jpe?g|png|webp|avif|gif)$/i, ''); for (let i = 0; i < 3 && SUFFIX.test(s); i++) s = s.replace(SUFFIX, ''); return s; };
+  // the other files the page loaded, by their stems, with their sizes where an img on the page shows them
+  const loaded = new Map();
+  for (const im of document.images) if (im.naturalWidth && im.currentSrc) { const f = fileOf(im.currentSrc); loaded.set(f, { w: im.naturalWidth, h: im.naturalHeight }); }
+  const out = [];
+  for (const im of document.images) {
+    if (!im.naturalWidth || !im.currentSrc || /\.svg/i.test(im.currentSrc) || im.closest('nav, dialog, [role=dialog], [data-ui], header[role=banner]') || !shows(im)) continue;
+    const r = im.getBoundingClientRect(); if (r.width * r.height < W * H * 0.02) continue;
+    const alt = norm(im.getAttribute('alt'));
+    // (named for the work by the section's id or heading, or by the picture's folder: a class such as "rw-frame" names a
+    // frame of the layout, not the work)
+    const sec = im.closest('section, [data-scene]'), hd = sec?.querySelector('h1, h2, h3');
+    const work = WORK.test([sec?.id, hd ? hd.innerText : '', fileOf(im.currentSrc).split('/').slice(-2, -1)[0] || ''].join(' '));
+    const lettering = LETTER.test(alt);
+    // (a picture across the whole width is a ground, cropped by nature, unless it carries lettering)
+    if (!lettering && (!work || r.width >= W * 0.9)) continue;
+    const cs = getComputedStyle(im);
+    // object-fit: the share of the picture's width and height the box shows
+    let kw = 1, kh = 1;
+    if (cs.objectFit === 'cover') { const s = Math.max(r.width / im.naturalWidth, r.height / im.naturalHeight); kw = r.width / (im.naturalWidth * s); kh = r.height / (im.naturalHeight * s); }
+    // the boxes that clip it (a frame narrower than the picture)
+    let cl = { l: r.left, r: r.right, t: r.top, b: r.bottom };
+    for (let e = im.parentElement, i = 0; e && e !== document.body && i < 6; e = e.parentElement, i++) { const c = getComputedStyle(e); if (c.overflowX !== 'visible' || c.overflowY !== 'visible') { const q = e.getBoundingClientRect(); cl = { l: Math.max(cl.l, q.left), r: Math.min(cl.r, q.right), t: Math.max(cl.t, q.top), b: Math.min(cl.b, q.bottom) }; } }
+    if (cl.r > cl.l && cl.b > cl.t) { kw *= (cl.r - cl.l) / r.width; kh *= (cl.b - cl.t) / r.height; }
+    // a file that is a crop of another the page loaded
+    let from = null;
+    const f = fileOf(im.currentSrc), stem = stemOf(f), bare = (x) => x.replace(/\.(jpe?g|png|webp|avif|gif)$/i, '');
+    // (only a file named as a crop, pelikaan-tall, of the file named plainly, pelikaan)
+    for (const [g, s] of stem !== bare(f) ? loaded : []) {
+      if (g === f || bare(g) !== stem) continue;
+      const a0 = s.w / s.h, a1 = im.naturalWidth / im.naturalHeight;
+      const keep = a1 < a0 ? a1 / a0 : a0 / a1; // the share of the wider one's width (or the taller one's height) kept
+      if (keep < 0.85 && s.w * s.h > im.naturalWidth * im.naturalHeight * 0.5) { from = { file: g.split('/').pop(), keep, axis: a1 < a0 ? 'width' : 'height' }; break; }
+    }
+    const cutW = 1 - kw, cutH = 1 - kh, cutFrom = from ? 1 - from.keep : 0;
+    const cut = Math.max(cutW, cutH, cutFrom);
+    if (cut < 0.15) continue;
+    out.push({ file: f.split('/').pop().slice(0, 48), cut: +cut.toFixed(2), axis: cutFrom >= Math.max(cutW, cutH) ? from.axis : cutW >= cutH ? 'width' : 'height', from: cutFrom >= Math.max(cutW, cutH) && from ? from.file : null, lettering, work, alt: alt.slice(0, 80) });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
 // deadControls: the controls of the first screen that change nothing when used (dead-control). A button, a field or a
 // link to "#" on the first screen, and in a product window anything drawn as a control (a field outlined round a few
 // words, a filled button of one to four words), is clicked once: it is alive when the page changes beyond what changes
@@ -266,7 +579,7 @@ export async function deadControls() {
   await wait(500);
   const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
   const words = (t) => (norm(t).match(/\S+/g) || []).length;
-  const rgba = (c) => { const m = c && c.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+  const rgba = (c) => { const s = String(c || ''); const k = s.match(/color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)(?:\s*\/\s*([-\d.e]+))?\s*\)/); if (k) return [k[1] * 255, k[2] * 255, k[3] * 255, k[4] != null ? +k[4] : 1]; const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
   const groundOf = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const c = rgba(getComputedStyle(e).backgroundColor); if (c && c[3] >= 0.9) return c; } return [255, 255, 255, 1]; };
   const shows = (el) => { const cs = getComputedStyle(el); if (cs.display === 'none' || cs.visibility === 'hidden') return false; let o = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) o *= +getComputedStyle(e).opacity; if (o < 0.5) return false; const r = el.getBoundingClientRect(); return r.width > 8 && r.height > 8 && r.top < H * 0.95 && r.bottom > 0 && r.left < W && r.right > 0; };
   const label = (el) => norm(el.innerText || el.value || el.placeholder || el.getAttribute('aria-label') || el.textContent || '').slice(0, 40);

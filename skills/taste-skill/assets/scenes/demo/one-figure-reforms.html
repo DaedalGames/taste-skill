@@ -107,9 +107,8 @@
   .ui-muted { color: #575c55; font-weight: 400; }
   .ui-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 12px 0 16px; }
   .ui-balance { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
-  .ui-tag { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--ground); font-size: 13px; white-space: nowrap; }
+  .ui-tag { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--ground); font-size: 14px; white-space: nowrap; }
   .ui-tag.is-in { color: var(--accent); }
-  .ui-av { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--ground); font-size: 12px; font-style: normal; font-weight: 600; }
   .ui-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; }
   .ui-row dt, .ui-row > span:first-child { color: #575c55; }
   .ui-row dd, .ui-row b { font-weight: 600; white-space: nowrap; }
@@ -118,8 +117,8 @@
   /* the account (first screen) */
   .ui-pots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
   .ui-pot { padding: 10px 12px; border-radius: 10px; background: var(--ground); font-size: 16px; font-weight: 600; }
-  .ui-pot::before { content: attr(data-k); display: block; font-size: 13px; font-weight: 400; color: #575c55; }
-  .ui-list li { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto 6.6em; align-items: center; column-gap: 12px; padding: 7px 0; }
+  .ui-pot::before { content: attr(data-k); display: block; font-size: 14px; font-weight: 400; color: #575c55; }
+  .ui-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto 6.6em; align-items: center; column-gap: 12px; padding: 7px 0; }
   .ui-list li > span { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ui-list b { text-align: right; }
   .ui-in { color: var(--accent); }
@@ -138,19 +137,19 @@
   .ui .ui-done { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; padding: 13px 16px; border-radius: 10px; background: var(--ink); color: var(--surface); font-weight: 600; }
   .ui .ui-done.is-in { background: var(--accent); color: #fff; }
   .ui-state { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px !important; }
-  .ui-run li { grid-template-columns: 30px minmax(0, 1fr) auto auto; }
+  .ui-run li { grid-template-columns: minmax(0, 1fr) auto auto; }
   .ui-bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; margin: 4px 0 6px; }
   .ui-bars i { flex: 1; height: calc(var(--h) * 100%); border-radius: 4px 4px 0 0; background: #c9cdc7; }
   .ui-bars i:last-child { background: var(--accent); }
-  .ui-axis { display: flex; justify-content: space-between; font-size: 12px; color: #575c55; }
+  .ui-axis { display: flex; justify-content: space-between; font-size: 14px; color: #575c55; }
   @container (max-width: 300px) {
-    .ofr-pane .ui { padding: 14px 14px 12px; font-size: 13px; }
-    .ofr-pane .ui-top .ui-muted { font-size: 12px; }
+    .ofr-pane .ui { padding: 14px 14px 12px; font-size: 14px; }
+    .ofr-pane .ui-top .ui-muted { font-size: 14px; }
     .ui-to { font-size: 18px; }
     .ofr-pane .ui-balance { font-size: 26px; }
     .ui .ui-done { margin-top: 8px; padding: 9px 10px; }
     .ui-run li { grid-template-columns: minmax(0, 1fr) auto; }
-    .ui-run .ui-av, .ui-run .ui-tag, .ui-hide-narrow { display: none; }
+    .ui-run .ui-tag, .ui-hide-narrow { display: none; }
     .ofr-pane .ui-row { padding: 4px 0; }
     .ofr-pane .ui-band { padding: 9px 10px; }
     .ui-run .ui-band { display: none; }
@@ -223,10 +222,9 @@
     .intro p { font-size: 18px; }
     .intro .ui { margin-inline: 0; }
     .intro .ui-balance { font-size: 28px; }
-    .ui-head .ui-muted { font-size: 13px; }
+    .ui-head .ui-muted { font-size: 14px; }
     .ui-pot { padding: 8px 9px; font-size: 15px; }
-    .intro .ui-list li { grid-template-columns: 28px minmax(0, 1fr) 6.2em; column-gap: 10px; }
-    .intro .ui-av { width: 28px; height: 28px; }
+    .intro .ui-list li { grid-template-columns: minmax(0, 1fr) 6.2em; column-gap: 10px; }
     .intro .ui-list .ui-tag { display: none; }
   }
 </style>
@@ -245,7 +243,7 @@
   <section class="intro" aria-labelledby="intro-h">
     <div>
       <h1 id="intro-h">Banking that sorts itself</h1>
-      <p>Corbel is a bank account for studios of one to twenty. Money comes in, goes out, is set aside and saved, without a spreadsheet.</p>
+      <p>A bank account for small studios. Money in, out, set aside and saved, without a spreadsheet.</p>
       <div class="actions">
         <a class="btn" href="#plan">Open an account</a>
         <a class="more" href="#how">See what it does</a>
@@ -260,10 +258,10 @@
         <div class="ui-pot" data-k="To spend">£26,270</div>
       </div>
       <ul class="ui-list">
-        <li><i class="ui-av">HC</i><span>Halden &amp; Co.</span><em class="ui-tag is-in">Invoice matched</em><b class="ui-in">+£3,200.00</b></li>
-        <li><i class="ui-av">PR</i><span>Payment run</span><em class="ui-tag">Six payees</em><b>−£8,450.00</b></li>
-        <li><i class="ui-av">NP</i><span>North Print</span><em class="ui-tag is-in">Invoice matched</em><b class="ui-in">+£1,180.00</b></li>
-        <li><i class="ui-av">TX</i><span>Tax pot</span><em class="ui-tag">25% kept back</em><b>−£1,095.00</b></li>
+        <li><span>Halden &amp; Co.</span><em class="ui-tag is-in">Invoice matched</em><b class="ui-in">+£3,200.00</b></li>
+        <li><span>Payment run</span><em class="ui-tag">Six payees</em><b>−£8,450.00</b></li>
+        <li><span>North Print</span><em class="ui-tag is-in">Invoice matched</em><b class="ui-in">+£1,180.00</b></li>
+        <li><span>Tax pot</span><em class="ui-tag">25% kept back</em><b>−£1,095.00</b></li>
       </ul>
     </div>
   </section>
@@ -290,9 +288,9 @@
           <div class="ui ui-run" data-ui role="img" aria-label="Friday's payment run: three payees, £5,190 in all, approved and sent">
             <div class="ui-top"><span>Payment run</span><span class="ui-muted">Friday 24 Oct</span></div>
             <ul class="ui-list">
-              <li><i class="ui-av">ML</i><span>Mara Lind</span><em class="ui-tag">Design</em><b>£3,100.00</b></li>
-              <li><i class="ui-av">OS</i><span>Okafor Studio</span><em class="ui-tag">Photos</em><b>£1,450.00</b></li>
-              <li><i class="ui-av">NP</i><span>North Print</span><em class="ui-tag">Print</em><b>£640.00</b></li>
+              <li><span>Mara Lind</span><em class="ui-tag">Design</em><b>£3,100.00</b></li>
+              <li><span>Okafor Studio</span><em class="ui-tag">Photos</em><b>£1,450.00</b></li>
+              <li><span>North Print</span><em class="ui-tag">Print</em><b>£640.00</b></li>
             </ul>
             <div class="ui-band"><span>Three payees</span><b>£5,190.00</b></div>
             <p class="ui-done" data-build="1"><span>Approved at 09:12</span></p>

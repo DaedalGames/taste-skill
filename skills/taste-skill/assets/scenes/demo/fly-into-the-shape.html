@@ -41,7 +41,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    padding: 18px var(--gutter);
+    height: 80px;
+    padding: 0 var(--gutter);
     font-size: 18px;
   }
   .brand { display: inline-flex; align-items: center; gap: 12px; font-weight: 700; text-decoration: none; font-size: 18px; }
@@ -59,19 +60,20 @@
     white-space: nowrap;
   }
 
-  /* first screen: the name and what it is, against the ridge at dusk */
+  /* first screen, alone: what a night here is, against the ridge at dusk; the picture keeps the
+     gutter on every side (the bar is 80px) */
   .opening {
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
     gap: 0 var(--gutter);
     min-height: calc(100svh - 80px);
-    padding: 0 0 0 var(--gutter);
+    padding: 0 var(--gutter) var(--gutter);
   }
   .opening-text {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 48px 0 clamp(40px, 7svh, 88px);
+    padding: 48px 0 clamp(16px, 4svh, 48px);
   }
   .opening h1 {
     margin: 0;
@@ -88,7 +90,7 @@
     line-height: 1.4;
     text-wrap: pretty;
   }
-  .opening-pic { margin: 0; min-height: 420px; }
+  .opening-pic { margin: 0; min-height: 420px; border-radius: 16px; overflow: hidden; }
   .opening-pic img { width: 100%; height: 100%; object-fit: cover; object-position: 72% 50%; }
 
   /* the scene's title, in the wide cut of the same family */
@@ -125,55 +127,60 @@
   /* the way in looks up at the sky: the summit stays low in the frame */
   #nights { --portal-focus: 50% 0%; }
 
-  /* the close, back on the paper (the scene's own dwell already gives the pause before it) */
-  .close { padding: clamp(40px, 7svh, 80px) var(--gutter) clamp(32px, 5svh, 56px); container-type: inline-size; }
-  .close .cols {
+  /* the footer: the night ground again, no card. The booking on the left, at the h2 step with the
+     one action; the sections and the way up in two short columns on the right; the small print at
+     the foot (the "out" scene's dwell on the paper gives the pause before it) */
+  .foot {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 32rem);
-    gap: 32px 48px;
-    align-items: start;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+    gap: 64px clamp(32px, 6vw, 112px);
+    min-height: 66svh;
+    margin-top: clamp(96px, 16svh, 200px);
+    padding: clamp(80px, 13svh, 160px) var(--gutter) 32px;
+    background: var(--portal-night);
+    color: #c9d2e6;
   }
-  .close h2 {
-    margin: 0;
+  .foot h2 {
+    margin: 0 0 20px;
     font-weight: 800;
     font-stretch: 87.5%;
-    font-size: clamp(36px, 4.4vw, 68px);
-    line-height: 0.98;
+    font-size: clamp(40px, 5vw, 80px);
+    line-height: 0.96;
     letter-spacing: -0.02em;
+    color: #f5f7ff;
   }
-  .close p { margin: 0 0 1em; text-wrap: pretty; }
-  .close .action {
+  .foot-book p { margin: 0 0 32px; max-width: 30rem; }
+  .foot .action {
     display: inline-flex;
     align-items: center;
-    min-height: 48px;
-    margin-top: 8px;
-    padding: 0 26px;
+    min-height: 52px;
+    padding: 0 28px;
     background: var(--accent);
     color: #fff;
     text-decoration: none;
     font-weight: 600;
   }
-  .close .name {
-    margin: clamp(80px, 14svh, 160px) 0 0;
-    font-weight: 800;
-    font-stretch: 112%;
-    font-size: clamp(48px, 15.4cqi, 260px);
-    line-height: 0.82;
-    letter-spacing: -0.03em;
-  }
-  .close .credit { margin-top: 32px; font-size: 16px; }
+  .foot-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-content: start; }
+  .foot-cols nav, .foot-cols p { display: grid; gap: 10px; margin: 0; }
+  .foot-cols a { color: #f5f7ff; text-decoration: none; }
+  .foot-cols a:hover { text-decoration: underline; }
+  .foot .credit { grid-column: 1 / -1; margin: 0; font-size: 15px; color: #8a93a8; }
 
   @media (max-width: 1000px) {
-    .night-plan, .close .cols { grid-template-columns: 1fr; }
+    .opening { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .opening-text { padding: 32px 0 32px; }
+    .opening-pic { position: relative; min-height: 280px; }
+    .opening-pic img { position: absolute; inset: 0; height: 100%; }
+    .night-plan, .foot { grid-template-columns: 1fr; }
     .night-plan figure { max-width: 34rem; }
   }
   @media (max-width: 767px) {
-    .bar nav a:not(.book) { display: none; }
+    /* the phone keeps one section link beside the action */
+    .bar { gap: 16px; }
+    .bar nav a:not(.book):not(:first-child) { display: none; }
+    .bar nav a.book { padding: 0 14px; }
     .brand-rest { display: none; }
-    .opening { grid-template-columns: 1fr; min-height: 0; padding: 0; }
-    .opening-text { padding: 40px var(--gutter) 40px; }
-    .opening-pic { min-height: 0; }
-    .opening-pic img { height: auto; aspect-ratio: 4 / 5; }
     .scene .portal-title { font-stretch: 100%; }
     .opening-text p { font-size: 20px; }
     .times li { grid-template-columns: 1fr; gap: 4px; }
@@ -195,8 +202,8 @@
 <main>
   <section class="opening" id="top">
     <div class="opening-text">
-      <h1>Skarfjell Observatory</h1>
-      <p>A public observatory 1,420 metres up the Skarfjell ridge, an hour above the valley by the last cable car, open to guests on clear winter nights.</p>
+      <h1>Nights at 1,420 metres</h1>
+      <p>A public observatory on the Skarfjell ridge, an hour above the valley by the last cable car, open on clear winter nights.</p>
     </div>
     <figure class="opening-pic">
       <img src="https://picsum.photos/id/866/1600/1067" alt="A snow ridge at dusk with a sharp peak behind it under pink cloud" width="1600" height="1067">
@@ -208,7 +215,6 @@
     <div class="scene-stage">
       <div class="portal-outside">
         <p class="portal-aside">Winter nights, October to March</p>
-        <p class="portal-cue" aria-hidden="true">Scroll</p>
       </div>
       <h2 class="portal-title portal-title--out" id="nights-title"><span class="portal-line">Lights off,</span> <span class="portal-line">eyes up</span></h2>
       <div class="portal-world">
@@ -262,19 +268,23 @@
     </div>
   </section>
 
-  <footer class="close" id="close">
-    <div class="cols">
-      <h2>Book a clear night</h2>
-      <div>
-        <p>Nights run from October to March, Thursday to Saturday, for up to 24 guests. A night costs 640 kr with the cable car both ways, soup in the hut and two hours under the domes.</p>
-        <p>We watch the forecast for you. If the sky is closed, your night moves to the next clear one, or you get the money back.</p>
-        <a class="action" href="#top">Book a night</a>
-      </div>
-    </div>
-    <p class="name">Skarfjell</p>
-    <p class="credit">Photographs by Samuel Zeller, Caleb Ralston and Hide Obara, from Unsplash via Lorem Picsum. Skarfjell Observatory is invented for this demo.</p>
-  </footer>
 </main>
+
+<!-- the footer: the night ground again, no card: the booking and the one action, two short columns, the
+     small print -->
+<footer class="foot" id="close" aria-labelledby="close-title">
+  <div class="foot-book">
+    <h2 id="close-title">Book a clear night</h2>
+    <p>Thursday to Saturday, October to March. 640 kr with the cable car, soup and two hours under the domes. A cloudy night moves to the next clear one.</p>
+    <a class="action" href="#close">Book a night</a>
+  </div>
+  <div class="foot-cols">
+    <nav aria-label="Footer"><a href="#nights">Nights</a><a href="#night-plan">Getting up</a><a href="#close">Prices</a></nav>
+    <p><span>Last car up at 17:40</span><span>Hallsdal valley station</span><a href="#close">nights@skarfjell.no</a></p>
+  </div>
+  <p class="credit">Photographs from Unsplash via Lorem Picsum. Skarfjell Observatory is invented for this demo.</p>
+</footer>
+<!-- Photographs by Samuel Zeller, Caleb Ralston and Hide Obara, from Unsplash via Lorem Picsum. -->
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>

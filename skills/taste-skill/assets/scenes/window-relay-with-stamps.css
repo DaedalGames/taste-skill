@@ -5,8 +5,8 @@
    file lays out: on wide screens the main slot on the left at 64% of the width and the full height inside
    the margins, the chip in its top left corner, and a caption band on its right with the name and line at
    the top, the heading lower down and the trail along the bottom edge; on portrait screens and phones the
-   window across the full width and the upper two thirds, the trail along its bottom edge, the caption under
-   the trail.
+   heading, then the window across the full width at the photographs' own 4:3 (75vw tall), the trail along
+   its bottom edge and the caption under the trail, the group centred on the screen.
    One ground, one ink, one accent: the accent is the current name and nothing else; every line of copy is
    in the ink at body size. Corners are square unless the page sets --radius (one radius for every frame,
    drawn by the clip). No shadows, no rules, no outlines.
@@ -190,25 +190,36 @@ html.js [data-scene="window-relay-with-stamps"].is-live > .scene-stage {
   line-height: 1.05;
 }
 
-/* ---------- portrait screens and phones: the window across the upper two thirds, the trail along its foot,
-   the caption under the trail ---------- */
+/* ---------- portrait screens and phones: the heading, the window across the full width at the
+   photographs' own 4:3, the trail along its foot, the caption under the trail, the whole group centred on
+   the screen so no third of it is left as bare ground ---------- */
 @media (max-aspect-ratio: 1 / 1), (max-width: 699px) {
   html.js [data-scene="window-relay-with-stamps"].is-live > .scene-stage {
-    --wr-mh: 66.6%;                              /* the window's height, share of the stage */
+    --wr-mh: min(75vw, 66.6%);                   /* the window's height: the photographs' own 4:3 at the full
+                                                    width, so every subject rests whole (a taller window
+                                                    cover-crops each bowl at both sides); never more than two
+                                                    thirds of a short landscape phone */
     --wr-c: 0.26;
     --wr-sg: 8px;
     --wr-sw: min(calc(11svh * 0.8), calc((100vw - 2 * var(--wr-g) - 3 * var(--wr-sg)) / 4), 120px);
-    --wr-tb: calc(var(--wr-mh) + 12px);          /* the trail's top edge */
+    --wr-nf: clamp(38px, 10vw, 64px);            /* the name */
+    --wr-lf: clamp(16px, 2.3vw, 19px);           /* its line */
+    --wr-hf: clamp(26px, 6.2vw, 40px);           /* the heading */
+    --wr-hh: calc(var(--wr-hf) * 2.1 + 24px);    /* room for the heading (two lines at most) and its gap */
+    /* the group's height: heading, window, trail, the name and two lines of its line */
+    --wr-gh: calc(var(--wr-hh) + var(--wr-mh) + 12px + var(--wr-sw) * 1.25 + 24px + var(--wr-nf) + 8px + var(--wr-lf) * 2.9);
+    --wr-top: max(calc(var(--wr-g) + var(--wr-hh)), calc((100% - var(--wr-gh)) / 2 + var(--wr-hh)));   /* the window's top edge */
+    --wr-tb: calc(var(--wr-top) + var(--wr-mh) + 12px);          /* the trail's top edge */
   }
   [data-scene="window-relay-with-stamps"].is-live .wr-at-main {
     left: 0;
-    top: 0;
+    top: var(--wr-top);
     width: 100%;
     height: var(--wr-mh);
   }
   [data-scene="window-relay-with-stamps"].is-live .wr-at-chip {
     left: 0;
-    top: 0;
+    top: var(--wr-top);
     width: calc(100% * var(--wr-c));
     height: calc(var(--wr-mh) * var(--wr-c));
   }
@@ -224,9 +235,28 @@ html.js [data-scene="window-relay-with-stamps"].is-live > .scene-stage {
     right: var(--wr-g);
     top: calc(var(--wr-tb) + var(--wr-sw) * 1.25 + 24px);
   }
-  [data-scene="window-relay-with-stamps"].is-live .wr-name { margin-top: -0.08em; font-size: clamp(34px, 8.4vw, 64px); }
-  [data-scene="window-relay-with-stamps"].is-live .wr-line { margin-top: 8px; max-width: 40ch; font-size: clamp(16px, 2.3vw, 19px); }
-  /* the heading is kept for screen readers while the scene runs here */
+  [data-scene="window-relay-with-stamps"].is-live .wr-name { margin-top: -0.08em; font-size: var(--wr-nf); }
+  [data-scene="window-relay-with-stamps"].is-live .wr-line { margin-top: 8px; max-width: 40ch; font-size: var(--wr-lf); }
+  /* the heading names the set just above the window, its foot 24px over the window's top edge */
+  [data-scene="window-relay-with-stamps"].is-live .wr-title {
+    position: absolute;
+    left: var(--wr-g);
+    right: var(--wr-g);
+    top: auto;
+    bottom: calc(100% - var(--wr-top) + 24px);
+    margin: 0;
+    max-width: 20ch;
+    font-size: var(--wr-hf);
+    line-height: 1.05;
+  }
+}
+/* a screen too short for the heading over the group: the group from the top, the heading kept for screen
+   readers while it runs */
+@media (max-aspect-ratio: 1 / 1) and (max-height: 619px), (max-width: 699px) and (max-height: 619px) {
+  html.js [data-scene="window-relay-with-stamps"].is-live > .scene-stage {
+    --wr-hh: 0px;
+    --wr-top: max(0px, calc((100% - var(--wr-gh)) / 2));
+  }
   [data-scene="window-relay-with-stamps"].is-live .wr-title {
     position: absolute;
     width: 1px;

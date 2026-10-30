@@ -7,8 +7,9 @@
    scroll. The pictures stay clear above their horizon; below it a flat band of scrim (the ::after of the
    .chs-move box the script wraps round each picture, from data-horizon down) carries every word: the
    title and text share one slot at the bottom left, and under
-   them one dock row holds the heading, the chapter names and the count (on a phone, the heading and
-   count). With data-set="pair" the pictures sit in a big and a small frame on the ground and the
+   them, when a page asks for the count or the names (counter: true, index: 'names'), one dock row holds
+   the heading, the chapter names and the count (on a phone, the heading and count); by default there is
+   no dock (see the end of this file). With data-set="pair" the pictures sit in a big and a small frame on the ground and the
    words beside them.
    Layers on the live stage: plates and frames 1 (DOM order stacks them), text, head and index 30.
    Tokens: --font-display, --chs-ground (stage ground), --chs-ink and --chs-muted (the current chapter's name and the others'), and per article
@@ -401,4 +402,27 @@ html.js [data-scene="pinned-chapter-switcher"].is-live > .scene-stage { backgrou
   }
   [data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-title { font-size: 36px; }
   [data-scene="pinned-chapter-switcher"][data-set="pair"].is-live .chs-body { font-size: 15px; }
+}
+
+/* ---------- no dock (the default since fix-002: no count, no lit chapter names) ----------
+   The foot carries the chapter's title and words alone. The section heading stays in the accessibility
+   tree (and in full ink in the finished composition) but is not drawn on the live stage: alone at the foot
+   it read as a small label under the title, and above the title it would be a kicker. A page that asks for
+   the count or the names gets the dock back as before. */
+[data-scene="pinned-chapter-switcher"][data-set="plates"][data-dock="off"].is-live .chs-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+[data-scene="pinned-chapter-switcher"][data-set="plates"][data-dock="off"].is-live .chs-text { bottom: calc(var(--chs-foot) + clamp(16px, 3vh, 32px)); }
+@media (min-width: 768px) and (max-width: 1099px) {
+  [data-scene="pinned-chapter-switcher"][data-set="plates"][data-dock="off"].is-live .chs-text { bottom: calc(var(--chs-foot) + 24px); }
+}
+@media (max-width: 767px) {
+  [data-scene="pinned-chapter-switcher"][data-set="plates"][data-dock="off"].is-live .chs-text { bottom: calc(var(--chs-foot) + 16px); }
 }

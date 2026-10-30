@@ -47,13 +47,18 @@
 //                               the hold is the settle
 //   ground    'rise' | 'cut'    the step to the closing ground: 'rise', one flat field with a hard top
 //                               edge comes up over the turn, the edge crossing the object's axis as it
-//                               stands edge-on; 'cut', the whole ground steps at once at edge-on
-//   lean      12    (0-20)      degrees it is tipped back as the hold starts (resolved by `from`)
-//   drift     12    (0-16)      vw it starts off to one side (slight); it drifts home by `from`
+//                               stands edge-on (measured on each screen, so it holds where the object
+//                               lifts or sits above a footer line); 'cut', the whole ground steps at once
+//                               at edge-on
+//   lean      4     (0-20)      degrees it is tipped back as the hold starts (resolved by `from`); kept
+//                               small, so the first frame of the hold is the front square and readable
+//   drift     4     (0-16)      vw it starts off to one side (slight); it drifts home by `from`
 //   side      'left' | 'right'  the side it comes from (left)
-//   tilt      3     (0-6)       degrees it is turned in its own plane as it arrives
+//   tilt      0     (0-6)       degrees it is turned in its own plane as it arrives (0: it arrives square,
+//                               never crooked)
 //   rise      45    (0-70)      svh it rises from below while the scene scrolls into view
-//   lift      0.18  (0-0.3)     how much nearer it comes at the turn (desktop): 0.18 = 18% larger
+//   lift      0.28  (0-0.3)     how much nearer it comes at the turn (desktop): 0.28 = 28% larger, so
+//                               the edge-on beat shows a large object, not a sliver on a flat ground
 //   phoneLift 0     (0-0.06)    the same on a phone, where the object fills the width
 //   size      0.92  (0.7-0.96)  share of the stage height the object fills on a wide screen
 //   shade     0.3   (0-0.45)    how dark a face gets edge-on (a flat shade, no light moves)
@@ -83,9 +88,10 @@
 // comes nearest mid-turn. Scenes['closing-object-turns'] leaves the fitted numbers on root.__cot.fit.
 //
 // Phone (below 768px): the same turn, the object at the full width less the margins, centred above the
-// footer line; the drift becomes a rise from lower on the screen (the width has no room for it), there
-// is no lift towards the viewer and the view is deeper, so the near edge never grows past the screen's
-// sides; the action is 48px tall or more. Reduced motion, no script and a failed CDN: the finished composition, an ordinary
+// footer line; the drift becomes a short rise from lower on the screen (the width has no room for it, and
+// the rise stays under 8% of the screen so the first frame is not a third empty), there is no lift
+// towards the viewer or upwards and the view is deeper, so the near edge never grows past the screen's
+// sides and edge-on stays mid-screen; the action is 48px tall or more. Reduced motion, no script and a failed CDN: the finished composition, an ordinary
 // section on the closing ground with the photograph and the plain face side by side (stacked on a
 // phone), nothing hidden.
 (() => {
@@ -137,12 +143,12 @@
       from: num(opts.from, 0.3, 0.15, 0.4),
       to: num(opts.to, 0.85, 0.7, 0.95),
       ground: opts.ground === 'cut' ? 'cut' : 'rise',
-      lean: num(opts.lean, 12, 0, 20),
-      drift: num(opts.drift, 12, 0, 16),
+      lean: num(opts.lean, 4, 0, 20),
+      drift: num(opts.drift, 4, 0, 16),
       side: opts.side === 'right' ? 1 : -1,
-      tilt: num(opts.tilt, 3, 0, 6),
+      tilt: num(opts.tilt, 0, 0, 6),
       rise: num(opts.rise, 45, 0, 70),
-      lift: num(opts.lift, 0.18, 0, 0.3),
+      lift: num(opts.lift, 0.28, 0, 0.3),
       phoneLift: num(opts.phoneLift, 0, 0, 0.06),
       size: num(opts.size, 0.92, 0.7, 0.96),
       shade: num(opts.shade, 0.3, 0, 0.45),
@@ -216,11 +222,15 @@
       let P = Math.round(Math.max(1200, oh * (phone ? 4.6 : 2.3)));
       const want = {
         tilt: o.side * o.tilt,
-        d: (o.side * o.drift * sr.width) / 100,
-        // the rise inside the hold: the room under the object, at most 16% of the screen
-        y: Math.max(0, Math.min(0.16 * room.H, room.H - (room.cy + oh / 2) - room.m - 4)),
-        // the lift upwards as it turns: the room over the object, at most 12% of the screen
-        u: Math.max(0, Math.min(0.12 * room.H, room.cy - oh / 2 - room.m)),
+        // (none on a phone: the object fills the width, and a drift there only pushes it off-centre)
+        d: phone ? 0 : (o.side * o.drift * sr.width) / 100,
+        // the rise inside the hold: the room under the object, at most 16% of the screen (8% on a phone,
+        // where a larger one leaves the top third of the first frame empty)
+        y: Math.max(0, Math.min((phone ? 0.08 : 0.16) * room.H, room.H - (room.cy + oh / 2) - room.m - 4)),
+        // the lift upwards as it turns: the room over the object, at most 12% of the screen; none on a
+        // phone, whose object already sits above the footer line, so edge-on stays mid-screen with the
+        // closing ground's edge across it
+        u: phone ? 0 : Math.max(0, Math.min(0.12 * room.H, room.cy - oh / 2 - room.m)),
         L: phone ? o.phoneLift : o.lift,
       };
       const got = { tilt: 0, d: 0, y: 0, u: 0, L: 0 };
@@ -244,7 +254,15 @@
     // straight top edge comes up from the foot of the stage over the turn, its edge crossing the object's
     // turning axis as the object stands edge-on, and covers the stage as the face lands; 'cut': the whole
     // ground steps at once at edge-on. Never a fade, never a gradient.
-    const groundAt = (t, face) => (o.ground === 'cut' ? (face === 'words' ? 1 : 0) : clamp((t - o.from) / (o.to - o.from), 0, 1));
+    // The edge reaches the object's axis exactly at edge-on: S.axisE is the share of the stage under the
+    // axis there (measured, since the axis sits above the middle where the object lifts or clears a footer
+    // line), so the field runs evenly from the foot to the axis over the first half of the turn and on
+    // to the top over the second.
+    const groundAt = (t, face) => {
+      if (o.ground === 'cut') return face === 'words' ? 1 : 0;
+      const m = (o.from + o.to) / 2, e = S.axisE || 0.5;
+      return t <= m ? clamp(((t - o.from) / (m - o.from)) * e, 0, e) : clamp(e + ((t - m) / (o.to - m)) * (1 - e), e, 1);
+    };
 
     // where the hold is: the object's pose, which face is up, the shades and the ground
     const render = (t) => {
@@ -301,6 +319,13 @@
       const f = fit(S.phone);
       S.P = f.P; S.curves = f.k; S.fit = { tilt: r3(f.tilt), d: Math.round(f.d), y: Math.round(f.y), u: Math.round(f.u), L: r3(f.L), P: f.P };
       rise.style.perspective = S.P + 'px';
+      // where the object's axis stands on the stage at edge-on (its centre, moved and drawn nearer), as the
+      // share of the stage under it: the closing ground's edge crosses it there
+      const sr = stage.getBoundingClientRect(), cr = root.querySelector('.cot').getBoundingClientRect();
+      const m = (o.from + o.to) / 2, q = pose(S.curves, S.P, m);
+      const axisY = cr.top - sr.top + cr.height / 2 + q.y * (S.P / Math.max(1, S.P - q.z));
+      S.axisE = sr.height ? clamp(1 - axisY / sr.height, 0.2, 0.8) : 0.5;
+      S.fit.axis = r3(S.axisE);
     };
 
     const unhook = () => {

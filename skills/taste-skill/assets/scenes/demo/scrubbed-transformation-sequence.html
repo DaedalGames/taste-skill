@@ -16,7 +16,6 @@
     --ground: #10100f;
     --ink: #edefe9;
     --accent: #b9ccbf;
-    --spruce: #1c332c;
     --font-display: "Instrument Sans", system-ui, sans-serif;
     --font-text: "Instrument Sans", system-ui, sans-serif;
     --margin: clamp(16px, 2.2vw, 32px);
@@ -35,12 +34,12 @@
 
   .hero { display: grid; grid-template-columns: 6fr 6fr; gap: var(--margin); padding: 0 var(--margin) var(--margin); min-height: calc(100svh - 74px); }
   .hero-copy { display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 6px; }
-  .hero h1 { margin: 0 0 28px; font: 500 clamp(56px, 8.4vw, 132px)/0.92 var(--font-display); letter-spacing: -0.05em; }
+  .hero h1 { margin: 0 0 28px; font: 500 clamp(52px, 6.4vw, 104px)/0.94 var(--font-display); letter-spacing: -0.045em; text-wrap: balance; }
   .hero p { margin: 0; max-width: 31ch; font-size: clamp(18px, 1.5vw, 22px); line-height: 1.4; }
   .hero-pic { margin: 0; min-height: 0; }
   .hero-pic img { width: 100%; height: 100%; object-fit: cover; }
 
-  .visit { display: grid; grid-template-columns: 5fr 7fr; gap: var(--margin); padding: clamp(120px, 16svh, 200px) var(--margin) var(--margin); background: var(--spruce); }
+  .visit { display: grid; grid-template-columns: 5fr 7fr; gap: var(--margin); padding: clamp(120px, 16svh, 200px) var(--margin) var(--margin); }
   .visit h2 { margin: 0 0 24px; font: 500 clamp(36px, 4.4vw, 68px)/1 var(--font-display); letter-spacing: -0.035em; }
   .visit p { margin: 0 0 28px; max-width: 34ch; font-size: clamp(18px, 1.4vw, 21px); line-height: 1.45; }
   .action { display: inline-block; padding: 15px 22px; background: var(--accent); color: var(--ground); text-decoration: none; font-weight: 500; font-size: 16px; line-height: 1.2; }
@@ -52,16 +51,16 @@
   /* the kiln shelf is cut along its slab's lower edge: the vase lands on a slab, not on a table */
   #vase { --xf-rclip: polygon(0 0, 100% 0, 100% 18.7%, 10% 26.7%, 0 26.7%); }
 
-  footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; padding: 72px var(--margin) 32px; font-size: 16px; background: var(--spruce); }
+  footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; padding: 72px var(--margin) 32px; font-size: 16px; }
 
   @media (max-width: 859px) {
-    .bar nav a:first-child { display: none; }
     .hero, .visit { grid-template-columns: 1fr; }
-    .hero { min-height: 0; }
-    .hero-copy { padding: 40px 0 28px; }
-    .hero h1 { font-size: clamp(52px, 15vw, 80px); }
+    /* one column: the dunes take what the words leave of the first screen, so the vase comes after it */
+    .hero { min-height: calc(100svh - 64px); grid-template-rows: minmax(240px, 1fr) auto; }
+    .hero-copy { padding: 32px 0 20px; }
+    .hero h1 { font-size: clamp(44px, 12.5vw, 72px); }
     .hero-pic { order: -1; }
-    .hero-pic img { aspect-ratio: 4 / 3; height: auto; }
+    .hero-pic img { height: 100%; }
     .visit { padding-top: 96px; }
   }
 </style>
@@ -70,13 +69,13 @@
 
 <div class="bar">
   <a class="mark" href="#">Marram Pottery</a>
-  <nav><a href="#vase">How a vase is made</a><a href="#visit">Visit the kiln shed</a></nav>
+  <nav><a href="#vase">The vase</a><a href="#visit">Visit</a></nav>
 </div>
 
 <section class="hero">
   <div class="hero-copy">
-    <h1>Marram Pottery</h1>
-    <p>Celadon stoneware thrown, glazed and fired one piece at a time by two potters in a shed above the dunes.</p>
+    <h1>Celadon, fired above the dunes</h1>
+    <p>Thrown, glazed and fired one piece at a time.</p>
     <a class="action" href="#visit">Book a firing day</a>
   </div>
   <figure class="hero-pic">
@@ -85,7 +84,7 @@
 </section>
 
 <section class="scene" id="vase" data-scene="scrubbed-transformation-sequence" aria-labelledby="xf-title"
-         data-options='{"frames":"https://cdn.jsdelivr.net/gh/Leonxlnx/taste-skill@scene-media/scrubbed-transformation-sequence/d/####.webp","count":120,"phoneFrames":"https://cdn.jsdelivr.net/gh/Leonxlnx/taste-skill@scene-media/scrubbed-transformation-sequence/m/####.webp","phoneCount":60}'>
+         data-options='{"frames":"https://cdn.jsdelivr.net/gh/Leonxlnx/taste-skill@scene-media/scrubbed-transformation-sequence/d/####.webp","count":120,"phoneFrames":"https://cdn.jsdelivr.net/gh/Leonxlnx/taste-skill@scene-media/scrubbed-transformation-sequence/m/####.webp","phoneCount":60,"ground":"none"}'>
   <div class="scene-stage">
     <div class="xf-ground" aria-hidden="true">
       <div class="xf-ground__after"></div>
@@ -104,16 +103,11 @@
            srcset="https://cdn.jsdelivr.net/gh/Leonxlnx/taste-skill@scene-media/scrubbed-transformation-sequence/m/0059.webp 720w, https://cdn.jsdelivr.net/gh/Leonxlnx/taste-skill@scene-media/scrubbed-transformation-sequence/d/0119.webp 1200w"
            sizes="(max-width: 767px) min(125vw, 58svh), min(92svh, 62vw)"
            alt="A tall celadon vase with a narrow neck, glaze run down to a bare clay foot" width="1200" height="1200">
-      <div class="xf-before">
-        <img data-src="https://cdn.jsdelivr.net/gh/Leonxlnx/taste-skill@scene-media/scrubbed-transformation-sequence/m/0000.webp" alt="The same vase as a wire-cut lump of clay" width="720" height="720">
-        <noscript><img src="https://cdn.jsdelivr.net/gh/Leonxlnx/taste-skill@scene-media/scrubbed-transformation-sequence/m/0000.webp" alt="The same vase as a wire-cut lump of clay" width="720" height="720"></noscript>
-        <p>Where it started</p>
-      </div>
       <canvas class="xf-canvas" aria-hidden="true"></canvas>
       <ul class="xf-callouts">
-        <li class="xf-callout" style="--x:64.5%;--y:22%" data-side="right"><span class="xf-mark" aria-hidden="true"></span><span class="xf-label">Thrown in one sitting</span></li>
-        <li class="xf-callout" style="--x:24.5%;--y:38%" data-side="left"><span class="xf-mark" aria-hidden="true"></span><span class="xf-label">Ash celadon from our own kiln</span></li>
-        <li class="xf-callout" style="--x:67%;--y:68%" data-side="right"><span class="xf-mark" aria-hidden="true"></span><span class="xf-label">Poured glaze, left to run</span></li>
+        <li class="xf-callout" style="--x:64.5%;--y:22%" data-side="right"><span class="xf-label">Thrown in one sitting</span></li>
+        <li class="xf-callout" style="--x:24.5%;--y:38%" data-side="left"><span class="xf-label">Ash celadon from our own kiln</span></li>
+        <li class="xf-callout" style="--x:67%;--y:68%" data-side="right"><span class="xf-label">Poured glaze, left to run</span></li>
       </ul>
     </figure>
     <div class="xf-copy">

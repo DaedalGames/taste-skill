@@ -6,7 +6,7 @@ the code, so you will read your intentions into it. The pictures only show what 
 
 ## Contents
 
-1. How to look (fourteen passes, a few minutes)
+1. How to look (sixteen passes, a few minutes)
 2. The score
 3. Caps
 4. Writing the critique
@@ -31,24 +31,28 @@ sheets. Make each pass on its own; do not blend them.
    the pricing, the FAQ and the footer, or does the page turn into stock blocks after the first screen?
 4. **Edges.** Follow the left edge of every text block down the page. Count the distinct x positions.
    A composed page has two or three, reused on purpose. Six means things were placed one at a time.
-5. **Space and frame.** Are related things close and unrelated things far? Is the gap between sections
-   clearly larger than any gap inside a section? Is any region empty by accident (a hole) rather than
-   by decision (a rest)? A hole usually sits beside a short column or under a removed decoration.
-   Then look at the frame: are the left and right margins of the page the same? Does any section keep
-   its text in one half and leave the other half empty? Is there a stretch of nothing taller than half
-   a screen? Readers name these first ("it is pushed to the left", "random empty space"), before any
-   detail; in the study of 100 Sites of the Day about 1 section in 100 left half the width empty.
+5. **Space and frame.** Does the first screen show the hero alone, with nothing of the next section in
+   view, at 1440 and on the phone? Is there real air between sections (16vh or more at 1440), or does
+   the next section crowd in as you scroll? Are related things close and unrelated things far? Is any
+   region empty by accident (a hole) rather than by decision (a rest)? A hole usually sits beside a
+   short column or under a removed decoration. Then look at the frame: are the left and right margins
+   of the page the same? Does anything that is not full-bleed touch one screen edge (a product window
+   run into the right edge)? Does any section keep its text in one half and leave the other half
+   empty? Is there a stretch of nothing taller than half a screen? Readers name these first ("it is
+   pushed to the left", "random empty space", "cluttered"), before any detail; in the study of 100
+   Sites of the Day about 1 section in 100 left half the width empty.
 6. **Type.** Is the jump from body text to headline decisive (three times or more)? Do you see more
    than five sizes? Any headline with one orphan word on its last line? Any paragraph wider than about
    75 characters or centred over more than three lines?
 7. **Colour.** Name the proportions: which colour holds most of the surface, which supports, where is
    the accent? An accent that appears in ten places means nothing. One that appears on the single
    action and one detail means "here".
-8. **Images.** Count the real pictures: are there at least four, and is there a moving one? A page of
-   drawings only, or of type only, looks unfinished next to one with real photographs and footage.
-   Is every image doing a job (showing the thing, setting the place, proving the claim)?
-   Do the crops share ratios? Is anything a grey box, a stretched photo, a fake screen made of bars?
-   Does the photography share one light and one grade, or is it a stock mix?
+8. **Images.** Count the real pictures: three to six good ones, each doing a job (showing the thing,
+   setting the place, proving the claim)? Does any look documentary, archival, old or news-like? Out
+   with it: modern, well-lit photographs or none. A page of drawings looks unfinished; a page of type
+   and colour can be finished. Do the crops share ratios, and does any crop cut a picture's own
+   lettering? Is anything a grey box, a stretched photo, a fake screen made of bars? Does the
+   photography share one light and one grade, or is it a stock mix?
 9. **Sameness.** Write one word for each section's layout (split, list, full-bleed, grid, statement,
    index …). The same word twice in a row, or three times on the page, is the template showing.
 10. **Phone.** Is the mobile screen a composition of its own, with its own crop and its own line
@@ -75,6 +79,12 @@ sheets. Make each pass on its own; do not blend them.
     good shop, a tech company, a studio). Is the type a sensible size, is the colour one ground, one ink
     and one accent, is every picture sharp and on subject, are there labels, captions or boxes that
     say nothing, is there a real navigation and a footer that works? Each "no" is a problem to fix.
+16. **Structure and grouping.** Squint again: does each screen have one clear place to look, and do
+    the things that belong together sit together, in a card of the dealt style where they are a group
+    (the plans, the rooms, the visit details), or does text float loose with nothing holding it? Count
+    the words on the first screen (30 at most) and in each section (60 at most): cut before anything
+    else. Are the navigation, the buttons, the cards and the footer built as section 0 dealt them, or
+    did they slide back to a plain bar, a small square button and a one-line footer?
 
 A note from testing: in blind comparisons a richer page full of template devices beat a cleaner page
 that was thin, every time. The house rules remove the devices; passes 11–13 are where you make sure the
@@ -129,8 +139,13 @@ These override the arithmetic.
 - More than one accent hue, or the page on a coloured ground with a second hue on it: design cannot
   exceed **6.5**.
 - A giant name or email in the footer, or picture credits spread across it: design cannot exceed **7**.
-- Labels, captions, chips or timestamps that carry nothing, or paragraphs over about 50 words:
-  content cannot exceed **6.5**.
+- The next section in view on the first screen, sections crowding with no air between them, or
+  anything run into one screen edge: design cannot exceed **6.5**.
+- A one-line footer, a bar above the navigation or a sentence in it, or groups of facts floating with
+  no card where they belong together: design cannot exceed **7**.
+- A documentary or archive photograph anywhere: design cannot exceed **6.5**.
+- Labels, captions, chips or timestamps that carry nothing, paragraphs over about 40 words, or a
+  first screen over 30 words: content cannot exceed **6.5**.
 - A page that barely moves (the inspector's `still-page`), or motion that is one identical fade on
   every block: design cannot exceed **7**.
 - Any placeholder (grey box, lorem, "Image here"): content cannot exceed **5**.

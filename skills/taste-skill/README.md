@@ -17,10 +17,10 @@ render before calling the work done.
 3. **Idea and live thing.** One sentence tying the client's own material to the direction's device,
    checked against the nearest competitor, and one thing the visitor can do on the page.
 4. **Build** from the sheet, words first, full content. When the project has no photographs of its
-   own, `scripts/assets.mjs` finds real pictures of the subject's world in open collections (its
-   street in old postcards, old maps, its materials, engravings of its trade, museum objects of its
-   kind), downloads them into the project and records their credits; the subject is drawn in code
-   only where no honest picture exists.
+   own, the library's dealt photographs come first, then `scripts/assets.mjs --source openverse` for
+   what the library lacks: modern, well-lit photographs of the subject's world, never documentary or
+   archive pictures. It downloads them into the project and records their credits; where no good
+   picture exists, the page is carried by type, colour and the product, never a drawing.
 5. **Gate.** `scripts/lint.mjs` (source) and `scripts/inspect.mjs` (real browser, 1440 / 768 / 390)
    measure the house rules: headlines of two lines or fewer, no eyebrow labels, no monospace, no
    01/02/03, no thin rules, no gradients, no resting shadows, no cream-and-terracotta, no violet, and

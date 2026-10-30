@@ -2,26 +2,27 @@
 //
 // The closing word of a page (4-8 letters, never the brand's name: a giant name fails the inspector's
 // giant-contact) is held on screen and strained by the scroll:
-// it is crushed onto its baseline and springs back, recedes into a stepped echo of stacked copies, and
-// its one straight letter loosens, falls out and lands flat as the call to action. Type, one flat
-// ground colour and one label; use it once per page, as the closing section.
+// it is crushed onto its baseline and springs back, and its full stop (a square added after the word)
+// loosens, falls out and lands flat as the call to action, so at rest the word itself reads whole. Type,
+// one flat ground colour and one label; use it once per page, as the closing section, for a loud brand.
+// A stepped echo of stacked copies behind the word is kept as an option (echo: true, 768px and wider
+// only), off by default: its bands read as a striped, winged badge over the word, and on a phone they
+// shrink to one sliced row of letter tops.
 //
 // DOM. Only the heading (with its visually hidden word) and the link are required; the script builds the
-// stack of copies to the plan. Authoring the copies as below gives the stepped word without script too;
-// the copies behind the front one carry the word in data-text, drawn by the stylesheet, not as text.
+// word's copy (and, with echo: true, the stack of copies behind it). Authoring the front copy as below
+// gives the word without script too.
 //
 //   <section class="scene ws" data-scene="wordmark-under-strain" aria-labelledby="ws-title" data-options='{}'>
 //     <div class="scene-stage">
-//       <div class="ws-top"><p>One sentence, 45+ characters, about the offer.</p><p>Porto, since 2009</p></div>
+//       <div class="ws-top"><p>One sentence, 45+ characters, about the offer.</p><p>Porto, 18 May 2027</p></div>
 //       <h2 class="ws-word" id="ws-title">
-//         <span class="ws-sr">STAIRS</span>
+//         <span class="ws-sr">UPWARD</span>
 //         <span class="ws-stack" aria-hidden="true">
-//           <span class="ws-copy" style="--i:0" data-text="STAIRS"></span>     drawn copies: the letters are
-//           …  --i:1 to --i:4, the same                                        generated content (data-text)
-//           <span class="ws-copy ws-copy--front" style="--i:5">STA<span class="ws-l ws-slot">I</span>RS</span>
+//           <span class="ws-copy ws-copy--front">UPWARD</span>
 //         </span>
 //       </h2>
-//       <a class="ws-drop" href="#contact"><span class="ws-drop__label">Start a project</span></a>
+//       <a class="ws-drop" href="#contact"><span class="ws-drop__label">Enter the race</span></a>
 //       <div class="ws-meta"><a href="mailto:…">hello@…</a><span>Street, City</span><a href="…">Journal</a></div>
 //     </div>
 //   </section>
@@ -31,9 +32,11 @@
 // forgot it, but then the first paint shows the finished composition), one flat ground colour (--ground)
 // shared with the section after the scene, and the word in .ws-sr (or data-word on .ws-word).
 //
-// The word: set it in capitals (or numerals), with a straight letter (I, l, 1) that is not the first or
-// last; with none, a square full stop is added after the word (in the front copy only) and falls instead.
-// Capitals are what the echo is drawn for: every letter has ink on the cap line, so each copy behind
+// The word: set it in capitals (or numerals), 4-8 letters, best with no I, l or 1. A square full stop is
+// added after it (in the front copy only) and is what falls, so the word rests whole; letter: 'straight'
+// drops the word's own straight letter instead (the old default), which leaves the word broken at rest
+// ("STA RS"), so use it only where the gap is the point.
+// (With echo: true) capitals are what the echo is drawn for: every letter has ink on the cap line, so each copy behind
 // steps out as one even row of bands across the word. Mixed case runs, but reads thinner: letters that
 // rise above the capitals (b d f h k l t, the dot of i) get plates tall enough to hide their own bands
 // (an ascender's band would float over the word as a loose block), and x-height letters have none, so
@@ -52,31 +55,43 @@
 //   --ground, --ink, --font-display, --font-text  the page's tokens, picked up as they are
 //
 // Options (data-options JSON). Default, then range:
-//   hold       1.2      screens the stage is held on desktop (1-4): one word holds about one screen
-//   phoneHold  1.2      screens held under 768px (1-2): the same one screen as on desktop
+//   hold       1        screens the stage is held on desktop (1-4): one word on flat ground holds one screen
+//                       (longer, the frames are mostly empty ground for over a screen: held-dead-screen)
+//   phoneHold  1        screens held under 768px (1-2): the same one screen as on desktop
 //   phone      'same'   'same' runs the scene with phone numbers; 'rest' shows the finished composition
 //   scrub      auto     true when Lenis smooths the page, else 0.8 (seconds of catch-up); set to override
+//   echo       false    true adds the stepped echo of stacked copies on screens 768px and wider (never on a
+//                       phone, where it is one sliced row of letter tops). Off: the bands read as a badge
 //   copies     6        copies in the echo, back to front (4-8); fewer, bigger steps if bands would be thin
 //                       or if the echo could not be complete by 45% of the hold (50% without the drop)
 //   step       1/13     scale each copy loses (1/16-1/9)
 //   shift      2        how far each copy sinks, in % of the word height (1-4)
-//   squash     0.10     how far the word is crushed onto its baseline (0-0.15; 0 = a calm, graphic opening)
+//   squash     0.14     how far the word is crushed onto its baseline (0-0.15; 0 = a calm, graphic opening);
+//                       0.10 with echo: true, where the crush is short and the phone takes 70% of it
 //   spring     3        strength of the spring back, back.out (1.5-3)
-//   drop       true     the straight letter falls out and becomes the button; false keeps the word whole,
-//                       the button sits under it from the start and the echo takes the whole hold
-//   letter     auto     0-based index of the letter that falls
+//   drop       true     the full stop falls out and becomes the button; false keeps the word as it is, the
+//                       button sits under it from the start (with echo: true, the echo takes the whole hold)
+//   letter     'stop'   what falls: 'stop' an added square full stop (the word rests whole), 'straight' the
+//                       word's own I, l or 1 (the word rests with a gap), or a 0-based letter index
 //   size       [300,64] landed button on desktop, px (240-360 x 56-72); phoneSize [240,52]
 //   radius     0        landed corner radius, px (0-8); the letter stays square, the bar rounds from 66%
 //   accent     ''       a colour the button takes as it lands (keep 4.5:1 against the ground-coloured label)
 //   reveal     'wipe'   how the label appears on the falling bar: 'wipe' (written left to right, whole
-//                       characters at a time) or 'fade'; either starts once the bar has cleared the word
+//                       characters at a time) or 'fade'; either runs on a clock (0.4s) once the bar has
+//                       cleared the word and is all but flat, so no scroll ever rests on half a label
 //   fill       0.92     width of the word's ink as a share of the stage width (0.8-0.96)
 //   maxHeight  0.42     limit on the word's cap height as a share of the stage height (0.3-0.45)
 //   stretch    'normal' font-stretch of the word on desktop ('extra-condensed' to 'expanded')
 //   phoneStretch 'condensed'  font-stretch under 768px: a font with a width axis gains height on the
 //                       phone; a font without one simply keeps its normal width
 //
-// Progress map (desktop): 0-5% still; 5-16% crushed to 90% height; 16-28% springs back past 100%;
+// Progress map (default, no echo): 0-4% still; 4-34% crushed to 86% height, giving fast and then
+// resisting; 34-52% springs back past 100%; then the drop as below, 4% later: 56% the full stop becomes
+// a bar of its size, 56-64% it loosens, from 59-61% it drops, flat at 84%; its label is written on a
+// clock (0.4s) once the bar is all but flat (82%), never half way where a scroll rests; 84-92% it lands
+// with a squash under the word's centre; 88% clickable; 92-100% held: the whole word, centred (the stop
+// hung in the margin until it fell), with the button under it.
+// Progress map (echo: true, desktop): 0-5% still; 5-16% crushed to 90% height; 16-28% springs back past 100%;
 // 16-52% the echo opens (front copy to 61.5%). The copies behind never fade: each one steps out at full
 // ink, nearest first and one at a time, the moment its edge is 6px or more — first its side strips
 // (from about 33%), then its top band (about 36-40%) — so the echo grows outward from the word and
@@ -94,7 +109,7 @@
 // neighbour's place reads as crossing the name. A letter with little room at rest (a condensed face on
 // the phone) loosens less or not at all. It drifts to its landing point late, stays the size of the
 // letter while it leaves the word and stretches into the button as it clears it; the label is written
-// on it once it is below the word's ink and big enough to carry it (about 74-82%); 80-88% it lands with
+// on it, on a clock, once it is below the word's ink, big enough to carry it and all but flat (78-82%); 80-88% it lands with
 // a squash; 84% clickable; 88-100% held. It lands under the word's centre (on desktop, straight under
 // its slot when the letter came from near one end of the word), at least half the letter's height
 // below the baseline, so the upright letter is out of the word before it turns. With drop: false the
@@ -133,17 +148,21 @@
   const settings = (opts) => {
     const o = opts || {};
     return {
-      hold: num(o.hold, 1.2, 1, 4),
-      phoneHold: num(o.phoneHold, 1.2, 1, 2),
+      hold: num(o.hold, 1, 1, 4),
+      phoneHold: num(o.phoneHold, 1, 1, 2),
       phone: o.phone === 'rest' ? 'rest' : 'same',
       scrub: typeof o.scrub === 'boolean' || typeof o.scrub === 'number' ? o.scrub : null,
+      echo: o.echo === true,
       copies: Math.round(num(o.copies, 6, 4, 8)),
       step: num(o.step, 1 / 13, 1 / 16, 1 / 9),
       shift: num(o.shift, 2, 1, 4),
-      squash: num(o.squash, 0.1, 0, 0.15),
+      // a deeper crush without the echo, so the strain reads at every step of its longer run
+      squash: num(o.squash, o.echo === true ? 0.1 : 0.14, 0, 0.15),
       spring: num(o.spring, 3, 1.5, 3),
       drop: o.drop !== false,
-      letter: Number.isInteger(o.letter) ? o.letter : -1,
+      // what falls: 'stop' (an added square full stop, so the word rests whole), 'straight' (the word's own
+      // I, l or 1, which leaves a gap in the word at rest) or a 0-based letter index
+      letter: Number.isInteger(o.letter) ? o.letter : o.letter === 'straight' ? 'straight' : 'stop',
       size: pair(o.size, [300, 64], [240, 360], [56, 72]),
       phoneSize: pair(o.phoneSize, [240, 52], [200, 300], [44, 60]),
       radius: num(o.radius, 0, 0, 8),
@@ -159,12 +178,16 @@
   // Echo plans, tried in order: the first whose thinnest band, strip and gap are all at least MIN px and
   // whose echo is complete in time wins; none means no echo. py is the plate's top overflow in % of the
   // cap height; xr the plate's side overflow past the ink as a share of half the ink width.
+  // The flat plan (no echo) is the default everywhere: the stacked bands read as a striped, winged badge
+  // over the word (drawn lines in effect), and under 768px they shrink to one sliced row of letter tops.
+  // The echo runs only when a page asks for it (echo: true), and never under 768px.
   const XR = (b) => 0.8 * (b.py / 100) * b.step / (b.shift / 100 + b.step);
-  const plans = (o, phone) => (phone
-    ? [{ n: 4, step: 1 / 9, shift: 5, py: 9, minH: 0.11 }, { n: 3, step: 1 / 7, shift: 6, py: 9 }]
+  const FLAT = (phone) => ({ n: 1, step: 0, shift: 0, py: phone ? 9 : 5, xr: 0, strips: false, wl: false, wr: false });
+  const plans = (o, phone) => (phone || !o.echo
+    ? [FLAT(phone)]
     : [{ n: o.copies, step: Math.min(o.step, 0.6 / (o.copies - 1)), shift: o.shift, py: 5 },
       { n: 5, step: 1 / 10, shift: 3, py: 5 }, { n: 4, step: 1 / 8, shift: 4, py: 5 }]
-      .filter((p, k) => k === 0 || p.n < o.copies)).map((b) => ({ ...b, xr: XR(b), strips: true }));
+      .filter((p, k) => k === 0 || p.n < o.copies).map((b) => ({ ...b, xr: XR(b), strips: true })));
   // With the echo opened to e (0-1), copy j's top band shows above copy j+1's plate:
   //   H0 * (e * (shift + step + py * (j + 1) * step) - py)
   // and its side strips outside copy j+1's plate: e * step * (half + X * (j + 1)) - X, where half is half
@@ -208,7 +231,9 @@
   };
   const choose = (o, phone, h0, stageH, half, m, echo, deadline) => {
     let best = null;
-    for (const base of plans(o, phone)) {
+    const all = plans(o, phone);
+    if (all[0].n < 2) return all[0];
+    for (const base of all) {
       if (base.minH && h0 < base.minH * stageH) continue;
       const sf = 1 - (base.n - 1) * base.step;
       // the side overflow keeps the ground gaps between the strips open
@@ -342,15 +367,18 @@
     if (!sr) { sr = document.createElement('span'); sr.className = 'ws-sr'; sr.textContent = text; word.textContent = ''; word.append(sr); }
     if (!stack) { stack = document.createElement('span'); stack.className = 'ws-stack'; stack.setAttribute('aria-hidden', 'true'); word.append(stack); }
 
-    // the letter that falls: the asked index, else the first straight letter that is not first or last,
-    // else a straight first or last letter, else an added square full stop
+    // the letter that falls: by default an added square full stop, so the word itself rests whole; an
+    // asked index; or with letter: 'straight' the first straight letter that is not first or last, else a
+    // straight first or last letter (and the full stop when the word has none)
     const dropOn = o.drop && !!drop;
     const chars = [...text];
     let slotAt = -1, added = false;
     if (dropOn) {
-      if (o.letter >= 0 && o.letter < chars.length && chars[o.letter].trim()) slotAt = o.letter;
-      if (slotAt < 0) slotAt = chars.findIndex((c, i) => i > 0 && i < chars.length - 1 && STRAIGHT.includes(c));
-      if (slotAt < 0) slotAt = chars.findIndex((c) => STRAIGHT.includes(c));
+      if (Number.isInteger(o.letter) && o.letter >= 0 && o.letter < chars.length && chars[o.letter].trim()) slotAt = o.letter;
+      if (slotAt < 0 && o.letter === 'straight') {
+        slotAt = chars.findIndex((c, i) => i > 0 && i < chars.length - 1 && STRAIGHT.includes(c));
+        if (slotAt < 0) slotAt = chars.findIndex((c) => STRAIGHT.includes(c));
+      }
       if (slotAt < 0) { chars.push('.'); slotAt = chars.length - 1; added = true; }
     }
     const real = added ? chars.length - 1 : chars.length; // letters of the word itself
@@ -468,7 +496,7 @@
       s.setProperty('--ws-plate-l', em(Xl - m.L));
       s.setProperty('--ws-plate-r', em(Xr - (m.w - m.R)));
       s.setProperty('--ws-ink-c', em((m.L + m.R) / 2 - m.w / 2));
-      s.setProperty('--ws-ink-shift', em(m.w / 2 - (m.L + m.RAll) / 2));
+      s.setProperty('--ws-ink-shift', em(m.w / 2 - (m.L + m.R) / 2));
       s.setProperty('--ws-asc', em(m.rise));
       // Letters taller than the capitals (b d f h k l t, the dot of i) get a plate of their own, tall
       // enough to hide their own bands: an ascender's band would float over the word as a loose block,
@@ -548,7 +576,9 @@
       // the falling letter's height in cap heights (a tall l rises above the capitals)
       S.kl = slotAt >= 0 && m.cols[slotAt] && m.cols[slotAt].rise > 0 ? 1 + m.cols[slotAt].rise / m.cap : 1;
       const rise = m.rise / m.cap;
-      let size = Math.min(o.fill * stageW, innerW) / (m.RAll - m.L);
+      // an added full stop hangs: the word's own letters are centred (so the word sits centred at rest,
+      // once the stop has gone) and the stop reaches into the margin, so the fit counts it on both sides
+      let size = Math.min(o.fill * stageW, innerW) / ((m.R - m.L) + 2 * (m.RAll - m.R));
       size = Math.min(size, (o.maxHeight * stageH) / m.cap);
       const topH = top ? top.offsetHeight : 0, metaH = meta ? meta.offsetHeight : 0;
       const avail = stageH - padT - padB - topH - metaH;
@@ -860,8 +890,9 @@
         g.kx = g.w0 / bh; g.ky = g.h0 / bw;
         // landing centre: under the word's centre; on desktop, straight under its slot when the letter
         // came from near one end of the word (anything between reads as a near miss). On whole pixels.
+        // (an added full stop always lands under the centre: it is the word's end, not one of its letters)
         const off = Math.abs(ox - g.sx);
-        const tx = S.phone || off <= 0.2 * stageW ? ox : g.sx;
+        const tx = S.phone || added || off <= 0.2 * stageW ? ox : g.sx;
         g.tx = Math.round(clamp(tx, gut + bw / 2, stageW - gut - bw / 2));
         // the bottom row's words: the falling bar keeps clear of them
         g.metaY = meta ? Math.min(...[...meta.children, meta].map((e) => rel(e, base).y + (e === meta ? parseFloat(getComputedStyle(meta).paddingTop) || 0 : 0))) : base.height;
@@ -905,8 +936,25 @@
       return S.geo;
     };
 
+    // The label's writing (S.wr.v, 0-1, run on a clock by sync()): whole characters at a time, or faded.
+    S.wr = { v: 0, on: false };
+    const writeLabel = () => {
+      const g = S.geo;
+      if (!label || !g || !S.live) return;
+      const fr = S.wr.v;
+      if (o.reveal === 'fade') {
+        const op = fr.toFixed(3);
+        if (label.style.opacity !== op) label.style.opacity = op;
+      } else if (g.label) {
+        const k = Math.round(fr * g.label.n);
+        const cp = k >= g.label.n ? 'none' : `inset(-4px ${g.label.cut[k].toFixed(1)}px -4px -4px)`;
+        if (label.style.clipPath !== cp) label.style.clipPath = cp;
+      }
+    };
+
     // Every frame of the live scene: which copies of the echo show (and how much of each), the bar, and
-    // the label on it. All of it follows from the timeline's time, so scrolling back undoes it exactly.
+    // the label on it. All of it but the label's writing follows from the timeline's time, so scrolling
+    // back undoes it exactly.
     const sync = () => {
       if (!S.tl || !S.live) return;
       // the geometry is kept current by refreshes and resizes; reading it here forces no layout
@@ -932,7 +980,9 @@
         }
       }
       if (dropOn) {
-        const b = bar(Math.max(0.52, t), g);
+        // the drop's own time (the flat plan spreads it over 50-94% of the hold)
+        const td = 0.52 + (t - (S.A ?? 0.52)) * (S.K || 1);
+        const b = bar(Math.max(0.52, td), g);
         const tr = `translate(${b.x.toFixed(2)}px, ${b.y.toFixed(2)}px) translate(-50%, -50%) rotate(${b.r.toFixed(3)}deg) scale(${b.sx.toFixed(4)}, ${b.sy.toFixed(4)})`;
         if (drop.style.transform !== tr) drop.style.transform = tr;
         // the label keeps its own size and stays upright to the bar: scaled by the bar's inverse (its
@@ -940,20 +990,20 @@
         if (label) {
           const lt = `translate(-50%, -50%) rotate(${-90 * g.dir}deg) scale(${(1 / b.sy).toFixed(4)}, ${(1 / b.sx).toFixed(4)})`;
           if (label.style.transform !== lt) label.style.transform = lt;
-          // written once the bar has cleared the word, whole characters at a time (or faded in)
-          const [wa, wb] = g.write, fr = clamp((t - wa) / (wb - wa), 0, 1);
-          if (o.reveal === 'fade') {
-            const op = fr.toFixed(3);
-            if (label.style.opacity !== op) label.style.opacity = op;
-          } else if (g.label) {
-            const k = Math.round(fr * g.label.n);
-            const cp = k >= g.label.n ? 'none' : `inset(-4px ${g.label.cut[k].toFixed(1)}px -4px -4px)`;
-            if (label.style.clipPath !== cp) label.style.clipPath = cp;
+          // written once the bar has cleared the word and is all but flat, on a clock (0.4s), not on the
+          // scroll: wherever a scroll comes to rest the label is either not there or whole, never half
+          // written. Scrolling back takes it off the same way.
+          const on = td >= Math.max(g.write[0], 0.78);
+          if (on !== S.wr.on) {
+            S.wr.on = on;
+            if (window.gsap) gsap.to(S.wr, { v: on ? 1 : 0, duration: on ? 0.4 : 0.2, ease: 'none', overwrite: true, onUpdate: writeLabel });
+            else S.wr.v = on ? 1 : 0;
           }
+          writeLabel();
         }
         // corners round only once the letter has become the bar, kept round on screen while it scales
         if (o.radius) {
-          const q = o.radius * clamp((t - 0.66) / 0.1, 0, 1);
+          const q = o.radius * clamp((td - 0.66) / 0.1, 0, 1);
           const br = q ? `${(q / b.sx).toFixed(2)}px / ${(q / b.sy).toFixed(2)}px` : '';
           if (drop.style.borderRadius !== br) drop.style.borderRadius = br;
         }
@@ -963,6 +1013,8 @@
     const clear = () => {
       S.list.forEach((el) => { el.style.visibility = ''; el.style.clipPath = ''; });
       S.state = [];
+      if (window.gsap) gsap.killTweensOf(S.wr);
+      S.wr.v = 0; S.wr.on = false;
       if (drop) { drop.style.transform = ''; drop.style.borderRadius = ''; }
       if (label) { label.style.transform = ''; label.style.clipPath = ''; label.style.opacity = ''; }
     };
@@ -990,11 +1042,24 @@
       S.tl = null;
       prepare(c.phone);
       const list = S.list;
-      const sq = c.phone ? o.squash * 0.7 : o.squash;
-      // T2-T3 load and spring, about the baseline
+      const flat = S.plan.n < 2;
+      const sq = c.phone && !flat ? o.squash * 0.7 : o.squash;
+      // Without the echo the drop's own map (its handoff at 0.52, flat at 0.80, landed at 0.88) is spread
+      // over 50-94% of the hold, so every step of it shows the bar somewhere new, the landing is still
+      // moving at 90% and the held end is the last 6%. at() gives the hold's place of a drop time.
+      S.A = flat ? 0.5 : 0.52; S.K = flat ? 0.36 / 0.44 : 1;
+      const at = (x) => S.A + (x - 0.52) / S.K, dur = (d) => d / S.K;
+      // T2-T3 load and spring, about the baseline. Without the echo (the default) the load takes the first
+      // half of the hold, a crush under the scroll that gives fast and then resists (4-32%) and the spring
+      // back past the word's height (32-50%), so no stretch of the hold stands still before the stop lets go.
       if (sq > 0) {
-        tl.fromTo(stack, { scaleX: 1, scaleY: 1 }, { scaleY: 1 - sq, scaleX: 1 + sq * 0.12, duration: 0.11, ease: 'power1.in' }, 0.05)
-          .to(stack, { scaleY: 1, scaleX: 1, duration: 0.12, ease: `back.out(${o.spring})` }, 0.16);
+        if (flat) {
+          tl.fromTo(stack, { scaleX: 1, scaleY: 1 }, { scaleY: 1 - sq, scaleX: 1 + sq * 0.12, duration: 0.28, ease: 'power1.out' }, 0.04)
+            .to(stack, { scaleY: 1, scaleX: 1, duration: 0.18, ease: `back.out(${o.spring})` }, 0.32);
+        } else {
+          tl.fromTo(stack, { scaleX: 1, scaleY: 1 }, { scaleY: 1 - sq, scaleX: 1 + sq * 0.12, duration: 0.11, ease: 'power1.in' }, 0.05)
+            .to(stack, { scaleY: 1, scaleX: 1, duration: 0.12, ease: `back.out(${o.spring})` }, 0.16);
+        }
       }
       // T4 the echo: copy i sinks and shrinks, the back copy never moves (values follow the current plan).
       // Which copies show, and how much of each, is decided frame by frame in sync().
@@ -1006,16 +1071,16 @@
         gsap.set(drop, { opacity: 0, pointerEvents: 'none' });
         // T5 the bar takes the slot glyph's exact place (its path, T6-T13, is bar() above, set in sync(),
         // and so are the label's writing (T12) and the rounding of the corners (T11))
-        tl.set(drop, { opacity: 1 }, 0.52)
-          .set(S.slot, { visibility: 'hidden' }, 0.52)
+        tl.set(drop, { opacity: 1 }, at(0.52))
+          .set(S.slot, { visibility: 'hidden' }, at(0.52))
           // T7 the word recoils as the letter lets go
-          .fromTo(stack, { y: 0 }, { y: () => -recoil * G().H0, duration: 0.03, ease: 'power1.out', immediateRender: false }, 0.6)
-          .to(stack, { y: 0, duration: 0.05, ease: 'power1.inOut' }, 0.63)
+          .fromTo(stack, { y: 0 }, { y: () => -recoil * G().H0, duration: dur(0.03), ease: 'power1.out', immediateRender: false }, at(0.6))
+          .to(stack, { y: 0, duration: dur(0.05), ease: 'power1.inOut' }, at(0.63))
           // the timeline spans the whole fall and landing
-          .to({}, { duration: 0.36 }, 0.52);
+          .to({}, { duration: dur(0.36) }, at(0.52));
         // T14 then it is a button
-        tl.set(drop, { pointerEvents: 'auto' }, 0.84);
-        if (o.accent) tl.to(drop, { backgroundColor: o.accent, duration: 0.04 }, 0.8);
+        tl.set(drop, { pointerEvents: 'auto' }, at(0.84));
+        if (o.accent) tl.to(drop, { backgroundColor: o.accent, duration: dur(0.04) }, at(0.8));
       }
       tl.eventCallback('onUpdate', sync);
       S.tl = tl;
@@ -1038,7 +1103,7 @@
     if (drop) {
       drop.addEventListener('focus', () => {
         const st = S.live && S.tl && S.tl.scrollTrigger;
-        if (!st || st.progress >= 0.86 || !root.classList.contains('is-live')) return;
+        if (!st || st.progress >= (S.A ?? 0.52) + 0.34 / (S.K || 1) || !root.classList.contains('is-live')) return;
         if (window.Stage && Stage.lenis) Stage.lenis.scrollTo(st.end, { immediate: true, force: true });
         else window.scrollTo(0, st.end);
       });

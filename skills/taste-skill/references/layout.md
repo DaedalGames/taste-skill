@@ -20,9 +20,10 @@ below are hand tallies from those notes, so read them as "about").
 
 ## 1. What strong pages do
 
-- **Tight margins, content to the edges.** About 45 of 114 use outer margins of 32px or less; only
-  about 8 use 80px or more. The centred 1100–1300px container is the minority among strong sites and
-  the usual frame of the ones the panel called stock.
+- **Tight margins, large things to both edges.** About 45 of 114 use outer margins of 32px or less;
+  only about 8 use 80px or more. The centred 1100–1300px container is the minority among strong sites
+  and the usual frame of the ones the panel called stock. Here the margins are dealt (section 0 of the
+  sheet), and nothing runs into one edge alone (§5).
 - **Text hangs from an off-centre line.** About 22 anchor text to one fixed line that is neither the
   centre nor the margin: a third across, 42%, the midpoint.
 - **Two or three type sizes with nothing between** (about 30): one very large with one small, or
@@ -42,17 +43,25 @@ below are hand tallies from those notes, so read them as "about").
 
 ```css
 :root {
-  --margin: clamp(1rem, 2.2vw, 2rem);   /* 16–32px: tight, so content reaches the edges */
+  /* section 0 of the sheet prints the dealt pair; these are standard (16-20vh, 32-48px at 1440) */
+  --margin: clamp(1.25rem, 3vw, 3rem);              /* airy clamp(1.5rem, 4.5vw, 4.5rem); open clamp(1.5rem, 4vw, 4rem) */
   --gutter: clamp(0.75rem, 1.4vw, 1.5rem);
+  --section-gap: clamp(6rem, 9vh + 5vw, 11.25rem);  /* airy clamp(7rem, 12vh + 7vw, 15.75rem); open clamp(8rem, 14vh + 10vw, 20rem) */
 }
 .wrap { padding-inline: var(--margin); }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); }
+/* half the gap above and below each section after the hero: the same space on one ground or across two,
+   never a strip of page ground between two sections with their own grounds */
+main > section:not(:first-child) { padding-block: calc(var(--section-gap) / 2); }
+/* and half the gap under the hero's last content, or the first section sits too close (`section-air`) */
+main > section:first-child { padding-bottom: calc(var(--section-gap) / 2); }
 ```
 
-- One pair of margins and one grid for the whole page. Every left edge is a column line.
+- One pair of margins and one grid for the whole page, as section 0 of the sheet deals them. Every
+  left edge is a column line.
 - Do not wrap the page in a `max-width: 1200px; margin: auto` container by reflex. Let large things
-  (type, images, colour fields) run the full width, and constrain only the measure of running text
-  (`max-width` in `ch` on the paragraph, not on the page).
+  (type, images, colour fields) run the full width, both edges at once, and constrain only the
+  measure of running text (`max-width` in `ch` on the paragraph, not on the page).
 - On very wide screens cap the layout at about 1760–1920px, or let type sized in `vw` stop growing with
   a `clamp()`.
 - Directions that call for wide margins (uneven photographs, the quiet instrument) say so on the
@@ -105,7 +114,8 @@ void with the picture, the type, a step in ground tone or a field of flat colour
 
 **Where holes come from.** In order of frequency in the study:
 
-1. A gap between sections stretched too far: bands of 250–760px of plain ground.
+1. A gap between sections stretched too far: bands of 250–760px of plain ground. (Here the dealt gap
+   is 16-36vh; generous air between sections is wanted, a whole screen of nothing is not.)
 2. Text in one half of a section and nothing in the other.
 3. Content that arrives late: a reveal not yet fired, so the visitor scrolls onto bare ground while the
    words fade in.
@@ -119,10 +129,14 @@ void with the picture, the type, a step in ground tone or a field of flat colour
 - Decide where the void is and name what closes it. If nothing does, it is a hole: move the section's
   picture into it, make the main element bigger, or take the space out.
 - Keep the void clean: no stray caption, no decorative shape, no faint watermark, no grid lines.
-- Sections sit 120–240px apart on desktop, counted from the last line of one to the first line of the
-  next (the median in the study is about 230–250px), and 72–112px on a phone. A change of ground
-  colour lets the gap be a little smaller. More than about 40% of a screen of plain ground between two
-  sections is a hole.
+- **The hero fills the first screen alone** (`min-height: 100svh`, the navigation inside it): nothing
+  of the next section, its heading, text, picture or ground, is in view on load at 1440 by 900 or 390
+  by 844. In the owner's review the next section already showing in the first view was what made the
+  pages read as cluttered.
+- Sections sit 16vh or more apart at 1440, as section 0 deals it (16-20vh, 22-28vh or 30-36vh, about
+  144-320px by a 900px screen), counted from the last line of one to the first line of the next (the
+  median in the study is about 230–250px), and about 96-160px on a phone. A change of ground colour
+  never shortens it. More than about 40% of a screen of plain ground between two sections is a hole.
 - The gap between sections is clearly larger than any gap inside one. Related things sit close and
   unrelated things far; a heading has at least twice as much space above it as below.
 - No stretch of the page taller than about half a screen holds nothing at all. In the study, runs of a
@@ -151,15 +165,17 @@ are from the study of 97 Sites of the Day (October 2026).
   sections the two sides match to a few pixels: 16 and 16, 20 and 21, 32 and 32, 140 and 137. No
   strong page in the study was pushed to one side.
 - The usual margin is tight: median about 28px at 1440, half the sites between about 18 and 45px, a
-  few at 80px or more. Here it is 16–32px (section 2), and never under 16px at any width, on the phone
-  included. About one award site in seven sets text 8–15px from the edge; that studio habit is
-  excluded here.
+  few at 80px or more. Here it is the one section 0 deals (32-72px at 1440, 20-24px on a phone), and
+  never under 16px at any width. About one award site in seven sets text 8–15px from the edge; that
+  studio habit is excluded here.
 - The navigation sits on the same margins as the content. The commonest small fault in the study is a
   header on one inset and the page on another (40px against 20px, or 34px on the left against 10px on
   the right).
-- A bleed is deliberate and starts from the margin: a row of pictures that runs off the right edge
-  begins on the left margin; a display line that bleeds starts or ends on one. A bleed never moves the
-  margin.
+- **Nothing runs into one edge.** A bleed spans both edges: a full-bleed picture, film or band runs
+  to the left and the right edge together. Anything else (a product window, a picture, a strip, a row
+  of cards, an object) keeps the margin on both sides at rest; a notes app's product window ran into
+  the right edge while the left margin held, and the owner named it first (`edge-run`). A row of
+  pictures fits the width inside the margins. A bleed never moves the margin.
 - Asymmetry belongs inside the frame: an off-centre anchor line (a third across, 42%, the centre line)
   on symmetric margins.
 
@@ -183,9 +199,9 @@ are from the study of 97 Sites of the Day (October 2026).
   the content box, or SVG text with `textLength`), never by a size guessed for one face: a name that
   starts on the margin and runs a few pixels off the other edge reads as a mistake.
 - A centred composition has one axis, equal flanks and one thing on it, not a stack of heading,
-  paragraph and two buttons. On the first screen that stack with a photograph card with round
-  corners under or beside it, the four together, is the template every model builds whatever hero
-  was dealt; the inspector fails it (`template-hero`). Build the dealt hero's geometry instead, its
+  paragraph and two buttons. On the first screen a centred headline and its line over a photograph
+  card with round corners or a row of two or three cards, with or without the buttons, is the
+  template every model builds whatever hero was dealt; the inspector fails it (`template-hero`). Build the dealt hero's geometry instead, its
   largest type the page's idea or the name.
 
 **A title that says what this is, on the first screen.**
@@ -235,8 +251,9 @@ points this way, including several above 7.5.
   the page's idea do here? If the page is a menu, the prices are menu lines. If the name is a
   monument, the hero carries it, never the footer. If the object's shape is the motif, the button and
   the image masks carry it.
-- **No card grid for features:** an editorial list or one large product view with short annotations;
-  at most one framed surface per section, never empty space inside a frame.
+- **Cards group what belongs together** (below): the plans, the rooms, the visit details, the
+  features a visitor compares. Never a page of nothing but cards, never a card inside a card, never
+  empty space inside one.
 - **No two neighbours share a layout.** Use the shape of each dealt blueprint (list, split, statement,
   full-bleed, mosaic, table, strip, pinned …). Count them in the screenshot; a shape used three times
   is the template showing. Three or more full-bleed picture screens in a row, each a picture with a
@@ -266,8 +283,9 @@ points this way, including several above 7.5.
 - **Alternate dense and empty, image and type, light and dark** so the scroll has rhythm. A long page
   on one dark ground still gets one lit or tinted section (the price list, the booking card on the
   ink colour) as its planned exception; twenty screens of the same graphite read as one long screen.
-- **A repeated module is for archives only** (a work index, a menu, a schedule). Anywhere else,
-  repetition reads as a kit.
+- **A repeated module is for items of one kind** (a work index, a menu, a schedule, the plans, the
+  rooms), as rows or in the dealt card style. Repeated round things of different kinds, it reads as a
+  kit.
 - **Break the system once.** After the page has established its rule, one planned exception (a single
   centred line, one inverted section, one image at a different scale) is what makes the rule visible.
 - **Short pages are fine.** A quarter of the studied sites are one or two screens. Do not add sections
@@ -278,27 +296,61 @@ points this way, including several above 7.5.
   (`scenes.md` §7). Under about 45 words a screen the content is stretched (§10, "thin content
   stretched over many screens"): shorten the holds, merge the full-bleed screens that repeat one shape,
   or cut a section. In testing, pages of 26-28 screens lost on content and usability whatever their
-  scenes did. However the page opens, the first piece of work at full size is on screen by about the
-  fourth screen.
+  scenes did. On a portfolio the first piece of work at full size is on the first or second screen,
+  before any statement, scene or photograph of the city (a motion designer's page opened on four
+  screens of Rotterdam before her work).
+
+### Cards
+
+The owner's reading of the round-10 pages: text floating with no card or container has no
+hierarchy, and cards show what belongs together. The earlier ban on cards made every page a column
+of loose text. Cards are wanted, varied, and kept to their job.
+
+- **Where:** in two or three sections, on the groups a visitor compares or reads as one: the plans,
+  the rooms, the dishes of a course, the visit details, the three things the product does, the
+  people. The other sections stand on the ground, separated by space and size.
+- **One style a page, dealt.** Section 0 of the sheet deals one of about twelve: filled surface
+  cards, picture-led cards, rows with a surface, horizontal cards, cards in the ink, one large panel,
+  overlapping, staggered, cards that stack as you scroll, cards that open, poster cards, tall cards of
+  words. Build the one dealt, at its sizes; another page gets another. Cards that overlap or stack
+  step their tone one by one (the surface mixed 6%, 12%, 18% toward the ink), so each edge reads with
+  no border and no shadow.
+- **Filled, not outlined.** A card is a surface one tone step from the ground (or the ink), in the
+  dealt corner, with 24-64px of padding. No border as its frame, no shadow at rest, no icon on top,
+  no gradient. A hover steps its fill or moves it a few pixels, once.
+- **Never a box in a box.** No card inside a card, a panel or a product window; no product window on
+  a card; no framed picture inside a card (the picture runs to the card's edges); no card laid half
+  or more over a photograph; the hero headline never in a card (`framed-elements`).
+- **Never only boxes.** A page whose every section is cards, or a bento of tiles, is the kit again
+  (`boxed-page`, `bento`).
+- **Content first.** A card holds a name, one or two facts and a price or a link; no paragraph over
+  about 25 words, no label that says nothing. Cards of one row share a height and a structure.
+- **On a phone** cards stack one to a row (or two narrow ones for a long list), full width inside
+  the margins, never a sideways scroller.
 
 ## 7. Navigation
 
-- The plain form: the wordmark at one end, three to five text links, one action, all at text size on
-  the page ground with no bar, border or background. Median link count in the study is 3.
-- It is also normal to have less: small links in the corners, a single action, or the navigation
-  folded into the content (a list of section titles that is itself the index).
-- If it stays fixed, it must never sit on top of content: check every scroll position in the
-  screenshots, especially on the phone. Floating pill bars are where the panel most often recorded a
-  nav covering text.
+- **The dealt design.** Section 0 of the sheet deals one of about twelve navigation designs: a bar
+  that hides on the way down, links split round a centred wordmark, an opaque floating capsule, a
+  minimal wordmark with a Menu button, a bar that shrinks on scroll, a side index, a dock fixed at the
+  bottom, four fixed corners, a masthead, a band in the ink, a contained bar, large links over the hero.
+  Build the one dealt with its sizes and its behaviour; the owner found the same plain hiding bar on
+  nearly every page. The wordmark, three to five links, one action. Median link count in the study is
+  3.
+- **Nothing above it, no sentence in it.** No announcement, information or language strip over the
+  bar (the owner: not modern); every link one or two words, never a sentence or a tagline (a
+  manuscript tool set a sentence in its bar and the page read as chaos).
+- If it stays fixed, it must never sit on top of content: it carries an opaque ground (never glass,
+  never translucent), and every held heading keeps clear of it. Check every scroll position in the
+  screenshots, especially on the phone; floating bars are where the panel most often recorded a nav
+  covering text.
 - **On a long page it stays in reach.** Past about ten screens at 1440 (a page with scroll scenes
-  always is), the navigation, or at least the one action, can be reached from every screen. The plain
-  form: the bar scrolls away with the hero, stays hidden while the visitor scrolls down and comes back
-  on the first scroll up, on a solid band of the ground colour where it passes pictures and scenes
-  (never glass, never a pill). Or the wordmark and the one action stay fixed in two corners, each on a
-  solid ground. A hero that animates its bar away hands it on to that bar. In testing, three long
-  pages kept their navigation only inside the hero, leaving the booking twenty screens away with no
-  way back, and the blind judges named it on all three. Scenes that can keep their type clear of a
-  fixed bar take its selector as an option (`scenes.md` §4).
+  always is), the navigation, or at least the one action, can be reached from every screen, the way
+  the dealt design says (it returns on scroll up, it stays fixed, it shrinks, or the wordmark and the
+  action keep their corners). A hero that animates its bar away hands it on to that navigation. In
+  testing, three long pages kept their navigation only inside the hero, leaving the booking twenty
+  screens away with no way back, and the blind judges named it on all three. Scenes that can keep
+  their type clear of a fixed bar take its selector as an option (`scenes.md` §4).
 - **Links land on what they name.** "Buildings" goes to the buildings, not to a scene that introduces
   them; a link into a held scene points at the section that holds the content it names.
 - On a phone: wordmark and one action in view; the links go in a simple full-screen sheet opened by a
@@ -315,12 +367,22 @@ points this way, including several above 7.5.
 - The page ends on a closing line at display size (the action as a statement) and the facts a visitor
   needs at text size: the email at the h3 step at most, with a Copy button and a mailto link, the
   address, the hours. Never the email or the name set across the width: none of the 65 professional
-  sites does it, and it lost a round-4 page points. On a one-page site the footer is one line; link
-  columns only for real pages beyond this one. Style every list: no browser bullets in a footer or a
+  sites does it, and it lost a round-4 page points.
+- **The footer is a designed section, never a single line.** Section 0 deals one of about twelve
+  designs (a closing line over columns, a big contact block, a sitemap grid, a picture footer, a
+  newsletter card, large links, three cards, two halves, the hours and the place, a closing statement
+  over one row, link columns for a site with more pages, a picture beside the facts). It stands on its
+  own ground (the surface tone or the ink), at least 40% of a screen tall at 1440, with the links,
+  the contact, the legal links and the Image credits link at text sizes. The owner found the footers
+  of the recent pages ignored, one line each. Link columns only for real pages beyond this one; never
+  a list the page already shows as content. Style every list: no browser bullets in a footer or a
   nav.
 - The last section carries a closing line at display size (the action as a statement, or the name),
-  never a label-sized heading: its title is at least the size of the other section headings. A card
-  set over a closing photograph sits on the page margin like everything else.
+  never a label-sized heading: its title is at least the size of the other section headings. No card
+  over the closing photograph: its words sit on its calm part, or the card stands beside it on the
+  ground. A page ends once: when the dealt footer opens on its own closing line, that line is the call
+  to action and no cta section stands before it; after a closing scene the footer has no closing
+  line of its own.
 - Put the practical facts (address, hours, email, legal line) in the text face at a readable size, on
   the same anchor lines as the rest of the page.
 
@@ -335,7 +397,9 @@ lose usability points; weak ones are often just broken.
 - Re-author line breaks; re-crop images to portrait (`object-position` per breakpoint, or a different
   crop size in the image URL); keep unevenness with alternating widths rather than making everything
   full width.
-- Margins 16–20px. Body text 16–18px. Touch targets at least 44px high.
+- Margins as dealt, 20-24px (16px at the least). Body text 16–18px. Touch targets at least 44px high.
+- The hero fills the phone's first screen alone too (`100svh`), the headline, the sentence and the
+  action in it.
 - **Nothing is clipped on the phone.** Below 600px a list laid over a picture (the coffees over a
   full-bleed panel, the facts over a room) drops into the normal flow under the picture, and no box
   with a fixed height or `overflow: hidden` cuts the words it holds. A coffee panel that showed two of

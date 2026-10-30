@@ -28,10 +28,14 @@
 //         </picture>                                          (or <video class="sw-world-media" muted loop playsinline poster>)
 //       </div>
 //       <div class="sw-type">                                    type that lives in the world, behind the shutter
-//         <div class="sw-scrim sw-scrim--top" aria-hidden="true"></div>
-//         <div class="sw-scrim sw-scrim--bottom" aria-hidden="true"></div>
+//         <div class="sw-scrim sw-scrim--top" aria-hidden="true"></div>      one flat, even dim over the whole
+//                                                              world behind the word (no edge, no blur;
+//                                                              --sw-scrim-fill tunes it)
+//         <div class="sw-scrim sw-scrim--bottom" aria-hidden="true"></div>   kept for older pages, not drawn
 //         <p class="sw-word" style="--chars:8">Icefield</p>   one word, 6-12 letters: the chapter's name
 //         <div class="sw-lede"><p>18-32 words</p><a class="sw-link" href="#next">2-3 words</a></div>
+//                                                              on a solid strip of the page's ground across
+//                                                              the stage's foot, in --ink
 //       </div>
 //       <div class="sw-shutter">                                 the page ground with the windows cut in it
 //         <div class="sw-half sw-half--l"></div>
@@ -76,10 +80,18 @@
 // band the windows fill, and the caption under the other, below it; the windows only widen outward.
 // Narrow screens get the phone numbers: two slim windows spanning 85%
 // of the width, the title full width on the ground above both, no caption, and the word fitted to 86%
-// of the width; its letters land on a clock of 0.75s once the push reaches them, not with the scroll, so
-// the word is whole wherever a phone stops. On both the title is stepped down until it fits its ground
-// (two lines at most, 16px clear of the stage's top) and fades as the push begins, before the scale can
-// carry it off the screen.
+// of the width. On both the title is stepped down until it fits its ground (two lines at most, 16px clear
+// of the stage's top).
+//
+// Timeline (fractions of the hold), the same at every width. Scrubbed: the windows widen outward
+// (0.04-0.30) and the one window grows while ground still frames it on every side, 5% of the screen at
+// least (0.48-0.66; on a narrow screen, whose window already reaches the gutter, at the top and the
+// foot). On clocks, each played when the scroll passes its point and played back when it
+// returns, so no stop catches a half state: the bar closes (0.32, 0.35s; no light seam between the
+// windows), the title and caption fade (0.44, 0.3s), the rest of the push carries the window past the
+// screen's edges (0.66, 0.55s; no slivers of ground at the edge), the word's letters land centre first
+// (0.6s, once the growing window has cleared the whole word, so it is never "EFIE" and never cut by the
+// shutter's edge) with the flat dim behind it, and the lede's strip settles (0.8, 0.45s).
 //
 // Options (data-options JSON; defaults, ranges):
 //   hold          2.4    1.8-3     screens the stage is held on wide screens
@@ -87,9 +99,9 @@
 //                                  chosen when the page loads: a tablet turned across the 1.1:1 line
 //                                  later keeps its first hold (the geometry still switches)
 //   open          0.38   0-0.5     how far each window widens outward before the bar closes, as a share
-//                                  of its width in the first frame (never past 2% from the screen's edge;
-//                                  0 keeps the first frame's width)
-//   phoneOpen     0.22   0-0.4     the same on narrow screens (little room there: about 20px a side)
+//                                  of its width in the first frame (never closer than 2% of the width or
+//                                  16px to the screen's edge; 0 keeps the first frame's width)
+//   phoneOpen     0.22   0-0.4     the same on narrow screens (little room there: about 13px a side)
 //   (stagger and phoneStagger belonged to the offset start and are ignored: the scene only opens a page,
 //   where two offset windows read as two crops of two pictures.)
 //   bar           "auto" 8-24      px of ground between the windows (auto: 1.1% of the width, 10-20px; 10 when narrow)
@@ -126,9 +138,9 @@
   const NARROW = '(max-width: 767px), (max-aspect-ratio: 11/10)';
   // px the title keeps clear of the stage's top, and the caption of its foot
   const MARGIN = 16;
-  // the bar closes on the first 80% of the merge (power2.inOut reaches 0.8 at 70% of its time, so 0.41
-  // of the hold), leaving a clean still beat with no lingering hairline
-  const BAR_CLOSE = 0.8;
+  // the bar closes over the whole merge, and the merge runs on a clock of 0.35s once the windows have
+  // widened (0.32 of the hold), so no stop of the scroll catches the bar thinned to a light seam between them
+  const BAR_CLOSE = 1;
 
   // Key a photograph of something dark against a bright plain sky into a cut-out (see Props above):
   // alpha from luminance between lo and hi, the edge colour un-mixed from the sky so no light fringe
@@ -275,12 +287,17 @@
       const propL = $('.sw-prop--l'), propR = $('.sw-prop--r');
       if (!world || !shutter || !halfL || !halfR) { console.warn(`${ID}: needs .sw-world, .sw-shutter and two .sw-half elements`); return; }
 
-      const p = { level: 0, merge: 0, push: 0, lift: 0 }; // the phases, each 0-1 (lift: the title and caption's fade)
+      // the phases, each 0-1. level (scrubbed): the windows widen outward. merge (clock): the bar closes.
+      // lift (clock): the title and caption fade. push1 (scrubbed): the one window grows while it is still
+      // framed by ground on every side (5% of the screen at least). push2 (clock): the rest of the push,
+      // past the screen's edges. No stop of the scroll catches the bar as a seam, the title half faded, or
+      // the ground as slivers at the screen's edge.
+      const p = { level: 0, merge: 0, push1: 0, push2: 0, lift: 0, lede: 0, scrim: 0 };
       const g = {};                               // geometry, re-measured on every refresh
       let dead = false;                           // set once this build is reverted
-      // narrow screens (phones, portrait tablets), chosen at build: the word's letters land on a clock once
-      // the push reaches them, never with the scroll, so the word is whole wherever the reader stops
-      const clock = phone || matchMedia(NARROW).matches;
+      // the word's letters land on a clock at every width, once the growing window has cleared the whole
+      // word (never with the scroll, and never under the shutter's edge), so the word is whole wherever the
+      // reader stops: no "EFIE"
       let wordTw = null, wordOn = false;
       const highRight = o.high === 'right';
       const vars = ['--sw-s0', '--sw-x0', '--sw-hole-w', '--sw-span-w', '--sw-low-x', '--sw-high-x', '--sw-low-top', '--sw-high-top', '--sw-high-bottom', '--sw-top', '--sw-bottom', '--sw-gap', '--sw-cap-x', '--sw-cap-w'];
@@ -397,7 +414,10 @@
         const n = g.narrow;
         const size = Math.min((100 * g.W * (n ? o.phoneWordWidth : o.wordWidth)) / w100, (100 * g.H * (n ? 0.14 : 0.3)) / capH);
         word.style.fontSize = px(size);
-        word.style.top = px(Math.max(n ? o.phoneWordTop : o.wordTop, (g.T || 0) + MARGIN) - (capTop * size) / 100);
+        const top = Math.max(n ? o.phoneWordTop : o.wordTop, (g.T || 0) + MARGIN);
+        word.style.top = px(top - (capTop * size) / 100);
+        // the word's ink (centred on the stage), for the moment the growing window has cleared it
+        g.wordInk = { w: (w100 * size) / 100, top };
       };
 
       const measure = () => {
@@ -412,16 +432,23 @@
         const cx = W / 2;
         const m = n ? (o.bar ?? 10) : (o.bar ?? clamp(0.011 * W, 10, 20));
         // xs: the windows' outer edges in the first frame; x0-x3: the band they widen to (each outer
-        // edge moves out by O, never closer than 2% to the screen's edge), which the bar then closes over
+        // edge moves out by O, never closer than 2% of the width or 16px to the screen's edge, so a phone
+        // keeps its gutter and no sliver of ground), which the bar then closes over
         const xs = (n ? 0.074 : 0.2222) * W;
         const holeW = cx - m / 2 - xs;   // one window's width in the first frame
-        const O = Math.max(0, Math.min((n ? o.phoneOpen : o.open) * holeW, xs - 0.02 * W));
+        const O = Math.max(0, Math.min((n ? o.phoneOpen : o.open) * holeW, xs - Math.max(16, 0.02 * W)));
         const x0 = xs - O, x3 = W - x0;
         const y0 = yT + (n ? 0.3 : 0.185) * (H - yT), y1 = yT + (n ? 0.8 : 0.815) * (H - yT);
         const ox = cx, oy = (y0 + y1) / 2;
         // the push scale that carries the window's edges past the screen's, times the overscan
         const S = (n ? o.phoneOverscan : o.overscan) * Math.max(ox / (ox - x0), (W - ox) / (x3 - ox), oy / (oy - y0), (H - oy) / (y1 - oy));
-        Object.assign(g, { W, H, T, cx, C: cx + 2, m, x0, x3, O, y0, y1, S, narrow: n });
+        // the scrubbed part of the push stops where the widened window is still framed by 5% of the screen
+        // on every side (at the top, 5% under a page's sticky bar); the rest of the push (past the edges)
+        // runs on its clock. A narrow screen's window already reaches past 5% of the sides when it has
+        // widened: there only the top and the foot stop the push (with the sides it never moved, 48-66%)
+        const sides = x0 >= 0.05 * W ? [(ox - 0.05 * W) / (ox - x0), (0.95 * W - ox) / (x3 - ox)] : [];
+        const s1 = clamp(Math.min((oy - T - 0.05 * H) / (oy - y0), (0.95 * H - oy) / (y1 - oy), ...sides), 1, S);
+        Object.assign(g, { W, H, T, cx, C: cx + 2, m, x0, x3, O, y0, y1, S, s1, oy, narrow: n });
         root.classList.toggle('sw--narrow', n);
         shutter.style.transformOrigin = `${px(ox)} ${px(oy)}`;
         const set = (k, v) => root.style.setProperty(k, v);
@@ -487,13 +514,64 @@
         write(halfR, 'visibility', one ? 'hidden' : '');
         write(halfL, 'clipPath', `polygon(evenodd, 0 0, ${X(C)} 0, ${X(C)} ${X(lT)}, ${X(lR)} ${X(lT)}, ${X(xL)} ${X(lT)}, ${X(xL)} ${X(lB)}, ${X(lR)} ${X(lB)}, ${X(lR)} ${X(lT)}, ${X(C)} ${X(lT)}, ${X(C)} ${B}, 0 ${B})`);
         write(halfR, 'clipPath', `polygon(evenodd, ${R} 0, ${X(cx)} 0, ${X(cx)} ${X(rT)}, ${X(rL)} ${X(rT)}, ${X(xR)} ${X(rT)}, ${X(xR)} ${X(rB)}, ${X(rL)} ${X(rB)}, ${X(rL)} ${X(rT)}, ${X(cx)} ${X(rT)}, ${X(cx)} ${B}, ${R} ${B})`);
-        const s = 1 + (g.S - 1) * p.push;
+        const s = 1 + (g.s1 - 1) * clamp(p.push1, 0, 1) + (g.S - g.s1) * clamp(p.push2, 0, 1);
         write(shutter, 'transform', s > 1.0001 ? `scale(${s.toFixed(5)})` : 'none');
-        // the title and the caption stand on ground the windows never reach; both fade as the push begins
+        // the shutter is past every edge once the push is done: stop painting it
+        write(shutter, 'visibility', p.push2 >= 0.999 ? 'hidden' : '');
+        // what the push carries with it: the world grows 1/worldScale times (so the push has depth), the
+        // word from 0.92, and the props are thrown outward
+        const k = g.S > 1 ? clamp((s - 1) / (g.S - 1), 0, 1) : 1;
+        if (setMedia) setMedia(o.worldScale + (1 - o.worldScale) * k);
+        if (setWord) setWord(0.92 + 0.08 * k);
+        if (setPropL) setPropL(-55 * k * k);
+        if (setPropR) setPropR(55 * k * k);
+        // the word and its letters are promoted only while the push moves them, so they are sharp at rest
+        const moving = k > 0.0001 && k < 0.9999 ? 'transform' : 'auto';
+        for (const el of wordLayers) write(el, 'willChange', moving);
+        // the title and the caption stand on ground the windows never reach; both fade (on their clock)
+        // as the push begins
         if (intro) fade(intro, 1 - p.lift);
         if (caption) fade(caption, 1 - p.lift);
-        // the word on its clock: played as the timeline passes 0.62, played back when it returns
-        if (wordTw) { const on = tl.progress() >= 0.62; if (on !== wordOn) { wordOn = on; if (on) wordTw.play(); else wordTw.reverse(); } }
+        // the word on its clock: played once the window has cleared the whole word (6px to spare on each
+        // side and above), played back when it closes over it again
+        if (g.wordInk) {
+          const L = g.cx - (g.cx - x0) * s, R = g.cx + (x3 - g.cx) * s, T = g.oy - (g.oy - y0) * s;
+          const clear = p.push2 >= 0.999 || (p.push2 > 0 && L <= g.cx - g.wordInk.w / 2 - 6 && R >= g.cx + g.wordInk.w / 2 + 6 && T <= g.wordInk.top - 6);
+          if (wordTw && clear !== wordOn) { wordOn = clear; if (clear) wordTw.play(); else wordTw.reverse(); }
+          if (scrimC) drive(scrimC, clear, false);
+        }
+        if (scrimTop) write(scrimTop, 'opacity', p.scrim.toFixed(3));
+        if (lede) { write(lede, 'opacity', p.lede.toFixed(3)); write(lede, 'visibility', p.lede > 0.001 ? '' : 'hidden'); write(lede, 'transform', p.lede < 0.999 ? `translate3d(0, ${(24 * (1 - p.lede)).toFixed(2)}px, 0)` : 'none'); }
+      };
+      // the clocks (see p above): each plays when the scroll passes its point and plays back when it
+      // returns; a landing far past the point (a reload mid-page) jumps instead
+      let setMedia = null, setWord = null, setPropL = null, setPropR = null, wordLayers = [], scrimC = null;
+      const clocks = [];
+      const clockOf = (key, dur, ease) => {
+        const c = { on: false, tw: gsap.fromTo(p, { [key]: 0 }, { [key]: 1, duration: dur, ease, paused: true, immediateRender: false, onUpdate: render, onComplete: () => tick(), onReverseComplete: () => tick() }) };
+        clocks.push(c);
+        return c;
+      };
+      const drive = (c, on, jump) => {
+        if (!c) return;
+        // already on its way: a jump still finishes it at once
+        if (on === c.on) { if (jump && c.tw.isActive()) c.tw.progress(on ? 1 : 0).pause(); return; }
+        c.on = on;
+        if (jump) c.tw.progress(on ? 1 : 0).pause();
+        else if (on) c.tw.play(); else c.tw.reverse();
+      };
+      let mergeC = null, liftC = null, push2C = null, ledeC = null;
+      // (snap: the point past which the clock jumps to its end, because what follows needs it done: the
+      // bar closed and the title gone before the push starts growing the shutter at 0.48)
+      const at = (q, point, on) => drive(on.c, q >= point && (on.also ?? true), q >= (on.snap ?? point + 0.25) || q < point - 0.25);
+      const tick = () => {
+        if (dead) return;
+        const q = tl.progress();
+        at(q, 0.32, { c: mergeC, snap: 0.47 });
+        at(q, 0.44, { c: liftC, snap: 0.47 });
+        at(q, 0.66, { c: push2C });
+        at(q, 0.8, { c: ledeC, also: p.push2 >= 0.999 });
+        render();
       };
 
       // A nested context: reverted with the stage's matchMedia, and its cleanup clears the inline
@@ -505,43 +583,37 @@
 
         measure();
 
-        // 1-3. widen (p.level), merge, still beat
-        tl.to(p, { level: 1, duration: 0.3, ease: 'sine.inOut' }, 0.04)
-          .to(p, { merge: 1, duration: 0.1, ease: 'power2.inOut' }, 0.34)
-        // 4-7. the push: the frame grows S times, the world 1/worldScale times, so the push has depth
-          .to(p, { push: 1, duration: 0.38, ease: 'power2.inOut' }, 0.5);
-        if (media) tl.fromTo(media, { scale: o.worldScale }, { scale: 1, duration: 0.38, ease: 'power1.inOut' }, 0.5);
-        if (word) tl.fromTo(word, { scale: 0.92, transformOrigin: '50% 0%' }, { scale: 1, duration: 0.38, ease: 'power1.inOut' }, 0.5);
-        if (propL) tl.fromTo(propL, { xPercent: 0 }, { xPercent: -55, duration: 0.38, ease: 'power2.in' }, 0.5);
-        if (propR) tl.fromTo(propR, { xPercent: 0 }, { xPercent: 55, duration: 0.38, ease: 'power2.in' }, 0.5);
-        // the title and the caption fade as the push begins, gone before its scale can carry them off the
-        // screen (render() applies it)
-        tl.to(p, { lift: 1, duration: 0.08 }, 0.46);
-        // 8-10. scrims and the word: centre letters land first, inside the growing window
-        if (scrimTop) tl.fromTo(scrimTop, { opacity: 0 }, { opacity: 1, duration: 0.18 }, 0.62);
+        // 1. widen (p.level, scrubbed, 0.04-0.30); 2. merge (clock at 0.32); 3. still beat; the title and
+        // the caption fade (clock at 0.44), gone before the push can carry them off the screen
+        tl.to(p, { level: 1, duration: 0.26, ease: 'sine.inOut' }, 0.04);
+        mergeC = clockOf('merge', 0.35, 'power2.inOut');
+        liftC = clockOf('lift', 0.3, 'power1.in');
+        // 4. the push, scrubbed while the window is framed by ground (0.48-0.66), then past the screen's
+        //    edges on a clock (at 0.66, 0.55s): the frame grows S times, the world 1/worldScale times
+        tl.to(p, { push1: 1, duration: 0.18, ease: 'sine.inOut' }, 0.48);
+        push2C = clockOf('push2', 0.55, 'power2.out');
+        if (media) { gsap.set(media, { scale: o.worldScale }); setMedia = gsap.quickSetter(media, 'scale'); }
+        if (word) { gsap.set(word, { scale: 0.92, transformOrigin: '50% 0%' }); setWord = gsap.quickSetter(word, 'scale'); }
+        if (propL) setPropL = gsap.quickSetter(propL, 'xPercent');
+        if (propR) setPropR = gsap.quickSetter(propR, 'xPercent');
+        // 5. the word: centre letters first, on a clock of 0.6s once the window has cleared it (render()),
+        //    with the flat scrim behind it
         if (chars.length) {
           // a staggered fromTo only pre-renders its first letters, so every letter is set down first
           const down = { yPercent: 110, rotationX: -75, transformOrigin: '50% 100%', transformPerspective: 900 };
           gsap.set(chars, down);
-          // narrow: 0.75s on a clock (a word keyed to the scroll stands half-drawn, "·c····l·", where a
-          // phone stops: the inspector's letters-mid-reveal); wide: with the scroll, as before
-          if (clock) wordTw = gsap.fromTo(chars, down, { yPercent: 0, rotationX: 0, duration: 0.45, ease: 'power3.out', paused: true, immediateRender: false, stagger: { amount: 0.3, from: 'center' } });
-          else tl.fromTo(chars, down, { yPercent: 0, rotationX: 0, duration: 0.08, ease: 'power3.out', immediateRender: false, stagger: { amount: 0.14, from: 'center' } }, 0.62);
+          wordTw = gsap.fromTo(chars, down, { yPercent: 0, rotationX: 0, duration: 0.4, ease: 'power3.out', paused: true, immediateRender: false, stagger: { amount: 0.2, from: 'center' } });
         }
-        // The word and its letters are promoted only while they move: a layer kept for good would hold
-        // the raster from the starting state (scale 0.92, letters tipped back) and leave the word soft.
-        const wordLayers = word ? [word, ...chars] : [];
-        if (wordLayers.length) {
-          tl.set(wordLayers, { willChange: 'transform' }, 0.5);
-          tl.set(wordLayers, { willChange: 'auto' }, 0.885);
-        }
-        if (scrimBottom) tl.fromTo(scrimBottom, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 0.8);
-        // 11-12. the shutter is past every edge: hide it; the lede settles
-        if (lede) tl.fromTo(lede, { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.08, ease: 'power2.out' }, 0.86);
-        tl.set(shutter, { autoAlpha: 0 }, 0.885);
-        // 13. the final hold
+        if (scrimTop) scrimC = clockOf('scrim', 0.4, 'power1.out');
+        // The word and its letters are promoted only while they move (render()): a layer kept for good
+        // would hold the raster from the starting state (scale 0.92, letters tipped back) and leave the
+        // word soft.
+        wordLayers = word ? [word, ...chars] : [];
+        // 6. the lede settles on its strip of ground (clock at 0.8, once the push is done)
+        if (lede) ledeC = clockOf('lede', 0.45, 'power2.out');
+        // 7. the final hold
         tl.to({}, { duration: 0.06 }, 0.94);
-        tl.eventCallback('onUpdate', render);
+        tl.eventCallback('onUpdate', tick);
 
         // Entry: the world is counter-moved so it stays fixed to the viewport while the stage rises in
         // (by the viewport's height, which is what the section travels; the stage itself is 100lvh).
@@ -557,11 +629,11 @@
           });
         }
         // Re-measure on every refresh (resize, fonts, pictures), then redraw.
-        ScrollTrigger.create({ trigger: root, start: 'top bottom', end: 'bottom top', onRefresh: () => { measure(); render(); } });
-        render();
+        ScrollTrigger.create({ trigger: root, start: 'top bottom', end: 'bottom top', onRefresh: () => { measure(); tick(); } });
+        tick();
 
         // late fonts change the word's advance: refit without a full refresh
-        const onFonts = () => { measure(); render(); };
+        const onFonts = () => { measure(); tick(); };
         if (document.fonts) document.fonts.addEventListener('loadingdone', onFonts);
         // pictures decode before they move
         if (media && media.decode && media.tagName === 'IMG') media.decode().catch(() => {});
@@ -582,7 +654,10 @@
           for (const el of [halfL, halfR]) { el.style.removeProperty('clip-path'); el.style.removeProperty('visibility'); }
           frame.remove();
           for (const el of [intro, caption]) if (el) { el.style.removeProperty('opacity'); el.style.removeProperty('visibility'); }
-          shutter.style.removeProperty('transform'); shutter.style.removeProperty('transform-origin');
+          if (lede) for (const k of ['opacity', 'visibility', 'transform']) lede.style.removeProperty(k);
+          if (scrimTop) scrimTop.style.removeProperty('opacity');
+          for (const el of wordLayers) el.style.removeProperty('will-change');
+          shutter.style.removeProperty('transform'); shutter.style.removeProperty('transform-origin'); shutter.style.removeProperty('visibility');
           if (word) { word.style.removeProperty('font-size'); word.style.removeProperty('top'); }
           if (title) title.style.removeProperty('font-size');
           root.classList.remove('sw--narrow', 'sw--no-caption');

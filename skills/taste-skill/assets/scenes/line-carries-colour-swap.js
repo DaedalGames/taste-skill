@@ -9,8 +9,10 @@
 // scroll. On the last word the ground and the ink swap in one jump: the stage's ground flips from ink to
 // paper and the line from paper to ink at one point of the scroll (a cut, never a blend), so the same line
 // is carried from one colour world into the next. The next section's first picture is already rising
-// from the foot of the stage under the line before the swap and settles whole under it by 90%, so no
-// frame is a headline alone on flat colour. The line is one colour, its last mark included.
+// from the foot of the stage under the line almost from the start (it follows the line up, a gap under it)
+// and settles whole under it by 90%, so no frame is a word or a headline alone on flat colour: while only
+// the first word shows, the closing photograph still fills the screen above it and the next picture
+// stands under it. The line is one colour, its last mark included.
 //
 // Type is never scaled: the line's font size is fitted (to the content width, from the measured words)
 // and set as a font size; the words move by transform and opacity only. A line that would set smaller
@@ -44,8 +46,9 @@
 // word spans the script makes are aria-hidden.
 //
 // Options (data-options JSON; defaults, ranges):
-//   hold        1.2    1-1.5    screens the stage is held for. One line and one picture: about one screen.
-//   phoneHold   1.2    1-1.5
+//   hold        1      1-1.5    screens the stage is held for. One line and one picture: about one screen
+//                               (every beat is a share of the hold, so a longer hold only stretches them)
+//   phoneHold   1      1-1.5
 //   direction   "to-paper"      the ground goes from ink to paper and the line from paper to ink |
 //                               "to-ink": the other way (add class lcs--to-ink to the section too, so the
 //                               finished composition matches)
@@ -64,20 +67,22 @@
 //   Screens under 480px tall always get the finished composition.
 //
 // Timeline (fractions of the hold; the same on every width, distances measured from the layout):
-//   rise     0-0.66   the line climbs from the foot of the stage to its rest under the header at about the
+//   rise     0-0.84   the line climbs from the foot of the stage to its rest under the header at about the
 //                     page's pace (linear for 80% of the time, then easing out with no jump in speed); the
-//                     clip's edge climbs just ahead of it and has cropped the photograph away by 0.66;
+//                     clip's edge climbs just ahead of it and has cropped the photograph away by 0.84;
 //                     the photograph drifts up by `drift` meanwhile
-//   words    word 1 shows from the start; the others land evenly from 0.28 to 0.66, each sliding in
+//   words    word 1 shows from the start; the others land evenly from 0.16 to 0.84, each sliding in
 //                     over 0.05 of the hold (x power3.out; full ink within its first 30%, so a frame
 //                     caught mid-slide shows the word whole, a little short of its place). Every slide is
 //                     snapped inside one tenth of the hold, clear of the 10% marks, so any frame taken on
-//                     a tenth shows whole words only: four words land at 0.28, 0.47 and 0.662
+//                     a tenth shows whole words only: four words land at 0.162, 0.562 and 0.862, so the
+//                     first word is alone only to about 0.11, over the photograph
 //                     (the travel is `slide` of the word's own width, at most 1.1 times the type size)
-//   swap     0.66     on the last word: ground and ink flip in one jump (a class, never a blend)
-//   next     0.15-0.90 the next picture rises from the foot of the stage into its place under the line
-//                     (power1.out), never closer to the line than the gap; its photograph settles from
-//                     1.12 to 1 until 1.0
+//   swap     0.862    on the last word: ground and ink flip in one jump (a class, never a blend)
+//   next     0.04-0.90 the next picture rises from the foot of the stage into its place under the line
+//                     (power1.out), never closer to the line than the gap, so from the first beat it
+//                     follows the line up instead of leaving flat ground under it; its photograph
+//                     settles from 1.12 to 1 until 1.0
 //   rest     0.90-1   paper ground, ink line, the picture whole under it; then the stage lets go
 //
 // Colours: tokens --ground (paper) and --ink from the page, and no accent: the line is one colour. Ink
@@ -91,12 +96,12 @@
   // the line keeps the page's pace while it climbs and only settles at the very end
   const settle = (a) => { const d2 = (1 - a) / (1 + a), d1 = 1 - d2; return (t) => (t <= a ? (d1 * t) / a : d1 + d2 * (1 - Math.pow(1 - (t - a) / (1 - a), 2))); };
 
-  const RISE = 0.66;   // the line is at rest and the photograph cropped away
-  const FIRST = 0.28;  // the second word lands
-  const LAST = 0.66;   // the last word lands, and ground and ink swap
+  const RISE = 0.84;   // the line is at rest and the photograph cropped away
+  const FIRST = 0.16;  // the second word lands (snapped to 0.162: the 20% frame already shows two words)
+  const LAST = 0.84;   // the last word lands, and ground and ink swap (snapped to 0.862)
   const SLIDE = 0.05;  // one word's slide, as a share of the hold
   const EDGE = 0.012;  // the least room between a slide and a tenth of the hold
-  const NEXT = [0.15, 0.9]; // the next picture: from, to (early, so no frame is a word or two on flat ink)
+  const NEXT = [0.04, 0.9]; // the next picture: from, to (at once, so no frame is a word or two on flat ink)
 
   // A slide that would run across a tenth of the hold is moved to start just after it, so a frame taken
   // on any tenth shows each word either not yet there or landed (never half way); landings stay in order.
@@ -115,8 +120,8 @@
   window.Scenes = window.Scenes || {};
   window.Scenes[ID] = (root, opts = {}) => {
     const o = {
-      hold: num(opts.hold, 1.2, 1, 1.5),
-      phoneHold: num(opts.phoneHold, 1.2, 1, 1.5),
+      hold: num(opts.hold, 1, 1, 1.5),
+      phoneHold: num(opts.phoneHold, 1, 1, 1.5),
       direction: opts.direction === 'to-ink' ? 'to-ink' : 'to-paper',
       min: num(opts.min, 0.08, 0.05, 0.12),
       max: num(opts.max, 0.3, 0.2, 0.4),
@@ -138,6 +143,7 @@
       return Stage.scene(root, { build: null });
     }
     if (!next) console.warn(`${ID}: no .lcs-next picture; the end of the hold will be a line alone on flat ground`);
+    if (!photo) console.warn(`${ID}: no .lcs-photo; the first word will stand alone on flat ground: put the closing photograph in the stage`);
     if (o.direction === 'to-ink') root.classList.add('lcs--to-ink');
     for (const im of [photoImg, nextImg]) if (im && im.decode) im.decode().catch(() => {});
 

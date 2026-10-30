@@ -8,7 +8,8 @@
 // to the next one in a short turn (an intermittent, Geneva-style step), so every rest shows one whole picture.
 // The journey has two ends: the first stop fills the right of the screen top to bottom and folds into the drum
 // as the statement leaves, and once the last name is up its picture opens out of the drum to fill it again.
-// The count ("4 of 15") and the front name's detail ride the front line, never empty. Before the turn a
+// With pictures, the front line carries the name and its picture and nothing else. Without them, the front
+// name's detail rides beside it (and the count, only when count is asked for), never empty. Before the turn a
 // two-line statement owns the empty upper half; after it, a closing line rises in with the scroll and its
 // button arrives whole on its own (never half-faded, so it never reads as disabled where a scroll rests).
 // Load after stage.js; the finished composition is the plain list below.
@@ -20,11 +21,14 @@
 //       <div class="drum-view">
 //         <ol class="drum">
 //           <li class="drum-item">
-//             <span class="drum-name">Name</span> <span class="drum-meta">Detail, five words at most</span>
+//             <span class="drum-name">Name</span>
 //             <img src="..." srcset="... 900w, ... 1200w, ... 1600w" sizes="(max-width: 767px) 100vw, 50vw"
-//                  width="900" height="600" alt="...">                          (optional, landscape)
+//                  width="900" height="600" alt="...">                          (landscape, of the named thing)
 //           </li>
-//           ...8-20 names read best (3 to 30 work); each 1-3 words, 22 characters at most; meta and picture optional
+//           ...8-20 names read best (3 to 30 work); each 1-3 words, 22 characters at most. Either every name has
+//           its own photograph (of that place, dish or room, the whole set in one grade) or every name has
+//           <span class="drum-meta">a detail, five words at most</span> (a city, a year, a sector) and no picture.
+//           Never a time or a date that steps with the names: beside the names it reads as a second readout.
 //         </ol>
 //       </div>
 //       <div class="drum-close">                                   (optional; a lone <a class="drum-close"> works too)
@@ -33,7 +37,7 @@
 //       </div>
 //     </div>
 //   </section>
-// The script adds the count and detail (aria-hidden) and, when every name has an <img>, the picture drum
+// The script adds the detail (and the count, when asked; both aria-hidden) and, when every name has an <img>, the picture drum
 // (aria-hidden copies; the pictures in the list keep their alt text). Each .drum-meta and <img> stays in the
 // list, so a screen reader hears every name with its detail, in order. The copies keep the <img>'s srcset and
 // sizes, so the browser picks the same file for both and downloads each picture once: give `sizes` for the
@@ -59,7 +63,8 @@
 //                (a name fades out before it is foreshortened to a fifth of its height, so the rim of the
 //                drum never shows edge-on slivers)
 //   highlight    'ink' (the front name in full ink) | 'accent' (the front name in --accent). 'ink'
-//   count        show the count. true
+//   count        show the count ("4 of 15"). false: a number that steps with every name reads as a progress
+//                readout. true only where the position itself means something, never beside a picture drum
 //   of           the word inside the count ("4 of 15"). "of"
 //   pictures     true uses the pictures when every name has one; false ignores them. true
 //   gear         'counter' (the pictures turn against the names, like meshed gears) | 'same'. 'counter'
@@ -112,7 +117,8 @@
     const stage = root.querySelector(':scope > .scene-stage') || root.firstElementChild;
     const n = items.length;
     const of = ' ' + String(o.of ?? 'of') + ' ' + n;
-    const showCount = o.count !== false && n > 1;
+    // off unless asked for: a number that steps with every name reads as a progress readout (house rule 7)
+    const showCount = o.count === true && n > 1;
     // a name written straight into the <li> gets its .drum-name span (the layout uses it)
     for (const li of items) {
       if (li.querySelector('.drum-name')) continue;

@@ -56,6 +56,18 @@
 // cut off above a tablet or phone screen fails (held-heading-cut). Lists drawn as boxes and framed elements inside
 // scenes are looked for in the scenes' finished compositions, on the reduced-motion page.
 //
+// Round 11 (Leon, 29 October: cluttered pages, too much text, cards wanted): cards on a fill pass in any number; a box in
+// a box, a box laid on a photograph with half of itself, a box cut to a shape (a ticket, a torn edge), three
+// outlined boxes in a section and three product windows on the first screen fail (framed-elements), and so does a list of such boxes (boxed-list) and a page built of
+// nothing but boxes (boxed-page). At 1440 and 390 the next section showing on the first screen, or the fold cutting through
+// a line of words, fails (hero-not-alone); on desktop under 12% of the screen between two sections warns and under 6%
+// fails (section-air). At rest, a window, a box or a picture that runs into one side of the screen while the page keeps
+// its margin fails (edge-run; a plain picture as tall as its section or a wide field flush with one side warns). A strip over the navigation
+// (announcement-bar) and a sentence or an item over three words in the bar (nav-sentence) fail. Words: the first screen 30
+// at most, a section 60 outside its lists, the page about 500, the headline 12; half as much again fails (wordy-hero,
+// wordy-section, wordy-page, hero-words). The template stack counts a row of two or three cards under the line, actions
+// or not (template-hero), and a picture cut hard while it carries lettering or shows the work warns (cropped-lettering).
+//
 // --app judges an app screen (dashboard, admin, settings) by the rules in references/app-screens.md; a
 // direction dealt with draw.mjs --app switches it on by itself.
 //
@@ -71,7 +83,7 @@ import { judge, judgeLayout, judgeApp, APP_SKIP } from './lib/rules.mjs';
 import { extra, controls, replayState, photoText, photoTextDone, photoContrast, splitLetters, tileFills } from './lib/probe-extra.mjs';
 import { judgeExtra, judgeBuild } from './lib/rules-extra.mjs';
 import { restLook, restStops, restGo, heroStack, visitBlocks } from './lib/probe-rest.mjs';
-import { pageBuild, deadControls } from './lib/probe-page.mjs';
+import { pageBuild, deadControls, space, navBar, crops } from './lib/probe-page.mjs';
 import { viewportClass as name, screenshotLabel, isInspectionScreenshot } from './lib/inspection-files.mjs';
 
 const args = process.argv.slice(2);
@@ -317,6 +329,8 @@ try {
     const fold = join(outDir, `${imageLabel}-fold.jpg`);
     await page.screenshot({ path: fold, quality: 82 });
     const metrics = await page.eval(probe);
+    // round 11: the site's bar as the page opens (a bar that hides on the way down may not be back after the walk)
+    const navAtLoad = !appMode ? await page.eval(navBar).catch(() => null) : null;
     // each product replay's window before the walk: replay.js has not armed it yet, so it shows its final state
     const replayAtLoad = await page.eval(`[...document.querySelectorAll('[data-replay]')].map((r) => { const u = (r.querySelector('[data-ui]') || r).getBoundingClientRect(); return { w: u.width / innerWidth, h: u.height / innerHeight }; })`).catch(() => []);
 
@@ -400,6 +414,13 @@ try {
     const visits = !appMode ? await page.eval(visitBlocks).catch((e) => { frameErrors.push('visit: ' + String(e.message).slice(0, 160)); return null; }) : null;
     // round 10, part B: what the sections are built from, the forms, the splits and the credits
     const build = !appMode ? await page.eval(pageBuild, {}).catch((e) => { frameErrors.push('build: ' + String(e.message).slice(0, 160)); return null; }) : null;
+    // round 11, at the top of the page: the hero alone on the first screen and the air between sections, the bar as the
+    // page opened, and pictures cut hard while they carry lettering or show the work
+    if (build) {
+      build.space = await page.eval(space).catch((e) => { frameErrors.push('space: ' + String(e.message).slice(0, 160)); return null; });
+      build.nav = navAtLoad;
+      build.crops = await page.eval(crops).catch((e) => { frameErrors.push('crops: ' + String(e.message).slice(0, 160)); return null; });
+    }
     const appM = appMode ? await page.eval(app).catch(() => null) : null;
     if (appM) appM.colourShare = await helper.eval(colourShare, 'data:image/jpeg;base64,' + frames[0]).catch(() => null);
 
@@ -547,7 +568,8 @@ try {
     if (ent && ['line-blocks', 'set-type'].includes(ent.id) && ent.wrapped.length && !allow.includes('entrance-line-wraps')) findings.push({ level: ent.id === 'line-blocks' ? 'FAIL' : 'WARN', id: 'entrance-line-wraps', width: w, message: `${ent.wrapped.length} headline line(s) wrap at this width, so ${ent.id === 'line-blocks' ? 'one block covers the whole column and leaves a bar beside the shorter line' : 'two lines rise as one'}: ` + ent.wrapped.slice(0, 3).map((t) => `"${t}"`).join(', '), fix: 'Each [data-line] must fit on one line at every width: break the headline into shorter lines (three at most), or set a smaller display step on phones.' });
     if (lay) findings.push(...judgeLayout(lay, { width: w, allow }));
     if (ex) findings.push(...judgeExtra(ex, { width: w, allow, screens: total, app: !!appMode }));
-    if (build) findings.push(...judgeBuild(build, { width: w, allow, boxed: (ex?.boxedLists || []).map((b) => b.head), dead }));
+    // (a list of cards on a fill is not reported, so it does not hide its section's other frames)
+    if (build) findings.push(...judgeBuild(build, { width: w, allow, boxed: (ex?.boxedLists || []).filter((b) => b.how !== 'filled').map((b) => b.head), dead }));
     // ---------- round 9 ----------
     // pictures the page asks for that are not there (r8-p37 asked for four)
     netOff.forEach((off) => off());
@@ -589,7 +611,8 @@ try {
     // ---------- round 10 ----------
     // the first screen as the generic stack (r9-p44: "Roasted and poured in Berlin" centred, a subline, a green pill and a
     // text link, a rounded photo card under them; the judge: it could be any café)
-    if (hero && hero.stack && !allow.includes('template-hero')) findings.push({ level: 'FAIL', id: 'template-hero', width: w, message: `The first screen is the generic stack: a centred headline ("${hero.h1}"), a line under it, two actions side by side (${hero.actions.join(', ')}) and a rounded picture card ${hero.card.where} (${hero.card.src}, ${hero.card.radius}px corners, ${Math.round(hero.card.w * 100)}% of the width).`, fix: 'Build the first screen round the page\'s one idea, not the default stack. The name or the subject is the dominant type at real scale, set in the dealt display face; the picture is cropped hard or runs to the edges, set beside or behind the words rather than parked as a card under them; one action. Change at least two of the four: the centring, the subline, the pair of actions, the rounded card.' });
+    // (round 11, r10-p47: the actions optional, and a row of two or three cards under the line counts as the card)
+    if (hero && hero.stack && !allow.includes('template-hero')) findings.push({ level: 'FAIL', id: 'template-hero', width: w, message: `The first screen is the generic stack: a centred headline ("${hero.h1}"), a line under it${hero.actions ? `, two actions side by side (${hero.actions.join(', ')})` : ''} and ${hero.card ? `a rounded picture card ${hero.card.where} (${hero.card.src}, ${hero.card.radius}px corners, ${Math.round(hero.card.w * 100)}% of the width)` : `a row of ${hero.cards.n} cards under them (${hero.cards.src}, each ${Math.round(hero.cards.w * 100)}% of the width)`}.`, fix: 'Build the first screen round the page\'s one idea, not the default stack. The name or the subject is the dominant type at real scale, set in the dealt display face; the picture is cropped hard or runs to the edges, set beside or behind the words rather than parked as a card or a row of cards under them; one action. Change at least two of the parts: the centring, the line under the headline, the actions, the card or the row of cards.' });
     // text cut off by a box that clips it once the page rests (r9-p44 on a phone: the coffee panel cut its list after
     // Huila and Guji, so Cerrado and Decaf were never shown)
     const restClip = new Map();
@@ -668,6 +691,21 @@ try {
     const cutHeads = new Map();
     for (const r of restRuns) for (const c of r.cutHeads || []) { const o = cutHeads.get(c.text); if (!o || c.past > o.past) cutHeads.set(c.text, { ...c, screen: Math.round(r.y / h) + 1 }); }
     if (cutHeads.size && !allow.includes('held-heading-cut')) findings.push({ level: 'FAIL', id: 'held-heading-cut', width: w, message: `${cutHeads.size} heading(s) of a held stage are cut off above the screen while it holds: ` + [...cutHeads.values()].slice(0, 3).map((c) => `"${c.text.slice(0, 48)}" ${c.whole ? 'wholly above the screen' : `${c.past}px above its top`} (${c.stage}, screen ${c.screen})`).join('; ') + '.', fix: 'A held stage fits the screen with its heading in view: on a tablet or phone, set the window shorter (fewer rows, the panel that does the task), put the heading over the stage outside the hold, or release the hold and let the replay play on its own clock in the flow (references/motion.md, "Product replay").' });
+    // ---------- round 11 ----------
+    // an object that runs into one side of the screen at rest while the page keeps its margin (r9-p41's product window,
+    // flush with the right edge, 58px of margin on the left). A product window, a box or a picture cut by the edge or
+    // rounded fails, and so does a picture in the middle of its section (r10-p46's village); a plain picture as tall as
+    // its section, or a wide field of colour, flush with one edge (a half-bleed split) warns
+    const edgeEls = new Map();
+    for (const r of restRuns) for (const e of r.edges || []) { const o = edgeEls.get(e.id); if (!o || e.past > o.past) edgeEls.set(e.id, { ...e, screen: Math.round(r.y / h) + 1 }); }
+    const margin = lay && lay.margins ? Math.max(lay.margins.left || 0, lay.margins.right || 0) : 0;
+    if (edgeEls.size && margin >= 16 && !appMode && !allow.includes('edge-run')) {
+      const field = (e) => !e.round && e.past < 8 && (e.what === 'a picture' ? !!e.fullH : e.what === 'a box' && e.share >= 0.4);
+      for (const level of ['FAIL', 'WARN']) {
+        const es = [...edgeEls.values()].filter((e) => (level === 'FAIL' ? !field(e) : field(e)));
+        if (es.length) findings.push({ level, id: 'edge-run', width: w, message: `${es.length} element(s) run into the ${[...new Set(es.map((e) => e.side))].join(' and ')} side of the screen at rest while the page keeps a ${margin}px margin: ` + es.slice(0, 3).map((e) => `${e.what} ("${e.text}", ${e.w}px wide${e.round ? ', rounded' : ''}) ${e.past ? `runs ${e.past}px past` : 'touches'} the ${e.side} edge, screen ${e.screen}`).join('; ') + '.', fix: level === 'FAIL' ? 'Nothing runs into one side of the screen. Keep the window, the card or the picture inside the page\'s margins (max-width and the same gutter on both sides), or let it span the whole width from edge to edge on purpose. A product window cut by the screen\'s side reads as a layout that broke.' : 'A picture or a field flush with one side of the screen reads as running out of the page. Keep it inside the margins, or run it from edge to edge; a split whose picture fills its half to the edge is a choice to defend in one sentence.' });
+      }
+    }
     if (appMode) {
       findings = findings.filter((f) => !APP_SKIP.has(f.id) && f.id !== 'no-title' && f.id !== 'small-title');
       if (appM) findings.push(...judgeApp(appM, m, { width: w, allow }));
@@ -853,7 +891,7 @@ try {
     // the product replay the sheet dealt (draw.mjs section 8)
     if (dealtReplay && w >= 1100 && ex && !(ex.replays || []).length && !allow.includes('replay-missing')) findings.push({ level: 'FAIL', id: 'replay-missing', width: w, message: `The sheet dealt the product replay "${dealtReplay.name || dealtReplay.id}" in the ${dealtReplay.carries || ''} section, but the page has no [data-replay].`, fix: 'Build the product replay the sheet deals (section 8): the product\'s window in its final state with data-replay and its marked beats, assets/replay.js, and a Replay button under it.' });
     if (w >= 1100 && empty.length >= 2 && !allow.includes('empty-screens')) findings.push({ level: 'FAIL', id: 'empty-screens', width: w, message: `${empty.length} of ${frameChecks.length} desktop screens are almost empty ground (under 20% of the screen holds text, a picture or a colour field): screens ${empty.map(({ f, i }) => screenOf(f, i)).join(', ')}.`, fix: 'An empty screen is a rest only once per page. Elsewhere it means the section is underbuilt: set its content larger, give it the full information, put it on a colour field, or cut it.' });
-    report.viewports.push({ width: w, height: h, load: how, screens: frames.length, pageScreens, stride, extra: ex, reached: reached.map((r) => (r ? r.found : null)), upReach: upReach ? upReach.found : null, unread, overText, frameErrors, filled: frameChecks.map((f) => f?.filled ?? null), content: frameChecks.map((f) => f?.content ?? null), filmContent: filmChecks.map((f) => (f ? [Math.round(f.y / h * 10) / 10, f.content] : null)), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5), missingImages: [...missingPics.keys()].slice(0, 12), photoText: [...onPhoto.values()].slice(0, 24), letters: [...letterSeen.values()].map((v) => ({ text: v.text, size: v.size, shows: v.at.map((s) => s.shows) })), tileWalls: wallRuns, hero, visits, build, dead, rest: restRuns.map((r) => ({ y: r.y, dy: r.dy, end: r.end, clipped: r.clipped, pics: (r.pics || []).map((p) => `${p.file} ${p.area} @${p.t}`), heads: (r.heads || []).map((x) => `${x.kind} ${x.text.slice(0, 40)} @${x.t}`), veils: r.veils, cutHeads: r.cutHeads })) });
+    report.viewports.push({ width: w, height: h, load: how, screens: frames.length, pageScreens, stride, extra: ex, reached: reached.map((r) => (r ? r.found : null)), upReach: upReach ? upReach.found : null, unread, overText, frameErrors, filled: frameChecks.map((f) => f?.filled ?? null), content: frameChecks.map((f) => f?.content ?? null), filmContent: filmChecks.map((f) => (f ? [Math.round(f.y / h * 10) / 10, f.content] : null)), motion, metrics: m, layout: lay, app: appM, consoleErrors: page.consoleErrors.slice(0, 5), missingImages: [...missingPics.keys()].slice(0, 12), photoText: [...onPhoto.values()].slice(0, 24), letters: [...letterSeen.values()].map((v) => ({ text: v.text, size: v.size, shows: v.at.map((s) => s.shows) })), tileWalls: wallRuns, hero, visits, build, dead, rest: restRuns.map((r) => ({ y: r.y, dy: r.dy, end: r.end, clipped: r.clipped, pics: (r.pics || []).map((p) => `${p.file} ${p.area} @${p.t}`), heads: (r.heads || []).map((x) => `${x.kind} ${x.text.slice(0, 40)} @${x.t}`), veils: r.veils, cutHeads: r.cutHeads, edges: r.edges })) });
     report.findings.push(...(appMode ? findings.filter((f) => !APP_SKIP.has(f.id)) : findings));
     report.images.push({ viewport: label, width: w, fold, pages: sheets, film: filmSheets, replay: replaySheets, walked: frames.length, stride, pageScreens, atFoot });
     if (replayRuns.length) report.viewports[report.viewports.length - 1].replayBeats = replayRuns.map((rb) => (rb ? { clock: rb.clock, beats: rb.diffs, states: rb.states.map((s) => ({ k: s.k, win: s.win, top: s.top, foot: s.foot, bar: s.bar, bare: s.bare, stuck: s.stuck })) } : null));
@@ -898,8 +936,8 @@ try {
         const sx = await sp.eval(extra, { scenes: true }).catch(() => null);
         const sb = await sp.eval(pageBuild, { scenes: true }).catch(() => null);
         const lists = sx?.boxedLists || [];
-        report.findings.push(...judgeExtra({ boxedLists: lists }, { width: 1440, allow, screens: 1 }).map((f) => ({ ...f, message: f.message.replace(/^(\d+ list\(s\) drawn as boxes)/, '$1 in a scene\'s finished composition') })));
-        if (sb) report.findings.push(...judgeBuild({ framed: sb.framed }, { width: 1440, allow, boxed: lists.map((b) => b.head) }));
+        report.findings.push(...judgeExtra({ boxedLists: lists }, { width: 1440, allow, screens: 1 }).map((f) => ({ ...f, message: f.message.replace(/^(\d+ list\(s\) drawn as boxes that are not cards)/, '$1 in a scene\'s finished composition') })));
+        if (sb) report.findings.push(...judgeBuild({ framed: sb.framed }, { width: 1440, allow, boxed: lists.filter((b) => b.how !== 'filled').map((b) => b.head) }));
         if (report.viewports[0]) report.viewports[0].scenesAtRest = { boxedLists: lists, framed: sb?.framed || [] };
       }
     } finally { await sp.close(); }

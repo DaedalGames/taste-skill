@@ -58,9 +58,17 @@
 //   hero          "sky"            "sky": the headline is set in --ink straight on the photograph's sky, with
 //                                  no scrim. Only for a photograph with open, even sky behind the headline
 //                                  (no cloud texture, no ridge line, no subject reaching up into it). The
-//                                  lede, small text, never trusts the sky: it sits on a solid strip of
-//                                  --ground (the sky's own colour, so on an even sky it does not show),
-//                                  in --ink at 7:1, at every width.
+//                                  lede never trusts the sky blindly: the script reads the photograph under
+//                                  the lede's own box, at every width, when the photograph can be read
+//                                  (served from the page's own origin, or with crossorigin="anonymous" on
+//                                  the <img> from a host that allows it). Where the palest part of that
+//                                  patch still reads against --ink (4.5:1; 3:1 once the lede is 24px, as it
+//                                  is on wide screens) the lede has no strip at all; where it is a shade too
+//                                  pale, the lede sits on a solid strip of the nearest shade of that sky
+//                                  that reads. A photograph the page may not read keeps the strip in
+//                                  --seg-lede-ground (set it on the section to the sky sampled at the
+//                                  lede's own spot), else --ground: the top third's median is darker or
+//                                  paler than the sky lower down, so a strip of it shows as a box there.
 //                                  | "band": a solid band in --ink sits behind the headline block and the
 //                                  type takes --ground (7:1 by the colour contract); use it for any
 //                                  photograph whose top-left is busy. A translucent fill reads under
@@ -92,8 +100,17 @@
 // The hold is not an option: it is 1.25 * (1 + C/H) screens (2.25 at C = 0.8H), set in the CSS, so the
 // arch travels exactly as far as the page scrolls. The arch height C is --seg-cap in the CSS.
 //
-// Timeline (fractions of the hold): photo zoom 0-0.88; headline out 0.06-0.18; ground climbs 0.08-0.88;
-// words spread 0.10-0.56; title letters 0.60-0.76; inset opens 0.78-0.94; settled 0.94-1.
+// Timeline (fractions of the hold): photo zoom 0-0.88; headline out from 0.08 (on a clock of 0.45s, so it
+// is never caught half faded); ground climbs 0.10-0.88 (0.08 before fix-006);
+// words spread 0.10-0.56; the inset opens on a clock of 0.6s once 40% of it is on screen (about
+// 0.7; 0.84 before round 11, which left the title alone on flat ground from 0.5 to 0.8); settled 0.90-1.
+// The chapter title's letters land on a clock of 0.7s once half the title is on screen, at every width,
+// never with the scroll, so no stop shows it half turned. While the scene runs, the words on the curve
+// and the statement show only while they are whole on screen: they fade in on a clock once the climbing
+// arch has carried all of them in, and out the moment one of them would be cut by the top or the foot of
+// the screen, so no stop shows a word sliced by the edge. The statement waits until it is clearly inside
+// the screen: its last line at least 8vh (64px or more) above the foot, so it never appears a few px
+// above the foot (6px before fix-006).
 //
 // Colour: --ground MUST be sampled from the final photograph (median of a 5% patch in the top third),
 // never chosen by eye. --ink is whichever of a deep near-black or a near-white of the same hue reads at
@@ -110,6 +127,8 @@
 // Screens under 560px tall get the finished composition.
 (() => {
   const ID = 'shaped-edge-ground-change';
+  // the ground's climb: start and duration, fractions of the hold
+  const GROUND = [0.10, 0.78];
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const num = (v, d, a, b) => { const n = typeof v === 'string' && v.trim() !== '' ? +v : v; return typeof n === 'number' && isFinite(n) ? clamp(n, a, b) : d; };
   // depth of the arch's edge below its crown at x, for an arch W wide and C tall
@@ -146,6 +165,69 @@
     // Pictures decode before they move: the photograph is on screen from the first frame and the inset
     // opens late from a closed clip, so without this its first paint (and decode) lands mid-scrub.
     for (const im of [img, insetImg]) if (im && im.decode) im.decode().catch(() => {});
+
+    // ---- the lede's strip takes the colour of the sky right behind it. --ground is the top third's
+    // median; lower down, where the lede sits, a sky is darker or paler than that, and a strip of --ground
+    // shows there as a box. The photograph is read under the lede's own box (object-fit: cover and the
+    // zoom's scale taken into account), at every width, and the strip is painted the median of that patch,
+    // kept only while the lede's ink still reads 4.5:1 on it. A photograph the page may not read (another
+    // origin without CORS) leaves the strip at --seg-lede-ground, else --ground.
+    const lede = hero ? hero.querySelector('.seg-hero__lede') : null;
+    const lum = (r, g, b) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+    const rgbOf = (s) => { const m = String(s).match(/[\d.]+/g); return m && m.length >= 3 ? m.slice(0, 3).map(Number) : null; };
+    const sampleLede = () => {
+      if (!lede || root.classList.contains('seg--band')) return;
+      if (liveTl && liveTl.progress() > 0.04) return; // sampled at the headline's own frame only
+      if (!img.complete || !img.naturalWidth) return;
+      const L = lede.getBoundingClientRect(), R = img.getBoundingClientRect();
+      if (L.width < 2 || L.height < 2 || R.width < 2 || R.height < 2) return;
+      const nw = img.naturalWidth, nh = img.naturalHeight;
+      const k = Math.max(R.width / nw, R.height / nh); // object-fit: cover
+      const pos = (getComputedStyle(img).objectPosition || '50% 50%').split(/\s+/);
+      const off = (v, free) => (/%$/.test(v) ? (free * parseFloat(v)) / 100 : /px$/.test(v) ? parseFloat(v) : free / 2);
+      const ox = R.left + off(pos[0] || '50%', R.width - nw * k), oy = R.top + off(pos[1] || '50%', R.height - nh * k);
+      const sx = (L.left - ox) / k, sy = (L.top - oy) / k, sw = L.width / k, sh = L.height / k;
+      if (sx < 0 || sy < 0 || sx + sw > nw + 1 || sy + sh > nh + 1) return;
+      // the whole picture drawn small, then the patch read from it: a source rectangle would be taken in
+      // the file's own pixels, which differ from naturalWidth when srcset picked a denser file
+      let data;
+      try {
+        const cw = 400, chh = Math.max(1, Math.round((400 * nh) / nw)), f = cw / nw;
+        const cv = document.createElement('canvas');
+        cv.width = cw; cv.height = chh;
+        const cx = cv.getContext('2d', { willReadFrequently: true });
+        cx.drawImage(img, 0, 0, cw, chh);
+        const x0 = clamp(Math.floor(sx * f), 0, cw - 1), y0 = clamp(Math.floor(sy * f), 0, chh - 1);
+        const x1 = clamp(Math.ceil((sx + sw) * f), x0 + 1, cw), y1 = clamp(Math.ceil((sy + sh) * f), y0 + 1, chh);
+        data = cx.getImageData(x0, y0, x1 - x0, y1 - y0).data; // throws on a photograph the page may not read
+      } catch { return; }
+      const ch = [[], [], []], ls = [];
+      for (let p = 0; p < data.length; p += 4) { ch[0].push(data[p]); ch[1].push(data[p + 1]); ch[2].push(data[p + 2]); ls.push(lum(data[p], data[p + 1], data[p + 2])); }
+      let [r, g, b] = ch.map((a) => { a.sort((x, y) => x - y); return a[a.length >> 1]; });
+      const cs = getComputedStyle(lede), ink = rgbOf(cs.color);
+      if (!ink) return;
+      const li = lum(...ink), ratioL = (l) => (Math.max(l, li) + 0.05) / (Math.min(l, li) + 0.05);
+      const ratio = (c) => ratioL(lum(...c));
+      const light = li > 0.18; // light ink: the palest sky is the worst; dark ink: the deepest
+      // large text (24px, or 18.5px bold) needs 3:1, small text 4.5:1, as the inspector reads it
+      const size = parseFloat(cs.fontSize) || 16, need = size >= 24 || (size >= 18.5 && (parseInt(cs.fontWeight, 10) || 400) >= 700) ? 3 : 4.5;
+      ls.sort((x, y) => x - y);
+      const worst = ls[Math.round((light ? 0.92 : 0.08) * (ls.length - 1))];
+      // the sky reads under the lede everywhere it covers: no strip at all
+      if (ratioL(worst) >= need + 0.15) { lede.style.setProperty('--seg-lede-sky', 'transparent'); return; }
+      // a shade too pale (or too deep) for the ink: the strip takes the nearest shade of the sky that
+      // reads, a step of a few levels instead of a box in the top third's colour
+      let c = [r, g, b];
+      const toward = light ? 0 : 255;
+      for (let step = 0; step < 40 && ratio(c) < need + 0.1; step++) c = c.map((v) => Math.round(v + (toward - v) * 0.03));
+      if (ratio(c) < need) { lede.style.removeProperty('--seg-lede-sky'); return; }
+      [r, g, b] = c;
+      lede.style.setProperty('--seg-lede-sky', `rgb(${r}, ${g}, ${b})`);
+    };
+    if (lede && img) {
+      if (img.complete) requestAnimationFrame(sampleLede);
+      else img.addEventListener('load', () => requestAnimationFrame(sampleLede), { once: true });
+    }
 
     // The headline holds two lines. In a face wider than the condensed default a six-word headline can
     // take three, so it is set smaller, in steps, down to 72% of the CSS size (fit after fonts load and
@@ -289,17 +371,28 @@
       arc.g = g;
       const n = arc.words.length;
       let s = arc.L / 2 - (arc.sum + (n - 1) * g) / 2;
+      // how far the letters reach above and below the cap's top: the gate in build() shows the words
+      // only while all of them are inside the screen
+      const em = parseFloat(getComputedStyle(arc.box).fontSize) || 16;
+      let top = Infinity, bottom = -Infinity;
       for (const wd of arc.words) {
         for (const ch of wd.chars) {
           const p = pointAt(s + ch.c);
           ch.el.style.transform = `translate(${(p.x - ch.w / 2).toFixed(2)}px, ${(p.y - arc.base).toFixed(2)}px) rotate(${p.a.toFixed(2)}deg)`;
+          top = Math.min(top, p.y - 0.85 * em); bottom = Math.max(bottom, p.y + 0.6 * em);
         }
         s += wd.width + g;
       }
+      arc.top = top; arc.bottom = bottom;
       root.classList.add('seg--arc-set');
     };
 
     let liveTl = null; // the scrubbed timeline while the scene runs; null in the finished composition
+    // what the live scene shows only while it is whole on screen (build, step 7); the finished
+    // composition shows it all
+    const crest = cap.querySelector('.seg-crest');
+    const gated = () => [arc.box, label, crest].filter(Boolean);
+    const ungate = () => { if (!window.gsap) return; const els = gated(); gsap.killTweensOf(els, 'opacity'); gsap.set(els, { clearProps: 'opacity' }); };
     const gapNow = () => {
       if (!liveTl || o.arc === 'static') return Math.max(arc.gStart, 0.5 * arc.gEnd);
       return arc.gStart + (arc.gEnd - arc.gStart) * clamp((liveTl.progress() - 0.1) / 0.46, 0, 1);
@@ -308,6 +401,7 @@
     // curve, or set straight when the words cannot fit on it.
     const relayout = () => {
       fitHero();
+      sampleLede();
       if (!arc.words.length) { root.classList.add('seg--flat'); return; }
       root.classList.remove('seg--flat');
       const ok = arc.measure();
@@ -359,7 +453,7 @@
           if (live) {
             const top = root.getBoundingClientRect().top + window.scrollY;
             const y = pt.y - edgeDepth(pt.x, W, C); // where the ground's top is when its edge meets the point
-            const t = clamp(0.08 + 0.8 * (H - y) / (H + C), 0, 1);
+            const t = clamp(GROUND[0] + GROUND[1] * (H - y) / (H + C), 0, 1);
             return top + t * Math.max(1, root.offsetHeight - window.innerHeight);
           }
           return ground.getBoundingClientRect().top + window.scrollY + edgeDepth(pt.x, W, C) - pt.y;
@@ -381,44 +475,72 @@
         tl.fromTo(img, { opacity: 1 }, { opacity: 0.7, duration: 0.55, ease: 'power2.in' }, 0)
           .to(img, { opacity: 0, duration: 0.31, ease: 'power2.in' }, 0.55);
       }
-      // 2. the headline leaves before the arch's flank reaches it
-      if (hero) tl.fromTo(hero, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: () => -0.06 * H(), duration: phone ? 0.1 : 0.12, ease: 'power1.in' }, 0.06);
+      // 2. the headline leaves before the arch's flank reaches it, on a clock of 0.45s once the scroll
+      //    passes 0.08 (back when it returns), so no stop shows it half faded
+      const heroTw = hero ? gsap.fromTo(hero, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: () => -0.06 * H(), duration: 0.45, ease: 'power2.in', paused: true }) : null;
+      let heroOut = false;
       // 3. the ground climbs from below the stage until its body fills it: H + C of travel over
-      //    0.8 * hold * H of scroll, which the CSS height makes equal
-      tl.fromTo(ground, { y: () => H() }, { y: () => -C(), duration: 0.8 }, 0.08);
-      // 4. the title turns in, letter by letter (one tween per letter, so every letter is set to its
-      //    start state the moment the scene is built, not only the first). On a phone the letters turn
-      //    on a clock of 0.7s once half the title is on screen, never with the scroll: a title keyed to
-      //    the scroll stands half-drawn where the reader stops, and one waiting for a point of the
-      //    timeline stands empty on screen until then (the inspector's letters-mid-reveal, both).
+      //    0.8 * hold * H of scroll, which the CSS height makes equal. It starts at 0.10 and keeps its end
+      //    (0.88), so it climbs 2.5% faster than the page and the 10% step shows no sliver of the arch's cap
+      //    on the foot of the screen (0.08 before fix-006, a 12px teal cap there)
+      tl.fromTo(ground, { y: () => H() }, { y: () => -C(), duration: GROUND[1] }, GROUND[0]);
+      // 4. the title turns in, letter by letter, on a clock of 0.7s once half the title is on screen, at
+      //    every width, never with the scroll: a title keyed to the scroll stands half-drawn where the
+      //    reader stops (a half-faded last letter), and one waiting for a point of the timeline stands
+      //    empty on screen until then (the inspector's letters-mid-reveal, both).
       const turned = { rotationY: 90, yPercent: 50, autoAlpha: 0, transformPerspective: 900 };
       let titleTw = null, titleOn = false;
-      if (phone && chars.length) {
+      if (chars.length) {
         gsap.set(chars, turned);
         titleTw = gsap.to(chars, { rotationY: 0, yPercent: 0, autoAlpha: 1, duration: 0.4, ease: 'power3.out', paused: true, stagger: { amount: 0.3 } });
-      } else {
-        chars.forEach((c, k) => {
-          tl.fromTo(c, turned,
-            { rotationY: 0, yPercent: 0, autoAlpha: 1, duration: 0.08, ease: 'power3.out' }, 0.6 + (chars.length > 1 ? (0.08 * k) / (chars.length - 1) : 0));
-        });
       }
-      // 5. the inset opens from the bottom while its picture settles
+      // 5. the inset opens from the bottom while its picture settles, on a clock of 0.6s once 40% of
+      //    it is on screen (about 0.7 of the hold), played back when it drops below that again. It rises with
+      //    the title: opened at 0.84, the title stood alone on flat ground from 0.5 to 0.8. Hidden while
+      //    it waits, so no closed box is read at the foot of the screen.
+      let insetTw = null, insetOn = false;
       if (inset) {
-        tl.fromTo(inset, { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.16, ease: 'power2.out' }, 0.78);
-        if (insetImg) tl.fromTo(insetImg, { scale: 1.4, xPercent: 14 }, { scale: 1, xPercent: 0, duration: 0.16, ease: 'power2.out' }, 0.78);
+        gsap.set(inset, { visibility: 'hidden', clipPath: 'inset(100% 0% 0% 0%)' });
+        insetTw = gsap.timeline({ paused: true })
+          .set(inset, { visibility: 'visible' }, 0)
+          .fromTo(inset, { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.6, ease: 'power2.out', immediateRender: false }, 0);
+        if (insetImg) insetTw.fromTo(insetImg, { scale: 1.2, xPercent: 8 }, { scale: 1, xPercent: 0, duration: 0.6, ease: 'power2.out', immediateRender: false }, 0);
       }
+      const insetIn = () => { const r = inset.getBoundingClientRect(); return r.height > 0 && r.top + 0.4 * r.height <= (window.innerHeight || H()); };
       // 6. the photograph is unseen from here: stop painting it
       tl.set(photo, { autoAlpha: 0 }, 0.885);
       tl.to({}, { duration: 0.06 }, 0.94);
 
+      // 7. the words on the curve and the statement show only while they are whole on screen: they fade in
+      //    on a clock once the arch has carried all of them in, and out before the top or the foot of the
+      //    screen would cut one, so no stop shows a sliced word.
+      const EDGE = 6;
+      const gate = { arc: false, crest: false };
+      gsap.set(gated(), { opacity: 0 }); // below the screen until the ground climbs
+      const show = (el, key, on) => {
+        if (!el || gate[key] === on) return;
+        gate[key] = on;
+        gsap.to(el, { opacity: on ? 1 : 0, duration: on ? 0.35 : 0.2, ease: on ? 'power2.out' : 'power1.in', overwrite: 'auto' });
+      };
+      const whole = (top, bottom, foot = EDGE) => top >= EDGE && bottom <= (window.innerHeight || H()) - foot;
+      // the statement waits until it is clearly inside the screen: its last line 8vh (64px or more) above
+      // the foot, both on the way in and on the way back down (6px let it appear 12-18px above the foot)
+      const crestFoot = () => Math.max(64, 0.08 * (window.innerHeight || H()));
+
       // the words spread with the timeline (0.10-0.56): driven from its progress, so every render,
       // scrub catch-up and refresh lands on the right spread
-      // (and the phone's title clock: played once the ground has carried half the title onto the screen,
+      // (and the title clock: played once the ground has carried half the title onto the screen,
       // played back when it drops below the screen again)
       const titleIn = () => { const r = title.getBoundingClientRect(); return r.height > 0 && r.top + r.height / 2 < (window.innerHeight || H()); };
       tl.eventCallback('onUpdate', () => {
         arc.layout(gapNow());
+        if (heroTw) { const out = tl.progress() >= 0.08; if (out !== heroOut) { heroOut = out; if (out) heroTw.play(); else heroTw.reverse(); } }
         if (titleTw) { const on = titleIn(); if (on !== titleOn) { titleOn = on; if (on) titleTw.play(); else titleTw.reverse(); } }
+        if (insetTw) { const on = insetIn(); if (on !== insetOn) { insetOn = on; if (on) insetTw.play(); else insetTw.reverse(); } }
+        const capTop = cap.getBoundingClientRect().top;
+        if (arc.box && arc.ok && !root.classList.contains('seg--flat')) show(arc.box, 'arc', whole(capTop + arc.top, capTop + arc.bottom));
+        else if (root.classList.contains('seg--flat') && label) { const r = label.getBoundingClientRect(); show(label, 'arc', whole(r.top, r.bottom)); }
+        if (crest) { const r = crest.getBoundingClientRect(); show(crest, 'crest', whole(r.top, r.bottom, crestFoot())); }
       });
       // re-measure the curve whenever ScrollTrigger refreshes (resize, fonts, pictures)
       ScrollTrigger.create({ trigger: root, start: 'top bottom', end: 'bottom top', onRefresh: relayout });
@@ -429,6 +551,7 @@
     function rest() {
       liveTl = null;
       chromeOff();
+      ungate();
       relayout();
       if (Stage.live) chromeTrigger(false);
     }

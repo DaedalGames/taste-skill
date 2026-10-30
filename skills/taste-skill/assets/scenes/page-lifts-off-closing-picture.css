@@ -13,8 +13,10 @@
                       ui mode (where it is also the interface's stage). For a photograph: the median of
                       its top edge as cropped at 1440x900. Default: a tone step of --ground toward --ink.
      --lift-band-ink  the band's words (default --ink; --ground when the script finds the band dark)
-     --lift-band-h    the band's share of the screen, default 30svh (it grows with its words, never
-                      squeezes them; keep the block under about a third of the screen)
+     --lift-band-h    the band's share of the screen, default 32svh (it grows with its words, never
+                      squeezes them; keep the block under about a third of the screen). Its words sit
+                      low in it, so the closing line's top is clear of the lifting sheet by about 0.9
+                      of the hold and the line lands before the scroll runs out
      --lift-object    object-position of the photograph (default 50% 50%; put the subject low)
      --lift-radius    the label's corners (default 4px: match the page's buttons)
      --lift-ui-inset  (read it, do not set it) the side padding an interface fragment uses: the page
@@ -26,7 +28,7 @@
 .scene[data-scene="page-lifts-off-closing-picture"] {
   --lift-band-c: var(--lift-band, color-mix(in srgb, var(--ink, #111) 9%, var(--ground, #f4f4f2)));
   --lift-band-ink: var(--ink, #111);
-  --lift-band-h: 30svh;
+  --lift-band-h: 32svh;
   --lift-pad: var(--pad, clamp(16px, 4.5vw, 72px));
   --lift-object: 50% 50%;
   --lift-focus: 50% 0%;
@@ -58,19 +60,21 @@
   background: var(--lift-band-c);
   color: var(--lift-band-ink);
 }
+/* the closing line is the page's last headline: display size over seven columns, so the rest frame
+   ends on it (at 46px it read as a caption) */
 .scene[data-scene="page-lifts-off-closing-picture"] .lift-title {
-  grid-column: 1 / span 5;
+  grid-column: 1 / span 7;
   margin: 0;
   max-width: 16ch;
   font-family: var(--font-display, inherit);
   font-weight: var(--display-weight, 600);
-  font-size: clamp(28px, 2.9vw, 46px);
-  line-height: 1.04;
-  letter-spacing: -0.02em;
+  font-size: clamp(40px, 5vw, 80px);
+  line-height: 1;
+  letter-spacing: -0.03em;
   text-wrap: balance;
 }
 .scene[data-scene="page-lifts-off-closing-picture"] .lift-contact {
-  grid-column: 7 / -1;
+  grid-column: 8 / -1;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: max-content;
@@ -172,8 +176,9 @@
 @media (max-width: 767px) {
   .scene[data-scene="page-lifts-off-closing-picture"] { --lift-pad: 16px; }
   .scene[data-scene="page-lifts-off-closing-picture"] .lift { min-height: 0; }
-  .scene[data-scene="page-lifts-off-closing-picture"] .lift-band { row-gap: 16px; padding: clamp(48px, 7svh, 64px) 16px 24px; }
-  .scene[data-scene="page-lifts-off-closing-picture"] .lift-title { font-size: 28px; }
+  /* the top padding keeps the closing line low enough to land by about 0.9 of the lift */
+  .scene[data-scene="page-lifts-off-closing-picture"] .lift-band { row-gap: 16px; padding: clamp(72px, 10.5svh, 96px) 16px 24px; }
+  .scene[data-scene="page-lifts-off-closing-picture"] .lift-title { font-size: clamp(32px, 9vw, 40px); }
   .scene[data-scene="page-lifts-off-closing-picture"] .lift-contact {
     grid-auto-flow: row;
     grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
@@ -196,9 +201,17 @@ html.js .scene.is-live[data-scene="page-lifts-off-closing-picture"] {
 html.js .scene.is-live[data-scene="page-lifts-off-closing-picture"] > .scene-stage { --p: initial; }
 html.js .scene.is-live[data-scene="page-lifts-off-closing-picture"] .lift { height: 100%; min-height: 0; }
 html.js .scene.is-live[data-scene="page-lifts-off-closing-picture"] img.lift-media { will-change: transform; }
+/* each word block lands whole on a clock once the sheet's edge has cleared its top (the script sets
+   data-lift-word), and goes quickly when the edge comes back over it: never caught half faded */
+html.js .scene.is-live[data-scene="page-lifts-off-closing-picture"] [data-lift-word] {
+  transition-property: opacity, background-color;
+  transition-duration: 320ms, 180ms;
+  transition-timing-function: cubic-bezier(.2, .7, .3, 1), ease;
+}
+html.js .scene.is-live[data-scene="page-lifts-off-closing-picture"] [data-lift-word="off"] { opacity: 0; transition-duration: 120ms, 180ms; }
 /* the sheet that lifts away and the footer line that closes the page sit above the held stage. The
-   sheet's edge is a hard flat edge: no shadow, no fade. While it lifts it shrinks a little about that
-   edge and dims (the script tweens its scale and a brightness filter), so it reads as a sheet leaving. */
+   sheet's edge is a hard flat edge: no shadow, no fade. It leaves at its full width in its own ground
+   (with the old options lift under 1 or dim over 0 the script also shrinks and darkens it). */
 html.js [data-lift-sheet] {
   position: relative;
   z-index: 2;

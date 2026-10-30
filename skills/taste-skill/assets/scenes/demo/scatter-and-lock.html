@@ -38,7 +38,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    padding: 24px var(--gutter) 0;
+    height: 80px;
+    padding: 0 var(--gutter);
   }
   .bar strong { font: 700 22px/1 var(--font-display); letter-spacing: -0.02em; }
   .bar nav { display: flex; align-items: center; gap: 28px; font-size: 16px; }
@@ -47,25 +48,28 @@
   .bar .book { padding: 12px 20px; background: var(--ink); color: var(--ground); font-weight: 600; }
   .bar .book:hover { background: #2a2d2b; }
 
+  /* the first screen is the opening alone (the bar is 80px): the scene starts at the fold */
   .intro {
     display: grid;
     align-content: end;
     gap: 36px;
-    padding: clamp(120px, 22vh, 220px) var(--gutter) 9vh;
+    min-height: calc(100svh - 80px);
+    padding: 48px var(--gutter) 10svh;
   }
-  @media (min-width: 1100px) and (min-height: 700px) { .intro { min-height: 76svh; padding-top: 0; } }
   .intro h1 {
     margin: 0;
-    max-width: 12.5em;
-    font: 600 clamp(30px, 7.6vw, 118px)/0.96 var(--font-display);
+    max-width: 9em;
+    font: 600 clamp(48px, min(18vw, 20svh), 200px)/0.96 var(--font-display);
+    text-wrap: balance;
     letter-spacing: -0.035em;
   }
   .intro p { margin: 0 0 0 auto; max-width: 30em; font-size: clamp(18px, 1.5vw, 22px); }
 
   /* The word sits on the dark pool and the moss right of the spray at the foot of the falls (every letter
-     at least 3.5:1 against the brightest fifth of the pixels behind it), inside one row band of the grid.
-     At 9.75cqi its letters fit the 7 columns: two cuts, both in the white between letters (T|h, a|w).
-     On the 4:5 art it stays in the middle 60% of the width: that is all a phone keeps of it at the end. */
+     at least 3.5:1 against the brightest fifth of the pixels behind it). It is never cut into the shards:
+     it fades in whole on the poster after the lock. On the 4:5 art it stays in the middle 60% of the
+     width: that is all a phone keeps of it at the end. The stage takes the scene's default mid-dark tone
+     (the ink lifted toward the ground, about #2c2e2d here), so the dark moss pieces never read as holes. */
   [data-scene="scatter-and-lock"] { --sl-gutter: var(--gutter); --sl-word-size: 9.75cqi; --sl-word-x: 52%; --sl-word-y: 87.5%; }
   [data-scene="scatter-and-lock"] .sl-word { font-stretch: 125%; font-weight: 700; letter-spacing: -0.01em; }
   @media (max-width: 767px), (orientation: portrait) {
@@ -78,7 +82,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
     gap: 48px var(--gutter);
-    padding: 160px var(--gutter) 200px;
+    padding: 128px var(--gutter) 112px;
   }
   .after h2 {
     margin: 0;
@@ -87,8 +91,9 @@
   }
   .after .copy { display: grid; gap: 28px; align-content: start; max-width: 34em; }
   .after p { margin: 0; }
-  .dates { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
-  .dates li { display: flex; justify-content: space-between; gap: 16px; padding: 16px 20px; background: #d9d9d2; }
+  .dates { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .dates li { display: flex; justify-content: space-between; gap: 16px; }
+  .dates span:first-child { font-weight: 600; }
   .dates span:last-child { font-variant-numeric: tabular-nums; }
   .action {
     justify-self: start;
@@ -101,24 +106,42 @@
   }
   .action:hover { background: #2a2d2b; }
 
+  /* the footer: a sitemap grid on the surface tone. The wordmark at the h3 step, three short columns of
+     real links and facts under headings in the display face, the small print at the foot */
   footer {
-    padding: 0 var(--gutter) 40px;
     display: grid;
-    gap: 20px;
+    grid-template-columns: minmax(0, 1.2fr) repeat(3, minmax(0, 1fr));
+    grid-template-rows: 1fr auto;
+    gap: 48px;
+    min-height: 52svh;
+    padding: clamp(72px, 12svh, 128px) var(--gutter) 36px;
+    background: #d9d7d0;
   }
   footer .name {
     margin: 0;
-    font: 700 22.4vw/0.8 var(--font-display);
-    letter-spacing: -0.05em;
+    font: 700 clamp(28px, 2.6vw, 40px)/1 var(--font-display);
+    letter-spacing: -0.03em;
   }
-  footer .small { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; font-size: 15px; }
+  footer h2 { margin: 0 0 14px; font: 600 22px/1.2 var(--font-display); font-stretch: 112%; letter-spacing: -0.01em; }
+  footer ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  footer ul a { text-decoration: none; }
+  footer ul a:hover { text-decoration: underline; text-underline-offset: 4px; }
+  footer .small { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; margin: 0; font-size: 15px; color: #45494a; }
 
+  @media (max-width: 1099px) {
+    .intro { align-content: center; }
+    .intro h1 { font-size: min(14vw, 20svh); }
+  }
   @media (max-width: 767px) {
-    .bar nav { gap: 18px; font-size: 15px; }
-    .bar nav a:nth-child(-n+2) { display: none; }
-    .intro { gap: 24px; padding-top: 18vh; }
+    .bar nav { gap: 14px; font-size: 15px; }
+    .bar nav a:nth-child(2) { display: none; }
+    .bar .book { padding: 12px 16px; }
+    .intro { gap: 24px; align-content: center; }
+    .intro h1 { font-size: 15vw; }
     .intro p { margin: 0; }
-    .after { grid-template-columns: 1fr; padding: 96px var(--gutter) 168px; }
+    .after { grid-template-columns: 1fr; padding: 96px var(--gutter) 96px; }
+    footer { grid-template-columns: 1fr 1fr; gap: 40px 24px; min-height: 0; }
+    footer .name { grid-column: 1 / -1; }
   }
 </style>
 </head>
@@ -135,11 +158,11 @@
 
 <main>
   <section class="intro">
-    <h1>Saltmark makes slow films about cold water</h1>
+    <h1>Slow films, cold water</h1>
     <p>Two people, one camera and a van. Our new film watched a single waterfall every morning for a whole year.</p>
   </section>
 
-  <section class="scene" id="films" data-scene="scatter-and-lock" data-options='{"hold":2.5,"cols":7,"rows":4}' aria-labelledby="sl-h">
+  <section class="scene" id="films" data-scene="scatter-and-lock" data-options='{}' aria-labelledby="sl-h">
     <div class="scene-stage">
       <header class="sl-title">
         <h2 class="sl-headline" id="sl-h">A year spent behind one waterfall</h2>
@@ -186,13 +209,24 @@
   </div>
 </main>
 
+<!-- the footer: a sitemap grid on the surface tone, the small print at the foot -->
 <footer id="studio">
   <p class="name">Saltmark</p>
-  <div class="small">
-    <span>A documentary studio on the north shore, since 2016.</span>
-    <span>Photograph by Jeff Sheldon, via Unsplash.</span>
+  <div>
+    <h2>Films</h2>
+    <ul><li><a href="#films">Thaw</a></li><li><a href="#screenings">Screenings</a></li></ul>
   </div>
+  <div>
+    <h2>Studio</h2>
+    <ul><li>North shore, since 2016</li><li><a href="mailto:hello@saltmark.film">hello@saltmark.film</a></li></ul>
+  </div>
+  <div>
+    <h2>Wellmouth</h2>
+    <ul><li>Harbour Picture House</li><li>14 to 16 November</li></ul>
+  </div>
+  <p class="small"><span>Photograph from Unsplash via Lorem Picsum. Saltmark is invented for this demonstration.</span><a href="#">Back to the top</a></p>
 </footer>
+<!-- Photograph by Jeff Sheldon, via Unsplash. -->
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>

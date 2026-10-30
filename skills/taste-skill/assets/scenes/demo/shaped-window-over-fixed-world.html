@@ -37,7 +37,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    padding: 22px var(--gutter);
+    height: 88px;
+    padding: 0 var(--gutter);
     font-size: 17px;
   }
   .bar .mark { font-weight: 700; font-stretch: 87.5%; text-decoration: none; font-size: 19px; }
@@ -53,17 +54,21 @@
     font-weight: 600;
   }
 
-  .opening, .close { container-type: inline-size; }
+  /* the first screen is the opening alone: the scene starts at the fold (the bar is 88px) */
   .opening {
-    padding: clamp(56px, 13svh, 150px) var(--gutter) clamp(64px, 14svh, 160px);
+    container-type: inline-size;
+    min-height: calc(100svh - 88px);
+    display: grid;
+    align-content: end;
+    padding: 48px var(--gutter) clamp(48px, 9svh, 112px);
   }
-  /* the name runs gutter to gutter: its advance is 6.69em, so 100cqi / 6.72 */
   .opening h1 {
     margin: 0;
     font-weight: 800;
     font-stretch: 62%;
     text-transform: uppercase;
-    font-size: clamp(44px, 14.85cqi, 240px);
+    font-size: clamp(48px, min(20cqi, 22svh), 240px);
+    text-wrap: balance;
     line-height: 0.84;
     letter-spacing: -0.01em;
   }
@@ -92,52 +97,72 @@
     }
   }
 
+  /* the footer: two halves. The ink half closes the page with the date and the one action; the
+     surface half holds the links, the warden and the small print */
   .close {
-    padding: clamp(120px, 20svh, 220px) var(--gutter) clamp(40px, 6svh, 64px);
-  }
-  .close .cols {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 34rem);
-    gap: 32px 48px;
-    align-items: start;
+    grid-template-columns: 1fr 1fr;
+    min-height: 62svh;
+    margin-top: clamp(96px, 16svh, 200px);
+  }
+  .close-act {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 48px;
+    padding: clamp(48px, 8svh, 96px) var(--gutter);
+    background: var(--ink);
+    color: var(--ground);
   }
   .close h2 {
     margin: 0;
+    max-width: 9em;
     font-weight: 700;
     font-stretch: 87.5%;
-    font-size: clamp(36px, 4.2vw, 64px);
+    font-size: clamp(40px, 4.6vw, 72px);
     line-height: 0.98;
     letter-spacing: -0.02em;
     text-wrap: balance;
   }
-  .close p { margin: 0 0 1em; text-wrap: pretty; }
   .close .action {
-    display: inline-block;
-    margin-top: 8px;
-    padding: 15px 26px;
-    background: var(--ink);
-    color: var(--ground);
+    align-self: start;
+    display: inline-flex;
+    align-items: center;
+    min-height: 52px;
+    padding: 0 28px;
+    background: var(--ground);
+    color: var(--ink);
     text-decoration: none;
     font-weight: 600;
   }
-  .close .credit { font-size: 15px; margin-top: 40px; }
-  /* a sign-off, not a second wordmark */
-  .close .name {
-    margin: 48px 0 0;
-    font-weight: 700;
-    font-stretch: 87.5%;
-    font-size: 28px;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
+  .close-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-content: space-between;
+    gap: 40px 32px;
+    padding: clamp(48px, 8svh, 96px) var(--gutter);
+    background: #d3d7d2;
   }
+  .close-info nav { display: grid; align-content: start; gap: 10px; }
+  .close-info nav a { text-decoration: none; }
+  .close-info nav a:hover { text-decoration: underline; }
+  .close-info p { margin: 0; }
+  .close-info .small { grid-column: 1 / -1; font-size: 15px; color: #444b4f; }
 
-  @media (max-width: 1000px) {
-    .close .cols { grid-template-columns: 1fr; }
-    .close .cols > div { max-width: 34rem; }
+  @media (max-width: 900px) {
+    /* on a tall narrow screen the two lines and the lede stand in the middle of it */
+    .opening { align-content: center; }
+    .close { grid-template-columns: 1fr; }
   }
   @media (max-width: 767px) {
     body { font-size: 17px; }
-    .bar nav a:not(.book) { display: none; }
+    /* the phone keeps one section link beside the action */
+    .bar, .bar nav { gap: 16px; }
+    .bar { font-size: 15px; }
+    .bar .mark { font-size: 17px; }
+    .bar .mark, .bar nav a { white-space: nowrap; }
+    .bar nav a:not(.book):not(:first-child) { display: none; }
+    .bar nav a.book { padding: 0 12px; }
     .opening .lead { grid-template-columns: 1fr; }
     .opening .lead p { grid-column: 1; }
   }
@@ -149,22 +174,22 @@
   <a class="mark" href="#top">Sorrel Pass Huts</a>
   <nav aria-label="Main">
     <a href="#route">The route</a>
-    <a href="#route">The huts</a>
-    <a class="book" href="#route">Book a bed</a>
+    <a href="#book">The huts</a>
+    <a class="book" href="#book">Book a bed</a>
   </nav>
 </header>
 
 <main id="top">
   <section class="opening" aria-labelledby="page-title">
-    <h1 id="page-title">Sorrel Pass Huts</h1>
+    <h1 id="page-title">Five huts, one icefield</h1>
     <div class="lead">
-      <p>Five timber huts a day's walk apart on the high route over the Sorrel icefield, open from late June until the first snow.</p>
+      <p>Timber huts a day's walk apart on the high route over Sorrel Pass, open from late June until the first snow.</p>
     </div>
   </section>
 
   <!-- high: left puts the caption under the left window and the title over the right one; in the first
        frame the left window shows the summit, the right one the ridges under the dark sky -->
-  <section class="scene sw scene-sw" data-scene="shaped-window-over-fixed-world" data-options='{"hold": 2.4, "high": "left"}' aria-labelledby="sw-title">
+  <section class="scene sw scene-sw" id="route" data-scene="shaped-window-over-fixed-world" data-options='{"hold": 2.4, "high": "left"}' aria-labelledby="sw-title">
     <div class="scene-stage sw-stage">
       <div class="sw-world" data-move>
         <picture>
@@ -182,7 +207,7 @@
         <p class="sw-word" style="--chars:8">Icefield</p>
         <div class="sw-lede">
           <p>Day three is the icefield itself: seven hours on old snow, roped to a guide, between two huts that each sleep twelve and keep the stove lit from six.</p>
-          <a class="sw-link" href="#route">See the route</a>
+          <a class="sw-link" href="#book">See the huts</a>
         </div>
       </div>
       <div class="sw-shutter">
@@ -193,30 +218,34 @@
         <!-- the foreground: firs at the treeline, photographed against fog and keyed into cut-outs by the
              scene (data-key), toned into the picture's cold light (data-tone), standing in the bottom
              corners until the push throws them aside. One photograph, cut two ways so they never read as
-             twins: the whole tree on the left, the right one cropped below its top and mirrored -->
-        <img class="sw-prop sw-prop--l" src="https://picsum.photos/id/925/2400/1600" crossorigin="anonymous"
+             twins: the whole tree on the left, the right one cropped below its top and mirrored. Fetched
+             at 3600px, so the crop the right one is shown at (130% of the stage) is never blown up -->
+
+        <img class="sw-prop sw-prop--l" src="https://picsum.photos/id/925/3600/2400" crossorigin="anonymous"
              data-key="0.3 0.52" data-crop="0.04 0 0.38 0.56" data-tone="saturate(.45) brightness(.75) hue-rotate(20deg)"
-             alt="" aria-hidden="true" width="816" height="896">
-        <img class="sw-prop sw-prop--r" src="https://picsum.photos/id/925/2400/1600" crossorigin="anonymous"
+             alt="" aria-hidden="true" width="1224" height="1344">
+        <img class="sw-prop sw-prop--r" src="https://picsum.photos/id/925/3600/2400" crossorigin="anonymous"
              data-key="0.3 0.52" data-crop="0.04 0.06 0.38 0.56" data-tone="saturate(.45) brightness(.75) hue-rotate(20deg)" data-flip
-             alt="" aria-hidden="true" width="816" height="800">
+             alt="" aria-hidden="true" width="1224" height="1200">
       </div>
     </div>
   </section>
 
-  <section class="close" id="route" aria-labelledby="close-title">
-    <div class="cols">
-      <h2 id="close-title">The route opens on 24 June</h2>
-      <div>
-        <p>Beds are booked hut by hut, in order along the route, from 2 March. Write to the warden with your dates and the size of your party, and she will hold the beds for a week while you arrange the rest.</p>
-        <p>Blankets, supper and breakfast are in the price. Bring a sleeping sheet, crampons and a head torch.</p>
-        <a class="action" href="#route">Hold beds on the route</a>
-        <p class="credit">Photographs of the icefield by Lee Roylland and of the firs by Patrick Fore, on Unsplash.</p>
-      </div>
-    </div>
-    <p class="name" aria-hidden="true">Sorrel Pass Huts</p>
-  </section>
 </main>
+
+<!-- the footer: the ink half closes the page with the one action, the surface half holds the links and
+     the small print -->
+<footer class="close" id="book" aria-labelledby="close-title">
+  <div class="close-act">
+    <h2 id="close-title">The route opens on 24 June</h2>
+    <a class="action" href="#book">Hold beds on the route</a>
+  </div>
+  <div class="close-info">
+    <nav aria-label="Footer"><a href="#route">The route</a><a href="#book">The huts</a><a href="#top">What to bring</a></nav>
+    <p>Beds are booked hut by hut from 2 March.<br>warden@sorrelpass.no</p>
+    <p class="small">Supper, breakfast and blankets are in the price. Photographs by Lee Roylland and Patrick Fore on Unsplash. Sorrel Pass Huts is invented for this demo.</p>
+  </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>

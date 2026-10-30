@@ -294,10 +294,35 @@ export function extra(opts = {}) {
     if (out.drawings.length >= 12) break;
   }
   {
-    let first = 0; const tw = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); let n;
-    while ((n = tw.nextNode())) { const el = n.parentElement; if (!el || !visible(el) || el.closest('nav, header, [data-ui]')) continue; const r = el.getBoundingClientRect(); if (r.top + sy < H && r.bottom + sy > 0) first += words(n.nodeValue); }
+    // round 11 (Leon: "too much text, cut almost everything down"): the words a visitor reads, in the first screen, in
+    // each section and on the whole page. The site's bar, the navigation, the product's window, dialogs and hidden text
+    // are not counted (a hero set in a <header> is counted)
+    // (a bar that holds the page's h1 is the hero's title strip, r8-p38's rail: its words are read as the hero's)
+    const siteBar = (el) => { const b = el.closest('header'); return !!b && !b.parentElement?.closest('main, section, article, [data-scene]') && b.getBoundingClientRect().height < H * 0.3 && !b.querySelector('h1'); };
+    const shownText = (el) => { for (let e = el; e && e !== D; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.05) return false; } const r = el.getBoundingClientRect(); return r.width > 1 && r.height > 1 && !(r.width <= 2 && r.height <= 2); };
+    const counted = (el) => !!el && !el.closest('script, style, noscript, template, nav, [data-ui], dialog, [role=dialog], [aria-hidden=true], [hidden], .sr-only, .visually-hidden') && !siteBar(el) && shownText(el);
+    let first = 0, page = 0, foot = 0; const tw = document.createTreeWalker(B, NodeFilter.SHOW_TEXT); let n;
+    const textNodes = [];
+    while ((n = tw.nextNode())) { const el = n.parentElement; const k = words(n.nodeValue); if (!k || !counted(el)) continue; textNodes.push([n, el, k]); page += k; if (el.closest('footer')) foot += k; const r = el.getBoundingClientRect(); if (r.top + sy < H && r.bottom + sy > 0) first += k; }
     out.firstScreenWords = first;
-    out.wordySections = [...document.querySelectorAll('main > section, body > section, main > div > section, section')].filter((s) => visible(s) && !s.parentElement?.closest('section')).map((s) => ({ words: [...s.querySelectorAll('p, li, dd, td, blockquote, figcaption')].filter((p) => visible(p) && !p.closest('[data-ui], footer') && !p.querySelector('p, li, dd, td, blockquote, figcaption')).reduce((a, p) => a + words(textOf(p)), 0), head: textOf(s.querySelector('h1, h2, h3') || s).slice(0, 40) })).filter((s) => s.words > 130).slice(0, 6);
+    out.pageWords = { all: page, footer: foot };
+    // each section's words outside lists and tables. A set of three items or more of one kind (cards, rooms, steps) is a
+    // list too, but an item's words past 25 count: a card says its point in about 25 words. The hero (the first screen's
+    // own budget) and the footer are left out
+    const h1 = document.querySelector('h1');
+    const secs = [...document.querySelectorAll('section, [data-scene], main > article, main > div')].filter((s) => visible(s) && !s.parentElement?.closest('section, [data-scene]') && !s.closest('footer') && !(s.matches('main > article, main > div') && s.querySelector('section, [data-scene]')) && !(h1 && s.contains(h1) && s.getBoundingClientRect().top + sy < H * 0.5));
+    // (paragraphs and inline words in the flow are running text, never items: four paragraphs of one class are a wall of
+    // text; a paragraph laid out as a row, r10-p47's schedule with the time beside each step, can be an item)
+    const itemOf = (el, s) => { for (let e = el; e && e !== s; e = e.parentElement) { if (/^(P|H[1-6]|BLOCKQUOTE|SPAN|EM|STRONG|B|I|SMALL|SUP|SUB)$/.test(e.tagName) && !/flex|grid/.test(getComputedStyle(e).display)) continue; const p = e.parentElement; if (!p || p === s.parentElement) break; const sib = [...p.children].filter((c) => c.tagName === e.tagName && String(c.className) === String(e.className) && words(c.innerText || '') >= 3); if (sib.length >= 3) return e; } return null; };
+    out.wordySections = secs.map((s) => {
+      let loose = 0; const items = new Map();
+      for (const [, el, k] of textNodes) {
+        if (!s.contains(el) || el.closest('ul, ol, dl, table, [role=list], [role=table], form, footer')) continue;
+        const it = itemOf(el, s); if (it) items.set(it, (items.get(it) || 0) + k); else loose += k;
+      }
+      const over = [...items.values()].reduce((a, k) => a + Math.max(0, k - 25), 0);
+      return { words: loose + over, loose, items: items.size, over, head: textOf(s.querySelector('h1, h2, h3') || s).slice(0, 40) };
+    }).filter((s) => s.words > 60).sort((a, b) => b.words - a.words).slice(0, 6);
   }
 
   // --- breakage at narrow widths (most of the reviewed pages' high-severity faults were phone or tablet only)
@@ -344,11 +369,14 @@ export function extra(opts = {}) {
   {
     const top = [...B.querySelectorAll('a[href], button')].filter((a) => { const r = a.getBoundingClientRect(); return r.top + sy < 160 && r.bottom > 0 && visible(a) && r.width > 8; });
     const menu = top.some((b) => /menu|navigation/i.test((b.getAttribute('aria-label') || '') + ' ' + textOf(b)) || b.getAttribute('aria-expanded') != null);
-    out.nav = { links: top.length, menu };
+    // (round 11: a bar fixed to the foot of the screen, one of the dealt navigations, is the navigation too, at every width)
+    const fixedAt = (el) => { for (let e = el, i = 0; e && e !== B && i < 6; e = e.parentElement, i++) if (getComputedStyle(e).position === 'fixed') return true; return false; };
+    const foot = [...B.querySelectorAll('nav a[href], nav button')].filter((a) => { const r = a.getBoundingClientRect(); return r.top >= H * 0.8 && r.bottom <= H + 2 && visible(a) && r.width > 8 && fixedAt(a); }).length;
+    out.nav = { links: top.length, menu, foot };
   }
 
   // ---------- round 4: what judges found on pages every check above passed ----------
-  const opaqueBg = (el) => { const m = getComputedStyle(el).backgroundColor.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return p.length > 3 && p[3] < 0.9 ? null : p.slice(0, 3); };
+  const opaqueBg = (el) => { const s = getComputedStyle(el).backgroundColor; const k = s.match(/color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)(?:\s*\/\s*([-\d.e]+))?\s*\)/); if (k) return k[4] != null && +k[4] < 0.9 ? null : [k[1] * 255, k[2] * 255, k[3] * 255]; const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return p.length > 3 && p[3] < 0.9 ? null : p.slice(0, 3); };
   const differs = (a, b, d = 6) => !!a && !!b && a.some((v, i) => Math.abs(v - b[i]) >= d);
   const sides = (el) => { const cs = getComputedStyle(el); return ['Top', 'Right', 'Bottom', 'Left'].filter((s) => parseFloat(cs[`border${s}Width`]) >= 1 && cs[`border${s}Style`] !== 'none' && !/rgba\([^)]*,\s*0\)/.test(cs[`border${s}Color`])).length; };
   const filledOn = (el) => { const c = opaqueBg(el); return c && differs(c, groundOf(el.parentElement || B)) ? c : null; };
@@ -780,7 +808,14 @@ export function extra(opts = {}) {
       if (touching >= (order.length - 1) * 0.6) continue;
       const box = filled.find((x) => x.c.tagName === tag);
       const sec = list.closest('section, article') || list.parentElement;
-      out.boxedLists.push({ el: list, head: textOf(sec?.querySelector('h1, h2, h3') || sec || list).slice(0, 40), first: textOf(box.c).slice(0, 30), n, fill: filledOn(box.d) ? hex(filledOn(box.d)) : 'outlined' });
+      // (round 11: how the items are drawn. Items on a fill are cards, wanted; items drawn by an outline alone, items cut to
+      // a shape by a mask or a clip-path, and items that hold a box of their own are what the boxed-list check fails)
+      const plainClip = (v) => v === 'none' || /^inset\(/.test(v);
+      const shapeOf = (it) => { const e = it.d; for (let x = e, i = 0; x && i < 3 && it.c.contains(x); i++, x = x.parentElement) { const cs = getComputedStyle(x); if ((cs.maskImage && cs.maskImage !== 'none') || (cs.webkitMaskImage && cs.webkitMaskImage !== 'none') || !plainClip(cs.clipPath)) return true; } for (const k of e.children) { const cs = getComputedStyle(k); const q = k.getBoundingClientRect(), b = e.getBoundingClientRect(); if (q.width * q.height >= b.width * b.height * 0.8 && ((cs.maskImage && cs.maskImage !== 'none') || !plainClip(cs.clipPath))) return true; } return false; };
+      const innerBox = (e) => { const b = e.getBoundingClientRect(); return [...e.querySelectorAll('*')].slice(0, 300).some((k) => { if (/^(BUTTON|INPUT|SELECT|TEXTAREA|IMG|VIDEO|PICTURE|CANVAS|SVG)$/i.test(k.tagName) || k instanceof SVGElement) return false; const ctl = k.closest('a, button'); if (ctl && ctl !== e && e.contains(ctl)) return false; const q = k.getBoundingClientRect(); if (q.width < Math.max(80, b.width * 0.3) || q.height < 40 || q.width * q.height >= b.width * b.height * 0.9 || !visible(k)) return false; return (!!filledOn(k) || sides(k) >= 3) && !!textOf(k); }); };
+      const items2 = filled.filter((x) => x.c.tagName === tag);
+      const how = items2.some((x) => shapeOf(x)) ? 'shaped' : items2.filter((x) => innerBox(x.d)).length >= Math.min(2, items2.length) ? 'nested' : items2.every((x) => !filledOn(x.d)) ? 'outlined' : 'filled';
+      out.boxedLists.push({ el: list, head: textOf(sec?.querySelector('h1, h2, h3') || sec || list).slice(0, 40), first: textOf(box.c).slice(0, 30), n, fill: filledOn(box.d) ? hex(filledOn(box.d)) : 'outlined', how });
     }
     for (const x of out.boxedLists) delete x.el;
   }

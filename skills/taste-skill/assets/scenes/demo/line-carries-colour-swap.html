@@ -74,14 +74,20 @@
 
   /* the ink chapter */
   .opening {
+    /* the hero fills the first screen alone: the chapter's photograph comes after it */
+    box-sizing: border-box;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
     background: var(--ink);
     color: var(--ground);
     padding: calc(68px + clamp(40px, 9svh, 104px)) var(--gutter) clamp(48px, 8svh, 88px);
   }
   .opening h1 {
     margin: 0;
-    max-width: 13ch;
-    font-size: clamp(44px, 7.4vw, 124px);
+    max-width: 12ch;
+    font-size: clamp(56px, 14vw, 240px);
     line-height: 0.94;
     text-wrap: balance;
   }
@@ -153,7 +159,7 @@
     .bar .mark { font-size: 21px; }
     .bar nav .hide-s { display: none; }
     .opening { padding-top: calc(60px + 7svh); }
-    .opening h1 { font-size: 11vw; }
+    .opening h1 { font-size: clamp(56px, 18vw, 168px); }
     .opening .lead { grid-template-columns: 1fr; }
     .opening .lead p { font-size: 18px; }
     .opening .button { justify-self: start; }
@@ -178,9 +184,9 @@
 
 <main id="top">
   <section class="opening" aria-labelledby="title">
-    <h1 class="display" id="title">Set by hand from lead type</h1>
+    <h1 class="display" id="title">Set from lead type</h1>
     <div class="lead">
-      <p>Ostler Press is a two-press letterpress shop for wedding sets, menus, cards and short-run books. Every job is set from our own cases, a letter at a time.</p>
+      <p>A letterpress shop for wedding sets, menus and short-run books, set a letter at a time.</p>
       <a class="button" href="#proof">Order prints</a>
     </div>
   </section>
@@ -207,13 +213,13 @@
     <div class="top">
       <div>
         <h2 class="display" id="papers-title">Four cotton papers, cut in the shop</h2>
-        <p>Soft cotton takes the deepest bite, so the letters can be felt with a fingertip. Every sheet is cut to size on the morning it is printed.</p>
+        <p>Soft cotton takes the deepest bite. Every sheet is cut on the morning it is printed.</p>
       </div>
       <ul aria-label="The four papers">
-        <li><strong>Smooth white</strong><span>300 gsm, for menus and notes that fold.</span></li>
-        <li><strong>Soft white</strong><span>600 gsm, the weight most wedding sets are printed on.</span></li>
-        <li><strong>Natural grey</strong><span>450 gsm, which takes black ink with a slight shine.</span></li>
-        <li><strong>Pasted black</strong><span>900 gsm, two sheets pasted together for a thick edge.</span></li>
+        <li><strong>Smooth white</strong><span>300 gsm, for menus that fold.</span></li>
+        <li><strong>Soft white</strong><span>600 gsm, for wedding sets.</span></li>
+        <li><strong>Natural grey</strong><span>450 gsm, black ink with a slight shine.</span></li>
+        <li><strong>Pasted black</strong><span>900 gsm, two sheets for a thick edge.</span></li>
       </ul>
     </div>
     <div class="proof" id="proof">
@@ -226,7 +232,7 @@
       </figure>
       <div>
         <h3 class="display">A proof before every run</h3>
-        <p>We set your words, pull a proof on the paper you chose and post it to you. Nothing goes to press until you have held it.</p>
+        <p>We post you a proof on your paper. Nothing goes to press until you have held it.</p>
         <a class="button" href="#proof">Order prints</a>
       </div>
     </div>

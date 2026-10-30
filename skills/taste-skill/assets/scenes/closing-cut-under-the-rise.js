@@ -1,14 +1,15 @@
 // tasteskill / scenes / closing-cut-under-the-rise.js — "Closing cut under the rise".
 //
 // A closing scene for a page about one physical thing (a chair, a lamp, a kettle, a dish, a garment).
-// The last section holds a cut-out photograph of the thing standing in a flat room of two tints: the
+// The last section holds a cut-out photograph of the thing standing low in a flat room of two tints: the
 // closing picture's own wall and floor, split exactly where the picture's floor meets its wall. On a
-// slow in-out scrub the cut-out is carried up past the top of the frame (about two screens of travel)
-// while the camera ducks under it and comes back (the room rises by a fifth of a screen and settles).
-// Half-way up, in one frame, the flat room and the cut-out are gone and the closing photograph, which
-// was waiting beneath them, fills the screen: its floor line sits on the same row as the flat floor's
-// edge, so the cut reads as the room coming into focus, not as a jump, and the camera's return carries
-// on through it. Over the photograph the page's last sentence arrives in two or three plain steps
+// slow scrub the cut-out is carried up the frame, whole on every frame (never sliced by the top edge),
+// onto the row where the thing stands in the photograph, while the camera ducks under it and comes back
+// (the room sinks by a fifth of a screen at most and settles). There, in one frame, the flat room and
+// the cut-out are gone and the closing photograph, which was waiting beneath them, fills the screen
+// with the thing in the same place: its floor line sits on the same row as the flat floor's edge, so
+// the cut reads as the room coming into focus, not as a jump, and the camera's return carries on
+// through it. Over the photograph the page's last sentence arrives in two or three plain steps
 // (whole phrases, never letters), and one plain action follows under it. Flat tints only: no fade
 // through black or white, no glow, no gradient.
 //
@@ -55,24 +56,34 @@
 // for portrait with the --ccr-object-portrait token (object-position, the focal point).
 //
 // ── Options (data-options JSON; a value that is not a number or not known falls back) ──────────────
-//   hold     2     (1.4-2.4)  screens the stage is held for
-//   rise     1.8   (1-2.4)    screens the cut-out travels up over the hold (it clears the top of the
-//                             frame by the cut and carries on above it)
-//   phoneRise (rise)  (1-2.4)  the same below 768px, where the cut-out is fitted to the width and smaller:
-//                             set both so the cut-out is still about half in the frame at the cut
+//   hold     1.6   (1.4-2.4)  screens the stage is held for (a closing scene holds about one screen and a
+//                             half: the rise, the cut and three phrases)
+//   rise     1     (1-2.4)    the rise's speed, in screens over the whole hold (only the stretch before
+//                             the cut shows). The cut-out starts lower by the distance it travels before
+//                             the cut, so at the cut it stands where the subject stands in the photograph,
+//                             but never under the stage's foot margin (there the rise is shortened to the
+//                             room it has, so the cut still lands it on its row); where it would still
+//                             reach the top edge before the cut, the script slows the rise. It is whole on
+//                             every frame.
+//   phoneRise (rise)  (1-2.4)  the same below 768px, where the cut-out is fitted to the width and smaller
 //   ease     'none'           the rise: steady, so it is visibly moving within the first tenth (an in-out
 //                             ease such as 'sine.inOut' starts slower and hides the first beat)
 //   dip      0.2   (0-0.3)    screens the stage counter-moves down under the rise and comes back (the camera
 //                             ducks; it is deepest half-way and settles by 100%): small, so nothing
-//                             important ever leaves the frame
+//                             important ever leaves the frame; the script lowers it where it would sink the
+//                             subject's foot under the band
 //   phoneDip 0.1   (0-0.3)    the same on a portrait screen, where every pixel of height is the crop's
-//   cut      0.5   (0.3-0.6)  where the flat room and the cut-out give way to the photograph: set it
-//                             where the cut-out is still about half in the frame (0.35 for a short thing
-//                             standing low), so no frame before it is an empty room
-//   size     0.8   (0.5-0.9)  the cut-out's height as a share of the stage (a phone fits it to the width)
-//   from     cut + 0.1        where the first phrase has arrived
-//   to       0.76  (0.65-0.9) where the last phrase has arrived, and the action with it; the phrases are
+//   cut      0.3   (0.25-0.6) where the flat room and the cut-out give way to the photograph (0.28 for a
+//                             short thing standing low): the rise before it is the part that shows, and the
+//                             cut lands the thing in its own place
+//   size     0.5   (0.35-0.6) the cut-out's height as a share of the stage, about the subject's own height
+//                             in the photograph as cropped (larger has no room to rise and shrinks at the
+//                             cut); a phone fits it to the width
+//   from     cut + 0.04       where the first phrase has arrived: right after the cut, so the band (solid
+//                             from the cut frame) never sits empty
+//   to       0.88  (0.65-0.9) where the last phrase has arrived, and the action with it; the phrases are
 //                             spread evenly between, and the rest of the hold is the finished frame settling
+//                             (a short rest: a longer one repeats the same frame)
 //   band     'floor' | 'none'   floor: the words sit on a short flat band of the floor's tint across the
 //            foot of the photograph; before the cut that strip is the flat room's own floor, so the band
 //            does not change at the cut and the photograph above it stays whole. none: straight on the
@@ -89,14 +100,16 @@
 //
 // ── Timing ───────────────────────────────────────────────────────────────────────────────────────
 // The hold, 0 → 1 (every tenth of it shows something new):
-//   0 → cut     the cut-out rises steadily from the first frame and clears the top of the frame by the
-//               cut; the stage counter-moves down (sin curve), so the floor edge sinks under the rising thing
+//   0 → cut     the cut-out rises steadily from the first frame, from low on the flat floor onto the row
+//               where the thing stands in the photograph, whole all the way; the stage counter-moves down
+//               (sin curve), so the floor edge sinks under the rising thing
 //   cut         one frame: the flat room, the cut-out and the caption are hidden, the photograph shows,
-//               its floor line on the flat floor's row, the camera still moving
+//               its floor line on the flat floor's row, the camera still moving; the band is solid on this
+//               frame (it was the flat floor's foot a frame before), so it never blinks out
 //   cut → 1     the camera comes back (the photograph settles a fifth of a screen into its framing); the
-//               phrases arrive one by one, each a short fade and rise of a third of a line, the action
-//               together with the last one; from about 80% the frame is finished and only settles, ending
-//               exactly at 100%
+//               phrases arrive one by one on the band, each a short fade and rise of a third of a line, the
+//               action together with the last one; from about 90% the frame is finished and only settles,
+//               ending exactly at 100%
 // Nothing runs on a clock: every frame is a function of the scroll, so it stops where the visitor stops
 // and runs backwards exactly when they scroll back. A keyboard user who tabs to the action lands on the
 // end of the hold, with the line whole.
@@ -143,19 +156,19 @@
       console.warn(`${ID}: needs .scene-stage > .ccr with .ccr-world (holding .ccr-close with an img and .ccr-carrier with .ccr-subject) and .ccr-words`);
       return Stage.scene(root, { build: null });
     }
-    const cut = num(opts.cut, 0.5, 0.3, 0.6);
+    const cut = num(opts.cut, 0.3, 0.25, 0.6);
     const PLACE = ['bottom-left', 'bottom-right', 'top-left', 'top-right'];
     const o = {
-      hold: num(opts.hold, 2, 1.4, 2.4),
-      rise: num(opts.rise, 1.8, 1, 2.4),
+      hold: num(opts.hold, 1.6, 1.4, 2.4),
+      rise: num(opts.rise, 1, 1, 2.4),
       phoneRise: num(opts.phoneRise, NaN, 1, 2.4),
       dip: num(opts.dip, 0.2, 0, 0.3),
       phoneDip: num(opts.phoneDip, 0.1, 0, 0.3),
       cut,
       ease: typeof opts.ease === 'string' && opts.ease.trim() ? opts.ease.trim() : 'none',
-      size: num(opts.size, 0.8, 0.5, 0.9),
-      from: num(opts.from, Math.min(0.75, cut + 0.1), cut + 0.04, 0.8),
-      to: num(opts.to, 0.76, 0.65, 0.9),
+      size: num(opts.size, 0.5, 0.35, 0.6),
+      from: num(opts.from, Math.min(0.75, cut + 0.04), cut + 0.04, 0.8),
+      to: num(opts.to, 0.88, 0.65, 0.9),
       place: PLACE.includes(opts.place) ? opts.place : 'bottom-left',
       band: opts.band === 'none' || opts.band === false ? 'none' : 'floor',
       tint: opts.tint === 'auto' ? 'auto' : 'token',
@@ -221,11 +234,13 @@
       // cut lands the very thing back in its own place; kept inside the side margins
       const sp = spot();
       root.style.removeProperty('--ccr-x'); root.style.removeProperty('--ccr-foot');
+      let footRow = NaN;
       if (sp && nw && nh) {
         const k = Math.max(box.w / nw, box.h / nh), ox = (box.w - nw * k) * box.px, oy = (box.h - nh * k) * box.py;
         const half = (subject.offsetWidth || 0) / 2, pad = parseFloat(getComputedStyle(root).getPropertyValue('--ccr-pad')) || 16;
         const x = clamp(ox + sp.x * nw * k, half + pad, W - half - pad);
         const foot = Math.round(top + oy + sp.y * nh * k);
+        footRow = foot;
         root.style.setProperty('--ccr-x', Math.round(x) + 'px');
         root.style.setProperty('--ccr-foot', Math.max(0, Math.round(H - foot)) + 'px');
       }
@@ -249,6 +264,36 @@
         S.foot.style.setProperty('--ccr-tail', tail + 'px');
         root.style.setProperty('--ccr-tail', tail + 'px');
       }
+      // the dip never sinks the subject's foot under the band: on a tall crop the subject stands close to
+      // it, and a full dip would cut the thing off at its foot for most of the hold
+      S.dipPx = S.dip * H;
+      if (Number.isFinite(footRow) && !S.ride && !o.place.startsWith('top')) {
+        const bandTop = H - words.offsetHeight;
+        S.dipPx = clamp(bandTop - 12 - footRow, 0, S.dipPx);
+      }
+      // the start: the cut-out starts lower by the distance it travels before the cut, so at the cut it
+      // stands on the subject's own row in the photograph (the dip moves both alike), but never under the
+      // stage's foot margin; where it would still reach the top edge before the cut, the rise is slowed.
+      // Either way it is whole on every frame it shows.
+      S.low = 0; S.riseK = 1;
+      const R = (S.phone && Number.isFinite(o.phoneRise) ? o.phoneRise : o.rise) * H;
+      const m = Math.max(16, Math.round(0.04 * H));
+      const top0 = carrier.offsetTop, hh = carrier.offsetHeight;
+      if (hh && hh <= H - 2 * m) {
+        S.low = clamp(R * ease(o.cut), 0, Math.max(0, H - m - (top0 + hh)));
+        // a capped start: the rise is shortened to the room there is, so the cut still lands it on its row
+        const pre = R * ease(o.cut); if (pre > 0 && S.low < pre) S.riseK = S.low / pre;
+        const topAt = (k) => {
+          let v = Infinity;
+          for (let i = 0; i <= 48; i++) { const t = (o.cut * i) / 48; v = Math.min(v, top0 + S.low - k * R * ease(t) + S.dipPx * Math.sin(Math.PI * t)); }
+          return v;
+        };
+        if (topAt(S.riseK) < m && topAt(0) >= m) {
+          let a = 0, b = S.riseK;
+          for (let j = 0; j < 24; j++) { const c = (a + b) / 2; if (topAt(c) < m) b = c; else a = c; }
+          S.riseK = a;
+        }
+      }
     };
 
     // the frame at t: the world's dip, the carrier's rise and which side of the cut it is
@@ -256,11 +301,13 @@
       if (!S.live) return;
       S.t = t;
       const H = S.H || innerHeight;
-      const d = (S.dip ?? o.dip) * H * Math.sin(Math.PI * clamp(t, 0, 1));
+      const amp = Number.isFinite(S.dipPx) ? S.dipPx : (S.dip ?? o.dip) * H;
+      const d = amp * Math.sin(Math.PI * clamp(t, 0, 1));
       world.style.transform = `translate3d(0, ${d.toFixed(1)}px, 0)`;
       words.style.transform = S.ride ? `translate3d(0, ${d.toFixed(1)}px, 0)` : '';
       const R = S.phone && Number.isFinite(o.phoneRise) ? o.phoneRise : o.rise;
-      carrier.style.transform = `translate3d(-50%, ${(-R * H * ease(clamp(t, 0, 1))).toFixed(1)}px, 0)`;
+      const y = (S.low || 0) - (S.riseK ?? 1) * R * H * ease(clamp(t, 0, 1));
+      carrier.style.transform = `translate3d(-50%, ${y.toFixed(1)}px, 0)`;
       const side = t >= o.cut ? 'after' : 'before';
       if (side !== S.side) { S.side = side; root.dataset.ccrCut = side; }
     };
@@ -268,7 +315,7 @@
     const unhook = () => {
       S.live = false;
       if (S.foot) { S.foot.removeAttribute('data-ccr-foot'); S.foot.style.removeProperty('--ccr-tail'); }
-      S.foot = null; S.side = '';
+      S.foot = null; S.side = ''; S.low = 0; S.riseK = 1;
       for (const p of ['--ccr-over', '--ccr-horizon', '--ccr-wall-c', '--ccr-floor-c', '--ccr-tail', '--ccr-x', '--ccr-foot']) root.style.removeProperty(p);
       delete root.dataset.ccrCut; delete root.dataset.ccrFloor;
       world.style.transform = ''; carrier.style.transform = ''; words.style.transform = '';
@@ -288,9 +335,10 @@
       S.state = state;
       // the words: whole phrases, one by one, each whole at its point; then the action
       const span = 0.035, phrases = arrive.filter((el) => el !== action), n = phrases.length;
-      // the band (or the block) arrives with the first phrase, not at the cut: the photograph is whole
-      // for a beat first
-      tl.fromTo(words, { opacity: 0 }, { opacity: 1, duration: span, ease: 'power1.out', immediateRender: true }, Math.max(o.cut + 0.005, o.from - span));
+      // the band is solid on the cut frame: before the cut that strip was the flat room's own floor, so it
+      // does not change at the cut (a fade here showed the table's legs through it for a beat); the CSS
+      // keeps it hidden before the cut, and the first phrase follows at `from`
+      tl.set(words, { opacity: 1 }, o.cut);
       arrive.forEach((el) => {
         const i = el === action ? n - 1 : phrases.indexOf(el);
         const end = n > 1 ? o.from + ((o.to - o.from) * i) / (n - 1) : o.to;

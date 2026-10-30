@@ -123,7 +123,9 @@
 
   @media (max-width: 1000px) {
     .intro { grid-template-columns: 1fr; padding-top: 120px; }
-    .intro > div { grid-column: 1; }
+    /* one column: the headline first, the line and the actions under it, both low in the screen */
+    .intro h1 { grid-row: 1; }
+    .intro > div { grid-column: 1; grid-row: 2; }
     .intro h1 { font-size: clamp(44px, 12vw, 120px); }
     .story { grid-template-columns: 1fr; }
     .story figure { max-width: 520px; }
@@ -151,15 +153,15 @@
   <section class="intro" aria-labelledby="intro-h">
     <h1 id="intro-h">Plan the year as one team</h1>
     <div>
-      <p>Tessera is a planning sheet for finance teams. The numbers arrive from payroll and billing, questions stay on the cell, and an agent drafts the edits you approve.</p>
+      <p>A planning sheet for finance teams, fed by payroll and billing.</p>
       <div class="actions">
         <a class="btn" href="/start">Start a plan</a>
-        <a class="more" href="#how">See how a plan comes together</a>
+        <a class="more" href="#how">See a plan built</a>
       </div>
     </div>
   </section>
 
-  <section class="scene" id="how" data-scene="parts-lock-into-the-whole" data-options='{"hold":1.6}' aria-labelledby="pl-h">
+  <section class="scene" id="how" data-scene="parts-lock-into-the-whole" data-options='{"hold":1.6,"stagger":0.04,"phone":"rest"}' aria-labelledby="pl-h">
     <div class="scene-stage">
       <p class="pl-word-wrap" aria-hidden="true"><span class="pl-word">2027</span></p>
 
@@ -167,26 +169,7 @@
         <div class="pl-panel pl-bar" data-ui>
           <span class="pl-logo">Tessera</span>
           <span class="pl-crumbs">Northwind<i>/</i>Plans<i>/</i><span>Headcount 2027</span></span>
-          <span class="pl-people"><span class="pl-av">AF</span><span class="pl-av">MO</span><span class="pl-av">JL</span></span>
           <span class="pl-btn">Share</span>
-        </div>
-
-        <div class="pl-panel pl-side" data-ui>
-          <p class="pl-group">Plans</p>
-          <ul class="pl-nav">
-            <li class="is-on">Headcount 2027</li>
-            <li>Operating budget</li>
-            <li>Revenue model</li>
-            <li>Cash runway</li>
-            <li>Board pack, Q4</li>
-          </ul>
-          <p class="pl-group">Sources</p>
-          <ul class="pl-nav pl-sources">
-            <li><span class="pl-dot"></span>Payroll<small>61 people</small></li>
-            <li><span class="pl-dot"></span>Billing<small>1,204 invoices</small></li>
-            <li><span class="pl-dot"></span>Bank feed<small>3 accounts</small></li>
-            <li><span class="pl-dot"></span>HR system<small>14 open roles</small></li>
-          </ul>
         </div>
 
         <div class="pl-panel pl-main" data-ui>
@@ -199,14 +182,14 @@
               <tr><th scope="col">Team</th><th scope="col">Q1</th><th scope="col">Q2</th><th scope="col">Q3</th><th scope="col">Q4</th><th scope="col">Cost</th></tr>
             </thead>
             <tbody>
-              <tr><th scope="row">Engineering</th><td>24</td><td>26</td><td>29</td><td>31</td><td><span class="pl-fill" data-layer="1" data-ink="x" style="--v:1"></span><span class="pl-n">€4.62M</span></td></tr>
-              <tr><th scope="row">Design</th><td>7</td><td>8</td><td>8</td><td>9</td><td><span class="pl-fill" data-layer="1" data-ink="x" style="--v:.26"></span><span class="pl-n">€1.21M</span></td></tr>
-              <tr class="pl-talk"><th scope="row" data-layer="2" data-ink="mark">Sales</th><td data-layer="2" data-ink="mark">11</td><td data-layer="2" data-ink="mark">12</td><td class="is-sel"><span class="pl-flag" data-layer="2"></span><s class="pl-old" data-layer="3" data-ink="strike">15</s><span class="pl-new" data-layer="3">13</span></td><td data-layer="2" data-ink="mark"><s class="pl-old" data-layer="3" data-ink="strike">16</s><span class="pl-new" data-layer="3">14</span></td><td data-layer="2" data-ink="mark"><span class="pl-fill" data-layer="1" data-ink="x" style="--v:.43"></span><s class="pl-old" data-layer="3" data-ink="strike">€1.98M</s><span class="pl-new" data-layer="3">€1.89M</span></td></tr>
-              <tr><th scope="row">Marketing</th><td>6</td><td>6</td><td>7</td><td>8</td><td><span class="pl-fill" data-layer="1" data-ink="x" style="--v:.21"></span><span class="pl-n">€0.98M</span></td></tr>
-              <tr><th scope="row">Support</th><td>8</td><td>9</td><td>10</td><td>10</td><td><span class="pl-fill" data-layer="1" data-ink="x" style="--v:.19"></span><span class="pl-n">€0.87M</span></td></tr>
-              <tr><th scope="row">Operations</th><td>5</td><td>5</td><td>6</td><td>6</td><td><span class="pl-fill" data-layer="1" data-ink="x" style="--v:.14"></span><span class="pl-n">€0.66M</span></td></tr>
-              <tr><th scope="row">Finance</th><td>4</td><td>4</td><td>4</td><td>5</td><td><span class="pl-fill" data-layer="1" data-ink="x" style="--v:.13"></span><span class="pl-n">€0.61M</span></td></tr>
-              <tr class="pl-total"><th scope="row">Total</th><td>65</td><td>70</td><td><s class="pl-old" data-layer="3" data-ink="strike">79</s><span class="pl-new" data-layer="3">77</span></td><td><s class="pl-old" data-layer="3" data-ink="strike">85</s><span class="pl-new" data-layer="3">83</span></td><td><s class="pl-old" data-layer="3" data-ink="strike">€10.93M</s><span class="pl-new" data-layer="3">€10.84M</span></td></tr>
+              <tr><th scope="row">Engineering</th><td>24</td><td>26</td><td>29</td><td>31</td><td><span class="pl-n" data-layer="1">€4.62M</span></td></tr>
+              <tr><th scope="row">Design</th><td>7</td><td>8</td><td>8</td><td>9</td><td><span class="pl-n" data-layer="1">€1.21M</span></td></tr>
+              <tr class="pl-talk"><th scope="row" data-layer="2" data-ink="mark">Sales</th><td data-layer="2" data-ink="mark">11</td><td data-layer="2" data-ink="mark">12</td><td class="is-sel"><s class="pl-old" data-layer="3" data-ink="strike">15</s><span class="pl-new" data-layer="3">13</span></td><td data-layer="2" data-ink="mark"><s class="pl-old" data-layer="3" data-ink="strike">16</s><span class="pl-new" data-layer="3">14</span></td><td data-layer="2" data-ink="mark"><span class="pl-n" data-layer="1"><s class="pl-old" data-layer="3" data-ink="strike">€1.98M</s></span><span class="pl-new" data-layer="3">€1.89M</span></td></tr>
+              <tr><th scope="row">Marketing</th><td>6</td><td>6</td><td>7</td><td>8</td><td><span class="pl-n" data-layer="1">€0.98M</span></td></tr>
+              <tr><th scope="row">Support</th><td>8</td><td>9</td><td>10</td><td>10</td><td><span class="pl-n" data-layer="1">€0.87M</span></td></tr>
+              <tr><th scope="row">Operations</th><td>5</td><td>5</td><td>6</td><td>6</td><td><span class="pl-n" data-layer="1">€0.66M</span></td></tr>
+              <tr><th scope="row">Finance</th><td>4</td><td>4</td><td>4</td><td>5</td><td><span class="pl-n" data-layer="1">€0.61M</span></td></tr>
+              <tr class="pl-total"><th scope="row">Total</th><td>65</td><td>70</td><td><s class="pl-old" data-layer="3" data-ink="strike">79</s><span class="pl-new" data-layer="3">77</span></td><td><s class="pl-old" data-layer="3" data-ink="strike">85</s><span class="pl-new" data-layer="3">83</span></td><td><span class="pl-n" data-layer="1"><s class="pl-old" data-layer="3" data-ink="strike">€10.93M</s></span><span class="pl-new" data-layer="3">€10.84M</span></td></tr>
               <tr class="pl-empty"><th></th><td></td><td></td><td></td><td></td><td></td></tr>
               <tr class="pl-empty"><th></th><td></td><td></td><td></td><td></td><td></td></tr>
               <tr class="pl-empty"><th></th><td></td><td></td><td></td><td></td><td></td></tr>
@@ -222,6 +205,24 @@
             <span class="pl-btn is-accent">Accept</span>
             <span class="pl-btn is-quiet">Undo</span>
           </div>
+        </div>
+
+        <div class="pl-panel pl-side" data-ui>
+          <p class="pl-group">Plans</p>
+          <ul class="pl-nav">
+            <li class="is-on">Headcount 2027</li>
+            <li>Operating budget</li>
+            <li>Revenue model</li>
+            <li>Cash runway</li>
+            <li>Board pack, Q4</li>
+          </ul>
+          <p class="pl-group">Sources</p>
+          <ul class="pl-nav pl-sources">
+            <li>Payroll<small>61 people</small></li>
+            <li>Billing<small>1,204 invoices</small></li>
+            <li>Bank feed<small>3 accounts</small></li>
+            <li>HR system<small>14 open roles</small></li>
+          </ul>
         </div>
 
         <div class="pl-panel pl-insp" data-ui>
@@ -242,9 +243,9 @@
           </div>
           <div class="pl-thread">
             <p class="pl-insp-sub">Comments</p>
-            <div class="pl-comment"><span class="pl-av">AF</span><p><b>Ana Ferreira</b>Q1 and Q2 now match payroll.</p></div>
-            <div class="pl-comment" data-layer="2"><span class="pl-av">MO</span><p><b>Maya Okafor</b>Can the two Q3 Sales hires wait until January?</p></div>
-            <div class="pl-comment is-reply" data-layer="2"><span class="pl-av">JL</span><p><b>Jonas Lind</b>Fine if the pipeline holds. Ask the agent.</p></div>
+            <div class="pl-comment"><p><b>Ana Ferreira</b>Q1 and Q2 now match payroll.</p></div>
+            <div class="pl-comment" data-layer="2"><p><b>Maya Okafor</b>Can the two Q3 Sales hires wait until January?</p></div>
+            <div class="pl-comment is-reply" data-layer="2"><p><b>Jonas Lind</b>Fine if the pipeline holds. Ask the agent.</p></div>
           </div>
         </div>
       </div>

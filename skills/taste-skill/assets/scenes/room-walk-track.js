@@ -18,8 +18,9 @@
 //  <div class="scene-stage">
 //   <div class="rw-chrome">                                     optional, walk mode only; first, so the
 //     <a class="rw-chip rw-mark" href="#top">Wordmark</a>                        skip link is an early tab stop
-//     <p class="rw-chip rw-where" aria-hidden="true"><span class="rw-where__name"></span><span class="rw-where__count"></span><span class="rw-bar"><span></span></span></p>
 //     <a class="rw-chip rw-skip" href="#after">Skip the walk</a></div>
+//   (A .rw-where chip, the room's name with "n of 8" and a filling bar, was a counter and a progress readout:
+//    since fix-002 it is hidden and never written. Leave it out; pages that still carry it keep working.)
 //   <div class="rw-track">
 //    <article class="rw-room rw-threshold" data-name="Varde">                              80vw, paper
 //      <h2 id="rw-title" class="rw-h1"><span class="rw-line">Line one</span><span class="rw-line">Line two</span></h2>
@@ -33,6 +34,7 @@
 //      <figure class="rw-pic rw-pic--a"><img></figure><figure class="rw-pic rw-pic--b"><img></figure>   3:4 portraits
 //      <p class="rw-read"><span class="rw-rl">one line</span> … five lines, 35-45 words</p></article>
 //    <div class="rw-band" aria-hidden="true"><div class="rw-band__col">Word * Word * Word * Word *</div></div>   15vw, one run of text
+//                         (optional, and best left out: a repeated word is filler, not a room; the demo has none)
 //    <article class="rw-room rw-values" data-name="Three rules">                           110vw, powder
 //      <h3 class="rw-sr">Three rules</h3>
 //      <ol class="rw-vals"><li class="rw-val">Word</li> ×3 (13 characters or fewer)</ol>
@@ -80,13 +82,14 @@
 // fit; they just get smaller.
 //
 // ── Options (data-options='{"rate":1.1}') ────────────────────────────────────────────────────────
-//   rate    0.8-1.25  screen widths walked per screen of scroll (1)
+//   rate    0.8-1.25  screen widths walked per screen of scroll (1.25 since fix-002, which trims the demo's
+//                     walk from 11.6 screens toward 8; 1 before)
 //   ramp    0.15-0.35 screens the walk takes to start and stop (0.25)
 //   open    50-66     width of an open project card, vw (60); the question panel is 100 - open
 //   closed  12-18     width of a waiting strip, vw (15)
 //   stack   0.5-1.2   screens the walk holds on the column while its photos stack (0.7)
 //   swap    0.5-1     screens it holds on the coral room for the photo swap (0.5)
-//   rest    0.2-0.6   screens of still closing headline before the page moves on (0.3)
+//   rest    0.2-0.6   screens of still closing headline before the page moves on (0.2; 0.3 before fix-002)
 //   scrub   true | 0.1-1.5   catch-up in seconds (0.3 when Lenis runs, else 0.6)
 //   intro   true      the threshold title rises once when the walk is on screen at load
 //
@@ -101,9 +104,9 @@
   const ROOM = { threshold: 80, photo: 90, ink: 90, band: 15, values: 110, coral: 100 };
   const TYPES = Object.keys(ROOM);
   const SLIDE = 17.5;          // vw the held column narrows by when the question opens (--rw-slide in the CSS)
-  const EDGE = 6;              // vw of extra exit travel, so the coral's trailing shade leaves the frame too
+  const EDGE = 0;              // vw of extra exit travel after the coral (6 while it drew a shade; it no longer does)
   const BLOCK = 34, SHUT = 13; // card colour block, open and closed, % of the stage height
-  const DRIFT = [-8, 6, -12];  // threshold title lines, vw over the first screen
+  const DRIFT = [-4, 5, -4];   // threshold title lines, vw over the first screen (never past the room's 6vw margin)
   const PHOTO_DRIFT = [[10, -4], [18, -6]];   // photo room heading lines, vw across the room's crossing
   const SHEAR = [[-14, 14], [10, -10], [-22, 22]];  // value words, vw across the room's crossing
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -154,20 +157,6 @@
       const words = c.children.length ? [...c.children].map((k) => k.textContent.trim()) : c.textContent.split(/\s+/);
       c.textContent = words.filter(Boolean).join(' ');
     });
-  };
-  const STRIPS = 14;
-  const edge = (el, side) => {
-    let e = el.querySelector(':scope > .rw-edge--' + side);
-    if (!e) {
-      // flat translucent strips, each a little wider than the last, all flush with the sheet's edge:
-      // where they overlap the shade deepens, in steps of under 2% so they never read as stripes
-      e = document.createElement('span');
-      e.className = 'rw-edge rw-edge--' + side;
-      e.setAttribute('aria-hidden', 'true');
-      for (let k = 1; k <= STRIPS; k++) e.appendChild(document.createElement('i')).style.width = (((k / STRIPS) ** 1.6) * 100).toFixed(2) + '%';
-      el.appendChild(e);
-    }
-    return e;
   };
   // A staggered fromTo placed later in a scrubbed timeline only applies its start to the first target,
   // so the start is set on all of them first.
@@ -338,6 +327,34 @@
     const sAt = (sg, p) => sAtX(p - sg.L);
     const vh = () => stage.clientHeight / 100;
     const seg = (type) => P.segs.find((s) => s.type === type);
+    // A block of words set inside a room shows only while every word of it is wholly on screen (its ink,
+    // measured where it is drawn, moving lines included, 1vw clear of both edges), and arrives on a 0.3s
+    // clock and leaves on a 0.2s one: a sideways walk never shows words cut by the screen's edge, and a stopped scroll never
+    // shows them half faded. (Before fix-006 the fade was scrubbed at fixed points, which let the photo
+    // room's drifting heading and the threshold title meet the edge first, and stood half faded at a stop.)
+    // `from`: not before this moment of the walk.
+    const edged = [];
+    const edgeFade = (el, sg, from = 0) => {
+      if (!el) return;
+      gsap.set(el, { autoAlpha: 0 });
+      const tw = gsap.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3, ease: 'power1.inOut', paused: true, immediateRender: false });
+      edged.push({ el, sg, from, tw, on: null });
+    };
+    // the words' own ink (their text, not the boxes of the lines that carry them), where it is drawn now
+    const inkBox = (b, rg) => {
+      if (!b.nodes) {
+        const w = document.createTreeWalker(b.el, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.data.trim() ? 1 : 3) });
+        b.nodes = [];
+        for (let n = w.nextNode(); n; n = w.nextNode()) b.nodes.push(n);
+      }
+      let l = Infinity, r = -Infinity;
+      for (const n of b.nodes) {
+        rg.selectNodeContents(n);
+        const rc = rg.getBoundingClientRect();
+        if (rc.width > 0) { l = Math.min(l, rc.left); r = Math.max(r, rc.right); }
+      }
+      return { left: l, right: r, width: r > l ? r - l : 0 };
+    };
     const track = root.querySelector('.rw-track');
 
     // Pictures far to the right of a transformed track are not reliably lazy-loaded: load them all now,
@@ -363,6 +380,10 @@
       titleLines = [...thr.el.querySelectorAll('.rw-h1 .rw-line')];
       const s1 = sAt(thr, -77.5);
       titleLines.forEach((ln, i) => tl.fromTo(ln, { x: 0 }, F({ x: () => DRIFT[i % 3] * vw(), duration: dd(s1) }), 0));
+      // the title and the lede leave before the screen's left edge reaches them (they were sliced,
+      // "oms that let / e city slow down", as the room left)
+      edgeFade(thr.el.querySelector('.rw-h1'), thr);
+      edgeFade(thr.el.querySelector('.rw-lede'), thr);
     }
 
     // photo room: counter-parallax in the bleed; the heading's lines rise as the room comes in and
@@ -382,6 +403,9 @@
       stag(tl, lines.map((l) => l.__in).filter(Boolean), { yPercent: 110 }, F({ yPercent: 0, ease: 'power2.out', duration: dd(0.26), stagger: dd(0.08) }), at(sAt(ph, 46)));
       const fl = ph.el.querySelector('.rw-flip');
       if (fl) swap(tl, fl, at(sAt(ph, 17.5)), dd(0.55), F({}));
+      // the copy (57-87vw of the room, its heading lines drifting) shows only while the whole of it is on
+      // screen: never cut by an edge, and gone before its drifting heading reaches the left edge
+      edgeFade(ph.el.querySelector('.rw-copy'), ph);
     }
 
     // ink room: two portraits open from the bottom, then the statement brightens line by line
@@ -397,6 +421,8 @@
       reveal(ink.el.querySelector('.rw-pic--b'), sAt(ink, 82.5));
       // the statement brightens from 40%, never fainter, so the lines still to come stay readable
       stag(tl, [...ink.el.querySelectorAll('.rw-read .rw-rl')], { opacity: 0.4 }, { opacity: 1, duration: dd(0.2), stagger: dd(0.075) }, at(sAt(ink, 40)));
+      // the statement (49-85vw of the room) shows only while the whole of it is on screen
+      edgeFade(ink.el.querySelector('.rw-read'), ink);
     }
 
     // band: the vertical word climbs while the walk runs left
@@ -411,12 +437,16 @@
     const val = seg('values');
     if (val) {
       const s0 = sAt(val, 100), s1 = sAt(val, -110);
+      // each word rides inside the powder room and shows only while the whole word is on screen: it fades
+      // in once its right edge is in and out before its left edge meets the screen's edge, on a clock (they
+      // were cut mid-word, "Da", "Patie", "Weigh", at 20-31% of the walk)
       val.el.querySelectorAll('.rw-val').forEach((w, i) => {
         const [a, b] = SHEAR[i % 3];
         tl.fromTo(w, { x: () => a * vw() }, F({ x: () => b * vw(), duration: dd(s1 - s0) }), at(s0));
+        edgeFade(w, val);
       });
-      const note = val.el.querySelector('.rw-vals__note');
-      if (note) tl.fromTo(note, { opacity: 0 }, { opacity: 1, duration: dd(0.3) }, at(sAt(val, 47.5)));
+      // the note: on the same clock, while it is wholly on screen (it was scrubbed in and caught half faded)
+      edgeFade(val.el.querySelector('.rw-vals__note'), val);
     }
 
     // relay: each card opens while its left edge walks from 80vw to 80 - open; the strip waiting to its
@@ -426,16 +456,21 @@
       const img = c.el.querySelector('.rw-card__photo img'), block = c.el.querySelector('.rw-card__block');
       return { ...c, e: { v: 0 }, setX: c.inHold ? null : gsap.quickSetter(c.el, 'x', 'px'), imgX: img ? gsap.quickSetter(img, 'xPercent') : null, blockY: block ? gsap.quickSetter(block, 'yPercent') : null };
     });
+    // A card's words never ride the scroll: keyed to it, a name stood half-drawn ("Kad", "Chapel Libr")
+    // wherever the reader stopped, half under the strip still covering it. They play on a clock of under a
+    // second once the card is three quarters open (its whole name uncovered), and drop back below that.
     cards.forEach((c) => {
       const ws = sAtX(80 - c.L), we = Math.max(sAtX(80 - O - c.L), ws + 0.05), u = we - ws;
-      c.ws = ws; c.we = we;
+      c.ws = ws; c.we = we; c.on = false; c.at = ws + 0.65 * u;
       tl.fromTo(c.e, { v: 0 }, { v: 1, ease: 'power1.inOut', duration: dd(u), immediateRender: false }, at(ws));
+      const words = gsap.timeline({ paused: true });
       const yp = [...c.el.querySelectorAll('.rw-card__year > .rw-in, .rw-card__place > .rw-in')];
-      if (yp.length) tl.fromTo(yp, { yPercent: 105 }, F({ yPercent: 0, ease: 'power2.out', duration: dd(0.245 * u) }), at(ws + 0.455 * u));
+      stag(words, yp, { yPercent: 105, opacity: 0 }, F({ yPercent: 0, opacity: 1, ease: 'power2.out', duration: 0.35 }), 0);
       const nm = c.el.querySelector('.rw-card__name');
-      stag(tl, (nm && nm.__chars) || [], { yPercent: 110 }, F({ yPercent: 0, ease: 'power3.out', duration: dd(0.19 * u), stagger: { amount: dd(0.245 * u) } }), at(ws + 0.5 * u));
+      stag(words, (nm && nm.__chars) || [], { yPercent: 110, opacity: 0 }, F({ yPercent: 0, opacity: 1, ease: 'power3.out', duration: 0.35, stagger: { amount: 0.25 } }), 0.1);
       const link = c.el.querySelector('.rw-card__link');
-      if (link) tl.fromTo(link, { yPercent: 100, opacity: 0 }, F({ yPercent: 0, opacity: 1, ease: 'power2.out', duration: dd(0.245 * u) }), at(ws + 0.7 * u));
+      if (link) stag(words, [link], { yPercent: 100, opacity: 0 }, F({ yPercent: 0, opacity: 1, ease: 'power2.out', duration: 0.3 }), 0.4);
+      c.words = words;
     });
 
     // hold: a paper underlay narrows the column, the question builds, the column's photos stack up.
@@ -447,10 +482,19 @@
       // the underlay covers the column's edge first, so the headline that reaches over it never sits on a
       // photo; it slides while the last card opens, so the column grows straight to its held width
       if (under && H.card && H.qn) tl.fromTo(under, { x: 0 }, F({ x: () => -SLIDE * vw(), ease: 'power1.inOut', duration: dd(0.3) }), at(sA - 0.75));
-      // every line rises out of its own mask; a line dropping from above would hang its first strokes
-      // under the descenders of the line over it
+      // every line rises out of its own mask (a line dropping from above would hang its first strokes under
+      // the descenders of the line over it), on a clock once the whole panel is in, never half-drawn at a stop
+      // and never cut by the screen edge;
+      // the lines of the body follow
       const qch = [...H.el.querySelectorAll('.rw-q .rw-line')].flatMap((ln) => ln.__chars || []);
-      stag(tl, qch, { yPercent: 110 }, F({ yPercent: 0, ease: 'power3.out', duration: dd(0.15), stagger: { amount: dd(0.4) } }), at(sA - 0.45));
+      const qWords = gsap.timeline({ paused: true });
+      stag(qWords, qch, { yPercent: 110, opacity: 0 }, F({ yPercent: 0, opacity: 1, ease: 'power3.out', duration: 0.4, stagger: { amount: 0.4 } }), 0);
+      const qBody = [...H.el.querySelectorAll('.rw-q__body .rw-rl > .rw-in')];
+      stag(qWords, qBody, { yPercent: 100, opacity: 0 }, F({ yPercent: 0, opacity: 1, ease: 'power2.out', duration: 0.4, stagger: 0.06 }), 0.35);
+      H.words = qWords; H.on = false; H.at = sA - 0.04;   // once the whole panel is on screen
+      // the question leaves before the coral sheet's edge reaches it, so no line is ever cut mid-word
+      const qText = [H.el.querySelector('.rw-q'), H.el.querySelector('.rw-q__body')].filter(Boolean);
+      if (qText.length) tl.fromTo(qText, { opacity: 1 }, { opacity: 0, ease: 'power1.in', duration: dd(0.08), immediateRender: false }, at(stops.holdEnd - 0.1));
       const stack = H.el.querySelector('.rw-stack');
       if (stack) {
         // two lifts that share the held stretch (0.3 + 0.25 of the default 0.7), so the column is at
@@ -462,7 +506,6 @@
         const pics = [...stack.querySelectorAll('.rw-stack__pic img')];
         if (pics.length) tl.fromTo(pics, { scale: 1.15 }, F({ scale: 1, duration: dd(l1 + l2) }), at(sA));
       }
-      stag(tl, [...H.el.querySelectorAll('.rw-q__body .rw-rl > .rw-in')], { yPercent: 100 }, F({ yPercent: 0, ease: 'power2.out', duration: dd(0.2), stagger: dd(0.05) }), at(sA - 0.15));
     }
 
     // coral: slides over the still column with its picture panning in, holds for a swap, then leaves
@@ -472,25 +515,34 @@
       const pan = K.el.querySelector('.rw-window__pan');
       if (pan) tl.fromTo(pan, { xPercent: -100 }, F({ xPercent: 0, duration: dd(sC - sIn) }), at(sIn));
       const caps = [...K.el.querySelectorAll('.rw-cap > span')];
-      if (caps[0]) tl.fromTo(caps[0], { yPercent: 105 }, F({ yPercent: 0, ease: 'power2.out', duration: dd(0.25) }), at(sC - 0.25));
+      if (caps[0]) tl.fromTo(caps[0], { yPercent: 105, opacity: 0 }, F({ yPercent: 0, opacity: 1, ease: 'power2.out', duration: dd(0.25) }), at(sC - 0.25));
       const fl = K.el.querySelector('.rw-flip');
       if (fl) swap(tl, fl, at(sC + 0.05), dd(0.35), F({}));
       if (caps[0] && caps[1]) {
-        tl.fromTo(caps[0], { yPercent: 0 }, F({ yPercent: -105, ease: 'power2.inOut', duration: dd(0.35), immediateRender: false }), at(sC + 0.05));
-        tl.fromTo(caps[1], { yPercent: 105 }, F({ yPercent: 0, ease: 'power2.inOut', duration: dd(0.35) }), at(sC + 0.05));
+        tl.fromTo(caps[0], { yPercent: 0, opacity: 1 }, F({ yPercent: -105, opacity: 0, ease: 'power2.inOut', duration: dd(0.35), immediateRender: false }), at(sC + 0.05));
+        tl.fromTo(caps[1], { yPercent: 105, opacity: 0 }, F({ yPercent: 0, opacity: 1, ease: 'power2.inOut', duration: dd(0.35) }), at(sC + 0.05));
       }
-      // the sheet's shade: only while it moves (at the column hold its leading edge sits just off-screen)
-      tl.fromTo(edge(K.el, 'l'), { opacity: 0 }, { opacity: 1, duration: dd(0.12) }, at(sIn));
-      edge(K.el, 'r');
+      // the caption leaves before the screen's left edge reaches it as the room pulls away (it stood 3px
+      // from the edge at 89% of the walk)
+      edgeFade(K.el.querySelector('.rw-cap'), K);
     }
 
     // exit: the still stage settles as the last room pulls away
     const exit = root.querySelector('.rw-exit');
     if (exit) tl.fromTo(exit, { x: () => 6 * vw(), scale: 1.04 }, F({ x: 0, scale: 1, ease: 'power2.out', duration: dd(stops.exit - stops.exitIn) }), at(stops.exitIn));
-    // the chips belong to the walk: they leave during the closing rest instead of riding up into the next section
-    const chromeEl = root.querySelector('.rw-chrome');
+    // the closing headline lies under the whole walk. It shows on a 0.4s clock, and only once every room
+    // is 8px clear of its words (the last room's trailing edge cut "Bring us your site" to "g us / r site"
+    // when it was shown as soon as that room started to pull away); place() plays it and drops it back
+    const exitB = exit ? { el: exit, on: null, from: Math.max(0, stops.exitIn - 0.02) } : null;
+    if (exitB) {
+      gsap.set(exit, { autoAlpha: 0 });
+      exitB.tw = gsap.fromTo(exit, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4, ease: 'power1.inOut', paused: true, immediateRender: false });
+    }
+    // the chips belong to the walk: they leave during the closing rest instead of riding up into the next
+    // section. The chips fade, not their full-stage wrapper, so nothing that moves lies over the rooms.
+    const chips = [...root.querySelectorAll('.rw-chrome > .rw-chip:not(.rw-where)')];
     const fade = Math.min(0.15, o.rest * 0.6);
-    if (chromeEl) tl.fromTo(chromeEl, { autoAlpha: 1 }, { autoAlpha: 0, duration: dd(fade) }, at(T - fade));
+    if (chips.length) tl.fromTo(chips, { autoAlpha: 1 }, { autoAlpha: 0, duration: dd(fade) }, at(T - fade));
 
     // ── place(): the walk, the relay and the chrome, in whole pixels, once per render ──
     const setTrack = gsap.quickSetter(track, 'x', 'px');
@@ -508,19 +560,68 @@
     if (blocks.length) tl.set(blocks, F({ yPercent: 0 }), 0);
     const paint = (c) => { const k = 1 - c.e.v; if (c.imgX) c.imgX(IMG0 * k); if (c.blockY) c.blockY(BLK0 * k); };
 
-    const chip = root.querySelector('.rw-where');
-    const cName = chip && chip.querySelector('.rw-where__name'), cCount = chip && chip.querySelector('.rw-where__count');
-    const bar = root.querySelector('.rw-bar > span');
-    let cur = -1;
+    // The "where" chip (room name, "n of 8" and a filling bar) was a counter and a progress readout: it is
+    // no longer written, and the CSS hides it on pages that still carry it. What place() does instead at
+    // every update: play or drop back the words that run on a clock (each card's, the question's).
+    const clocked = [...cards, H].filter((c) => c && c.words);
+    // The held column's own card rides up with the stack towards the chips at the top of the screen: its
+    // words drop back (in about 0.4s) while its block is still a sixth of the screen below the chips, and
+    // come back when the stack comes down. They were drawn under the wordmark ("Varde" over "2024").
+    const held = cards.find((c) => c.inHold && c.words);
+    const heldBlock = held && held.el.querySelector('.rw-card__block');
+    // Only a chip at the top that lies over the block counts: the "Skip the walk" chip at the foot is
+    // never over it (counted, it kept the held card blank on desktop).
+    const clearOfChips = () => {
+      if (!heldBlock || !chips.length) return true;
+      const b = heldBlock.getBoundingClientRect();
+      let floor = 0;
+      for (const ch of chips) {
+        const r = ch.getBoundingClientRect();
+        if (r.height && r.top < stage.clientHeight / 2 && r.left < b.right && r.right > b.left) floor = Math.max(floor, r.bottom);
+      }
+      return !floor || b.top >= floor + stage.clientHeight / 6;
+    };
     const chrome = (s) => {
-      if (bar) bar.style.transform = 'scaleX(' + (s / T).toFixed(4) + ')';
-      if (!P.chapters.length || !cName) return;
-      let i = 0;
-      for (let k = 0; k < P.chapters.length; k++) if (s >= P.chapters[k].s - 1e-6) i = k;
-      if (i === cur) return;
-      cur = i;
-      cName.textContent = P.chapters[i].name;
-      if (cCount) cCount.textContent = (i + 1) + ' of ' + P.chapters.length;
+      for (const c of clocked) {
+        const on = s >= c.at && (c !== held || clearOfChips());
+        if (on === c.on) continue;
+        c.on = on;
+        if (on) c.words.timeScale(1).play(); else c.words.timeScale(c === held ? 2 : 1).reverse();
+      }
+    };
+
+    // the blocks of words that show only while wholly on screen: read where they are drawn now (a room off
+    // the screen is not read), then play or drop back their clocks; the first reading of a build jumps
+    const rg = document.createRange();
+    // (1vw clear of each edge, and out in 0.2s, so a stop just past the point still ends on the block whole
+    // and gone; a wider margin cost the value room words it keeps whole at the 23% and 29% steps)
+    const edges = (s) => {
+      const Wpx = window.innerWidth, m = Wpx / 100;
+      for (const b of edged) {
+        let on = false;
+        if (!b.sg.off && s >= b.from) { const r = inkBox(b, rg); on = r.width > 0 && r.left >= m && r.right <= Wpx - m; }
+        if (on === b.on) continue;
+        const first = b.on === null;
+        b.on = on;
+        if (first) b.tw.progress(on ? 1 : 0).pause();
+        else if (on) b.tw.timeScale(1).play(); else b.tw.timeScale(1.5).reverse();
+      }
+      // the closing headline: shown once the trailing edge of every room on screen is 8px left of its words
+      if (exitB) {
+        let on = false;
+        if (s >= exitB.from) {
+          const r = inkBox(exitB, rg);
+          let right = -Infinity;
+          for (const sg of P.segs) if (!sg.off) right = Math.max(right, sg.el.getBoundingClientRect().right);
+          on = r.width > 0 && r.left >= right + 8;
+        }
+        if (on !== exitB.on) {
+          const first = exitB.on === null;
+          exitB.on = on;
+          if (first) exitB.tw.progress(on ? 1 : 0).pause();
+          else if (on) exitB.tw.timeScale(1).play(); else exitB.tw.timeScale(1.5).reverse();
+        }
+      }
     };
 
     const ground = root.querySelector('.rw-ground');
@@ -531,7 +632,13 @@
       setTrack(tpx);
       let un = 0, ci = 0, centre = null;
       // the room across the middle of the screen (the last one wins: later rooms lie on top)
-      const over = (sg, shift, el) => { const l = sg.L + st.x + shift; if (l <= 50 && l + sg.w > 50) centre = el; };
+      const over = (sg, shift, el) => {
+        const l = sg.L + st.x + shift;
+        if (l <= 50 && l + sg.w > 50) centre = el;
+        // a room wholly off the screen is hidden, words and all, so nothing reads it as words cut by the edge
+        const off = l >= 100.5 || l + sg.w <= -0.5;
+        if (off !== sg.off) { sg.off = off; sg.el.style.visibility = off ? 'hidden' : ''; }
+      };
       for (const sg of P.segs) {
         if (sg.type === 'card') {
           const c = cards[ci++];
@@ -558,6 +665,7 @@
       }
       root.__rwRoom = centre || ground;
       chrome(tl.time() * T);
+      edges(tl.time() * T);
     };
     root.__rwPlace = place;
     root.__rwPlan = P;
@@ -582,6 +690,7 @@
     prep(root);
     root.classList.remove('rw-walk');
     root.classList.add('rw-v');
+    root.querySelectorAll('.rw-track > *, .rw-relay > .rw-card').forEach((el) => { el.style.visibility = ''; });
     root.__rwPlace = null;
     const S = (trigger, start, end) => gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger, start, end, scrub: 0.4, invalidateOnRefresh: true } });
     // Letters never ride the scroll here: a name keyed to the scroll stands half-drawn wherever the reader
@@ -643,10 +752,17 @@
     }
 
     // every line rises from below, as in the walk, its letters in 0.85s once half the question is on screen
+    // They do not drop back while the question is still on screen: they reset at once when the whole question
+    // has gone below the screen again, out of sight, so no moment (a reader scrolling back up, a tool that
+    // jumps to the top and measures) catches the letters half dropped, at three heights across two lines.
     const qh = one('.rw-q');
     if (qh) {
       const qch = [...qh.querySelectorAll('.rw-line')].flatMap((ln) => ln.__chars || []);
-      if (qch.length) stag(C(qh), qch, { yPercent: 110 }, { yPercent: 0, duration: 0.45, ease: 'power3.out', stagger: { amount: 0.4 } }, 0);
+      if (qch.length) {
+        const t = gsap.timeline({ scrollTrigger: { trigger: qh, start: () => `top bottom-=${Math.round(qh.offsetHeight / 2)}`, toggleActions: 'play none none none', invalidateOnRefresh: true } });
+        stag(t, qch, { yPercent: 110 }, { yPercent: 0, duration: 0.45, ease: 'power3.out', stagger: { amount: 0.4 } }, 0);
+        ScrollTrigger.create({ trigger: qh, start: 'top bottom', onLeaveBack: () => t.progress(0).pause() });
+      }
     }
 
     const win = one('.rw-window');
@@ -692,13 +808,13 @@
   window.Scenes[ID] = (root, opts = {}) => {
     if (!root || !window.Stage) return null;
     const o = {
-      rate: num(opts.rate, 1, 0.8, 1.25),
+      rate: num(opts.rate, 1.25, 0.8, 1.25),
       ramp: num(opts.ramp, 0.25, 0.15, 0.35),
       open: num(opts.open, 60, 50, 66),
       closed: num(opts.closed, 15, 12, 18),
       stack: num(opts.stack, 0.7, 0.5, 1.2),
       swap: num(opts.swap, 0.5, 0.5, 1),
-      rest: num(opts.rest, 0.3, 0.2, 0.6),
+      rest: num(opts.rest, 0.2, 0.2, 0.6),
       scrub: opts.scrub === true ? true : num(opts.scrub, Stage.lenis ? 0.3 : 0.6, 0.1, 1.5),
       intro: opts.intro !== false,
     };
@@ -728,6 +844,7 @@
       const P = root.__rwPlan;
       if (!P) return;
       gsap.set([root.querySelector('.rw-track'), ...P.segs.map((s) => s.el), ...P.cards.map((c) => c.el), P.hold && P.hold.qn].filter(Boolean), { x: 0 });
+      root.querySelectorAll('.rw-track > *, .rw-relay > .rw-card').forEach((el) => { el.style.visibility = ''; });
       for (const c of P.cards) {
         const img = c.el.querySelector('.rw-card__photo img'), block = c.el.querySelector('.rw-card__block');
         if (img) gsap.set(img, { xPercent: 0 });
@@ -833,8 +950,14 @@
       const st = moved && root.__rwTl && root.__rwTl.scrollTrigger;
       if (st) { st.update(); const tw = st.getTween && st.getTween(); if (tw) tw.progress(1); }
     });
-    // late fonts change every line's width: fit again, and let the column measure its new heights
-    if (document.fonts && document.fonts.status !== 'loaded') document.fonts.ready.then(() => ScrollTrigger.refresh());
+    // late fonts change every line's width: fit again, and let the column measure its new heights. A web
+    // font is fetched only once text using it is laid out, so `status` can read "loaded" before it has even
+    // been asked for: wait for fonts.ready always, and fit again whenever a later font finishes loading
+    if (document.fonts) {
+      const refit = () => { fit(root); ScrollTrigger.refresh(); };
+      document.fonts.ready.then(refit);
+      if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', refit);
+    }
 
     root.addEventListener('focusin', (e) => {
       const P = root.__rwPlan;

@@ -1,33 +1,100 @@
 // tasteskill / frame-deal — deal the parts every page has and every model builds the same way:
-// navigation, footer, corners, spacing, how pictures are treated, and whether the page has an
-// interactive piece or a moving picture at all. Left to the builder, these came out identical on 51
-// reviewed pages (a live widget on 33 of 34, video on 29, a giant footer name on 28, square buttons on 22).
+// navigation, footer, cards, buttons, corners, spacing, how pictures are treated, and whether the page has an
+// interactive piece or a moving picture at all. Left to the builder, these came out identical on 51 reviewed pages
+// (a live widget on 33 of 34, video on 29, a giant footer name on 28, square buttons on 22), and in October 2026 the
+// owner still saw three button shapes, one plain bar that hides on scroll and a one-line footer on nearly every page.
+// The four parts every page shows (navigation, footer, cards, buttons) now hold twelve designs each, dealt away from
+// the last draws in the history, so no one design comes back on more than about one page in eight.
+//
+// Each entry: [id, weight, what to build (or a function of ctx that writes it), fit(ctx) -> a weight multiplier
+// (optional)]. ctx: { tone, sector, software, door, multiPage, emailElsewhere, creative, few, nameHero, closingScene,
+// visitShown (a section blueprint is itself the visit block: then the footer is not) }.
 
+const ALWAYS_NAV = 'Nothing stands above it (no announcement, information or language strip: `announcement-bar` fails it), and every link is one or two words, never a sentence (`nav-sentence` fails a sentence in the bar and any link or button over three words). It sits on the page\'s margins, on an opaque ground wherever it is fixed.';
+// a first screen whose headline is the name shows no second wordmark (sheet section 6): the two designs that set the
+// wordmark large on the first screen say how, and are dealt less often under such a hero
+const NAME_MARK = 'When the hero\'s headline is the name, the first screen shows the mark alone in the wordmark\'s place (or leaves it empty) and the wordmark arrives in the fixed band once the hero has gone.';
 const NAV = [
-  ['bar', 5, 'A plain bar: the name on the left, three to six links, one action on the right. It stays at the top, or hides on the way down and returns on the first scroll up.'],
-  ['centred-name', 1.5, 'The name centred, the links split either side of it, the action at the far right. Good when the name is short.'],
-  ['two-rows', 1, 'A thin top row with secondary links (help, sign in, language) over a main row with the name, the main links and the action, like a large company site.'],
-  ['menu', 0.5, 'The name on the left, the links inline and the one action on the right on desktop; below 1024px a "Menu" button opens a full panel with the links while the action stays visible. Never a Menu button alone on desktop.'],
-  ['split', 0.8, 'The name on the left, the main links in the middle of the width, the action and a secondary link (sign in, cart) on the right.'],
+  ['hide-on-scroll', 1, 'A plain bar that hides on the way down: the wordmark at the left margin at the h3 step, three to five one-word links at body size, one button at the right margin; 64-72px tall on the page ground, no line under it. It scrolls away with the hero, stays hidden while the visitor scrolls down and comes back on the first scroll up on a solid band of the ground (a 200ms slide). On a phone: the wordmark and a Menu button in a 56px bar that hides the same way; Menu opens the links full-screen on the ground.'],
+  ['centred-logo', 1, `Split round a centred wordmark: two or three links at the left margin, the wordmark centred at the h3 step, the action at the right margin with one secondary link (Visit, Sign in) beside it; 80px tall over the hero. After the hero it stays fixed as a 56px band of the ground with the wordmark centred and the action at the right; below 900px the links go behind a Menu text button. ${NAME_MARK}`, (c) => (c.nameHero ? 0.3 : 1)],
+  ['floating-pill', 1, 'A floating capsule: centred at the top, 16px below the edge, as wide as its content (about 520-640px at 1440), 52-56px tall, fully round, filled with the surface tone and opaque (no blur, no border, no shadow at rest); in it the wordmark, three or four links at 15-16px and the action as the accent fill at its right end. It stays fixed on every screen on its solid fill, and every held heading keeps clear of it. On a phone: the wordmark and a Menu button in a 48px capsule, 12px from the edges.'],
+  ['menu-button', 1, 'Minimal: the wordmark at the left margin, and at the right margin a Menu text button beside the one action, both 44-48px tall, at every width. Menu opens a full-screen panel on the ink: the section names as links at the h2 step stacked on the left, the action, the email and the address or hours on the right, Close where Menu was; it slides down in 320ms. The 72px bar scrolls away with the hero; the wordmark and the two buttons then stay fixed in their corners, each on a solid tab of the ground.'],
+  ['shrinks', 1, 'A bar that changes on scroll: over the hero it is 104-120px tall with the wordmark at the h2 step and the links at body size; after 80px of scroll it settles into a 56-64px band of the ground (or the surface tone) with the wordmark at the h4 step, by transform alone (scale and translate, 300ms), and stays fixed. Never fades to glass. On a phone: 72px with the wordmark at the h4 step and a Menu button, settling to 56px the same way.'],
+  ['side-index', 0.7, 'A side index: at 1200px and wider the section names stand as a short vertical list at the left margin in grid columns 1-2, at body size, sticky from the end of the hero to the footer (position: sticky inside the page grid), the current one in the ink at weight 600 and the others in the muted ink. Every section after the hero keeps its content in columns 3-12, so the margins stay equal and nothing runs under the list: map each blueprint\'s columns 1-12 onto columns 3-12. The index hides (opacity 0, 200ms) while a full-bleed band, a scene or the replay is on screen, and comes back after. Over the hero the wordmark and the action stand in a plain top row; below 1200px it is a top bar with a Menu button.', (c) => (c.software ? 0.6 : 1)],
+  ['bottom-dock', 1, 'A dock at the bottom: at the top of the first screen only the wordmark, at the left margin, which scrolls away with the hero. The links and the action live in a capsule fixed 20px above the bottom edge and centred, there from the first screen on, 56px tall, as wide as its content, filled with the ink and lettered in the ground colour (on a dark page the surface tone with ink letters), opaque, no border, no shadow: three or four section names at 15-16px, the current one at weight 600, and the action as its one filled item in the accent. On a phone the dock spans the width less the margins, 60px plus the safe area, each target 44px or taller, and the page keeps 96px free under its last line. It slides down out of view while a pinned scene or the replay holds the screen, and comes back after.'],
+  ['corners', 0.9, 'No bar, four corners: the wordmark top-left and the action top-right, each on a small solid tab of the ground (10-14px padding, the dealt corner), fixed on every screen; on the first screen three or four links stand beside the wordmark and scroll away with the hero. On a phone the links go behind a Menu button beside the action.'],
+  ['masthead', 0.8, `A masthead: two rows over the hero, the wordmark centred at the h2 step and under it the links centred in one row at body size, the action at the right margin of the links row; 120-140px in all, 24px between the rows. Past the hero only the links row stays fixed, 56px, on a solid band of the ground, with the wordmark small at its left. Never an information strip over it. On a phone: the wordmark centred at the h3 step over one row with Menu at the left and the action at the right, about 112px in all; past the hero a 56px band with the wordmark and Menu. ${NAME_MARK}`, (c) => (c.nameHero ? 0.3 : 1) * (['restaurant', 'hospitality', 'culture', 'fashion', 'event', 'music'].includes(c.sector) || c.tone === 'editorial' || c.tone === 'luxury' ? 1.3 : c.software ? 0.4 : 1)],
+  ['ink-band', 0.8, 'A band in the ink: full width, 60-64px, filled with the page\'s ink colour (on a dark page the surface tone), the wordmark, links and action in the ground colour, the action a button of the ground colour with ink letters. It stays fixed at the top on every screen, a solid frame for the page. On a phone the band is 56px with the wordmark and a Menu button in the ground colour; Menu opens the links full-screen on the ink.', (c) => (c.tone === 'quiet' ? 0.5 : 1)],
+  ['contained-bar', 1, 'A contained bar: a filled band inside the page margins, 16px below the top edge, 60-64px tall, in the surface tone with the dealt panel corner; the wordmark at its left inner edge, the links and the action at its right. Fixed, opaque, no border, no shadow. On a phone it keeps the margins and holds the wordmark and Menu.'],
+  ['big-links', 0.7, 'Large links over the hero: the wordmark top-left and the section names as links at the h3 step in the text face at weight 500, spread across the top of the first screen on the grid columns, the action as a button at the right margin; 96px tall in all. Past the hero the links fold into a Menu text button beside the wordmark, the two fixed top-left on one solid tab of the ground (12px padding, the dealt corner), and the action stays fixed top-right on a tab of its own; Menu opens the same large links full-screen. On a phone: the wordmark and Menu on one tab, the action on the other.', (c) => (c.creative ? 1.4 : c.software ? 0.5 : 1)],
 ];
+const ALWAYS_FOOTER = 'The footer is a designed section, never a single line: it stands on its own ground (the surface tone or the ink; the page ground where its cards carry the surface tone), at least 40% of a screen tall at 1440, its links at body size. Never the name or the email at display size, never a credit wall (the credits sit behind one small "Image credits" link that opens a dialog), never a list the page already shows as content (the menu, the rooms).';
+// A footer that opens on its own closing line and button closes the page: the cta section before it is carried by that
+// line (draw.mjs), and it is not dealt after a closing scene, so a page ends once (round 11: nine of thirty pages ended
+// on a call to action and then a footer's closing line). On a door place the visit block stands once on the page: the
+// hours-and-place footer is that block; the others give the city and Directions and leave the rest to it.
+export const CLOSING_FOOTERS = new Set(['closing-columns', 'picture-footer', 'two-halves', 'statement-and-row', 'picture-and-facts']);
+const ends = (c) => (c.closingScene ? 0 : 1);
 const FOOTER = [
-  ['columns', 5, 'Link columns, only when the site has pages beyond this one: three to five short columns of real links to other pages (product, company, resources, legal), the name small, the legal line under them. Never the navigation again, never a list the page already shows. Text sizes only.'],
-  ['contact-band', 2.5, 'A contact band: address, hours, telephone and email in two or three columns at the body size, a short link row, and the legal line. The details a visitor came to the foot for.'],
-  ['one-line', 3, 'One quiet line: the name or ©, the city, the legal links and the Image credits link, on one row (two on a phone). For one-page sites.'],
-  ['sign-up', 1.5, 'A short sign-up (one sentence and an email field with its button) above a row of links and the legal line.'],
-  ['action-then-links', 2, 'The page\'s last section is the closing action (a heading and the one button); the footer under it is a small link row and the legal line.'],
+  ['closing-columns', 1, 'A closing line over columns: the closing line at the h2 step (the action as a statement, four to seven words) with the one button; 96px below, three or four short columns at body size: the sections, the contact (the email, a phone only if the brief gives one), the place or the social links, the legal links with Image credits; the © line at the foot. On the surface tone, about 60svh at 1440. On a phone the columns stack in pairs.', ends],
+  ['contact-block', 1, (c) => `A big contact block on the ink: the heading (Visit, Write, Book) at the h2 step on the left half; on the right half the email at the h3 step with a Copy button and a mailto link, and the city${c.door ? ' with a Directions link (the full visit block stands in the section above)' : ''}; under both, a row of the section links, the legal links and Image credits. About 60-70svh.`],
+  ['sitemap-grid', 1, 'A sitemap grid: four or five columns of real links at body size, each under a short heading at the h4 step in the display face (the sections, the contact, the social links, the legal pages with Image credits), across the content width on the surface tone with 48px gaps; the wordmark at the h3 step top-left and the © line at the foot. About 45-55svh. Only links that go somewhere, no column of filler.', (c) => (c.multiPage ? 1.2 : 0.4)],
+  ['picture-footer', 1, 'A picture footer: a photograph of the subject the page has not shown yet, full-bleed, 55-65svh, with the closing line at the h2 step and the button on its calm part (one tone under the words, no gradient, no card); under it a 30svh band of the ground with the contact, the links and the legal line in three columns.', (c) => ends(c) * (c.few ? 0.3 : c.software ? 0.5 : 1)],
+  ['newsletter-card', 1, 'A newsletter block on the page ground: one filled card on the surface tone with the dealt corner, whatever the page\'s card style, across eight columns, holding one sentence at the h3 step and an email field with its button in one row; beside it, on four columns, the contact and two or three links; the legal line and Image credits under both. It is the page\'s one email form.', (c) => (c.emailElsewhere ? 0 : 1)],
+  ['big-link-list', 1, (c) => `Large links on the ink: the page's sections and Contact stacked as links at the h2 step in the display face on the left two thirds (on hover each moves 8px and takes the accent); on the right third the email, the city${c.door ? ' with a Directions link (the full visit block stands in the section above)' : ''} and the social links at body size; the legal line and Image credits at the foot. About 70svh.`, (c) => (c.creative ? 1.3 : 1)],
+  ['three-cards', 1, (c) => `Three filled cards in a row on the ground, on the surface tone with the dealt corner, whatever the page's card style: ${c.door ? 'the place (the city and the district with a Directions link; the full visit block stands in the section above)' : c.software ? 'the company (its city and who makes the product)' : 'the studio\'s or company\'s city and what it takes on'}, the contact (the email with Copy, a phone only if given), and the news or the social links; each 260-320px tall with its heading at the h3 step; the © line, the legal links and Image credits under them.`],
+  ['two-halves', 1, 'Two halves: the left half on the ink (or the accent field the palette names) holds the closing line at the h2 step and the button in the ground colour; the right half on the surface tone holds the links in two short columns, the contact and the legal line. Full width, 50-60svh, the halves meeting on the centre line; on a phone they stack.', ends],
+  ['hours-and-place', 1, 'The place, in full: two columns on the surface tone: the opening hours (or the season and check-in times) as a real table with tabular figures on the left; the street and district, the nearest stop or the road from the town, a Directions link and the contact on the right; under both the section links, the legal links and Image credits. About 55svh. It is this page\'s visit block: no section above repeats the address, the hours or Directions.', (c) => (c.door && !c.visitShown ? 1.4 : 0)],
+  ['statement-and-row', 1, 'A closing statement: one line at the display step (five to eight words, the action as a statement) with the button under it, on the ground; then 120px of space and one band of the surface tone, 120-160px tall, with the links on the left, the contact in the middle, the © line and Image credits on the right. About 70svh in all.', ends],
+  ['link-columns', 1, 'Link columns for a site with pages beyond this one: four or five columns of real links to other pages (product, company, resources, legal), each under a heading at the h4 step; the wordmark and one sentence of what the company does at the top-left; the © line at the foot; on the surface tone, about 50svh. Never the navigation again, never a link that goes nowhere.', (c) => (c.multiPage ? 1.2 : 0)],
+  ['picture-and-facts', 1, 'A split footer: a photograph of the subject on the left six columns, from the left margin, 60svh tall; on the right six columns, on the surface tone, the closing line at the h3 step, the button, the contact, the links and the legal line, 32px between the groups.', (c) => ends(c) * (c.few ? 0.3 : c.software ? 0.5 : 1)],
+];
+const ALWAYS_CARDS = 'Cards group what belongs together and give the page its hierarchy: use them in two or three sections (the things a visitor compares or chooses between, the facts that belong together) and let the rest stand on the ground. One card style on the page. Filled, never outlined; no shadow at rest; no icon on top; never a card inside a card (a product window on a card is one), never a card laid half or more over a photograph, never more than one product window on the first screen, never a page built only of cards (`framed-elements`, `boxed-list`, `boxed-page`); the hero headline never in a card.';
+const CARDS = [
+  ['surface', 1, 'Filled cards: the surface tone (one step from the ground), the dealt corner, 32-40px padding, no border, no shadow; a heading at the h3 step, one or two sentences at body size, a link or a price at the foot. Two or three to a row with 16-24px gaps, equal heights; hover steps the fill one tone. On a phone they stack, full width.'],
+  ['picture-top', 1, 'Picture-led cards: the picture runs to the card\'s top and side edges at 4:3, the words under it on the card\'s surface tone with 24-28px padding: the name at the h4 step, one line of facts, the price or the link. Three to a row on desktop (two for rooms), 24px gaps; the corner on the card, the picture clipped by it; hover scales the picture 3% inside the card. On a phone one to a row.', (c) => (c.few ? 0.4 : 1)],
+  ['rows', 1, 'Rows with a surface: each item a full-width row on the surface tone, 80-104px tall, 8px apart, the dealt corner: the name at the h4 step on the left, one fact in the middle columns, the price or the link at the right. No line between them, no outline; hover steps the fill. For a menu, the plans, the rooms in short, a schedule. On a phone each row sets its parts on two lines.'],
+  ['horizontal', 1, 'Horizontal cards: wide cards on the surface tone, the picture on the left 40% (square or 4:5) running to the card\'s edges, the name, two facts and the action on the right 60% with 32-40px padding. Two to a row at 1440, or one to a row across the content width for two or three items. On a phone the picture goes on top.', (c) => (c.few ? 0.4 : 1)],
+  ['ink', 1, 'Cards in the ink: filled with the page\'s ink colour and lettered in the ground colour (dark cards on a light page, light cards on a dark one), the dealt corner, 36-44px padding. For the groups that must stand out (the plans, the three things a visitor chooses between), in two sections at most; the other groups stand on the ground.'],
+  ['one-panel', 1, 'One large panel a section: a single filled card in the surface tone, 8-10 columns wide, 48-64px padding, holding one group whole (the price and everything it includes, the visit block, the booking choices), beside or under the section heading on the ground. Nothing framed inside it.'],
+  ['overlapping', 1, 'Overlapping cards: a row of three or four filled cards with the dealt corner, each one tone step from the card it overlaps (the surface tone, then the surface mixed 6%, 12% and 18% toward the ink: `color-mix(in oklab, var(--surface), var(--ink) 6%)`), so every edge reads with no border and no shadow. Each overlaps the one before by 24-32px and sits 24px lower, so the row steps down from left to right; its padding on the covered side is the overlap plus 24px or more, so no word sits under the card above. Hover or focus brings one to the front with a 6px rise. On a phone they stack with no overlap.'],
+  ['staggered', 1, 'Staggered cards: two columns of filled cards on the surface tone, the right column starting 96-140px lower than the left, 24px gaps, each card holding its picture at its own ratio and its words under it. For four to six items of one kind; on a phone one column, no stagger.', (c) => (c.few ? 0.5 : 1)],
+  ['sticky-stack', 1, 'Cards that stack as you scroll: three to five cards across the content width (a corner of 16px or more), each one tone step from the card under it (the surface tone, then the surface mixed 6%, 12%, 18% toward the ink), so the edge of the card sliding up reads with no border and no shadow; each about 70svh tall with its heading at the h2 step, its picture or figure and two lines of text; each sticks 96px below the top as the next slides up over it, the one beneath scaling to 0.96. Native scroll (position: sticky), no pin; reduced motion and phones show them one after another.'],
+  ['expanding', 1, 'Cards that open: a row of three or four filled cards on the surface tone, equal at rest, each with its name at the h3 step and one fact; hovering or focusing one widens it to about half the row (grid-template-columns, 400ms) and shows its picture and one more sentence. On a phone they stack and a tap opens one at a time; everything a visitor needs reads in the open card and in the plain fallback.'],
+  ['poster', 1, 'Poster cards: tall cards at 3:4, the picture filling the card to its edges, the name and one fact on a solid foot of the surface tone across the card\'s bottom 88-104px, never on the picture itself. Three or four to a row, 20px gaps; on hover the foot rises 8px to show one more line. For work, rooms, products, places.', (c) => (c.few ? 0.3 : c.software ? 0.6 : 1)],
+  ['tall-text', 1, 'Tall cards of words: cards at 4:5 on the surface tone with the dealt corner and 32px padding, the name at the h3 step pinned to the top and one sentence with a link or a price pinned to the foot, the space between left empty. Three or four to a row with 16-20px gaps; hover steps the fill one tone and moves the link 4px. For services, plans in short, reasons to choose. On a phone they stack at their natural height, 24px of space between top and foot.'],
+];
+const ALWAYS_BUTTONS = 'One button design on the whole page: the primary action takes it on the first screen (a real button, 44px or taller), the second action takes the treatment it names. Sentence case, no tracked capitals, no gradient, no shadow, no outline as the only shape. Where the brand has its own button, the brand\'s wins (say so in the report). One action appears once in a block: never two buttons to the same place on one screen.';
+const BUTTONS = [
+  ['pill-accent', 1, 'Pills: fully round, 48px tall, 24px side padding, the text face at 16px weight 500, filled with the accent; hover darkens the fill one step, press scales to 0.97. The second action is a text link at the same size in the ink with an arrow (→) that moves 4px on hover.', (c) => (c.tone === 'luxury' ? 0.4 : c.tone === 'playful' || c.tone === 'warm' ? 1.4 : 1)],
+  ['pill-large-ink', 1, 'Large pills in the ink: fully round, 60-64px tall, 32px padding, the text face at 18-20px weight 500, filled with the ink and lettered in the ground colour; hover turns the fill the accent. The second action is the same pill in the surface tone with ink letters.', (c) => (c.tone === 'bold' || c.tone === 'playful' ? 1.4 : 1)],
+  ['square-block', 1, 'Square blocks: no radius, 56px tall, 28-32px padding, the text face at 17px weight 600, filled with the ink; hover swaps the fill to the accent in 160ms. The second action is the label alone in the ink, underlined on hover.', (c) => (c.tone === 'playful' ? 0.4 : c.tone === 'technical' || c.tone === 'editorial' ? 1.4 : 1)],
+  ['wide-split', 1, 'Wide bars with a split label: square or the dealt corner, 60-64px tall, as wide as four grid columns, the label at the left inner edge and an arrow (→) at the right inner edge, the text face at 18px weight 500, filled with the accent; hover slides the arrow 6px right. The second action is a plain text link. On a phone the bar runs the full content width.'],
+  ['soft-accent', 1, 'Soft rectangles: 8px radius, 44-48px tall, 20px padding, the text face at 15-16px weight 600, filled with the accent; hover lightens the fill one step, press darkens it. The second action is the same shape in the surface tone with ink letters.', (c) => (c.software ? 1.3 : 1)],
+  ['soft-large', 1, 'Large soft buttons: 14px radius, 56px tall, 28px padding, the text face at 18px weight 500, filled with the ink on a light page or the accent on a dark one; press scales to 0.98. The second action is a text link at the same size with an arrow (→).'],
+  ['circle-arrow', 1, 'A label with a round arrow: the label at 18-20px in the ink, weight 500, then 12px on a 52-56px circle filled with the accent holding an arrow in the accent\'s ink; label and circle are one link, 56px tall; hover turns the arrow 45° and slides the label 4px. The second action is the label alone, without the circle.', (c) => (c.software ? 0.6 : 1)],
+  ['fact-inside', 1, 'Buttons that carry the fact: 4-6px radius, 52px tall, the label, 16px of space and the price, time or date on the same line in the regular weight ("Book a room · from 140 €"), the text face at 16px, the label at weight 600, filled with the accent. In the navigation the action carries the label alone (a label and a fact read as a sentence there). The second action is a text link.', (c) => (c.door || ['physical-product', 'ecommerce', 'event'].includes(c.sector) ? 1.4 : 0.6)],
+  ['rolling-label', 1, 'Rolling labels: 4px radius, 52px tall, 24px padding, the text face at 16px weight 600, filled with the accent; on hover the label rolls up out of the button and a copy rolls in from below (two stacked spans, translateY, 280ms, clipped by the button); reduced motion swaps the fill instead. The second action is a text link that rolls the same way.'],
+  ['wipe-fill', 1, 'A fill that wipes in: fully round, 52px tall, 28px padding, the text face at 16px weight 500; at rest the surface tone with an ink label, on hover the accent wipes in from the left (a scaleX layer behind the label, 300ms) and the label turns the accent\'s ink. The second action is a text link.'],
+  ['big-block', 1, 'Big blocks: square, 72px tall, 280px wide or more, the text face at the h4 step, weight 600, filled with the accent, the label at the left; hover darkens the fill. For the one action of a confident page. The second action is a text link at the same size.', (c) => (c.tone === 'bold' || c.creative ? 1.4 : c.tone === 'quiet' || c.tone === 'luxury' ? 0.4 : 1)],
+  ['slim-ink', 1, 'Slim buttons: 4px radius, 44px tall, 18px padding, the text face at 15px weight 500, filled with the ink; the second action is the same shape in the surface tone. Quiet and exact, for a page of a lot of content.', (c) => (c.tone === 'luxury' || c.tone === 'quiet' || c.software ? 1.3 : 1)],
 ];
 const CORNERS = [
-  [{ id: 'square', radius: '0', button: 'square' }, 3, 'Square corners on everything: pictures, panels, fields and buttons.'],
-  [{ id: 'hint', radius: '4px', button: '4px' }, 2.5, 'A 4px radius on buttons, fields and panels; pictures square or at the same 4px.'],
-  [{ id: 'soft', radius: '10px', button: '10px' }, 1.5, 'A 10px radius on panels, pictures and buttons alike; nothing else rounded.'],
-  [{ id: 'pill', radius: '6px', button: '999px' }, 2.5, 'Fully round buttons and fields; panels and pictures at 6px or square.'],
-  [{ id: 'large', radius: '20px', button: '999px' }, 0.8, 'A large 20px radius on pictures and panels with fully round buttons, as consumer apps do.'],
+  [{ id: 'square', radius: '0' }, 3, 'Square corners on pictures, cards, panels and fields.'],
+  [{ id: 'hint', radius: '4px' }, 2.5, 'A 4px radius on cards, panels and fields; pictures square or at the same 4px.'],
+  [{ id: 'soft', radius: '10px' }, 2, 'A 10px radius on cards, panels and pictures alike.'],
+  [{ id: 'round', radius: '16px' }, 1.5, 'A 16px radius on cards and panels; pictures at 16px or square inside a card.'],
+  [{ id: 'large', radius: '24px' }, 1, 'A large 24px radius on cards, panels and pictures, as consumer apps do.'],
 ];
+// The space between sections starts at about 16vh at 1440 (144px by a 900px screen): pages with 80-140px between
+// sections read as cluttered to the owner (October 2026), the next section already in view. The hero fills the
+// first screen alone whatever is dealt here.
+// gap and margin are the CSS the sheet prints for each (references/layout.md §2): the gap reaches the range at 1440 by
+// 900 and at 390 by 844 alike (9vh + 5vw is 153px on the one and 96px on the other)
 const SPACING = [
-  [{ id: 'airy', section: '160-200px', margin: '48-64px' }, 2, 'Airy: 160-200px between sections, 48-64px page margins at 1440.'],
-  [{ id: 'standard', section: '112-144px', margin: '32-48px' }, 4, 'Standard: 112-144px between sections, 32-48px page margins at 1440.'],
-  [{ id: 'compact', section: '80-104px', margin: '24-32px' }, 2, 'Compact: 80-104px between sections, 24-32px margins; for pages with a lot of real content (shops, product lines).'],
+  [{ id: 'standard', section: '16-20vh', margin: '32-48px', gap: 'clamp(6rem, 9vh + 5vw, 11.25rem)', marginCss: 'clamp(1.25rem, 3vw, 3rem)' }, 3, 'Standard: 16-20vh between sections (about 144-180px at 1440 by 900, 96-120px on a phone), page margins 32-48px at 1440 and 20px on a phone.'],
+  [{ id: 'airy', section: '22-28vh', margin: '48-72px', gap: 'clamp(7rem, 12vh + 7vw, 15.75rem)', marginCss: 'clamp(1.5rem, 4.5vw, 4.5rem)' }, 3, 'Airy: 22-28vh between sections (200-250px at 1440, 112-140px on a phone), page margins 48-72px at 1440 and 24px on a phone.'],
+  [{ id: 'open', section: '30-36vh', margin: '40-64px', gap: 'clamp(8rem, 14vh + 10vw, 20rem)', marginCss: 'clamp(1.5rem, 4vw, 4rem)' }, 2, 'Open: 30-36vh between sections (270-320px at 1440, 128-160px on a phone), page margins 40-64px at 1440 and 24px on a phone; one section to a screen at most.'],
 ];
 // Black-and-white is never dealt at random (weight 0): it greyed a notes app's one photograph (r9-p41) and a house
 // named white (r6-p30). It is the treatment only where the brief itself asks for black and white.
@@ -52,25 +119,55 @@ const CLIP = [
   ['one-clip', 2, 'One moving picture of the subject: a muted loop with a poster frame and a pause control, used once, large. Only if an honest clip of this subject exists.'],
   ['slow-picture', 1.5, 'One photograph that moves slowly as the page scrolls (a scale or drift of a few percent), once.'],
 ];
+// the rules every design of a part shares, printed under it on the sheet
+export const FRAME_RULES = { nav: ALWAYS_NAV, footer: ALWAYS_FOOTER, cards: ALWAYS_CARDS, buttons: ALWAYS_BUTTONS };
+// every design of the parts with many, for counting and listing
+export const FRAME_DESIGNS = { nav: NAV.map((x) => x[0]), footer: FOOTER.map((x) => x[0]), cards: CARDS.map((x) => x[0]), buttons: BUTTONS.map((x) => x[0]) };
 
-// bw: whether the brief asks for black-and-white pictures (draw.mjs decides, with its colour veto)
-export function dealFrame({ rnd, input, imagery, recent = {}, bw = BW_BRIEF.test(input.brief || '') }) {
+// history: the frames of the last draws, newest first ({ nav: id, footer: id, … } each); recent: the last one alone
+// (older callers). ctx: what the page is (see the top). bw: whether the brief asks for black-and-white pictures
+// (draw.mjs decides, with its colour veto).
+export function dealFrame({ rnd, input, imagery, history = null, recent = {}, ctx = {}, bw = BW_BRIEF.test(input.brief || '') }) {
+  const hist = (history || [recent]).filter(Boolean);
   const wpick = (pairs) => { const t = pairs.reduce((s, x) => s + x[1], 0); let r = rnd() * t; for (const x of pairs) { r -= x[1]; if (r <= 0) return x; } return pairs.at(-1); };
-  const not = (pairs, last) => pairs.map((x) => [x[0], x[1] * (last && (x[0] === last || x[0]?.id === last) ? 0.35 : 1), x[2]]);
+  const idOf = (x) => x[0]?.id ?? x[0];
+  // the parts with many designs: one used in the last four draws is out (while three others fit), one in the last
+  // eight a quarter as likely, and each is weighed down by how often the history holds it, so a run of draws cycles
+  // through the whole set (about one page in eleven or twelve each, never more than about one in eight)
+  // (when fewer fit, as on a door place with a booking block and a closing scene, the ones of the last four come back,
+  // the longest unused first and never the last draw's while another fits: round 11 dealt one footer twice running)
+  const away = (key, pairs) => {
+    const w = pairs.map((x) => {
+      const at = hist.findIndex((h) => h?.[key] === idOf(x));
+      const damp = x[1] / (1 + hist.filter((h) => h?.[key] === idOf(x)).length);
+      return { x, at, v: damp * (at < 0 ? 1 : at < 4 ? 0 : at < 8 ? 0.25 : 1), back: damp * 0.03 * 2 ** Math.max(0, at) };
+    });
+    const live = w.filter((e) => e.v > 0);
+    const pool = live.length >= 3 ? live : w.filter((e) => e.at !== 0).length ? w.filter((e) => e.at !== 0) : w;
+    return pool.map((e) => [e.x[0], e.v || e.back, e.x[2]]);
+  };
+  // the parts with few: the last draw's is about a third as likely
+  const not = (key, pairs) => pairs.map((x) => [x[0], x[1] * (hist[0]?.[key] === idOf(x) ? 0.35 : 1), x[2]]);
   const tone = input.tone;
   const software = imagery === 'interface';
-  const nav = wpick(not(NAV, recent.nav));
   // link columns belong to sites with pages beyond this one (software, shops); a one-page site (a portfolio, a
   // studio, a restaurant, a house, an event) that got them repeated its own navigation in the footer
   const multiPage = software || ['ecommerce', 'physical-product'].includes(input.sector);
-  const footer = wpick(not(FOOTER.filter((x) => multiPage || x[0] !== 'columns'), recent.footer));
-  const corners = wpick(not(CORNERS.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'large' ? 0.2 : tone === 'playful' && x[0].id === 'square' ? 0.5 : 1), x[2]]), recent.corners));
-  const spacing = wpick(not(SPACING.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'airy' ? 2 : input.sector === 'ecommerce' && x[0].id === 'compact' ? 2 : 1), x[2]]), recent.spacing));
-  const treatment = bw ? TREATMENT.find((x) => x[0] === 'mono') : wpick(not(TREATMENT.filter((x) => x[1] > 0).map((x) => [x[0], x[1] * (software && x[0] === 'cut-out' ? 0.3 : 1), x[2]]), recent.treatment));
-  const interaction = wpick(not(INTERACTION.map((x) => [x[0], x[1] * (x[0] === 'product' && !(software || ['physical-product', 'ecommerce'].includes(input.sector)) ? 0 : 1), x[2]]), recent.interaction));
-  const clip = wpick(not(CLIP.map((x) => [x[0], x[1] * (software && x[0] === 'one-clip' ? 0.5 : 1), x[2]]), recent.clip));
+  const c = { tone, sector: input.sector, software, multiPage, creative: ['bold', 'playful'].includes(tone) || ['agency', 'studio-portfolio', 'personal-portfolio', 'music', 'fashion', 'event', 'culture'].includes(input.sector), ...ctx };
+  // (a design whose text depends on the page, a door or none, is written here)
+  const fit = (list) => list.map((x) => [x[0], x[1] * (x[3] ? x[3](c) : 1), typeof x[2] === 'function' ? x[2](c) : x[2]]).filter((x) => x[1] > 0);
+  const nav = wpick(away('nav', fit(NAV)));
+  const footer = wpick(away('footer', fit(FOOTER)));
+  const cards = wpick(away('cards', fit(CARDS)));
+  const buttons = wpick(away('buttons', fit(BUTTONS)));
+  const corners = wpick(not('corners', CORNERS.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'large' ? 0.2 : tone === 'playful' && x[0].id === 'square' ? 0.5 : 1), x[2]])));
+  const spacing = wpick(not('spacing', SPACING.map((x) => [x[0], x[1] * (tone === 'luxury' && x[0].id === 'open' ? 2 : multiPage && x[0].id === 'open' ? 0.5 : 1), x[2]])));
+  const treatment = bw ? TREATMENT.find((x) => x[0] === 'mono') : wpick(not('treatment', TREATMENT.filter((x) => x[1] > 0).map((x) => [x[0], x[1] * (software && x[0] === 'cut-out' ? 0.3 : 1), x[2]])));
+  const interaction = wpick(not('interaction', INTERACTION.map((x) => [x[0], x[1] * (x[0] === 'product' && !(software || ['physical-product', 'ecommerce'].includes(input.sector)) ? 0 : 1), x[2]])));
+  const clip = wpick(not('clip', CLIP.map((x) => [x[0], x[1] * (software && x[0] === 'one-clip' ? 0.5 : 1), x[2]])));
   return {
-    nav: { id: nav[0], text: nav[2] }, footer: { id: footer[0], text: footer[2] },
+    nav: { id: nav[0], text: nav[2] }, footer: { id: footer[0], text: footer[2], ...(CLOSING_FOOTERS.has(footer[0]) ? { closes: true } : {}) },
+    cards: { id: cards[0], text: cards[2] }, buttons: { id: buttons[0], text: buttons[2] },
     corners: { ...corners[0], text: corners[2] }, spacing: { ...spacing[0], text: spacing[2] },
     treatment: { id: treatment[0], text: treatment[2] }, interaction: { id: interaction[0], text: interaction[2] }, clip: { id: clip[0], text: clip[2] },
   };

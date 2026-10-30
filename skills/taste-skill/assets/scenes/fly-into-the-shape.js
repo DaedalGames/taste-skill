@@ -59,11 +59,31 @@
 //
 // Options (data-options JSON; defaults, ranges):
 //   dir        "in"     "in" | "out"   prefer the data-dir attribute, which the CSS also reads
-//   hold       2        1.4-2.6   screens the stage is held on desktop
-//   phoneHold  1.6      1.2-2.4   screens on a phone (under 768px)
-//   size       0.4      0.2-0.6   height of the mark's box at rest, as a share of the stage's height (and
+//   hold       1.4      1.4-2.6   screens the stage is held on desktop (both directions; "in" held 2
+//                                 before round 11, two screens of a small mark on bare paper)
+//   phoneHold  1.2      1.2-2.4   screens on a phone (under 768px)
+//   rush       "clock"  "clock" | "scroll"   "clock" (default): the mark comes towards you with the scroll
+//                                 only while it sits whole on the screen (to the largest size that stays
+//                                 16px inside it), then the rush past the screen's edges plays on a clock
+//                                 of 0.85s once the scroll passes its point (0.72 of the hold "in", 0.25
+//                                 "out"), and plays back when the scroll returns. No stop of the scroll
+//                                 shows paper cut into slabs by the screen's edge (the notches of a mark
+//                                 hanging at the sides, a wedge of paper under a turned mark). "in" turns
+//                                 to face you while it rides up into place, so the first held frame is
+//                                 upright; "out" turns inside the rush and lands upright. The mark at
+//                                 rest is at most 72% of the largest whole mark, so it has room to come
+//                                 towards you. The paper's notes and the sub-line also arrive and leave
+//                                 on clocks.
+//                                 "scroll": the older dive, the whole flight scrubbed by the scroll (cover
+//                                 at 0.76 "in"), which stops on paper cut by the screen's edge mid-dive.
+//   size       0.55     0.2-0.6   height of the mark's box at rest, as a share of the stage's height (and
 //                                 at most 0.45 of its width): the hero of the first frame, with the title
-//                                 on its face. A number above 1 is read as px (96-720). "fit": the
+//                                 on its face. "out" with rush "clock": the landed stamp's box as a share
+//                                 of the stage's longer side (a landscape screen's width, a portrait
+//                                 tablet's height), the stamp landing with its outline centred on the stage,
+//                                 at most 72% of the largest mark that sits whole there (1440x900: about 69%
+//                                 of the height; 768x1024: about 66% of the width).
+//                                 A number above 1 is read as px (96-720). "fit": the
 //                                 smallest mark that holds the whole title at its full rest size.
 //                                 The face always holds every line of the title at rest, at every angle
 //                                 of the turn: when the mark is smaller than that, the title is set
@@ -80,8 +100,10 @@
 //                                 its full rest size (turned and upright); when the title is too wide for
 //                                 that, the largest such mark with the title set smaller on its face.
 //                                 A share is of the stage's width (at most 0.4 of its height).
-//   turn       45       0-180     degrees of the turn: "in" runs -turn -> 0 while the mark is still
-//                                 small, "out" lands from +turn -> 0 as the mark shrinks home
+//   turn       25 (in), 45 (out)   0-180   degrees of the turn: "in" runs -turn -> 0 while the mark is
+//                                 still small (with rush "clock", as it rides up into place, before the
+//                                 stage is held), "out" lands from +turn -> 0 as the mark shrinks home
+//                                 (with rush "clock", inside the rush)
 //   phoneTurn  12       0-180     a smaller turn on a phone keeps the big mark on the screen
 //   face       "picture" "picture" (the world's photograph is inside the mark from the first frame) |
 //                                 "accent" (a solid accent face that clears to the picture as the mark nears)
@@ -122,7 +144,9 @@
 // Testing: the section carries data-z, data-rot, data-cover, data-box (the mark's box at rest, px),
 // data-fit (the box that would hold the whole title at its full rest size, px) and data-ts (the title's
 // scale at rest, 0.94 when it is held at full size) while it runs.
-// Cover is reached at 76% of the hold ("in") and left at 10% ("out"), on every screen and mark.
+// rush "clock": the rush fires at 72% of the hold ("in"; the sub-line settles as it lands) and at 25% ("out"; the mark
+// lands centred, settles to its rest by 92%, the paper's note at 84%), on every screen and mark.
+// rush "scroll": cover is reached at 76% of the hold ("in") and left at 10% ("out").
 (() => {
   const ID = 'fly-into-the-shape';
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -408,7 +432,8 @@
     });
     // a lighter copy of the outline for the title-fit test
     const coarse = rings.map((r) => r.filter((_, k) => k % 4 === 0));
-    const mark = { subs, sideSubs, sg, ax, ay, rin, box, table, coarse, bw: (x1 - x0) / box, bh: (y1 - y0) / box, rule: evenodd ? 'evenodd, ' : '' };
+    // (cx, cy): the centre of the outline's box, where the "out" stamp is centred on the stage once it lands
+    const mark = { subs, sideSubs, sg, ax, ay, rin, box, table, coarse, bw: (x1 - x0) / box, bh: (y1 - y0) / box, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, rule: evenodd ? 'evenodd, ' : '' };
     cache.set(path, mark);
     return mark;
   }
@@ -423,12 +448,16 @@
       const n = typeof v === 'string' && v.trim() !== '' ? +v : v;
       return typeof n === 'number' && isFinite(n) && n > 0 ? share(n, 0, a, b, pa, pb) : d;
     };
+    // both directions hold a large mark on a short hold ("in" on 2 screens with a 0.4 mark stood two
+    // screens of a small dome on bare paper); "in" starts turned 25 degrees, not 45
+    const OUT = dir === 'out';
     const o = {
-      hold: num(opts.hold, 2, 1.4, 2.6),
-      phoneHold: num(opts.phoneHold, 1.6, 1.2, 2.4),
-      size: sizeOpt(opts.size, 0.4, 0.2, 0.6, 96, 720),
+      hold: num(opts.hold, 1.4, 1.4, 2.6),
+      phoneHold: num(opts.phoneHold, 1.2, 1.2, 2.4),
+      size: sizeOpt(opts.size, 0.55, 0.2, 0.6, 96, 720),
       phoneSize: sizeOpt(opts.phoneSize, 'fit', 0.3, 0.75, 64, 420),
-      turn: num(opts.turn, 45, 0, 180),
+      turn: num(opts.turn, OUT ? 45 : 25, 0, 180),
+      rush: opts.rush === 'scroll' ? 'scroll' : 'clock',
       phoneTurn: num(opts.phoneTurn, 12, 0, 180),
       depth: share(opts.depth, 0, 0, 0.15, 0, 48),
       phoneDepth: share(opts.phoneDepth, 0, 0, 0.15, 0, 24),
@@ -485,8 +514,10 @@
         // st.ts: how far the title has grown from its rest scale (g.ts0) towards its full size (0-1)
         // the face: the picture from the first frame, or (face "accent") the solid accent that clears
         const ACCENT = o.face === 'accent';
-        const st = { zl: 0, rot: 0, tint: ACCENT ? 1 : 0, ts: 0, note: 1, sub: 0, bl: 0, mz: 1 };
-        const g = { W: 0, H: 0, s0: 1, k0: 0, zCover: 1, key: '', box: 0, ts0: TS0 };
+        const CLOCK = o.rush === 'clock';
+        // st.rush (the clocked rush): 0 the mark whole on the paper, 1 the world covering the stage
+        const st = { zl: 0, rot: 0, tint: ACCENT ? 1 : 0, ts: 0, note: IN ? 1 : 0, sub: IN ? 0 : 1, bl: 0, mz: 1, rush: IN ? 0 : 1, a: IN ? 0 : 1, g: IN ? 0 : 1 };
+        const g = { W: 0, H: 0, s0: 1, k0: 0, zCover: 1, key: '', box: 0, ts0: TS0, zEdge: 1 };
         const last = {};
         // writes a style only when it changed (this build's own memory, so a rebuild starts clean)
         const written = new Map();
@@ -517,7 +548,13 @@
           return out;
         };
         // the angles of the turn, every 7.5 degrees or closer ("in" turns -turn -> 0, "out" +turn -> 0)
-        const angles = () => { const n = Math.max(1, Math.ceil(turn / 7.5)); return Array.from({ length: n + 1 }, (_, i) => (IN ? -turn : turn) * (1 - i / n)); };
+        // (with the clocked rush, "out" turns only inside the rush, while the mark is far larger than the
+        // title, and lands upright: its title is fitted upright, so the landed stamp keeps it large)
+        const angles = () => {
+          if (CLOCK && !IN) return [0];
+          const n = Math.max(1, Math.ceil(turn / 7.5));
+          return Array.from({ length: n + 1 }, (_, i) => (IN ? -turn : turn) * (1 - i / n));
+        };
         const holds = (boxes, rots, B, s) => {
           const sc = B / mark.box;
           for (const rot of rots) {
@@ -542,9 +579,11 @@
         };
         // the largest box whose mark at rest (turned as it rests, with its extruded side) stays 16px inside
         // the stage on every side, so nothing of it is cut by the screen's edge before the dive
-        const fitScreen = (W, H) => {
+        // (deg: the angle it is tested at; the clocked rush also asks it upright, for the largest mark
+        // that still sits whole on the screen before the rush)
+        const fitScreen = (W, H, deg = IN ? -turn : 0) => {
           const G = 16, d = depthOpt > 1 ? 0 : depthOpt, dpx = depthOpt > 1 ? depthOpt : 0;
-          const a = ((IN ? -turn : 0) * Math.PI) / 180, c = Math.cos(a), n = Math.sin(a);
+          const a = (deg * Math.PI) / 180, c = Math.cos(a), n = Math.sin(a);
           let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
           for (const r of mark.coarse) for (const [mx, my] of r) {
             const dx = c * (mx - mark.ax) - n * (my - mark.ay), dy = n * (mx - mark.ax) + c * (my - mark.ay);
@@ -553,10 +592,22 @@
           const lim = (room, extent, perBox) => { const k = extent / mark.box + perBox; return k > 0 ? Math.max(0, room) / k : Infinity; };
           return Math.min(lim(W / 2 - G, -x0, 0), lim(W / 2 - G - VX * dpx, x1, VX * d), lim(H / 2 - G, -y0, 0), lim(H / 2 - G - VY * dpx, y1, VY * d));
         };
+        // the clocked "out" lands with the mark's outline centred on the stage (not its anchor, which sits
+        // low in most marks and pushed the stamp up against the top edge), so the landed stamp can be large:
+        // the largest upright box that sits 16px inside the stage, centred so
+        const CENTRE = CLOCK && !IN;
+        const fitCentred = (W, H) => {
+          const G = 16, d = depthOpt > 1 ? 0 : depthOpt, dpx = depthOpt > 1 ? depthOpt : 0;
+          const hw = mark.bw / 2, hh = mark.bh / 2;
+          const lim = (room, k) => (k > 0 ? Math.max(0, room) / k : Infinity);
+          return Math.min(lim(W / 2 - G, hw), lim(W / 2 - G - VX * dpx, hw + VX * d), lim(H / 2 - G, hh), lim(H / 2 - G - VY * dpx, hh + VY * d));
+        };
+        // the largest mark that sits whole on the screen, upright, where it rests
+        const whole = (W, H) => (CENTRE ? fitCentred(W, H) : fitScreen(W, H, 0));
         // the mark's box at rest (a share of the stage: its height on desktop, its width on a phone) and
         // the title's scale on it
         const boxPx = (W, H) => {
-          const boxes = inkBoxes(), rots = angles(), scr = fitScreen(W, H);
+          const boxes = inkBoxes(), rots = angles(), scr = CENTRE ? fitCentred(W, H) : fitScreen(W, H);
           if (!boxes.length) return { box: Math.min(scr, phone ? 0.45 * W : Math.min(0.4 * H, 0.45 * W)), ts: TS0 };
           const F = fullFit(boxes, rots, W, H);
           root.dataset.fit = isFinite(F) ? Math.round(F) : 0;
@@ -568,13 +619,20 @@
             const from = phone ? 0.5 * W : 0.25 * H;
             box = Math.max(Math.min(F, hi), Math.min(from, hi));
           } else {
-            const B = Math.min(scr, phone ? (sizeWant > 1 ? sizeWant : Math.min(sizeWant * W, 0.4 * H)) : sizeWant > 1 ? sizeWant : Math.min(sizeWant * H, 0.45 * W));
+            // the clocked "out" stamp: a share of the stage's longer side (a landscape screen's width, a
+            // portrait tablet's height), so it lands large on both; "in": a share of the height, at most
+            // 0.45 of the width
+            const B = Math.min(scr, phone ? (sizeWant > 1 ? sizeWant : Math.min(sizeWant * W, 0.4 * H)) : sizeWant > 1 ? sizeWant : CENTRE ? sizeWant * Math.max(W, H) : Math.min(sizeWant * H, 0.45 * W));
             // a mark a little smaller than the title grows to hold it at full size (a portrait tablet);
             // one that would set the title under half its size grows until it holds half
             if (B >= F) box = B;
             else if (B >= 0.65 * F && F <= Math.max(hi, B)) box = F;
             else box = Math.max(B, Math.min(hi, (0.5 * F) / TS0));
           }
+          // the clocked rush needs room: the mark at rest is at most 72% of the largest mark that sits whole
+          // on the screen, so it visibly comes towards you before the rush (on a phone the title is then
+          // set a little smaller on it and grows to full size with it)
+          if (CLOCK) box = Math.min(box, 0.72 * whole(W, H));
           if (!isFinite(F)) return { box, ts: TS0 };
           // the title set smaller on a mark that cannot hold it at full size (the margin is kept in px)
           let ts = Math.min(TS0, (TS0 * box) / F);
@@ -598,6 +656,9 @@
             // "in" covers once it is upright; "out" leaves the cover still turned
             g.zCover = coverZoom(mark.table, mark.rin, g.s0, W, H, IN ? 0 : turn);
             g.k0 = depthOpt > 1 ? depthOpt : depthOpt * g.box;
+            // the clocked rush: the largest zoom at which the upright mark still sits whole on the screen
+            // (16px clear)
+            g.zEdge = clamp(whole(W, H) / (g.box || 1), 1, Math.max(1, g.zCover));
             g.key = key;
           }
           g.W = W; g.H = H;
@@ -635,17 +696,46 @@
         const VX = 0.6 / Math.hypot(0.6, 1), VY = 1 / Math.hypot(0.6, 1);
 
         let mediaOk = !media || media.tagName !== 'IMG' || (media.complete && media.naturalWidth > 0);
+        // "fly": the distance to the mark falls at a steady rate, so its size grows as 1 / distance.
+        // The curve is that of a flight of at most 8x, stretched in log space to the real zoom, so a thin
+        // mark (a cover of 15-30x) never crowds its last sweep into a single wheel tick. u: 0-1 of the
+        // way; Z: the zoom it covers (as a ratio)
+        const sineIO = (t) => 0.5 - 0.5 * Math.cos(Math.PI * clamp(t, 0, 1));
+        const flight = (u, Z) => {
+          u = clamp(u, 0, 1);
+          const R = Math.min(Z, 8);
+          if (FLY) return R > 1.01 ? -Math.log(1 - u * (1 - 1 / R)) / Math.log(R) : u;
+          return o.ease === 'sine.inOut' ? sineIO(u) : u;
+        };
+        // the zoom now. Scroll mode: one scrubbed flight from the rest to the cover. Clock mode: a scrubbed
+        // approach while the mark sits whole on the screen (zA, 1 -> zEdge), then the rush from there to
+        // the cover on a clock (st.rush), so no stop of the scroll shows paper cut by the screen's edge
+        const zoomNow = () => {
+          if (!CLOCK) { const zl = clamp(st.zl, 0, 1); return { z: Math.exp(Math.log(g.zCover) * (FLY ? flight(zl, g.zCover) : zl)), covered: zl >= 0.9999 }; }
+          const zA = Math.pow(g.zEdge, st.a);
+          const r = clamp(st.rush, 0, 1), Z = Math.max(1, g.zCover / zA);
+          return { z: zA * Math.exp(Math.log(Z) * flight(r, Z)), covered: r >= 0.9999 };
+        };
         const render = () => {
           if (dead || !g.W) return;
-          const zl = clamp(st.zl, 0, 1);
-          // "fly": the distance to the mark falls at a steady rate, so its size grows as 1 / distance.
-          // The curve is that of a flight of at most 8x, stretched in log space to the real cover zoom,
-          // so a thin mark (a cover of 15-30x) never crowds its last sweep into a single wheel tick
-          const lz = Math.log(g.zCover), R = Math.min(g.zCover, 8);
-          const z = Math.exp(lz * (FLY && R > 1.01 ? -Math.log(1 - zl * (1 - 1 / R)) / Math.log(R) : zl));
+          if (CLOCK) {
+            // what follows the clocked rush: the title grows with the approach and the rush; "out" is still
+            // turned while the world shrinks back and lands upright; the world's blur peaks mid-rush
+            const r = clamp(st.rush, 0, 1);
+            st.ts = 0.35 * st.g + 0.65 * r;
+            if (!IN) st.rot = turn * r;
+            st.bl = Math.sin(Math.PI * r);
+          }
+          const { z, covered } = zoomNow();
           const s = g.s0 * z, a = (st.rot * Math.PI) / 180, c = Math.cos(a) * s, n = Math.sin(a) * s;
-          const tx = g.W / 2 - (c * mark.ax - n * mark.ay), ty = g.H / 2 - (n * mark.ax + c * mark.ay);
-          const covered = zl >= 0.9999;
+          // the clocked "out" slides its outline's centre onto the stage's centre as the rush lands (none
+          // while it still covers the stage, all of it once it is whole); the title moves with it
+          let ox = 0, oy = 0;
+          if (CENTRE) {
+            const w = Math.pow(1 - clamp(st.rush, 0, 1), 2), dx = mark.cx - mark.ax, dy = mark.cy - mark.ay;
+            ox = -w * (c * dx - n * dy); oy = -w * (n * dx + c * dy);
+          }
+          const tx = g.W / 2 - (c * mark.ax - n * mark.ay) + ox, ty = g.H / 2 - (n * mark.ax + c * mark.ay) + oy;
           const face = covered ? '' : subsPath(mark.subs, c, n, tx, ty);
           put(world, 'clipPath', covered ? 'none' : `path(${mark.rule}"${face}")`);
           // once the world covers the stage the paper side is out of sight: stop painting it
@@ -671,7 +761,7 @@
           // the title grows from its rest scale towards its full size, but never faster than the mark
           // (ts / z stays at or under the rest scale the face was fitted to), so it stays on the face
           const ts = Math.min(g.ts0 * z, g.ts0 + (1 - g.ts0) * clamp(st.ts, 0, 1));
-          put(outTitle, 'transform', `scale(${ts.toFixed(4)})`);
+          put(outTitle, 'transform', (ox || oy ? `translate(${f1(ox)}px, ${f1(oy)}px) ` : '') + `scale(${ts.toFixed(4)})`);
           if (media) {
             // the world comes towards you for the whole hold; the picture stays still until it decoded
             const ms = mediaOk ? st.mz : 1;
@@ -688,7 +778,73 @@
 
         // the timeline: every tween drives the state object; render() writes the DOM once per update
         const E = FLY ? 'none' : o.ease;
-        if (IN) {
+        // clock mode: the state is read from the scroll's progress (tick), and what must never stand half
+        // done (the rush past the screen's edges, the notes on the paper, the sub-line) runs on clocks
+        let tick = render;
+        const clocks = [];
+        if (CLOCK) {
+          const clock = (key, from, to, dur, ease) => {
+            const c = { on: false, tw: gsap.fromTo(st, { [key]: from }, { [key]: to, duration: dur, ease, paused: true, onUpdate: render, onComplete: () => tick(), onReverseComplete: () => tick() }) };
+            clocks.push(c);
+            return c;
+          };
+          // jump (no animation) when the scroll lands far past the point, as on a reload mid-page
+          const drive = (c, on, jump) => {
+            if (on === c.on) return;
+            c.on = on;
+            if (jump) c.tw.progress(on ? 1 : 0).pause();
+            else if (on) c.tw.play(); else c.tw.reverse();
+          };
+          const rushC = clock('rush', IN ? 0 : 1, IN ? 1 : 0, 0.85, 'none');
+          const noteC = clock('note', IN ? 1 : 0, IN ? 0 : 1, 0.3, 'power1.inOut');
+          // ("in": 0.2s from the last fifth of the rush, when the face already holds the sub-line whole, so it
+          // has settled 0.9s after the rush fires; it took 1.35s before fix-006 and the 80% step caught it
+          // half faded)
+          const subC = clock('sub', IN ? 0 : 1, IN ? 1 : 0, IN ? 0.2 : 0.25, IN ? 'power2.out' : 'power1.in');
+          // "in" turns to face you as it rides up into place, before the stage is held, so the first held
+          // frame shows it upright; during the hold it only grows
+          let entry = 1;
+          if (IN && turn > 0) {
+            entry = 0;
+            ScrollTrigger.create({
+              trigger: root, start: 'top bottom', end: 'top top',
+              onUpdate: (self) => { entry = self.progress; tick(); },
+              onRefresh: (self) => { entry = self.progress; },
+            });
+          }
+          // st.a: the approach, as the exponent of zEdge (0 the rest size, 1 the largest whole mark);
+          // st.g: how far the title has grown on it (0-1)
+          // "in": the mark comes towards you at a steady rate (0.03-0.72), the rush fires at 0.72 and the
+          // sub-line settles as soon as it lands, so the title is never alone on the world and the world is
+          // never held long with nothing new (a dark world's slow zoom does not read as change). "out": the world is held with its title, the rush back into the
+          // mark fires at 0.25, the mark settles to its rest at a steady rate until 0.92 and the paper's note
+          // arrives at 0.84, so every step to 90% shows something new and the stamp rests for the last step.
+          const PIN = 0.72, POUT = 0.25, SETTLED = 0.92, NOTE = 0.84;
+          tick = () => {
+            if (dead) return;
+            const p = tl.progress();
+            if (IN) {
+              st.rot = -turn * Math.pow(1 - clamp(entry, 0, 1), 2);
+              st.a = clamp((p - 0.03) / (PIN - 0.03), 0, 1);
+              st.g = sineIO(st.a);
+              drive(rushC, p >= PIN, p >= PIN + 0.25 || p < PIN - 0.25);
+              drive(noteC, p >= 0.05, p >= 0.3);
+              drive(subC, p >= PIN + 0.04 && st.rush >= 0.8, false);
+              st.mz = 1 + (o.zoom - 1) * clamp((p - 0.03) / 0.97, 0, 1);
+              st.tint = ACCENT ? 1 - sineIO((p - 0.04) / (0.8 * (PIN - 0.04))) : 0;
+            } else {
+              // the shrink: the largest whole mark (a = 1) down to the rest size (a = 0)
+              st.a = 1 - clamp((p - POUT) / (SETTLED - POUT), 0, 1);
+              st.g = sineIO(st.a);
+              drive(rushC, p >= POUT, p >= POUT + 0.25 || p < POUT - 0.25);
+              drive(subC, p >= 0.06, p >= 0.3);
+              drive(noteC, p >= NOTE, false);
+              st.mz = o.zoom - (o.zoom - 1) * clamp(p / POUT, 0, 1);
+              st.tint = ACCENT ? sineIO((p - POUT) / (0.8 * (SETTLED - POUT))) : 0;
+            }
+            render();
+          };
+        } else if (IN) {
           tl.fromTo(st, { zl: 0 }, { zl: 1, duration: 0.7, ease: E }, 0.06)
             .fromTo(st, { rot: -turn }, { rot: 0, duration: 0.3, ease: 'power2.out' }, 0.06)
             .fromTo(st, { ts: 0 }, { ts: 1, duration: 0.7, ease: 'sine.inOut' }, 0.06)
@@ -716,15 +872,15 @@
           if (ACCENT) tl.fromTo(st, { tint: 0 }, { tint: 1, duration: 0.44, ease: 'sine.inOut' }, 0.26);
         }
         tl.set({}, {}, 1);
-        tl.eventCallback('onUpdate', render);
+        tl.eventCallback('onUpdate', () => tick());
 
         measure();
-        render();
+        tick();
         // re-measure on every refresh (resize, fonts, pictures), then redraw
-        ScrollTrigger.create({ trigger: root, start: 'top bottom', end: 'bottom top', onRefresh: () => { measure(); render(); } });
+        ScrollTrigger.create({ trigger: root, start: 'top bottom', end: 'bottom top', onRefresh: () => { measure(); tick(); } });
         // late fonts change the title's size, which places the sub-line and can resize a "fit" mark
         let ro = null;
-        if ('ResizeObserver' in window) { ro = new ResizeObserver(() => { if (!dead) { measure(); render(); } }); ro.observe(outTitle); }
+        if ('ResizeObserver' in window) { ro = new ResizeObserver(() => { if (!dead) { measure(); tick(); } }); ro.observe(outTitle); }
         // pictures decode before they move; a video plays only while the section is on screen. The picture
         // stays painted with the world, never on a layer of its own: under the moving clip a layer adds a
         // full-screen mask every frame, and promoting it at cover costs one long raster right at the rush

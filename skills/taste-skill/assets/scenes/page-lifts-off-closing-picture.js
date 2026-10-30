@@ -1,10 +1,12 @@
 // tasteskill / scenes / page-lifts-off-closing-picture.js — "Page lifts off a closing picture".
 //
 // A closing scene. The last content section slides up like a sheet and uncovers a picture that was
-// held underneath it the whole time; as it goes it shrinks a little about its lifting edge (0.97) and
-// dims, so it reads as a sheet leaving. As the sheet clears the screen the picture settles from a close
+// held underneath it the whole time; it leaves at its full width in its own ground colour (lift 1, dim
+// 0 by default since round 10: a sheet that shrank and dimmed ended as a flat grey slab with gutters of
+// sky either side). As the sheet clears the screen the picture settles from a close
 // zoom (1.35x) to its natural framing, and it lands exactly as the scroll runs out. A solid band across
-// the top of the screen (about 30%) carries the closing line and the contact block in the body face;
+// the top of the screen (about 30%) carries the closing line, a headline at display size, and the
+// contact block in the body face;
 // its colour is the picture's own top-edge colour, so band and picture meet with no seam. The whole
 // picture is the page's one action: a link with a plain centred label at its foot.
 // The picture is a photograph, or a fragment of the product's interface built in HTML (data-ui) and
@@ -47,9 +49,10 @@
 //   mode         'photo' | 'ui'   default: 'ui' when .lift-media carries data-ui, else 'photo'
 //   settle       1.35  (1.1-1.5)   the picture's scale while the sheet still covers it; 1 at the end
 //   phoneSettle  1.18  (1.05-1.3)  the same below 768px (the same share of the move on a small screen)
-//   lift         0.97  (0.9-1)     the sheet's scale as it leaves, about its lifting edge (1: none)
-//   dim          0.14  (0-0.3)     how much the sheet darkens as it leaves (a brightness filter, no
-//                                  shadow and no overlay on its words)
+//   lift         1     (0.9-1)     the sheet's scale as it leaves, about its lifting edge (1: none, the
+//                                  default; under 1 its sides pull in and show gutters of the picture)
+//   dim          0     (0-0.3)     how much the sheet darkens as it leaves (a brightness filter; 0, the
+//                                  default: any dim turns the page's ground into a grey slab)
 //   band         'auto' | 'token' | a CSS colour   (auto)
 //                auto: the band takes the median colour of the photograph's top edge as it is cropped
 //                at this screen (sampled from the picture: same-origin, or from a CDN that sends CORS
@@ -72,13 +75,15 @@
 // The hold is the lift: the scene is pulled up under the sheet by the sheet's height (a screen at most),
 // so the stage is held for exactly the scroll that takes the sheet's bottom edge from the foot of the
 // screen to its top (1 screen; less only when the sheet is shorter than a screen). Over that hold:
-//   0 → 1      the picture settles, settle → 1 (power1.out: it slows into its framing), and the sheet
-//              shrinks to `lift` about its bottom edge and dims by `dim` (linear, with the scroll; its
-//              edge stays where the scroll puts it, so the uncover is exact)
-//   each word  the label, the contact block and the closing line show whole, each once the sheet's edge
-//              has cleared its top (a fade over about 3% of a screen), so no line is ever drawn half
-//              under the edge; the closing line, highest on the band, lands last, by about 97%
-// Nothing in the uncovered layer runs on a clock: a visitor who stops halfway sees a still frame.
+//   0 → 1      the picture settles, settle → 1 (power1.out: it slows into its framing); the sheet moves
+//              with the scroll, its edge exactly where the scroll puts it (with lift under 1 or dim over
+//              0 it also shrinks about its bottom edge and darkens, linear)
+//   each word  the label, the contact block and the closing line each land whole on a clock (a 0.32s
+//              fade) once the sheet's edge has cleared their top, and go (0.12s) when the edge comes back
+//              over it, so no line is ever drawn half under the edge or caught half faded; the closing
+//              line, highest on the band, lands last, at about 0.88-0.9 (the band's words sit low in it)
+// The picture's settle follows the scroll; only the words' fades run on a clock, so a visitor who stops
+// halfway sees a still frame with every visible line whole.
 //
 // Phone (below 768px): the same lift, the picture held under the page with a gentler 1.18x settle. The
 // band grows with its words (it never squeezes the contact block) and the interface crop drops to the
@@ -138,8 +143,8 @@
       mode: isUi ? 'ui' : 'photo',
       settle: num(opts.settle, 1.35, 1.1, 1.5),
       phoneSettle: num(opts.phoneSettle, 1.18, 1.05, 1.3),
-      lift: num(opts.lift, 0.97, 0.9, 1),
-      dim: num(opts.dim, 0.14, 0, 0.3),
+      lift: num(opts.lift, 1, 0.9, 1),
+      dim: num(opts.dim, 0, 0, 0.3),
       band: typeof opts.band === 'string' && opts.band.trim() ? opts.band.trim() : 'auto',
       focus: typeof opts.focus === 'string' && opts.focus.trim() ? opts.focus.trim() : '50% 0%',
       label: opts.label === 'centre' || opts.label === 'center' ? 'centre' : 'foot',
@@ -193,7 +198,7 @@
     const unhook = () => {
       if (S.sheet) { S.sheet.removeAttribute('data-lift-sheet'); S.sheet.classList.remove('lift-sheet-moving'); }
       if (S.foot) { S.foot.removeAttribute('data-lift-foot'); S.foot.style.removeProperty('--lift-tail'); }
-      for (const el of words()) el.style.opacity = '';
+      for (const el of words()) { el.style.opacity = ''; el.removeAttribute('data-lift-word'); }
       picture.style.clipPath = '';
       for (const p of ['--lift-overlap', '--lift-tail', '--lift-settle']) root.style.removeProperty(p);
       S.sheet = S.foot = null; S.items = []; S.live = false;
@@ -218,20 +223,20 @@
       const tail = S.foot ? Math.min(Math.round(0.25 * H), S.foot.offsetHeight) : 0;
       root.style.setProperty('--lift-tail', tail + 'px');
       if (S.foot) S.foot.style.setProperty('--lift-tail', tail + 'px');
-      // each word block shows once the sheet's edge has cleared its top
+      // each word block shows once the sheet's edge has cleared its top (its state is kept across a
+      // refresh, so re-measuring never replays a fade)
       const top0 = stage.getBoundingClientRect().top;
-      S.items = words().map((el) => ({ el, top: el.getBoundingClientRect().top - top0, o: NaN }));
+      S.items = words().map((el) => ({ el, top: el.getBoundingClientRect().top - top0, on: el.getAttribute('data-lift-word') || '' }));
       S.picTop = picture.getBoundingClientRect().top - top0;
       S.clip = NaN;
     };
     const map = (p) => {
       if (!S.live) return;
       const edge = S.overlap * (1 - p);              // the sheet's bottom edge on the stage, px from its top
-      const ramp = 0.03 * S.H;
+      // a block is on once the edge has cleared its top; the fade itself is a CSS transition (a clock)
       for (const it of S.items) {
-        const r = Math.min(ramp, Math.max(1, it.top));
-        const v = p >= 0.999 ? 1 : r3(clamp((it.top - edge) / r, 0, 1));
-        if (v !== it.o) { it.o = v; it.el.style.opacity = v === 1 ? '' : String(v); }
+        const on = p >= 0.999 || it.top >= edge - 0.5 ? 'on' : 'off';
+        if (on !== it.on) { it.on = on; it.el.setAttribute('data-lift-word', on); }
       }
       // ui: the shrinking sheet would show slivers of the interface's words in its side gutters; the
       // interface is drawn only below the sheet's edge, so the gutters show the band's flat colour

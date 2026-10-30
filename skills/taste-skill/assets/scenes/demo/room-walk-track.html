@@ -42,7 +42,8 @@
     justify-content: space-between;
     align-items: center;
     gap: 24px;
-    padding: 22px var(--gutter);
+    height: 76px;
+    padding: 0 var(--gutter);
     font-size: 16px;
   }
   .bar .mark { font-family: var(--font-display); font-size: 26px; letter-spacing: -0.02em; text-decoration: none; }
@@ -50,24 +51,26 @@
   .bar nav a { text-decoration: none; }
   .bar nav a:hover, .bar nav a:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
 
+  /* the first screen is the opening alone (the bar is 76px): the walk starts at the fold */
   .intro {
-    min-height: calc(78svh - 76px);
-    padding: clamp(40px, 10svh, 120px) var(--gutter) clamp(44px, 8svh, 96px);
+    min-height: calc(100svh - 76px);
+    padding: clamp(24px, 5svh, 64px) var(--gutter) clamp(44px, 8svh, 96px);
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 30vw);
-    column-gap: 6vw;
-    align-content: end;
-    align-items: end;
+    align-content: space-between;
+    gap: 48px;
   }
+  /* the headline at the top, sized with the screen, its second line stepped to the right; the line and
+     the link at the foot */
   .intro h1 {
     margin: 0;
     font-family: var(--font-display);
     font-weight: 400;
-    font-size: clamp(56px, 10.5vw, 188px);
+    font-size: clamp(56px, min(12.5vw, 24svh), 230px);
     line-height: 0.9;
     letter-spacing: -0.035em;
   }
   .intro h1 span { display: block; }
+  .intro h1 span + span { text-align: right; }
   .intro p { margin: 0 0 1.2vw; font-size: clamp(18px, 1.3vw, 22px); line-height: 1.45; max-width: 26em; }
   .intro .go {
     display: inline-block;
@@ -86,50 +89,54 @@
      then the room around him and the light falling into it from the high windows */
   .rw-photo .rw-flip__a img { scale: 2.3; transform-origin: 24% 70%; }
 
+  /* the footer: a contact block on the oat. The heading on the left half; the address on the right half
+     with the letter at the h3 step and the one action; the sections and the small print along the foot */
   .after {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+    gap: 64px 6vw;
+    min-height: 66svh;
+    padding: clamp(96px, 16svh, 180px) var(--gutter) 40px;
     background: var(--oat);
     color: var(--ink);
-    padding: clamp(64px, 12svh, 150px) var(--gutter) clamp(56px, 10svh, 120px);
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
-    gap: 40px 5vw;
-    align-items: start;
   }
   .after h2 {
     margin: 0;
     font-family: var(--font-display);
     font-weight: 400;
-    font-size: clamp(40px, 4.4vw, 76px);
-    line-height: 0.98;
+    font-size: clamp(48px, 6vw, 104px);
+    line-height: 0.95;
     letter-spacing: -0.035em;
   }
-  .after p { margin: 0 0 14px; max-width: 26em; }
+  .after-contact { display: grid; align-content: start; gap: 20px; }
+  .after-contact p { margin: 0; max-width: 26em; }
+  .after-mail { font-size: 20px; text-underline-offset: 4px; }
+  .after-mail:hover, .after-mail:focus-visible { text-decoration: underline; text-underline-offset: 6px; }
   .after .book {
-    display: inline-block;
-    margin-top: 10px;
+    justify-self: start;
     background: var(--ink);
     color: var(--paper);
     text-decoration: none;
-    padding: 14px 22px;
+    padding: 15px 24px;
     border-radius: 999px;
     line-height: 1;
   }
   .after .book:hover, .after .book:focus-visible { background: var(--coral); color: var(--ink); }
-  footer {
-    background: var(--oat);
-    color: var(--ink);
-    padding: 0 var(--gutter) 40px;
-    font-size: 16px;
-    line-height: 1.5;
-  }
-  footer p { margin: 0; max-width: 66ch; opacity: 0.72; }
+  .after-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 32px; font-size: 15px; color: #4c4840; }
+  .after-foot nav { display: flex; gap: 24px; }
+  .after-foot p { margin: 0; }
 
   @media (max-width: 899px) {
-    .intro { grid-template-columns: 1fr; row-gap: 28px; min-height: 64svh; }
-    .after { grid-template-columns: 1fr; }
+    /* the words at the foot of the first screen, so its rest runs into nothing below the fold */
+    .intro { align-content: end; }
+    .intro h1 { font-size: 13vw; }
+    .intro p { font-size: 20px; }
+    .intro h1 span + span { text-align: left; }
+    .after { grid-template-columns: 1fr; grid-template-rows: none; gap: 40px; min-height: 0; }
   }
   @media (max-width: 520px) {
-    .bar nav a:not(:last-child) { display: none; }
+    .bar nav { gap: 20px; }
   }
 </style>
 </head>
@@ -144,15 +151,14 @@
 
 <main id="top">
 <section class="intro" aria-labelledby="page-title">
-  <h1 id="page-title"><span>Varde</span><span>Architects</span></h1>
-  <p>Public stairs, halls, stations and libraries, drawn in Rotterdam and built slowly since 2009.<br><a class="go" href="#walk">Walk through the rooms</a></p>
+  <h1 id="page-title"><span>Public rooms,</span><span>built slowly</span></h1>
+  <p>Stairs, halls, stations and libraries for towns, drawn in Rotterdam since 2009.<br><a class="go" href="#walk">Walk through the rooms</a></p>
 </section>
 
 <section class="scene" data-scene="room-walk-track" id="walk" aria-labelledby="rw-title">
   <div class="scene-stage">
     <div class="rw-chrome">
       <a class="rw-chip rw-mark" href="#top">Varde</a>
-      <p class="rw-chip rw-where" aria-hidden="true"><span class="rw-where__name">Eight rooms</span><span class="rw-where__count">1 of 8</span><span class="rw-bar"><span></span></span></p>
       <a class="rw-chip rw-skip" href="#after">Skip the walk</a>
     </div>
 
@@ -176,14 +182,10 @@
       </article>
 
       <article class="rw-room rw-ink" data-name="On stairs">
-        <figure class="rw-pic rw-pic--a"><img src="https://picsum.photos/id/494/600/800" srcset="https://picsum.photos/id/494/600/800 600w, https://picsum.photos/id/494/1200/1600 1200w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 29vw, (min-width: 900px) 24vw, 50vw" width="600" height="800" alt="A walker and a dog crossing a stone stair landing in a shaft of sun" decoding="async"></figure>
-        <figure class="rw-pic rw-pic--b"><img src="https://picsum.photos/id/402/450/600" srcset="https://picsum.photos/id/402/450/600 450w, https://picsum.photos/id/402/536/715 536w" sizes="(min-width: 900px) 18vw, 50vw" width="450" height="600" alt="A long street of shopfronts running straight into a low evening sun" decoding="async"></figure>
+        <figure class="rw-pic rw-pic--a"><img src="https://picsum.photos/id/494/600/800" srcset="https://picsum.photos/id/494/600/800 600w, https://picsum.photos/id/494/1200/1600 1200w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 37vw, (min-width: 900px) 24vw, 50vw" width="600" height="800" alt="A walker and a dog crossing a stone stair landing in a shaft of sun" decoding="async"></figure>
+        <figure class="rw-pic rw-pic--b"><img src="https://picsum.photos/id/402/450/600" srcset="https://picsum.photos/id/402/450/600 450w, https://picsum.photos/id/402/900/1200 900w" sizes="(min-width: 900px) 37vw, 50vw" width="450" height="600" alt="A long street of shopfronts running straight into a low evening sun" decoding="async"></figure>
         <p class="rw-read"><span class="rw-rl">We start every project on the stairs.</span> <span class="rw-rl">A stair is where strangers slow down</span> <span class="rw-rl">together, look up and decide how far</span> <span class="rw-rl">to go. Get the stair right and the rest</span> <span class="rw-rl">of the building tends to follow it.</span></p>
       </article>
-
-      <div class="rw-band" aria-hidden="true">
-        <div class="rw-band__col">Rules * Rules * Rules * Rules * Rules *</div>
-      </div>
 
       <article class="rw-room rw-values" data-name="Three rules">
         <h3 class="rw-sr">Three rules: daylight, weight, patience</h3>
@@ -239,8 +241,8 @@
               <h3 class="rw-card__name">Gate Hall</h3>
               <a class="rw-card__link" href="#after">See the hall</a>
             </div>
-            <figure class="rw-stack__pic"><img src="https://picsum.photos/id/1076/700/390" srcset="https://picsum.photos/id/1076/700/390 700w, https://picsum.photos/id/1076/1400/780 1400w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 43vw, 50vw" width="700" height="390" alt="A building wrapped in bronze fins, seen from below against a pale sky" loading="lazy" decoding="async"></figure>
-            <figure class="rw-stack__pic"><img src="https://picsum.photos/id/975/700/390" srcset="https://picsum.photos/id/975/700/390 700w, https://picsum.photos/id/975/1400/780 1400w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 43vw, 50vw" width="700" height="390" alt="Two tall oak shutters closed in an old brick wall, warm in the late sun" loading="lazy" decoding="async"></figure>
+            <figure class="rw-stack__pic"><img src="https://picsum.photos/id/1076/700/390" srcset="https://picsum.photos/id/1076/700/390 700w, https://picsum.photos/id/1076/1400/780 1400w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 70vw, 50vw" width="700" height="390" alt="A building wrapped in bronze fins, seen from below against a pale sky" loading="lazy" decoding="async"></figure>
+            <figure class="rw-stack__pic"><img src="https://picsum.photos/id/975/700/390" srcset="https://picsum.photos/id/975/700/390 700w, https://picsum.photos/id/975/1400/780 1400w" sizes="(min-width: 900px) and (min-aspect-ratio: 5/4) 70vw, 50vw" width="700" height="390" alt="Two tall oak shutters closed in an old brick wall, warm in the late sun" loading="lazy" decoding="async"></figure>
             <a class="rw-stack__all" href="#after"><span>All 38 projects</span><span aria-hidden="true">&rarr;</span></a>
           </div>
         </article>
@@ -274,21 +276,24 @@
   </div>
 </section>
 
-<section class="after" id="after" aria-labelledby="after-title">
-  <h2 id="after-title">Visit the studio</h2>
-  <div>
-    <p>Hollin Yard 4, 3011 Rotterdam. The ground floor is open to anyone on weekdays from nine to five; the models are on the first floor.</p>
-  </div>
-  <div>
-    <p>Send us the site plan, the budget and who the building is for. We answer every letter within two weeks.</p>
-    <a class="book" href="#after">Send us your site</a>
-  </div>
-</section>
 </main>
 
-<footer>
-  <p>Photographs: Hartmut Tobies, Austin Ban, Matthew Wiebe, Loudge, Charlie Foster, Jeff Sheldon, Afroz Nawaf, Sam X, Paul Evans, Samuel Zeller, Leeroy, Jean-Marie Grange and Alexandre Perotto, through Unsplash. Varde Architects and its buildings are invented for this demonstration.</p>
+<!-- the footer: a contact block on the oat (the visit and the letter), the sections and the small print -->
+<footer class="after" id="after" aria-labelledby="after-title">
+  <h2 id="after-title">Visit the studio</h2>
+  <div class="after-contact">
+    <p>Hollin Yard 4, Kop van Zuid, Rotterdam. The ground floor is open on weekdays from nine to five. <a href="https://www.openstreetmap.org/search?query=Kop%20van%20Zuid%20Rotterdam">Directions</a></p>
+    <a class="after-mail" href="mailto:sites@varde.nl">sites@varde.nl</a>
+    <p>Send the site plan, the budget and who the building is for. We answer within two weeks.</p>
+    <a class="book" href="mailto:sites@varde.nl">Send us your site</a>
+  </div>
+  <div class="after-foot">
+    <nav aria-label="Footer"><a href="#walk">Rooms</a><a href="#top">Back to the top</a></nav>
+    <p>Photographs from Unsplash. Varde Architects and its buildings are invented for this demonstration.</p>
+  </div>
 </footer>
+<!-- Photographs: Hartmut Tobies, Austin Ban, Matthew Wiebe, Loudge, Charlie Foster, Jeff Sheldon, Afroz Nawaf,
+     Sam X, Paul Evans, Samuel Zeller, Leeroy, Jean-Marie Grange and Alexandre Perotto, through Unsplash. -->
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>

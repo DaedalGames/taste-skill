@@ -4,10 +4,13 @@
 // screen hung on a calm wall (the scene draws its housing), or a measured opening such as a window, a
 // frame or a billboard. Then the place shrinks until it is the picture inside an object resting on the
 // page's plain ground: a framed print or a device screen, built in CSS so it registers by construction.
-// Three flat layers scale at different rates in log space, all driven by two eased values, so the film
-// lands on its wall and stays there: about an 11x pull-back in two reveals (about 18x on a phone). Use
-// it when the punchline is context: a reel shown in a space, a product in its setting, something at its
-// true scale. The phone runs the same two reveals with a portrait print and the copy under it.
+// Three flat layers scale at different rates in log space, all driven by eased values, so the film lands
+// on its wall and stays there. By default it is one reveal (jumps 1): the film becomes the screen on the
+// wall and the pull-back ends full-bleed in the place, with the copy on a band of the page's ground. The
+// second reveal into a framed print (jumps 2, about an 11x pull-back, 18x on a phone) is kept for pages
+// built with it; it is the stock half of the scene, so it is no longer the default. Use it when the
+// punchline is context: a reel shown in a space, a product in its setting, something at its true scale.
+// The phone runs the same reveal on the 4:5 crop of the place, with the copy on the band.
 //
 // Needs gsap + ScrollTrigger, stage.js and powers-of-ten-pullback.css. No SplitText.
 //
@@ -24,7 +27,8 @@
 //                 <source media="(max-width: 767px)" srcset="room-4x5.webp 1600w, room-4x5-l.webp 2666w"
 //                         sizes="175vw" width="1600" height="2000">
 //                 <img class="pb-room-img" src="room.webp" srcset="room.webp 2400w, room-l.webp 3600w"
-//                      sizes="120vw" width="3600" height="2400" alt="the place">
+//                      sizes="170vw" width="3600" height="2400" alt="the place">   sizes = depth x 100vw: the
+//                                                       room is laid out at its start scale and only shrinks
 //               </picture>
 //               <div class="pb-inner">                         level 0: the film's box
 //                 <img class="pb-film" src="still.webp" width="2560" height="1440" alt="the film">
@@ -39,13 +43,23 @@
 //       </div>
 //       <div class="pb-scrim" aria-hidden="true"></div>
 //       <header class="pb-title"><p>the film's name, 2-6 words</p><p>one sentence, 8-16 words</p></header>
-//       <p class="pb-label">the wall label, 6-10 words</p>
+//       <p class="pb-label">the wall label, 6-10 words</p>   live, it joins the copy as plain words under the
+//                                                           headline (never a card on the picture); at rest
+//                                                           it is the last line of the caption
 //       <div class="pb-copy"><h2 id="pb-head">3-8 words, two lines</h2><p>18-32 words</p><a href="#">2-3 words</a></div>
 //       <div class="pb-ground" aria-hidden="true"></div>       optional (made when missing): jumps 1 only
 //     </div>
 //   </section>
 // The copy's headline is the section's heading (any level; it is .pb-copy's first child). The opening
 // title is .pb-title's first child; at rest it becomes the caption under the object, so it is a <p>.
+//
+// Timing (jumps 1): the camera rides the scroll (the film settles into its window over 0.10-0.28, the room
+// pulls back around it over 0.10-0.62, then a rest on the wall to 0.76).
+// What must never stand half done runs on a short clock once the scroll passes its point, and plays back
+// when the scroll returns: the opening title and its scrim leave in 0.3s at 0.04; at 0.76 the band rises
+// from the foot to the landed screen's bottom edge (so whatever stands under the screen is covered whole,
+// never sliced by the band's edge) and the headline and the wall label settle on it; the words and the
+// link follow at 0.86. A stopped scroll never shows a grey ghost of the title or half-faded copy.
 //
 // The window. --wx --wy --ww --wh on .pb-room are where the film sits, as fractions of the room picture's
 // natural box (x y width height, 4 decimals): the screen's picture area on a calm wall, or the INNER edge
@@ -58,10 +72,11 @@
 // the picture allows; a window whose middle is at 38-48% of the picture's height reads best.
 //
 // Options (data-options JSON; defaults, ranges):
-//   jumps       2          1 | 2     2 = film -> room -> object; 1 = film -> room, ending full-bleed in
-//                                    the room with the copy on a band of ground
-//   hold        3 (1.8 at jumps 1)   1.5-4 screens the stage is held on desktop
-//   holdPhone   2.6 (2.2 at jumps 1) 1.6-3.2 screens on a phone
+//   jumps       1          1 | 2     1 = film -> room, ending full-bleed in the room with the copy on a
+//                                    band of ground (the default); 2 = film -> room -> object, the
+//                                    framed print (the default before fix-002: give it to keep it)
+//   hold        1.8 (3 at jumps 2)   1.5-4 screens the stage is held on desktop
+//   holdPhone   2.2 (2.6 at jumps 2) 1.6-3.2 screens on a phone
 //   depth       1.7        1-2.2     the room's start scale: 1 = the film flies back into a still wall,
 //                                    1.7 = a dolly out of a hall, 2.2 = strong parallax (needs a 4800px room)
 //   depthPhone  1.8        1-2.2
@@ -70,8 +85,8 @@
 //   side        "right"    "right" | "left": where the object settles; the copy takes the other side
 //                          (for "left" also put class="pb-side-left" on the section, so the finished
 //                          composition matches without script)
-//   tilt        3          0-6       degrees the object turns as it settles (0 = clinical, 6 = playful;
-//                                    phones and upright tablets use at most 2)
+//   tilt        0          0-6       jumps 2: degrees the object turns as it settles (0 = flat, the
+//                                    default since fix-002; phones and upright tablets use at most 2)
 //   drop        0.02       0-0.06    how far it drops as it settles, as a share of the stage height
 //   drift       0.08 (0 for a video) 0-0.15  the still's slow zoom inside its box, so held frames live
 //   scrub       0.8 (0.4 with Lenis) seconds of catch-up, or true
@@ -91,7 +106,7 @@
 //   --pb-frame-color var(--ink)   --pb-mat-color var(--surface)   --pb-radius 0 (the opening's corners)
 //   --pb-scrim  rgb(0 0 0 / .34)  flat scrim under the opening title while the film is full-bleed
 //   --pb-glass  rgb(255 255 255 / .06)  flat glazing over the room once it is a picture in the object
-// Page tokens: --ground (the field), --ink, --muted, --surface (the label card and the mat), --accent
+// Page tokens: --ground (the field), --ink, --muted, --surface (the mat), --accent
 // (the link), --font-display, --font-text.
 //
 // Pictures: the film, 16:9 (the window's aspect), 2560 wide, its subject in the centre third (the phone
@@ -105,10 +120,17 @@
   const num = (v, d) => { const n = parseFloat(v); return Number.isFinite(n) ? n : d; };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const px = (n) => Math.round(n * 100) / 100 + 'px';
+  // the one-jump pull-back runs on two eased values. The film settles into its window fast (most of the
+  // way in its first sixth, so the wall frames the film at once, never a strip of room along one edge,
+  // and the film is over the figures under its window only briefly); the room keeps pulling back with the
+  // film registered in it, on a gentle curve, so every tenth until it lands shows the camera moving (one
+  // value for both stood still for its last three tenths)
+  const pullEase = (t) => 0.7 * (1 - Math.pow(1 - t, 10)) + 0.3 * (1 - Math.pow(1 - t, 2));
+  const roomEase = (t) => 1 - Math.pow(1 - t, 1.4);
 
   window.Scenes = window.Scenes || {};
   Scenes[ID] = (root, opts = {}) => {
-    const jumps = +opts.jumps === 1 ? 1 : 2;
+    const jumps = +opts.jumps === 2 ? 2 : 1;
     const side = (opts.side ?? (root.classList.contains('pb-side-left') ? 'left' : 'right')) === 'left' ? 'left' : 'right';
     const o = {
       jumps,
@@ -119,7 +141,7 @@
       depthPhone: clamp(num(opts.depthPhone, 1.8), 1, 2.2),
       end: clamp(num(opts.end, 0.32), 0.24, 0.44),
       endPhone: clamp(num(opts.endPhone, 0.56), 0.4, 0.7),
-      tilt: clamp(Math.abs(num(opts.tilt, 3)), 0, 6),
+      tilt: clamp(Math.abs(num(opts.tilt, 0)), 0, 6),
       drop: clamp(num(opts.drop, 0.02), 0, 0.06),
       drift: opts.drift == null ? null : clamp(num(opts.drift, 0.08), 0, 0.15),
     };
@@ -133,6 +155,9 @@
     };
     root.classList.add('pb');
     root.classList.toggle('pb-side-left', side === 'left');
+    // the finished composition follows the plan: the framed print, and its resting tilt, only at jumps 2
+    root.classList.toggle('pb-print', jumps === 2);
+    root.style.setProperty('--pb-tilt', String(o.tilt));
     const video = el.film && el.film.tagName === 'VIDEO' ? el.film : null;
     const drift = o.drift ?? (video ? 0 : 0.08);
     let inst = null;
@@ -156,7 +181,16 @@
         stage.appendChild(ground); madeGround = true;
       }
       root.classList.add(mode === 'one' ? 'pb-one' : 'pb-two');
-      const j1 = { v: 0 }, j2 = { v: 0 };
+      // the wall label joins the copy, as plain words under its headline: no card is laid on the picture.
+      // It goes back to its place in the finished composition when the live scene is cleared.
+      let labelHome = null;
+      if (label && copy && label.parentElement !== copy) {
+        labelHome = [label.parentElement, label.nextSibling];
+        const h = copy.firstElementChild;
+        copy.insertBefore(label, h ? h.nextSibling : copy.firstChild);
+      }
+      // j1: the room's pull-back; jf: the film into its window (one value with j1 at jumps 2)
+      const j1 = { v: 0 }, j2 = { v: 0 }, jf = mode === 'one' ? { v: 0 } : j1;
       const g = { Z: 1, D0: 1, r2: 1, H: 1, W: 1, tiltDeg: 0 };
       const touched = [world, slot, room, inner, label, tilt, stage, ground].filter(Boolean);
       let dead = false;   // the proxies' tweens call draw() while GSAP reverts them, after destroy()
@@ -164,7 +198,8 @@
       const draw = () => {
         if (dead) return;
         room.style.transform = `scale(${Math.pow(g.Z, -j1.v)})`;
-        inner.style.transform = `scale(${Math.pow(g.D0, -j1.v)})`;
+        // the film's box is registered with its window once jf is 1, at any scale of the room around it
+        inner.style.transform = `scale(${Math.pow(g.D0, -jf.v)})`;
         world.style.transform = mode === 'two' ? `scale(${Math.pow(g.r2, j2.v)})` : '';
       };
 
@@ -257,18 +292,12 @@
           Object.assign(world.style, { left: '0px', top: '0px', width: px(W), height: px(H), transformOrigin: '' });
           Object.assign(slot.style, { left: '0px', top: '0px', width: px(W), height: px(H) });
           g.r2 = 1; g.tiltDeg = 0;
-          // the band of ground that carries the copy at the end starts 48px under the landed film
-          const top = clamp(cy + lh / 2 + 48, 0.5 * H, 0.66 * H);
+          // the band of ground that carries the copy at the end starts at the landed screen's bottom edge (its
+          // housing, overlapped by 1px so no line of wall shows): whatever stands under the screen, a person,
+          // a dog, a bench, is covered whole and never sliced by the band's edge (48px under the film, the
+          // band cut the head of the figure under it into a half-disc)
+          const top = clamp(cy + lh / 2 + housing * lw - 1, 0.34 * H, 0.66 * H);
           stage.style.setProperty('--pb-band', px(top));
-        }
-        // the wall label: a card under the landed screen's left edge, in screen space. On a wide screen it
-        // keeps to the left half of the screen, like a gallery label, so it leaves the wall below the
-        // screen's middle (where people stand) clear.
-        if (label) {
-          const hs = housing * lw;
-          const lx = Math.max(16, cx - lw / 2 - hs);
-          const mw = ctx.phone ? Math.max(lw + 2 * hs, 240) : clamp(0.46 * lw, 220, 320);
-          Object.assign(label.style, { left: px(lx), top: px(cy + lh / 2 + hs + (ctx.phone ? 12 : 16)), maxWidth: px(Math.min(W - lx - 16, mw)) });
         }
         draw();
       };
@@ -284,37 +313,74 @@
         .then(() => { if (inst && inst.layout === layout) { layout(); ScrollTrigger.refresh(); } });
 
       const head = copy ? copy.firstElementChild : null;
-      const rest = copy ? [...copy.children].filter((c) => c !== head) : [];
+      // the headline and the wall label arrive together; the words and the link follow
+      const lead = [head, label && label.parentElement === copy ? label : null].filter(Boolean);
+      const rest = copy ? [...copy.children].filter((c) => !lead.includes(c)) : [];
+      // One jump: the camera rides the scroll, and everything that must never stand half done runs on a
+      // short clock once the scroll passes its point (and plays back when the scroll returns), so a stopped
+      // scroll never shows a grey ghost of the title, a band whose edge slices the figure under the screen,
+      // or half-faded copy. The tenths: the title over the film (0), the bare film (10%), the film framed by
+      // its wall (20%: most of the way back at once, so the room never shows as a strip along one edge), the
+      // film in its window from 0.28 while the room keeps pulling back around it, 6-12% smaller at every
+      // tenth to 60%, the rest on the wall (0.62-0.76, a tenth and a half), the band with the headline and
+      // the wall label (80%), the whole copy (90-100%).
+      // Two jumps keep their scrubbed timing (only the title is on a clock there too).
       const A = mode === 'two'
-        ? { j1: [0.04, 0.38], t1: 0.06, lin: 0.40, lout: 0.53, j2: [0.56, 0.28], tilt: 0.70, h: 0.82, r: 0.85, y: 32 }
-        : { j1: [0.04, 0.56], t1: 0.06, lin: 0.56, lout: 0.67, band: 0.69, h: 0.74, r: 0.78, y: 24 };
+        ? { j1: [0.04, 0.38], ease: 'sine.inOut', t1: 0.04, j2: [0.56, 0.28], tilt: 0.70, h: [0.82, 0.10], r: [0.85, 0.10], y: 32 }
+        : { jf: [0.10, 0.18], j1: [0.10, 0.52], ease: roomEase, t1: 0.04, band: 0.76, r: 0.86, y: 24 };
 
-      // 1. the first reveal: room and film read one eased value in log space, so they land together
-      tl.fromTo(j1, { v: 0 }, { v: 1, duration: A.j1[1], ease: 'sine.inOut', onUpdate: draw }, A.j1[0]);
+      // 1. the first reveal, in log space. Two jumps: room and film read one eased value, so they land
+      // together. One jump: the film is in its window by 0.28 (at the 20% step its edge already clears the
+      // head of the figure under the window), the room lands at 0.62
+      tl.fromTo(j1, { v: 0 }, { v: 1, duration: A.j1[1], ease: A.ease, onUpdate: draw }, A.j1[0]);
+      if (jf !== j1) tl.fromTo(jf, { v: 0 }, { v: 1, duration: A.jf[1], ease: pullEase, onUpdate: draw }, A.jf[0]);
       if (film && drift) tl.fromTo(film, { scale: 1 + drift }, { scale: 1, duration: mode === 'two' ? 0.84 : 0.86, ease: 'none' }, 0);
-      // 2. the opening title and its scrim leave while the room shows only as slivers, before the film's
-      //    edge can reach the title's corner of the screen
-      if (scrim) tl.fromTo(scrim, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.07, ease: 'power1.in' }, A.t1);
-      if (title) tl.fromTo(title, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -24, duration: 0.07, ease: 'power1.in' }, A.t1);
-      // 3. the wall label, only while the film sits still on its wall
-      if (label) {
-        tl.fromTo(label, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.05, ease: 'power2.out' }, A.lin);
-        tl.fromTo(label, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.04, ease: 'power1.in', immediateRender: false }, A.lout);
-      }
+      // clocks: a paused tween per beat, played when the scroll passes its point and reversed when it
+      // comes back; a landing far from the point (a reload mid-page) jumps instead of animating
+      const clocks = [];
+      const clock = (at, tw) => { const c = { at, tw, on: false }; clocks.push(c); return c; };
+      // 2. the opening title and its scrim leave on a 0.3s clock as the pull-back is about to start
+      const t1 = gsap.timeline({ paused: true });
+      if (scrim) t1.fromTo(scrim, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.3, ease: 'power1.inOut', immediateRender: false }, 0);
+      if (title) t1.fromTo(title, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -24, duration: 0.3, ease: 'power1.inOut', immediateRender: false }, 0);
+      if (t1.duration()) clock(A.t1, t1);
       if (mode === 'two') {
         // 4. the second reveal: the world shrinks about F, so the slot travels straight to its end point
         tl.fromTo(j2, { v: 0 }, { v: 1, duration: A.j2[1], ease: 'sine.inOut', onUpdate: draw }, A.j2[0]);
         if (glass) tl.fromTo(glass, { opacity: 0 }, { opacity: 1, duration: 0.10 }, A.j2[0]);
         // 5. the settle, after the zoom has landed
         if (tilt) tl.fromTo(tilt, { rotation: 0, y: 0 }, { rotation: () => g.tiltDeg, y: () => o.drop * g.H, duration: 0.20, ease: 'power2.out' }, A.tilt);
-      } else if (ground) {
-        // 4. one jump: a band of the page's ground rises under the room to carry the copy
-        tl.fromTo(ground, { yPercent: 100 }, { yPercent: 0, duration: 0.12, ease: 'power2.out' }, A.band);
+        // 6. the copy (with the wall label under its headline), on the plain field
+        if (lead.length) tl.fromTo(lead, { autoAlpha: 0, y: A.y }, { autoAlpha: 1, y: 0, duration: A.h[1], ease: 'power3.out' }, A.h[0]);
+        if (rest.length) tl.fromTo(rest, { autoAlpha: 0, y: A.y }, { autoAlpha: 1, y: 0, duration: A.r[1], ease: 'power3.out' }, A.r[0]);
+      } else {
+        // 4. one jump: a band of the page's ground rises from the foot to the screen's bottom edge (0.45s),
+        // then the headline and the wall label settle on it (so no word is ever over the moving band)
+        const bandTl = gsap.timeline({ paused: true });
+        if (ground) bandTl.fromTo(ground, { yPercent: 100 }, { yPercent: 0, duration: 0.45, ease: 'power2.out', immediateRender: false }, 0);
+        if (lead.length) bandTl.fromTo(lead, { autoAlpha: 0, y: A.y }, { autoAlpha: 1, y: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, ground ? 0.42 : 0);
+        if (bandTl.duration()) clock(A.band, bandTl);
+        // 5. the words and the link
+        const restTl = gsap.timeline({ paused: true });
+        if (rest.length) restTl.fromTo(rest, { autoAlpha: 0, y: A.y }, { autoAlpha: 1, y: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, 0);
+        if (restTl.duration()) clock(A.r, restTl);
+        // the starting state, before the first clock runs
+        if (ground) gsap.set(ground, { yPercent: 100 });
+        if (lead.length || rest.length) gsap.set([...lead, ...rest], { autoAlpha: 0, y: A.y });
       }
-      // 6. the copy, on the plain field
-      if (head) tl.fromTo(head, { autoAlpha: 0, y: A.y }, { autoAlpha: 1, y: 0, duration: 0.10, ease: 'power3.out' }, A.h);
-      if (rest.length) tl.fromTo(rest, { autoAlpha: 0, y: A.y }, { autoAlpha: 1, y: 0, duration: 0.10, ease: 'power3.out' }, A.r);
       tl.set({}, {}, 1);
+      const tick = () => {
+        if (dead) return;
+        const p = tl.progress();
+        for (const c of clocks) {
+          const on = p >= c.at;
+          if (on === c.on) continue;
+          c.on = on;
+          if (Math.abs(p - c.at) > 0.25) c.tw.progress(on ? 1 : 0).pause();
+          else if (on) c.tw.play(); else c.tw.reverse();
+        }
+      };
+      if (clocks.length) { tl.eventCallback('onUpdate', tick); tick(); }
 
       // the film plays only near the screen; the three moving layers are promoted only then
       ScrollTrigger.create({
@@ -343,6 +409,7 @@
           stage.style.removeProperty('--pb-band');
           stage.style.removeProperty('--pb-copy-top');
           if (madeGround && ground) ground.remove();
+          if (labelHome && labelHome[0]) labelHome[0].insertBefore(label, labelHome[1] && labelHome[1].parentNode === labelHome[0] ? labelHome[1] : null);
           root.classList.remove('pb-one', 'pb-two', 'pb-near', 'pb-stack');
           if (video) video.pause();
           inst = null;

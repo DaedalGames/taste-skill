@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Westerly, a small ferry for the outer islands</title>
-<meta name="description" content="Westerly sails one slow loop a week from Oban, calling at fifteen islands between Lismore and Lewis.">
+<meta name="description" content="Westerly sails one slow loop a week from Oban, calling at thirteen islands between Lismore and Lewis.">
 <script>document.documentElement.classList.add('js')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -95,13 +95,9 @@
   }
 
   .foot { padding: 0 var(--margin) 28px; }
-  .foot-name {
-    margin: 0;
-    font-weight: 700;
-    font-size: 19.5vw;
-    line-height: 0.8;
-    letter-spacing: -0.055em;
-  }
+  .foot-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 16px 28px; }
+  .foot-row nav { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+  .foot-row nav a { text-decoration: none; }
   .foot p:last-child { margin: 28px 0 0; max-width: 62ch; font-size: 16px; color: color-mix(in srgb, var(--ink) 68%, transparent); }
 
   @media (max-width: 1023px) {
@@ -109,7 +105,8 @@
     .hero p { max-width: 40ch; }
   }
   @media (max-width: 767px) {
-    .bar nav a:not(:last-child) { display: none; }
+    .bar { gap: 16px; font-size: 16px; }
+    .bar nav { gap: 16px; }
     .hero { padding-top: 4svh; }
     .hero-text { grid-template-columns: 1fr; gap: 20px; }
     .hero-pic { margin-top: 28px; min-height: 40svh; }
@@ -132,7 +129,7 @@
       <div class="hero-text">
         <h1 id="hero-title">A small ferry for the outer islands</h1>
         <div>
-          <p>Westerly sails one slow loop a week from Oban, calling at fifteen islands between Lismore and Lewis, April to October.</p>
+          <p>Westerly sails one slow loop a week from Oban, calling at thirteen islands between Lismore and Lewis, April to October.</p>
           <a class="button" href="#book">Book a berth</a>
         </div>
       </div>
@@ -148,36 +145,32 @@
         </header>
         <div class="drum-view">
           <ol class="drum">
-            <li class="drum-item"><span class="drum-name">Lismore</span> <span class="drum-meta">Monday, 07:40</span>
+            <li class="drum-item"><span class="drum-name">Lismore</span>
               <img src="https://picsum.photos/id/12/900/600" srcset="https://picsum.photos/id/12/600/400 600w, https://picsum.photos/id/12/900/600 900w, https://picsum.photos/id/12/1200/800 1200w, https://picsum.photos/id/12/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="Dark rocks on a sandy beach, calm sea and low islands beyond"></li>
-            <li class="drum-item"><span class="drum-name">Mull</span> <span class="drum-meta">Monday, 10:15</span>
+            <li class="drum-item"><span class="drum-name">Mull</span>
               <img src="https://picsum.photos/id/1049/900/600" srcset="https://picsum.photos/id/1049/600/400 600w, https://picsum.photos/id/1049/900/600 900w, https://picsum.photos/id/1049/1200/800 1200w, https://picsum.photos/id/1049/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A rock island reflected on a wet beach under a pale sky"></li>
-            <li class="drum-item"><span class="drum-name">Coll</span> <span class="drum-meta">Monday, 15:30</span>
+            <li class="drum-item"><span class="drum-name">Coll</span>
               <img src="https://picsum.photos/id/347/900/600" srcset="https://picsum.photos/id/347/600/400 600w, https://picsum.photos/id/347/900/600 900w, https://picsum.photos/id/347/1200/800 1200w, https://picsum.photos/id/347/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="Dune grass bending in the wind under a wide white sky"></li>
-            <li class="drum-item"><span class="drum-name">Tiree</span> <span class="drum-meta">Monday, 18:05</span>
-              <img src="https://picsum.photos/id/640/900/600" srcset="https://picsum.photos/id/640/600/400 600w, https://picsum.photos/id/640/900/600 900w, https://picsum.photos/id/640/1200/800 1200w, https://picsum.photos/id/640/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="Turquoise surf breaking on golden sand, seen from above"></li>
-            <li class="drum-item"><span class="drum-name">Colonsay</span> <span class="drum-meta">Tuesday, 09:20</span>
+            <li class="drum-item"><span class="drum-name">Tiree</span>
+              <img src="https://picsum.photos/id/606/900/600" srcset="https://picsum.photos/id/606/600/400 600w, https://picsum.photos/id/606/900/600 900w, https://picsum.photos/id/606/1200/800 1200w, https://picsum.photos/id/606/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A wooden boardwalk through grassy dunes towards the sea"></li>
+            <li class="drum-item"><span class="drum-name">Colonsay</span>
               <img src="https://picsum.photos/id/14/900/600" srcset="https://picsum.photos/id/14/600/400 600w, https://picsum.photos/id/14/900/600 900w, https://picsum.photos/id/14/1200/800 1200w, https://picsum.photos/id/14/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A rocky shore meeting a calm pale sea under haze"></li>
-            <li class="drum-item"><span class="drum-name">Barra</span> <span class="drum-meta">Tuesday, 16:45</span>
-              <img src="https://picsum.photos/id/162/900/600" srcset="https://picsum.photos/id/162/600/400 600w, https://picsum.photos/id/162/900/600 900w, https://picsum.photos/id/162/1200/800 1200w, https://picsum.photos/id/162/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A coastline of turquoise sea and patchwork fields, seen from the air"></li>
-            <li class="drum-item"><span class="drum-name">Vatersay</span> <span class="drum-meta">Wednesday, 08:10</span>
-              <img src="https://picsum.photos/id/606/900/600" srcset="https://picsum.photos/id/606/600/400 600w, https://picsum.photos/id/606/900/600 900w, https://picsum.photos/id/606/1200/800 1200w, https://picsum.photos/id/606/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A wooden boardwalk winding through grassy dunes toward the sea"></li>
-            <li class="drum-item"><span class="drum-name">Eriskay</span> <span class="drum-meta">Wednesday, 11:30</span>
-              <img src="https://picsum.photos/id/853/900/600" srcset="https://picsum.photos/id/853/600/400 600w, https://picsum.photos/id/853/900/600 900w, https://picsum.photos/id/853/1200/800 1200w, https://picsum.photos/id/853/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A lone rock in a calm blue sea under a pastel evening sky"></li>
-            <li class="drum-item"><span class="drum-name">South Uist</span> <span class="drum-meta">Wednesday, 14:00</span>
+            <li class="drum-item"><span class="drum-name">Barra</span>
+              <img src="https://picsum.photos/id/457/900/600" srcset="https://picsum.photos/id/457/600/400 600w, https://picsum.photos/id/457/900/600 900w, https://picsum.photos/id/457/1200/800 1200w, https://picsum.photos/id/457/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="Faint boats at anchor on a pale, foggy sea"></li>
+            <li class="drum-item"><span class="drum-name">Eriskay</span>
+              <img src="https://picsum.photos/id/941/900/600" srcset="https://picsum.photos/id/941/600/400 600w, https://picsum.photos/id/941/900/600 900w, https://picsum.photos/id/941/1200/800 1200w, https://picsum.photos/id/941/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A small island on a pale, glassy sea under soft cloud"></li>
+            <li class="drum-item"><span class="drum-name">South Uist</span>
               <img src="https://picsum.photos/id/179/900/600" srcset="https://picsum.photos/id/179/600/400 600w, https://picsum.photos/id/179/900/600 900w, https://picsum.photos/id/179/1200/800 1200w, https://picsum.photos/id/179/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="Waves breaking around dark rocks on a misty shore"></li>
-            <li class="drum-item"><span class="drum-name">Benbecula</span> <span class="drum-meta">Thursday, 09:00</span>
+            <li class="drum-item"><span class="drum-name">Benbecula</span>
               <img src="https://picsum.photos/id/172/900/600" srcset="https://picsum.photos/id/172/600/400 600w, https://picsum.photos/id/172/900/600 900w, https://picsum.photos/id/172/1200/800 1200w, https://picsum.photos/id/172/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A stone jetty running out into still water and grey fog"></li>
-            <li class="drum-item"><span class="drum-name">North Uist</span> <span class="drum-meta">Thursday, 13:20</span>
+            <li class="drum-item"><span class="drum-name">North Uist</span>
               <img src="https://picsum.photos/id/302/900/600" srcset="https://picsum.photos/id/302/600/400 600w, https://picsum.photos/id/302/900/600 900w, https://picsum.photos/id/302/1200/800 1200w, https://picsum.photos/id/302/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A lone marker post standing in still water wrapped in fog"></li>
-            <li class="drum-item"><span class="drum-name">Berneray</span> <span class="drum-meta">Thursday, 16:10</span>
-              <img src="https://picsum.photos/id/941/900/600" srcset="https://picsum.photos/id/941/600/400 600w, https://picsum.photos/id/941/900/600 900w, https://picsum.photos/id/941/1200/800 1200w, https://picsum.photos/id/941/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A small island on a pale, glassy sea under soft clouds"></li>
-            <li class="drum-item"><span class="drum-name">Harris</span> <span class="drum-meta">Friday, 10:30</span>
-              <img src="https://picsum.photos/id/323/900/600" srcset="https://picsum.photos/id/323/600/400 600w, https://picsum.photos/id/323/900/600 900w, https://picsum.photos/id/323/1200/800 1200w, https://picsum.photos/id/323/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="Steep green headlands dropping into a deep blue bay"></li>
-            <li class="drum-item"><span class="drum-name">Scalpay</span> <span class="drum-meta">Friday, 13:45</span>
-              <img src="https://picsum.photos/id/626/900/600" srcset="https://picsum.photos/id/626/600/400 600w, https://picsum.photos/id/626/900/600 900w, https://picsum.photos/id/626/1200/800 1200w, https://picsum.photos/id/626/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A red and white lighthouse in a turquoise sea below a pale cliff"></li>
-            <li class="drum-item"><span class="drum-name">Lewis</span> <span class="drum-meta">Saturday, 09:00</span>
-              <img src="https://picsum.photos/id/574/900/600" srcset="https://picsum.photos/id/574/600/400 600w, https://picsum.photos/id/574/900/600 900w, https://picsum.photos/id/574/1200/800 1200w, https://picsum.photos/id/574/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A grassy cliff above a black sand beach with sea stacks offshore"></li>
+            <li class="drum-item"><span class="drum-name">Berneray</span>
+              <img src="https://picsum.photos/id/130/900/600" srcset="https://picsum.photos/id/130/600/400 600w, https://picsum.photos/id/130/900/600 900w, https://picsum.photos/id/130/1200/800 1200w, https://picsum.photos/id/130/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="A gull gliding over a grey sea under pale cloud"></li>
+            <li class="drum-item"><span class="drum-name">Harris</span>
+              <img src="https://picsum.photos/id/66/900/600" srcset="https://picsum.photos/id/66/600/400 600w, https://picsum.photos/id/66/900/600 900w, https://picsum.photos/id/66/1200/800 1200w, https://picsum.photos/id/66/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="Rough grazing in a wide glen under low grey cloud, a lone peak behind"></li>
+            <li class="drum-item"><span class="drum-name">Lewis</span>
+              <img src="https://picsum.photos/id/379/900/600" srcset="https://picsum.photos/id/379/600/400 600w, https://picsum.photos/id/379/900/600 900w, https://picsum.photos/id/379/1200/800 1200w, https://picsum.photos/id/379/1600/1067 1600w" sizes="(max-width: 767px) 100vw, 50vw" width="900" height="600" alt="An empty road running over the moor under a grey sky"></li>
           </ol>
         </div>
         <div class="drum-close">
@@ -198,8 +191,15 @@
   </main>
 
   <footer class="foot">
-    <p class="foot-name" aria-hidden="true">Westerly</p>
-    <p>Photographs by Paul Jarvis, Rosan Harmens, Alex Talmon, Sarah Bürvenich, Dillon McIntosh, Aleksandra Boguslawska, Stephen Radford, Angelina Odemchuk, Aleksi Tappura, Billy Lam, Ivan Slade, Paweł Wojciechowski, Nick Diamantidis, Julien Lavallée and Paulo Simões Mendes, from Unsplash via Picsum. Westerly is an invented company for this demo, and the pictures stand in for the islands.</p>
+    <div class="foot-row">
+      <a class="mark" href="#top">Westerly</a>
+      <nav aria-label="Footer">
+        <a href="#islands">Islands</a>
+        <a href="#book">Fares</a>
+        <a href="#book">Book a berth</a>
+      </nav>
+    </div>
+    <p>Photographs by Paul Jarvis, Rosan Harmens, Alex Talmon, Aleksandra Boguslawska, Volkan Olmez, Ivan Slade, Angelina Odemchuk, Aleksi Tappura, Billy Lam, Ryan Jacques, Nicholas Swanson and Kamil Lehmann, from Unsplash via Picsum. Westerly is an invented company for this demo, and the pictures stand in for the islands.</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>

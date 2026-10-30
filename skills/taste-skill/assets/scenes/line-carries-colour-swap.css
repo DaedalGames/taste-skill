@@ -6,7 +6,7 @@
    Without .is-live (no script, a failed CDN, reduced motion, a phone set to 'rest', a screen under 480px
    tall) this file draws the finished composition: the closing photograph full width with a straight foot,
    then on the paper ground the line in ink at the width of the content (one row; two on a phone), then
-   the next picture. With .is-live the stage holds for 1.2 screens (line-carries-colour-swap.js).
+   the next picture. With .is-live the stage holds for one screen (line-carries-colour-swap.js).
 
    Tokens it reads: --ground (the paper), --ink, --font-display,
    --display-weight (600 here when the page sets none; a weight the page has not loaded is never faked),

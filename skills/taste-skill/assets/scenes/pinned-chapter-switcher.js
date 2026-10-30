@@ -4,8 +4,8 @@
 // picture settles from a slight scale as its seam lands; the outgoing one is pushed aside and darkens, so
 // the new sheet reads as lying on top. Exactly at the half-and-half frame of each wipe the title and text
 // swap through masks (timed, not scrubbed) and arrive the way the picture did: sliding in from the side the
-// seam came from, bottom line first with a rising sheet. The count rolls ("2 of 4") and the chapter names
-// under it mark the current one in full ink. No bar fills with the scroll: the stage shows where the story is.
+// seam came from, bottom line first with a rising sheet. No count, no lit chapter names and no bar by
+// default (since fix-002: those are a counter and a step tracker): the pictures show where the story is.
 //
 // Use it for feature chapters, before/after stories, project indexes or product variants where every
 // chapter has a different picture and different words. Not for a run of similar photos. The half-and-half
@@ -90,9 +90,10 @@
 //                         allow (the words need the lower half)
 //   shade        0.25     how dark the outgoing picture gets as it is covered, 0-0.6
 //   push         1        strength of the scale and drift on both pictures, 0-1.5
-//   index        'names'  'names' (the chapter names, the current one in --chs-ink, the others in --chs-muted;
-//                         desktop and tablet) | 'none'; above 7 chapters 'none'. No progress bars
-//   counter      true     the rolling "2 of 4" beside the heading
+//   index        'none'   'none' (the default since fix-002: the lit chapter name is a step tracker) | 'names'
+//                         (the chapter names, the current one in --chs-ink, the others in --chs-muted;
+//                         desktop and tablet; above 7 chapters 'none'). No progress bars
+//   counter      false    the rolling "2 of 4" beside the heading (false since fix-002: a counter)
 //   preroll      true     the first picture settles into its frame while the section scrolls into view
 //   scrub        true when smooth scrolling is on, else 0.6 (0.4 on a phone)
 //   maxHold      6        ceiling on the screens held, 3-8
@@ -210,8 +211,10 @@
     // head: heading plus the rolling count
     const head = stage.querySelector(':scope > .chs-head');
     let count = head && head.querySelector('.chs-count');
-    if (count && opts.counter === false) { count.remove(); count = null; }
-    if (head && !count && opts.counter !== false) {
+    // the count is a counter: off unless a page asks for it (counter: true)
+    const wantCount = opts.counter === true;
+    if (count && !wantCount) { count.remove(); count = null; }
+    if (head && !count && wantCount) {
       count = document.createElement('p'); count.className = 'chs-count'; head.appendChild(count);
     }
     if (count) {
@@ -221,8 +224,13 @@
     const reel = count && count.querySelector('.chs-reel');
 
     // index: the chapter names, built from data-name or the title when the page has none
-    const indexMode = opts.index === 'none' || opts.index === false || N > 7 ? 'none' : 'names';
+    // the names with the current one lit are a step tracker: off unless a page asks for them (index: 'names')
+    const indexMode = opts.index === 'names' && N <= 7 ? 'names' : 'none';
     root.dataset.index = indexMode;
+    // the dock (heading, names, count in one row at the foot) exists only when a page asks for the count or
+    // the names; otherwise the foot carries the chapter's words alone and the section heading is kept for
+    // screen readers (it stays visible in the finished composition), never a lone label under the title
+    root.dataset.dock = wantCount || indexMode === 'names' ? 'on' : 'off';
     let nav = stage.querySelector(':scope > .chs-index');
     if (!nav) {
       nav = document.createElement('nav');
@@ -263,7 +271,10 @@
     const hand = { L: Math.min(num(opts.phoneLength, 0.85, 0.6, 1.4), maxHold / N), w: num(opts.phoneWipe, 0.55, 0.35, 0.7), amp: 0.6, phone: true };
     const push = num(opts.push, 1, 0, 1.5), shadeTo = num(opts.shade, 0.25, 0, 0.6);
     const masked = !!window.SplitText;
-    const EASE = window.gsap ? gsap.parseEase('power1.inOut') : (t) => t;
+    // The seam's ease: quick off each edge and slow through the middle, so it lingers on the half-and-half
+    // frame this scene exists for and never stands as a thin sliver of the next picture at the screen's edge
+    // (power1.inOut before fix-002 spent a fifth of every wipe under 10% open, a sliver at a stop).
+    const EASE = (u) => (u < 0.5 ? 0.5 - 0.5 * (1 - 2 * u) ** 2 : 0.5 + 0.5 * (2 * u - 1) ** 2);
     if (Stage.touch && window.ScrollTrigger) ScrollTrigger.config({ ignoreMobileResize: true });
 
     // live state, rebuilt by every build() and cleared by reset()

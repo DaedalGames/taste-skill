@@ -1,11 +1,12 @@
 // tasteskill / scenes / scatter-and-lock.js — one photograph cut into a grid of live cells and scattered
-// as shards through real 3D space (depth, blur, twist). The scroll flies the cells home centre-out into a
-// gapped contact sheet, snaps them shut edge to edge with a short flash, swaps them for the one solid
-// poster, and grows that poster to full bleed so the page can carry on from the picture.
+// as shards through real 3D space (depth, twist). The scroll flies the cells home centre-out into a
+// gapped contact sheet, snaps them shut edge to edge, swaps them for the one solid poster (its word and
+// corner note arrive whole, only then: the shards carry the picture alone, never cut letters), and grows
+// that poster to full bleed so the page can carry on from the picture.
 // Needs stage.css + stage.js, GSAP 3.15.0 and ScrollTrigger (see stage.js for the script tags).
 //
 // DOM (one real heading, one real img; the script adds the cells and the flash):
-//   <section class="scene" data-scene="scatter-and-lock" data-options='{"cols":7,"rows":4}' aria-labelledby="sl-h">
+//   <section class="scene" data-scene="scatter-and-lock" data-options='{}' aria-labelledby="sl-h">
 //     <div class="scene-stage">
 //       <header class="sl-title"><h2 class="sl-headline" id="sl-h">A headline of two lines</h2></header>
 //       <div class="sl-field">
@@ -38,12 +39,10 @@
 // 1000px and 1600px for phones and portrait screens. Never lazy-load it. Serve it with CORS (same origin,
 // or crossorigin="anonymous" on a host that allows it) so the scene can read it and put its most detailed
 // cells in the front of the cloud; without that it falls back to fixed hero cells.
-// The word: put it over a dark, quiet part of the photograph (or set --sl-scrim), and inside one row band
-// of the grid (on 4 rows: --sl-word-y 12.5%, 37.5%, 62.5% or 87.5%) so no gap runs through its middle.
-// Check every letter at the lock and at full bleed: at least 3:1 against the pixels behind it.
-// Across the columns the script nudges it by up to half a letter so the cuts fall in the white between
-// letters (it measures each letter's ink). Where two cuts cannot both find white, try a size a little up or
-// down: the demo's word fits its 7 columns at 9.75cqi and cuts into a letter at 9cqi.
+// The word: put it over a dark, quiet part of the photograph (or set --sl-scrim). Check every letter on the
+// poster and at full bleed: at least 3:1 against the pixels behind it. The word and the corner note are
+// never cut into the shards (a word in flight reads as "T", "ha", "w"): the cells carry the picture only,
+// and the word and note fade in whole on the solid poster just after the lock.
 // Inside .sl-art, size things in cqi (or in em of something sized in cqi): the art is drawn at two sizes
 // (the cells at frame size, the poster at full-bleed size, scaled down until the hand-off), and px would
 // differ between them. The micro-copy's 14px floor is already handled (--sl-up).
@@ -54,33 +53,48 @@
 //                               the title is hidden at progress 0 (the scene opens on the bare poster), so
 //                               never use explode as the first section of a page: the page would open with
 //                               no heading in view.
-//   hold 2.5 (1.5-4)            screens the stage is held on desktop; phoneHold 2 (1.5-3)
+//   hold 1.8 (1.5-4)            screens the stage is held on desktop (2.5 before fix-002); phoneHold 1.8 (1.5-3)
 //   scrub 0.6 (0-0.8)           seconds of catch-up; true locks it to the scrollbar
-//   cols 7, rows 4              landscape grid, at most 40 cells (5x3 calm and readable, 8x5 a swarm)
-//   phoneCols 4, phoneRows 5    phone and portrait grid (4:5 art), at most 20 cells
+//   cols 5, rows 3              landscape grid, at most 40 cells (5x3, the default since fix-002: pieces big
+//                               enough to read as parts of a photograph; 7x4 was the old default, 8x5 a swarm)
+//   phoneCols 3, phoneRows 4    phone and portrait grid (4:5 art), at most 20 cells (4x5 before fix-002)
 //   heroes "auto"               which cells fill the front of the cloud: "auto" (the most detailed cells of the
 //                               photograph, the biggest slot nearest the centre) | "fixed" | [[c,r], …] nearest first
 //   phoneHeroes "auto"          the same for the phone and portrait grid
 //   perspective 1200 (700-2000) lower is more dramatic; phonePerspective 900
-//   depth 2000 (600-3000)       how deep the far shards start, in px of z; phoneDepth 1200 (500-2000)
+//   depth 800 (600-3000)        how deep the far shards start, in px of z; phoneDepth 600 (500-2000) (2000 and
+//                               1200 before fix-002: a deep cloud of small chips left the opening screens empty)
 //   near 280 (0-300)            how far in front of the screen the nearest shard starts; phoneNear 160
-//   twist 40 (0-45)             rotation of the shards in degrees; 0 = a flat glide, like dealt cards
+//   twist 24 (0-45)             rotation of the shards in degrees; 0 = a flat glide, like dealt cards (40 before
+//                               fix-002)
+//   size 1.3 (0.6-1.8)          the shards' size in the opening cloud, as a share of their cells; they keep it
+//                               through most of the flight and give it up as they land (1 before fix-002);
+//                               phoneSize 1.5, for the portrait grid
 //   drift 0.06 (0-0.15)         share of its flight a parked shard travels while it waits its turn
 //   order "centre"              "centre" (out from the middle) | "sweep" (left to right) | "random" (seeded)
-//   blur true                   depth blur, at most 6px (4px on phones); dropped on 4-core and saveData devices
-//   flash 0.16 (0-0.3)          peak of the white flash when the grid locks; 0 = none
+//   blur false                  depth blur on the far shards, at most 6px (4px on phones); dropped on 4-core and
+//                               saveData devices. Off by default since fix-002 (blur in the scene is a tell)
+//   flash 0 (0-0.3)             peak of the white flash when the grid locks; 0 = none (the default since
+//                               fix-002: a full-frame white wash reads as glow)
 //   handoff true                grow the locked poster to full bleed at the end; false = it rests, framed
-//   wordFit true                nudge the poster word so the column gaps fall between its letters
+//   wordFit                     no effect since fix-002 (it nudged the word so the column cuts fell between
+//                               its letters; the word is no longer cut). Accepted and ignored.
 //   seed 11                     the random part of the scatter
 //   phone "same"                "same" | "rest" (phones get the finished composition)
 // CSS custom properties on the section: --sl-bg, --sl-ink, --sl-W (frame width), --sl-word-size,
 // --sl-word-x, --sl-word-y, --sl-word-ink, --sl-scrim, --sl-flash (see scatter-and-lock.css).
 //
-// Timeline (fractions of the hold): title and caption fade out 0.05-0.18 (opacity only: the heading stays
-// in the accessibility tree); cell k of N starts its flight at 0.03 + 0.42k/(N-1) and lands 0.25 later (the
-// last at 0.70); the grid locks 0.70-0.76; flash 0.758-0.82; the cells swap for the solid poster at 0.765;
-// the poster rests to 0.84, grows to full bleed by 0.95 and holds it to 1, so the release never shows a
-// poster still growing. Explode runs the same timeline backwards from 0.84 to 0.
+// Timeline (fractions of the hold; every change falls between two tenths, so a stop on a tenth is whole):
+// the opening cloud holds to 0.08 (its shards drift a little); title and caption fade out 0.205-0.295
+// (opacity only: the heading stays in the accessibility tree); on a portrait screen, where the title ends
+// clear above the frame, it stays until the hand-off (0.805-0.83); the cells set off centre-out, the
+// first three together at 0.08 and the rest spread evenly to 0.38 (the cells under the title or caption
+// from 0.30, once it has gone), each landing 0.22 later (the last at 0.60), so the 10% and 20% steps
+// already show pieces flying home (fix-006: 0.25 + 0.16k/(N-1) and 0.19 before, and the title left at
+// 0.305-0.395); the grid locks
+// 0.60-0.66; flash (when set) 0.658-0.72; the cells swap for the solid poster at 0.665 and its word and
+// note fade in whole by 0.69; the poster rests to 0.805, grows to full bleed by 0.895 and holds it to 1, so
+// the release never shows a poster still growing. Explode runs the same timeline backwards from 0.805 to 0.
 // The opening cloud: the most detailed pieces of the photograph take the near places and the plain ones
 // (sky, mist) sink deepest; every shard starts out beyond its own place in the picture, seen from the
 // middle, so the outer pieces (which land last) never travel behind pieces that have already landed.
@@ -114,10 +128,25 @@
       [3, 4, 40, 90, -1200, 24, -14, -10, 5, 0.75],
     ],
   };
-  const FLIGHT = 0.25;
-  const LANDED = 0.7; // 0.03 + 0.42 + FLIGHT: every cell is home by then
-  const REST = 0.84; // the locked poster rests from 0.765 to here
-  const BLEED = 0.95; // the hand-off reaches full bleed here and holds it to 1
+  // fix-006: the flights start at 0.08 (0.25 before, which held the cloud unchanged for three tenths), so
+  // the 0% step is the whole cloud with the title and the 10% and 20% steps already show pieces flying home
+  const FLIGHT = 0.22;
+  const START = 0.08; // the opening cloud holds, whole, until here
+  const SPREAD = 0.30; // the starts of the flights spread over START to START + SPREAD
+  const LANDED = START + SPREAD + FLIGHT; // 0.60: every cell is home by then, and the lock starts
+  const SWAP = LANDED + 0.065; // the cells give way to the one solid poster
+  const REST = 0.805; // the locked poster rests from SWAP to here
+  const BLEED = 0.895; // the hand-off reaches full bleed here and holds it to 1
+  // the title and caption leave between the 20% and 30% steps (30-40% before), so the cells under them can
+  // fly home from 0.30, inside the spread of the flights
+  const TITLE = [0.205, 0.09];
+  // when the cell of a rank (0 first, centre-out) sets off: the first three together at START, so the
+  // 10% step already shows pieces on their way at every width, the rest spread evenly to START + SPREAD
+  const LEAD = 3;
+  const startAt = (rank, N) => {
+    const g = Math.min(LEAD, N) - 1;
+    return rank <= g ? START : START + (SPREAD * (rank - g)) / Math.max(1, N - 1 - g);
+  };
 
   // How badly a shard that starts at s crosses the picture on its way home to h. Both are in half-frames
   // from the frame's centre. A start out beyond its own place (along the ray from the centre through it)
@@ -265,6 +294,18 @@
     const next = root.nextElementSibling;
     const hasStill = !!(next && next.classList.contains('sl-still'));
     const still = hasStill ? next : null;
+    // The still is a picture of the poster (aria-hidden): its word is drawn from an attribute, like the
+    // cells' copies, so the next section rising over it never counts as covering or crossing real text.
+    if (still) {
+      const pic = still.querySelector('.sl-still-pic');
+      const tw = pic && document.createTreeWalker(pic, NodeFilter.SHOW_TEXT);
+      const texts = [];
+      for (let n = tw && tw.nextNode(); n; n = tw.nextNode()) if (n.nodeValue.trim()) texts.push(n);
+      for (const n of texts) { const s = document.createElement('span'); s.setAttribute('data-sl-text', n.nodeValue); n.replaceWith(s); }
+    }
+
+    // A portrait title that ends above the frame stays on screen until the hand-off (see the title's tween).
+    const titleStays = tall && !explode && !!title && frame.offsetTop >= title.offsetTop + title.offsetHeight + 24;
 
     let cols = tall ? o.phoneCols : o.cols;
     let rows = tall ? o.phoneRows : o.rows;
@@ -277,8 +318,10 @@
     frame.style.setProperty('--cols', cols);
     frame.style.setProperty('--rows', rows);
 
-    // The cells: clones of the poster art (picture, word and all), each showing its own window of it.
+    // The cells: clones of the poster's picture, each showing its own window of it. The word and the corner
+    // note stay on the solid poster alone: cut into shards they would fly as pieces of letters.
     const proto = art.cloneNode(true);
+    proto.querySelectorAll('.sl-word, .sl-micro').forEach((el) => el.remove());
     proto.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
     proto.querySelectorAll('source').forEach((el) => el.remove());
     proto.querySelectorAll('img').forEach((im) => {
@@ -328,6 +371,7 @@
     const zNear = -depth * 0.4;
     const lowEnd = (navigator.hardwareConcurrency || 8) <= 4 || !!(navigator.connection && navigator.connection.saveData);
     const blurCap = o.blur && !lowEnd ? (phone ? 4 : 6) : 0;
+    const SC = tall ? o.phoneSize : o.size; // the shards' size in the opening cloud, as a share of their cells
     const rotXY = phone ? 24 : 40;
     const rotZ = phone ? 10 : 15;
     const heroOpt = tall ? o.phoneHeroes : o.heroes;
@@ -397,13 +441,13 @@
           k.op = Math.min(1, 0.5 + 0.25 * q[4] + (look && look.light[k.i] < 0.3 ? 0.3 : 0));
           k.blur = Math.round(blurCap * (0.35 + 0.65 * ((zNear - k.z) / (zNear - zFar))));
         }
-        k.sc = 1;
+        k.sc = SC;
         k.spx = (k.c - (cols - 1) / 2) * 6; // the contact-sheet gaps, in % of a cell, held through the flight
         k.spy = (k.r - (rows - 1) / 2) * 6;
       }
 
       // Arrival order: shards in front of the screen leave first (they would hide the assembly), then
-      // centre-out with the heroes pulled forward. Cells under the title or caption wait until 0.20.
+      // centre-out with the heroes pulled forward. Cells under the title or caption wait until they have gone.
       let order;
       if (o.order === 'sweep') {
         order = cells.slice().sort((a, b) => (b.z > 0) - (a.z > 0) || a.c + 0.35 * a.r - (b.c + 0.35 * b.r) || a.i - b.i);
@@ -416,14 +460,16 @@
         const d = (k) => Math.hypot((k.c - cx) / (cols / 2), (k.r - cy) / (rows / 2)) - (k.hero ? 0.25 : 0) - (k.z > 0 ? 1 : 0);
         order = cells.slice().sort((a, b) => d(a) - d(b) || a.i - b.i);
       }
-      const keep = [title, caption].filter((el) => el && el.offsetWidth).map((el) => [el.offsetLeft, el.offsetTop, el.offsetLeft + el.offsetWidth, el.offsetTop + el.offsetHeight]);
+      const keep = [titleStays ? null : title, caption].filter((el) => el && el.offsetWidth).map((el) => [el.offsetLeft, el.offsetTop, el.offsetLeft + el.offsetWidth, el.offsetTop + el.offsetHeight]);
       if (keep.length) {
         const cw = frame.offsetWidth / cols;
         const ch = frame.offsetHeight / rows;
         const fl = frame.offsetLeft;
         const ft = frame.offsetTop;
         const under = (k) => keep.some((b) => fl + (k.c + 1) * cw > b[0] && fl + k.c * cw < b[2] && ft + (k.r + 1) * ch > b[1] && ft + k.r * ch < b[3]);
-        const kMin = Math.ceil(((0.2 - 0.03) / 0.42) * (N - 1) - 1e-6);
+        // the first rank that starts after the title and caption have gone
+        let kMin = 0;
+        while (kMin < N && startAt(kMin, N) < TITLE[0] + TITLE[1] + 0.005 - 1e-6) kMin++;
         const out = [];
         const wait = [];
         for (const k of order) {
@@ -433,7 +479,7 @@
         }
         order = out.concat(wait);
       }
-      order.forEach((k, rank) => { k.s = 0.03 + (0.42 * rank) / Math.max(1, N - 1); });
+      order.forEach((k, rank) => { k.s = startAt(rank, N); });
       G = null;
     };
     assign(pick());
@@ -467,16 +513,20 @@
       const turn = 1 + 0.25 * tw;
       const reach = (z, blur) => {
         const g = P / (P - z);
-        return [(((cw * g * turn) / 2 + 12 + 2 * blur) / vw) * 100, (((ch * g * turn) / 2 + 12 + 2 * blur) / vh) * 100];
+        return [(((cw * g * turn * SC) / 2 + 12 + 2 * blur) / vw) * 100, (((ch * g * turn * SC) / 2 + 12 + 2 * blur) / vh) * 100];
       };
       const blocked = (x, y, e) => zones.some((z) => x + e[0] > z[0] && x - e[0] < z[2] && y + e[1] > z[1] && y - e[1] < z[3]);
-      // a place that would touch a clear zone moves to the nearest free point
+      // a place that would touch a clear zone, or let the shard's edge run off the screen (a slab cut by the
+      // edge), moves to the nearest free point; failing that, the nearest point clear of the zones
+      const inside = (x, y, e) => x - e[0] >= 0 && x + e[0] <= 100 && y - e[1] >= 0 && y + e[1] <= 100;
       const free = (x, y, e) => {
-        for (let d = 0; d <= 60; d += 2) {
-          for (const [ax, ay] of [[0, d], [0, -d], [d, 0], [-d, 0], [d, d], [-d, d], [d, -d], [-d, -d]]) {
-            const nx = x + ax;
-            const ny = y + ay;
-            if (nx >= 6 && nx <= 94 && ny >= 8 && ny <= 94 && !blocked(nx, ny, e)) return [nx, ny];
+        for (const whole of [true, false]) {
+          for (let d = 0; d <= 60; d += 2) {
+            for (const [ax, ay] of [[0, d], [0, -d], [d, 0], [-d, 0], [d, d], [-d, d], [d, -d], [-d, -d]]) {
+              const nx = x + ax;
+              const ny = y + ay;
+              if (nx >= 6 && nx <= 94 && ny >= 8 && ny <= 94 && (!whole || inside(nx, ny, e)) && !blocked(nx, ny, e)) return [nx, ny];
+            }
           }
         }
         return [x, y];
@@ -566,13 +616,17 @@
       const yMin = tall ? 32 : 10;
       const gap = tall ? 9 : 7;
       const gapLoose = tall ? 5 : 4;
+      // the field keeps every shard whole on the screen (no slab cut by its edge) when it fits
+      const fit = (lo, hi, e) => (Math.max(lo, e) <= Math.min(hi, 100 - e) ? [Math.max(lo, e), Math.min(hi, 100 - e)] : [lo, hi]);
+      const [xLo, xHi] = fit(6, 94, eField[0]);
+      const [yLo, yHi] = fit(yMin, 94, eField[1]);
       const pts = [];
       for (let n = 0; n < field.length; n++) {
         let pt = null;
         let loose = null;
         for (let t = 0; t < 400 && !pt; t++) {
-          const x = 6 + 88 * pr();
-          const y = yMin + (94 - yMin) * pr();
+          const x = xLo + (xHi - xLo) * pr();
+          const y = yLo + (yHi - yLo) * pr();
           if (blocked(x, y, eField)) continue;
           loose = loose || [x, y];
           const need = t < 200 ? gap : gapLoose;
@@ -635,14 +689,18 @@
 
     // 1-2. The title and the caption leave before any shard reaches them. Opacity only: the heading stays in
     // the accessibility tree all through the scene.
-    if (title) tl.fromTo(title, { y: 0, opacity: 1 }, { y: -48, opacity: 0, duration: 0.13, ease: 'power2.in' }, 0.05);
-    if (caption) tl.fromTo(caption, { y: 0, opacity: 1 }, { y: 24, opacity: 0, duration: 0.13, ease: 'power2.in' }, 0.05);
+    // On a portrait screen the title sits above the frame, clear of every shard: it stays through the
+    // assembly and the rest, so no step of the hold is a bare cloud, and leaves as the poster grows.
+    if (title && titleStays) {
+      if (grow) tl.fromTo(title, { y: 0, opacity: 1 }, { y: -48, opacity: 0, duration: 0.025, ease: 'power2.in' }, REST);
+    } else if (title) tl.fromTo(title, { y: 0, opacity: 1 }, { y: -48, opacity: 0, duration: TITLE[1], ease: 'power2.in' }, TITLE[0]);
+    if (caption) tl.fromTo(caption, { y: 0, opacity: 1 }, { y: 24, opacity: 0, duration: TITLE[1], ease: 'power2.in' }, TITLE[0]);
 
     // 4. The lock (made before the flights, whose start state must win): gaps close and the tiles overlap
     // by 1.2% in one decisive snap.
     const els = cells.map((k) => k.el);
     tl.fromTo(els, { xPercent: (i) => cells[i].spx, yPercent: (i) => cells[i].spy, scale: 0.96 },
-      { xPercent: 0, yPercent: 0, scale: 1.012, duration: 0.06, ease: 'power4.inOut' }, 0.7);
+      { xPercent: 0, yPercent: 0, scale: 1.012, duration: 0.06, ease: 'power4.inOut' }, LANDED);
 
     // 3. Each cell flies home. Its tweens run from 0 so the whole cloud is placed at every refresh; the ease
     // drifts it a little while it waits, then lands it with power3.out over its own 0.25 of the scroll,
@@ -669,6 +727,13 @@
       const u = (t - k.s) / FLIGHT;
       return o.drift + (1 - o.drift) * (k.route === 3 ? lifted(k, axis, u) : along(u, ROUTES[k.route || 0][Math.min(2, axis)]));
     };
+    const shrink = (k) => (p) => {
+      const t = p * LANDED;
+      if (t <= k.s) return 0;
+      if (t >= k.s + FLIGHT) return 1;
+      const u = (t - k.s) / FLIGHT;
+      return u * u * (3 - 2 * u);
+    };
     for (const k of cells) {
       // geo() first in every value: it may deal a piece a new place (depth, twist, route) after a resize
       tl.fromTo(k.el, { x: () => geo().x0[k.i] }, { x: 0, duration: LANDED, ease: flight(k, 0) }, 0);
@@ -676,10 +741,13 @@
       tl.fromTo(k.el, { z: () => (geo(), k.z) }, { z: 0, duration: LANDED, ease: flight(k, 2) }, 0);
       tl.fromTo(k.el, {
         rotationX: () => (geo(), k.rx), rotationY: () => (geo(), k.ry), rotationZ: () => (geo(), k.rz),
-        scale: () => k.sc, xPercent: k.spx, yPercent: k.spy, transformOrigin: '50% 50%', force3D: true,
+        xPercent: k.spx, yPercent: k.spy, transformOrigin: '50% 50%', force3D: true,
       }, {
-        rotationX: 0, rotationY: 0, rotationZ: 0, scale: 0.96, duration: LANDED, ease: flight(k, 3),
+        rotationX: 0, rotationY: 0, rotationZ: 0, duration: LANDED, ease: flight(k, 3),
       }, 0);
+      // its size in the cloud (the size option) is kept through most of the flight and given up as it lands,
+      // so the converging pieces still fill the screen
+      tl.fromTo(k.el, { scale: () => k.sc }, { scale: 0.96, duration: LANDED, ease: shrink(k) }, 0);
     }
     // Depth blur and faint far shards clear as each one sets off: one clock for all cells, and a style is
     // written only when it changes (filter goes back to none as soon as a shard is sharp). The blur steps
@@ -705,12 +773,15 @@
     if (o.flash > 0) {
       const out = gsap.parseEase('power2.out');
       const breath = (p) => { const u = p * 0.062; return u < 0.008 ? u / 0.008 : 1 - out((u - 0.008) / 0.054); };
-      tl.fromTo(flash, { autoAlpha: 0 }, { autoAlpha: o.flash, duration: 0.062, ease: breath }, 0.758);
+      tl.fromTo(flash, { autoAlpha: 0 }, { autoAlpha: o.flash, duration: 0.062, ease: breath }, LANDED + 0.058);
     }
 
-    // 6. The swap: one solid poster replaces the cells (no seams can survive the hand-off).
-    tl.fromTo(solid, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0.764);
-    tl.fromTo(wrap, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.001 }, 0.765);
+    // 6. The swap: one solid poster replaces the cells (no seams can survive the hand-off). Its word and
+    // corner note, never part of the shards, fade in whole over the locked picture.
+    tl.fromTo(solid, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, SWAP - 0.001);
+    tl.fromTo(wrap, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.001 }, SWAP);
+    const marks = [...art.querySelectorAll('.sl-word, .sl-micro')];
+    if (marks.length) tl.fromTo(marks, { opacity: 0 }, { opacity: 1, duration: 0.024, ease: 'power1.out' }, SWAP + 0.001);
 
     // 8. The hand-off: the poster grows until it covers the stage on both axes (0.84-0.95), then holds full
     // bleed to the end, so even a lagging scrub has reached it by the time the stage releases.
@@ -790,74 +861,8 @@
     ScrollTrigger.addEventListener('refreshInit', onRefresh);
     ScrollTrigger.addEventListener('refresh', onRefreshed);
 
-    // Where the ink of each letter of the word lies (art px): each glyph measured on a canvas in the word's
-    // own face, placed where the page set it (so kerning and tracking are the page's). A T's bar or an a's
-    // tail reaches past its letter's box, and a cut there leaves a stub. Without a canvas, or when the
-    // canvas cannot set the face exactly (a width the canvas has no keyword for), the letters' boxes.
-    const STRETCH = { 50: 'ultra-condensed', 62.5: 'extra-condensed', 75: 'condensed', 87.5: 'semi-condensed', 100: 'normal', 112.5: 'semi-expanded', 125: 'expanded', 150: 'extra-expanded', 200: 'ultra-expanded' };
-    const inkOf = (word, chars, box) => {
-      try {
-        const cs = getComputedStyle(word);
-        const cx = document.createElement('canvas').getContext('2d');
-        const st = STRETCH[parseFloat(cs.fontStretch) || 100];
-        if (!cx || !st || (st !== 'normal' && !('fontStretch' in cx))) return box;
-        cx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-        if (st !== 'normal') cx.fontStretch = st;
-        const ls = parseFloat(cs.letterSpacing) || 0;
-        const ink = [];
-        for (let i = 0; i < chars.length; i++) {
-          const m = cx.measureText(chars[i]);
-          const w = box[i][1] - box[i][0];
-          if (!(Math.abs(m.width + ls - w) < Math.max(2, w * 0.06))) return box; // not the same face
-          ink.push([box[i][0] - m.actualBoundingBoxLeft, box[i][0] + m.actualBoundingBoxRight]);
-        }
-        return ink;
-      } catch { return box; }
-    };
-    // The poster word: nudge it (by at most half a letter) so the column cuts fall in the white between
-    // letters, or else cut off as little of a letter as possible.
-    const fitWord = () => {
-      root.style.removeProperty('--sl-word-dx');
-      if (hasStill) still.style.removeProperty('--sl-word-dx');
-      const word = o.wordFit && art.querySelector('.sl-word');
-      const tn = word && [...word.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim());
-      const W = art.offsetWidth;
-      if (!tn || !W) return;
-      const ab = art.getBoundingClientRect();
-      const sc = ab.width / W || 1;
-      const rg = document.createRange();
-      const box = [];
-      const chars = [];
-      for (let i = 0; i < tn.nodeValue.length; i++) {
-        if (/\s/.test(tn.nodeValue[i])) continue;
-        rg.setStart(tn, i);
-        rg.setEnd(tn, i + 1);
-        const b = rg.getBoundingClientRect();
-        if (b.width) { box.push([(b.left - ab.left) / sc, (b.right - ab.left) / sc]); chars.push(tn.nodeValue[i]); }
-      }
-      if (box.length < 2) return;
-      const pad = (parseFloat(getComputedStyle(word).fontSize) || 0) * 0.015; // keep a cut a hair off the ink
-      const ink = inkOf(word, chars, box).map(([a, b]) => [a - pad, b + pad]);
-      const L = Math.min(...ink.map((k) => k[0]));
-      const R = Math.max(...ink.map((k) => k[1]));
-      const half = Math.round((box[box.length - 1][1] - box[0][0]) / box.length / 2);
-      // a cut through a letter costs the smaller of the two pieces it leaves
-      const cut = (x) => ink.reduce((s, [a, b]) => (x > a && x < b ? s + Math.min(x - a, b - x) : s), 0);
-      let best = 0;
-      let low = Infinity;
-      for (let dx = -half; dx <= half; dx += 0.5) {
-        let cost = Math.abs(dx) * 0.01;
-        for (let c = 1; c < cols; c++) {
-          const x = (c * W) / cols - dx;
-          if (x > L && x < R) cost += cut(x);
-        }
-        if (cost < low - 1e-9) { low = cost; best = dx; }
-      }
-      if (!best) return;
-      const v = ((best / W) * 100).toFixed(3); // in cqi of the art, so it scales with the hand-off and the still
-      root.style.setProperty('--sl-word-dx', v);
-      if (hasStill) still.style.setProperty('--sl-word-dx', v);
-    };
+    // (The word used to be nudged here so the column cuts fell between its letters: the word is no longer
+    // cut into the shards, so the wordFit option has nothing left to do.)
 
     // Shards stay invisible until the photograph is decoded and the fonts are in: never an empty or
     // flashing cell, never a word that shifts between the copies. When the picture switches source (the
@@ -883,7 +888,6 @@
           if (!ok || !live()) return;
           look = detail(img, art, cols, rows);
           if (look) { assign(pick()); recast(); }
-          fitWord();
           root.classList.remove('sl-pending');
           // the still's copy of the picture, decoded long before the release shows it
           if (grow && hasStill) still.querySelectorAll('img').forEach((im) => { if (im.decode) im.decode().catch(() => {}); });
@@ -904,28 +908,30 @@
   window.Scenes[ID] = (root, opts = {}) => {
     const o = {
       mode: opts.mode === 'explode' ? 'explode' : 'assemble',
-      hold: num(opts.hold, 2.5, 1.5, 4),
-      phoneHold: num(opts.phoneHold, 2, 1.5, 3),
+      hold: num(opts.hold, 1.8, 1.5, 4),
+      phoneHold: num(opts.phoneHold, 1.8, 1.5, 3),
       scrub: opts.scrub === true ? true : num(opts.scrub, 0.6, 0, 0.8),
-      cols: Math.round(num(opts.cols, 7, 3, 10)),
-      rows: Math.round(num(opts.rows, 4, 2, 8)),
-      phoneCols: Math.round(num(opts.phoneCols, 4, 2, 6)),
-      phoneRows: Math.round(num(opts.phoneRows, 5, 2, 8)),
+      cols: Math.round(num(opts.cols, 5, 3, 10)),
+      rows: Math.round(num(opts.rows, 3, 2, 8)),
+      phoneCols: Math.round(num(opts.phoneCols, 3, 2, 6)),
+      phoneRows: Math.round(num(opts.phoneRows, 4, 2, 8)),
       heroes: heroList(opts.heroes),
       phoneHeroes: heroList(opts.phoneHeroes),
       perspective: num(opts.perspective, 1200, 700, 2000),
       phonePerspective: num(opts.phonePerspective, 900, 600, 1600),
-      depth: num(opts.depth, 2000, 600, 3000),
-      phoneDepth: num(opts.phoneDepth, 1200, 500, 2000),
+      depth: num(opts.depth, 800, 600, 3000),
+      phoneDepth: num(opts.phoneDepth, 600, 500, 2000),
       near: num(opts.near, 280, 0, 300),
       phoneNear: num(opts.phoneNear, 160, 0, 300),
-      twist: num(opts.twist, 40, 0, 45),
+      twist: num(opts.twist, 24, 0, 45),
+      size: num(opts.size, 1.3, 0.6, 1.8),
+      phoneSize: num(opts.phoneSize, 1.5, 0.6, 1.8),
       drift: num(opts.drift, 0.06, 0, 0.15),
       order: opts.order === 'sweep' || opts.order === 'random' ? opts.order : 'centre',
-      blur: opts.blur !== false,
-      flash: num(opts.flash, 0.16, 0, 0.3),
+      blur: opts.blur === true,
+      flash: num(opts.flash, 0, 0, 0.3),
       handoff: opts.handoff !== false,
-      wordFit: opts.wordFit !== false,
+      // wordFit: accepted and ignored (see the header)
       seed: Math.round(num(opts.seed, 11, 0, 1e9)),
     };
     const run = (tl, ctx) => build(tl, ctx, o);

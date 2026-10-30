@@ -5,10 +5,11 @@
 // frame between two of them is again a clean rounded rectangle: no lumps, no torn outlines, no free
 // polygons. Each stop rests for about a third of its chapter's scroll. The window always carries a
 // chapter's content (on a software page the product's own interface for that job, as an interface
-// fragment; on a page with photographs, one photograph per chapter): while it rests, the interface's small
-// parts build in one by one; as it sets off, that interface stays whole and rides the re-forming, and when
-// the window is half re-formed it hands over to the next chapter's, which starts to build as the old one
-// goes, so no frame shows an empty window. Beside it the chapter's name is set huge with one or two lines
+// fragment; on a page with photographs, one photograph per chapter): as it sets off, that interface stays
+// whole and rides the re-forming, and when the window is half re-formed it hands over to the next
+// chapter's, whose small parts build in one by one while the window draws into its new shape, so it lands
+// on a finished interface and rests on it whole. No frame shows an empty window or a half-built card at a
+// rest. Beside it the chapter's name is set huge with one or two lines
 // and one key figure; they change at the same moment, the old name and lines out, then the new ones in,
 // never overlapping. One accent, never a colour per chapter; no counter, no index, no progress mark, no
 // snap: the scrollbar tells the truth and slow wheel, keyboard and trackpad all work.
@@ -45,10 +46,11 @@
 // slab in order. Give neighbours different outlines (bar beside disc, arch beside pill).
 // Pane content: an interface fragment (data-ui) sits centred in the part of the shape a rectangle can fill
 // without meeting a curve (the script sets --ofr-px, --ofr-py, --ofr-pw, --ofr-ph); size it for the
-// narrowest shape it lands in (a pill leaves about 0.7 of its width), 14px text, 12-13px labels, never
-// under 12px, and let rows drop on phones. Mark one or two of its parts data-build (or data-build="1",
-// "2" to group them): they build in, in order, while the window rests, on room the fragment keeps free for
-// them (a status tag beside a status, a matched row under the total), never over its own words. Each pane
+// narrowest shape it lands in (a pill leaves about 0.7 of its width), 14-16px text and labels, never
+// under 14px (no initials in small discs), and let rows drop on phones. Mark one or two of its parts
+// data-build (or data-build="1", "2" to group them): they build in, in order, while the window draws into
+// its shape, on room the fragment keeps free for them (a status tag beside a status, a matched row under
+// the total), never over its own words; the first chapter's are there from the start. Each pane
 // is a different interface; never the same picture twice. A photograph (an <img> as the pane's only child)
 // fills the whole window.
 // Key figure: a real figure about the chapter (a rate, a time, a fee), never a restated line. It sits under
@@ -76,10 +78,11 @@
 // figure fade out (0.12s), then the new ones rise in from the side the scroll is heading (0.5s), always to
 // the chapter the scroll is in. At the same moment the panes overlap: the old pane, whole with its late
 // parts, leaves (0.12s) as the new one rises in (0.45s, from 0.04s), so the window is never empty. Its
-// data-build parts follow one by one at equal spacing through the rest; scrolling back, a pane returns
-// whole. So every tenth of the hold changes (the window moving, or a part building in), every stop ends on
-// its finished composition, and the last part lands two thirds of the way through the last rest, just
-// before the stage lets go.
+// data-build parts follow on a clock, one by one right behind it (0.05s after the pane starts in, then
+// 0.07s apart, 0.28s each), while the window is still drawing into its shape; scrolling back, a pane
+// returns whole. So the window lands on a finished composition and every rest holds it whole, from its
+// first frame to its last, and a reader who stops mid re-form sees the card whole about 0.3s after the
+// swap; the first chapter is whole from the start.
 // Phone: the same timeline, the window smaller above the words, each name fitted to the width.
 // Reduced motion, no script, a failed CDN, or fewer than three chapters: the finished composition (every
 // chapter as a row: its key figure, name and lines beside its own window, shape drawn with border-radius,
@@ -145,7 +148,14 @@
     const starts = Array.from({ length: N - 1 }, (_, k) => restAt(k) + R);
     // the moment each re-forming is o.swap of the way to its shape (the inverse of sine.inOut)
     const swaps = starts.map((s) => s + (M * Math.acos(1 - 2 * o.swap)) / Math.PI);
-    const fires = steps.map((g, k) => g.map((_, j) => restAt(k) + (R * (j + 1)) / (g.length + 1)));
+    // the late parts land on a clock right after their pane arrives at the swap, one by one, while the
+    // window is still drawing into its shape: so the window lands on a finished interface and rests on it
+    // whole, and wherever a reader stops (mid re-form too) the card is whole within a second. A rest that
+    // opened on a half-built card was the frame a reader stops on. The first chapter's are there from the
+    // start.
+    // seconds: the first part after the pane starts in, then each next, and how long each takes (short, so
+    // the card is whole about 0.3s after the swap, before a reader who stops there has looked)
+    const BUILD0 = 0.05, BUILD_GAP = 0.07, BUILD_IN = 0.28;
 
     // geometry, measured from the layout once per refresh: each name fitted to its column, the room the
     // words take, then the shapes in the window's zone and each pane's place in its own shape
@@ -210,22 +220,9 @@
     const visible = (e) => e && +gsap.getProperty(e, 'opacity') > 0.02;
     const hide = (els) => { const list = els.filter(Boolean); if (list.length) gsap.set(list, { autoAlpha: 0 }); };
 
-    // the late parts of a pane: n of them shown, the rest back (now: at once)
-    const built = steps.map(() => 0);
-    hide(steps.flat(2));
-    const setBuilt = (k, n, now) => {
-      if (k < 0 || built[k] === n) return;
-      steps[k].forEach((group, j) => {
-        const on = j < n, was = j < built[k];
-        if (on === was) return;
-        if (now) gsap.set(group, { autoAlpha: on ? 1 : 0, y: 0, overwrite: 'auto' });
-        else if (!on) gsap.to(group, { autoAlpha: 0, y: 0, duration: OUT, overwrite: 'auto' });
-        else gsap.fromTo(group, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.4, ease: 'power3.out', overwrite: 'auto' });
-      });
-      built[k] = n;
-    };
-    // how many of a pane's late parts the scroll has passed: none before its rest, all after it
-    const passed = (k, time) => fires[k].filter((f) => time >= f).length;
+    // the late parts of a pane, all shown or all back, at once (any build on its way is stopped)
+    const parts = (k, on) => { const list = steps[k].flat(); if (list.length) gsap.set(list, { autoAlpha: on ? 1 : 0, y: 0, overwrite: true }); };
+    hide(steps.slice(1).flat(2));
 
     // one chapter at a time, swapped when the window is half re-formed. The name, lines and key figure go
     // out, then the new ones come in. The panes overlap instead: the old one stays whole until the new one
@@ -235,14 +232,14 @@
     gsap.set(chapters, { autoAlpha: 0, y: 0 });
     gsap.set(chapters[0], { autoAlpha: 1 });
     hide(panes.slice(1));
-    const swapTo = (c, time) => {
+    const swapTo = (c) => {
       const from = shown;
       shown = c;
       if (swapTl) swapTl.kill();
-      chapters.forEach((ch, i) => { if (i !== from && i !== c) { hide([ch, panes[i]]); setBuilt(i, 0, true); } });
-      // the new pane comes in as far built as the scroll has passed: bare going on, whole coming back
-      setBuilt(c, passed(c, time), true);
+      chapters.forEach((ch, i) => { if (i !== from && i !== c) { hide([ch, panes[i]]); parts(i, false); } });
       const down = c > from;
+      // the new pane comes in bare going on (its late parts land on a clock below), whole coming back
+      parts(c, !down);
       const out = from !== c && visible(chapters[from]) ? chapters[from] : null;
       const paneOut = from !== c && visible(panes[from]) ? panes[from] : null;
       swapTl = gsap.timeline();
@@ -253,10 +250,13 @@
       [...chapters[c].children].forEach((p, i) => swapTl.fromTo(p, { y: down ? 26 : -26 }, { y: 0, duration: 0.5, ease: 'power3.out', immediateRender: false }, t + i * 0.05));
       if (paneOut) {
         swapTl.to(paneOut, { autoAlpha: 0, duration: OUT, ease: 'power1.in' }, 0);
-        swapTl.add(() => setBuilt(from, 0, true), OUT);
+        swapTl.add(() => parts(from, false), OUT);
       }
       const p = panes[c];
-      if (p) swapTl.fromTo(p, { autoAlpha: 0, y: photo[c] ? 0 : 16 }, { autoAlpha: 1, y: 0, duration: photo[c] ? IN * 0.6 : IN, ease: photo[c] ? 'power1.out' : 'power3.out', immediateRender: false }, paneOut ? OVERLAP : 0);
+      const pin = paneOut ? OVERLAP : 0;
+      if (p) swapTl.fromTo(p, { autoAlpha: 0, y: photo[c] ? 0 : 16 }, { autoAlpha: 1, y: 0, duration: photo[c] ? IN * 0.6 : IN, ease: photo[c] ? 'power1.out' : 'power3.out', immediateRender: false }, pin);
+      // going on: its late parts land one by one just after it, on a clock, well before the window lands
+      if (down) steps[c].forEach((group, j) => swapTl.fromTo(group, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: BUILD_IN, ease: 'power3.out', immediateRender: false }, pin + BUILD0 + j * BUILD_GAP));
     };
     const H = 0.004;  // hysteresis around a swap point, so a scroll resting on it never flickers
     const current = (time) => { let c = 0; swaps.forEach((s, j) => { if (time >= s + (shown > j ? -H : H)) c = j + 1; }); return c; };
@@ -265,8 +265,7 @@
       render();
       const time = tl.time();
       const c = current(time);
-      if (c !== shown) swapTo(c, time);
-      setBuilt(shown, passed(shown, time));
+      if (c !== shown) swapTo(c);
     });
 
     // before the pin: the names wait until the first one fits whole on the screen, then rise in (timed);

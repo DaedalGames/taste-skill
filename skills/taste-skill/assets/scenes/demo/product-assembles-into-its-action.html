@@ -200,7 +200,7 @@
     .bar .mark { font-size: 22px; }
     .bar nav { gap: 16px; font-size: 16px; }
     .bar .btn { padding: 10px 14px; }
-    .intro { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 56px var(--gutter) 72px; }
+    .intro { grid-template-columns: minmax(0, 1fr); min-height: calc(100svh - 64px); padding: 56px var(--gutter) 72px; }
     .intro p { margin: 0 0 28px; font-size: 18px; }
     .intro > div { gap: 24px; }
     .intro img { aspect-ratio: 4 / 3; }
@@ -251,7 +251,7 @@
     <div>
       <h1 id="intro-h">Invoices for small studios</h1>
       <div>
-        <p>Kvitt does the sums, sends the invoice and marks it paid the day the money lands. For studios of one to twenty people.</p>
+        <p>Kvitt does the sums, sends the invoice and marks it paid the day the money lands.</p>
         <div class="actions">
           <a class="btn" href="#pricing">Start free</a>
           <a class="more" href="#how">See an invoice come together</a>
@@ -299,7 +299,7 @@
           <div class="inv-due"><dt>Total due</dt><dd>£6,912.00</dd></div>
         </dl>
         <div class="inv-act">
-          <button type="button" class="inv-send" data-at="5" data-action>Send invoice</button>
+          <button type="button" class="inv-send" data-at="5" data-action>Send £6,912.00</button>
           <p class="inv-paid" data-at="6">Paid 14 Nov</p>
         </div>
         <p class="inv-terms">Pay by bank transfer to Marlow Studio Ltd within 14 days. Thank you.</p>

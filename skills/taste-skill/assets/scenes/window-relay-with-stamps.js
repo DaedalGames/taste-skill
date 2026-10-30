@@ -59,8 +59,8 @@
 //   hold       0.6 a hand-over   screens the stage is held for (1.2-3.2): 2.4 for five pictures, 1.8 for four, 3 for six
 //   phoneHold  0.55 a hand-over  screens held on phones under 768px (1.2-3.2): 2.2 for five
 //   phone      'same'   'same' runs the phone plan below; 'rest' shows the finished composition on phones
-//   swap       0.42     share of the hold the hand-overs take together (0.3-0.55); the rest are the beats where a
-//                       picture rests whole with its name. Lower it for longer rests and quicker hand-overs.
+//   swap       0.3      share of the hold the hand-overs take together (0.3-0.55); the rest are the beats where a
+//                       picture rests whole with its name. Raise it for slower hand-overs and shorter rests.
 //   trail      4        places in the trail (1-4); older stamps leave at the far end
 //   peek       0.74     share of its photograph's width the waiting chip shows (0.5-1): the whole subject, small
 //   crop       0.56     share of its photograph's width a stamp shows (0.35-0.9): a tall crop through the subject
@@ -71,10 +71,12 @@
 //                       no lag of its own, so a page without Stage.smooth() should keep the catch-up.
 //
 // Phone plan (under 768px, and any portrait screen): the same relay rearranged. The window takes the full
-// width and the upper two thirds of the screen, with the chip in its top left corner; the trail runs along
-// the window's bottom edge, newest stamp at the right, and the name and line sit under the trail, so the
-// stamp that slides out of the window's lower right corner never crosses them. The heading is kept for
-// screen readers while it runs. Hold 2.2 for five. Touch scrolling is never smoothed.
+// width at the photographs' own 4:3 (75vw tall, two thirds of the screen at most), so every subject rests
+// whole, with the chip in its top left corner; the heading sits just above it, the trail runs along the
+// window's bottom edge, newest stamp at the right, and the name and line sit under the trail, so the stamp
+// that slides out of the window's lower right corner never crosses them. The group is centred on the
+// screen. On a screen under 620px tall the heading is kept for screen readers while it runs. Hold 2.2 for
+// five. Touch scrolling is never smoothed.
 //
 // Reduced motion, no script, a failed CDN, or phone: 'rest': the finished composition, the heading over the
 // pieces in a row (two columns on tablets with the first piece across both, one column on phones), each with
@@ -113,8 +115,10 @@
   // in the slot's far corner (the corner nearest the trail): the leaving picture shows there, on top, and
   // shrinks into it, so its shrinking is seen, and it leaves that box as a whole stamp.
   const PH = {
-    grow: [0, 0.42],     // the arriving window opens over the current picture, from the chip's corner to the whole slot
-    name: 0.24,          // the caption changes here, in one step, as the arriving window becomes the larger picture
+    grow: [0, 0.61],     // the arriving window opens over the current picture, from the chip's corner to the whole slot
+    land: 1.15,          // it lands with some speed, covering the slot at 0.42 (the in-out ease is cut at 1/land), so
+                         // almost no frame shows it all but covering the slot with a thin seam of the old picture
+    name: 0.32,          // the caption changes here, in one step, as the arriving window becomes the larger picture
     size: [0.42, 0.62],  // the leaving picture shrinks into its stamp inside the box in the far corner
     shift: [0.52, 0.78], // the stamps already in the trail move one place along; the oldest leaves at the far end
     hop: [0.64, 0.92],   // the new stamp slides out of the corner into the trail's first place
@@ -143,7 +147,7 @@
       hold: num(opts.hold, clamp(0.6 * H, 1.2, 3.2), 1.2, 3.2),
       phoneHold: num(opts.phoneHold, clamp(0.55 * H, 1.2, 3.2), 1.2, 3.2),
       phone: opts.phone === 'rest' ? 'rest' : 'same',
-      swap: num(opts.swap, 0.42, 0.3, 0.55),
+      swap: num(opts.swap, 0.3, 0.3, 0.55),
       trail: Math.round(num(opts.trail, 4, 1, 4)),
       peek: num(opts.peek, 0.74, 0.5, 1),
       crop: num(opts.crop, 0.56, 0.35, 0.9),
@@ -214,7 +218,7 @@
       // the chip grows out of the slot's corner as a whole small picture (window and photograph together)
       const chipIn = (k, t) => ({ r: { x: g.C.x, y: g.C.y, w: g.C.w * t, h: g.C.h * t }, s: g.P[k].sC * t, o: t > 0.02 ? 1 : 0 });
       const arriving = (k, u) => {
-        const a = io3(seg(u, PH.grow));
+        const a = Math.min(1, PH.land * io3(seg(u, PH.grow)));
         return { r: lerpRect(g.C, g.M, a), s: lerp(g.P[k].sC, 1, a), o: 1 };
       };
       // leaving: whole under the arriving window while it grows; once the window covers the slot, only the

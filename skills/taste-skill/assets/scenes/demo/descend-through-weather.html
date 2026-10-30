@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Skarven, eleven rooms on the ridge above the sound</title>
-<meta name="description" content="Skarven is a lodge of eleven rooms at 1,140 metres on the north ridge above the Skarven sound, open from May to October.">
+<title>Brekka, eleven rooms on the Skarven ridge</title>
+<meta name="description" content="Brekka is a lodge of eleven rooms at 1,140 metres on the north ridge above the Skarven sound, open from May to October.">
 <script>document.documentElement.classList.add('js')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,9 +43,6 @@
   .stay { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0 24px; padding: 72px var(--gutter) 96px; background: var(--ground); }
   .stay h2 { grid-column: 1 / 8; margin: 0; font: 600 clamp(36px, 4.6vw, 72px)/1 var(--font-display); font-stretch: 90%; letter-spacing: -0.02em; }
   .stay__text { grid-column: 1 / 7; margin: 40px 0 0; max-width: 46ch; font-size: 19px; color: var(--ink); }
-  .stay dl { grid-column: 1 / 7; display: grid; grid-template-columns: max-content 1fr; gap: 14px 32px; margin: 48px 0 0; font-size: 18px; }
-  .stay dt { color: var(--muted); }
-  .stay dd { margin: 0; }
   .stay__ask { grid-column: 1 / 7; justify-self: start; margin-top: 48px; padding: 16px 26px; background: var(--ink); color: var(--ground); font-weight: 600; text-decoration: none; }
   .stay figure { grid-column: 8 / 13; grid-row: 1 / 6; align-self: end; margin: 0; }
   .stay figure img { aspect-ratio: 4 / 5; object-fit: cover; }
@@ -53,32 +50,60 @@
   .stay figure.stay__table img { aspect-ratio: 21 / 9; }
   .stay figcaption { margin-top: 14px; font-size: 16px; line-height: 1.45; color: var(--muted); }
 
-  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; padding: 32px var(--gutter) 40px; background: var(--ground); color: var(--muted); font-size: 16px; }
+  /* the footer: the place in full on the mist of the scene. The season and the day as a table on the
+     left, the way up and the contact on the right, the sections and the small print at the foot */
+  .foot {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: auto 1fr auto;
+    gap: 40px 24px;
+    min-height: 60svh;
+    padding: clamp(80px, 13svh, 150px) var(--gutter) 36px;
+    background: var(--mist);
+    color: var(--on-mist);
+  }
+  .foot h2 { grid-column: 1 / -1; margin: 0; font: 600 clamp(36px, 4.6vw, 72px)/1 var(--font-display); font-stretch: 90%; letter-spacing: -0.02em; }
+  .foot table { grid-column: 1 / 6; align-self: start; border-collapse: separate; border-spacing: 0 6px; font-size: 19px; }
+  .foot th { padding: 10px 32px 10px 0; text-align: left; font-weight: 400; color: #4b555c; }
+  .foot td { padding: 10px 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .foot-way { grid-column: 7 / 13; display: grid; align-content: start; gap: 18px; font-size: 19px; }
+  .foot-way p { margin: 0; max-width: 34ch; }
+  .foot-way .mail { font-weight: 600; text-decoration: none; }
+  .foot-way .mail:hover { text-decoration: underline; }
+  .foot-small { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 32px; font-size: 15px; color: #4b555c; }
+  .foot-small nav { display: flex; gap: 24px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
   @media (max-width: 767px) {
     .bar { gap: 16px; padding: 18px var(--gutter); }
-    .bar nav { display: none; }
+    /* the phone keeps one section link beside the action */
+    .bar nav { gap: 16px; font-size: 16px; }
+    .bar nav a:not(:first-child) { display: none; }
     .bar__action { padding: 10px 14px; font-size: 16px; }
     .stay { display: block; padding: 56px var(--gutter) 72px; }
     .stay__text { margin-top: 28px; }
-    .stay dl { grid-template-columns: 1fr; gap: 4px; margin-top: 36px; }
-    .stay dd { margin-bottom: 14px; }
+    .foot { display: flex; flex-direction: column; gap: 32px; min-height: 0; }
     .stay__ask { display: inline-block; margin-top: 28px; }
     .stay figure { margin-top: 56px; }
     .stay figure.stay__table img { aspect-ratio: 4 / 3; }
     .scene { --phone-tagline-top: 14svh; --above-pos: 21% 50%; }
   }
+  /* a portrait tablet runs the desktop plan on a tall screen: it takes the phone's crop of photo A, so
+     the walker stays whole instead of being cut by the left edge */
+  @media (min-width: 768px) and (max-width: 1099px) and (orientation: portrait) {
+    .scene { --above-pos: 21% 50%; }
+  }
 </style>
 </head>
 <body>
 <header class="bar">
-  <a class="bar__name" href="#">Skarven</a>
+  <a class="bar__name" href="#">Brekka</a>
   <nav aria-label="Main">
     <a href="#stay">Rooms</a>
     <a href="#stay">The ridge</a>
     <a href="#getting-here">Getting here</a>
   </nav>
-  <a class="bar__action" href="#ask">Ask for a room</a>
+  <a class="bar__action" href="#ask">Book a room</a>
 </header>
 
 <main>
@@ -90,7 +115,7 @@
       </figure>
       <header class="wx-hero">
         <h1 class="wx-title">Skarven</h1>
-        <p class="wx-tagline">Eleven rooms on a ridge above the Skarven sound, open from May to October.</p>
+        <p class="wx-tagline">Brekka, eleven rooms on the ridge above the sound, open from May to October.</p>
       </header>
       <p class="wx-note">Inside the cloud, 800 metres up</p>
       <figure class="wx-below">
@@ -105,14 +130,8 @@
 
   <section class="stay" id="stay" aria-labelledby="stay-title">
     <h2 id="stay-title">Eleven rooms and one long table</h2>
-    <p class="stay__text">Skarven sits at 1,140 metres on the north ridge. Most mornings the cloud fills the sound and burns off by nine; from then on you can count the boats. The last stretch is a stone path, forty minutes on foot, and the goods lift carries your bags.</p>
-    <dl id="getting-here">
-      <dt>Open</dt><dd>Mid May to early October</dd>
-      <dt>Rooms</dt><dd>Eleven, every one facing the water</dd>
-      <dt>From the coast road</dt><dd>Two hours by car, then the path</dd>
-      <dt>Dinner</dt><dd>One sitting at seven, at the long table</dd>
-    </dl>
-    <a class="stay__ask" id="ask" href="#stay">Ask for a room</a>
+    <p class="stay__text">Brekka sits at 1,140 metres on the north ridge. Most mornings the cloud fills the sound and burns off by nine; from then on you can count the boats. Every room faces the water.</p>
+    <a class="stay__ask" id="ask" href="mailto:rooms@brekka.no">Book a room</a>
     <figure>
       <img src="https://picsum.photos/id/208/1000/1250" alt="A multi-pane window in a dark room looking onto green trees" width="1000" height="1250" loading="lazy" decoding="async">
       <figcaption>Room four, the window over the birches.</figcaption>
@@ -124,9 +143,25 @@
   </section>
 </main>
 
-<footer class="foot">
-  <span>Skarven, north ridge above the Skarven sound</span>
-  <span>Open mid May to early October</span>
+<!-- the footer: the place in full (the season and the day, the way up, the contact), the small print -->
+<footer class="foot" id="getting-here" aria-labelledby="foot-title">
+  <h2 id="foot-title">Getting here</h2>
+  <table>
+    <caption class="sr">The season and the day at Brekka</caption>
+    <tr><th scope="row">Season</th><td>16 May to 4 October</td></tr>
+    <tr><th scope="row">Check-in</th><td>15:00 to 18:30</td></tr>
+    <tr><th scope="row">Dinner</th><td>19:00, one sitting</td></tr>
+    <tr><th scope="row">Check-out</th><td>11:00</td></tr>
+  </table>
+  <div class="foot-way">
+    <p>Park at Skarvik, the village on the coast road, two hours by car from Moldvik. From there a stone path, forty minutes on foot; the goods lift takes your bags.</p>
+    <p><a href="#getting-here">Directions to Skarvik</a></p>
+    <a class="mail" href="mailto:rooms@brekka.no">rooms@brekka.no</a>
+  </div>
+  <div class="foot-small">
+    <nav aria-label="Footer"><a href="#stay">Rooms</a><a href="#">Back to the top</a></nav>
+    <span>Photographs from Unsplash via Lorem Picsum. Brekka and Skarven are invented for this demonstration.</span>
+  </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>

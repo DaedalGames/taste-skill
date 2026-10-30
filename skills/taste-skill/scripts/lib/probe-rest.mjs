@@ -40,11 +40,12 @@ export function restLook(opts = {}) {
   // --- the boxes that clip an element: overflow hidden or clip on an axis, paint containment, clip-path, along the
   // element's chain of containing blocks (an absolutely placed box escapes the boxes between it and the box it is
   // placed in; a fixed one escapes all of them unless one is transformed)
-  const insetOf = (cp, r) => {
+  // (lengths are the element's own, before its transform: scaled by sx and sy, product-assembles' window at 1.6)
+  const insetOf = (cp, r, sx = 1, sy = 1) => {
     const whole = { l: r.left, r: r.right, t: r.top, b: r.bottom };
     const m = /^inset\(([^()]*)\)$/.exec(cp.trim()); if (!m) return whole;
-    const p = m[1].split(/\s+round\s+/)[0].trim().split(/\s+/); const v = (s, len) => (s.endsWith('%') ? (parseFloat(s) / 100) * len : parseFloat(s));
-    const [a, b = a, c = a, d = b] = p; const box = { t: r.top + v(a, r.height), r: r.right - v(b, r.width), b: r.bottom - v(c, r.height), l: r.left + v(d, r.width) };
+    const p = m[1].split(/\s+round\s+/)[0].trim().split(/\s+/); const v = (s, len, k) => (s.endsWith('%') ? (parseFloat(s) / 100) * len : parseFloat(s) * k);
+    const [a, b = a, c = a, d = b] = p; const box = { t: r.top + v(a, r.height, sy), r: r.right - v(b, r.width, sx), b: r.bottom - v(c, r.height, sy), l: r.left + v(d, r.width, sx) };
     return Object.values(box).every(Number.isFinite) ? box : whole;
   };
   const ownClip = (e) => {
@@ -52,7 +53,8 @@ export function restLook(opts = {}) {
     const hid = (v) => v === 'hidden' || v === 'clip', paint = /paint|strict|content/.test(cs.contain);
     const x = hid(cs.overflowX) || paint, y = hid(cs.overflowY) || paint, cp = cs.clipPath !== 'none';
     if (!x && !y && !cp) return null;
-    const r = e.getBoundingClientRect(); const box = cp ? insetOf(cs.clipPath, r) : { l: r.left, r: r.right, t: r.top, b: r.bottom };
+    const r = e.getBoundingClientRect(); const sx = e.offsetWidth ? r.width / e.offsetWidth : 1, sy = e.offsetHeight ? r.height / e.offsetHeight : 1;
+    const box = cp ? insetOf(cs.clipPath, r, sx, sy) : { l: r.left, r: r.right, t: r.top, b: r.bottom };
     return { e, l: x || cp ? box.l : -Infinity, r: x || cp ? box.r : Infinity, t: y || cp ? box.t : -Infinity, b: y || cp ? box.b : Infinity, w: r.width, h: r.height, rect: r };
   };
   const holdsFixed = (p) => { const c = css(p); return c.transform !== 'none' || c.perspective !== 'none' || c.filter !== 'none' || c.translate !== 'none' || c.scale !== 'none' || c.rotate !== 'none' || /transform|perspective|filter/.test(c.willChange) || /paint|layout|strict|content/.test(c.contain); };
@@ -335,12 +337,109 @@ export function restLook(opts = {}) {
         if ((past > 4 && hr.bottom > topLine + 4) || (hr.bottom <= topLine && r.top < topLine - 4 && r.bottom > H * 0.6)) cutHeads.push({ id: idOf(h), text: norm(h.innerText || h.textContent || '').slice(0, 60), stage: desc(st), past: Math.round(past), whole: hr.bottom <= topLine, st: Math.round(r.top) });
       }
     }
+    // --- round 11: an object that runs into one side of the screen (edge-run): a product window, a box with a fill or an
+    // outline, or a picture, in view, whose frame (its box within the boxes that clip it) reaches the left or the right
+    // edge of the screen but not both (r9-p41's product window, flush with the right edge while the page kept 58px on
+    // the left). Something that spans both edges is full-bleed. Only the outermost of a stack counts; a row that scrolls
+    // sideways, a ticker and a running scene that has not reached its end are left out.
+    const edges = [];
+    {
+      const rgb = (v) => { const s = String(v || ''); const k = s.match(/color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)(?:\s*\/\s*([-\d.e]+))?\s*\)/); if (k) return [k[1] * 255, k[2] * 255, k[3] * 255, k[4] != null ? +k[4] : 1]; const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+      const ground = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const c = rgb(css(e).backgroundColor); if (c && c[3] >= 0.9) return c; } return [255, 255, 255, 1]; };
+      const sides = (e) => { const c = css(e); return ['Top', 'Right', 'Bottom', 'Left'].filter((s) => parseFloat(c[`border${s}Width`]) >= 1 && c[`border${s}Style`] !== 'none' && (rgb(c[`border${s}Color`]) || [0, 0, 0, 0])[3] > 0.05).length; };
+      const radius = (e) => Math.min(...['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomLeftRadius', 'borderBottomRightRadius'].map((k) => parseFloat(css(e)[k]) || 0));
+      const found = []; let n2 = 0;
+      for (const el of scope.querySelectorAll('*')) {
+        if (++n2 > 7000) break;
+        if (el instanceof SVGElement || /^(SCRIPT|STYLE|SOURCE|BR|HR|INPUT|SELECT|TEXTAREA|BUTTON|LABEL|OPTION|SPAN|EM|STRONG|B|I|SMALL|SUP|SUB)$/.test(el.tagName)) continue;
+        if (el.closest('nav, dialog, [role=dialog], .marquee, [class*=marquee i], [class*=ticker i]') || bar(el) || (el.parentElement && el.parentElement.closest('[data-ui]'))) continue;
+        let kind = null;
+        if (el.matches('[data-ui]')) kind = 'a product window';
+        else if (/^(IMG|VIDEO|CANVAS)$/.test(el.tagName)) kind = 'a picture';
+        else if (el.tagName !== 'PICTURE') {
+          const c = css(el);
+          if (/url\(/.test(c.backgroundImage) && /cover|contain|%/.test(c.backgroundSize) && !/\.svg/i.test(c.backgroundImage)) kind = 'a picture';
+          else { const f = rgb(c.backgroundColor); if ((f && f[3] >= 0.5 && [0, 1, 2].some((i) => Math.abs(f[i] - ground(el.parentElement || document.body)[i]) >= 6)) || sides(el) >= 3) kind = 'a box'; }
+        }
+        if (!kind || opacityOf(el) < 0.5) continue;
+        let r = el.getBoundingClientRect();
+        // (a product window drawn by what is inside it, its own box clear: its extent is what it draws)
+        if (kind === 'a product window') {
+          const painted = (x) => { const c = css(x), f = rgb(c.backgroundColor); return (f && f[3] >= 0.5) || sides(x) >= 1 || c.boxShadow !== 'none' || /url\(/.test(c.backgroundImage) || /^(IMG|VIDEO|CANVAS)$/.test(x.tagName); };
+          if (!painted(el)) { const rs = [...el.querySelectorAll('*')].slice(0, 400).filter((x) => painted(x) || [...x.childNodes].some((t) => t.nodeType === 3 && t.nodeValue.trim())).map((x) => x.getBoundingClientRect()).filter((q) => q.width > 2 && q.height > 2); if (!rs.length) continue; r = { left: Math.min(...rs.map((q) => q.left)), right: Math.max(...rs.map((q) => q.right)), top: Math.min(...rs.map((q) => q.top)), bottom: Math.max(...rs.map((q) => q.bottom)) }; r.width = r.right - r.left; r.height = r.bottom - r.top; }
+        }
+        if (r.bottom <= 0 || r.top >= H || r.width < 120 || r.height < 56 || r.width * r.height < W * H * 0.02) continue;
+        if (/fixed|sticky/.test(css(el).position) && r.height < H * 0.3) continue;
+        // (a row that scrolls sideways is the sideways-rail's business; a running scene is looked at at its end)
+        let rail = false; for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) if (/auto|scroll/.test(css(e).overflowX) && e.scrollWidth > e.clientWidth + 8) { rail = true; break; }
+        if (rail || unfinished(sceneOf(el))) continue;
+        const c = meet(clipsOf(el)); const fb = { l: Math.max(r.left, c.l), r: Math.min(r.right, c.r), t: Math.max(r.top, c.t), b: Math.min(r.bottom, c.b) };
+        if (fb.r - fb.l < 120 || fb.b - fb.t < 56) continue;
+        const L = fb.l <= 1, R = fb.r >= W - 1;
+        if (L === R) continue;
+        // (shown where it lies: three of nine points of its frame on the screen are its own, not under a layer or a cover)
+        const vb = { l: Math.max(fb.l, 0), r: Math.min(fb.r, W), t: Math.max(fb.t, 0), b: Math.min(fb.b, H) };
+        if (vb.r - vb.l < 24 || vb.b - vb.t < 24) continue;
+        let hits = 0; for (const fx of [0.2, 0.5, 0.8]) for (const fy of [0.2, 0.5, 0.8]) if (shownAt(el, vb.l + (vb.r - vb.l) * fx, vb.t + (vb.b - vb.t) * fy)) hits++;
+        if (hits < 3) continue;
+        // (a band of panels side by side from edge to edge, r8-p39's three rooms, is full-bleed as a row)
+        // (the panels each painted: a fill, a photograph for a background, or a picture over most of it; a column of text
+        // beside a picture is a split, not a band)
+        const panel = (s) => { const c = css(s), f = rgb(c.backgroundColor); if ((f && f[3] >= 0.5) || /url\(/.test(c.backgroundImage) || /^(IMG|VIDEO|CANVAS|PICTURE)$/.test(s.tagName)) return true; const q = s.getBoundingClientRect(); return [...s.querySelectorAll('img, video, canvas')].some((m) => { const p = m.getBoundingClientRect(); return p.width * p.height >= q.width * q.height * 0.6; }); };
+        // (round 11, the demos: a row of pictures carried past both sides, speed-bent-row's prints, is a band too: the walk
+        // goes up to the row's own list, six levels, and the panels stand side by side, not one behind the other)
+        let band = false;
+        for (let e = el, i = 0; e && e.parentElement && e.parentElement !== document.body && i < 6 && !band; e = e.parentElement, i++) {
+          const row = [...e.parentElement.children].filter(panel).map((s) => s.getBoundingClientRect()).filter((q) => q.width > 8 && Math.min(q.bottom, fb.b) - Math.max(q.top, fb.t) > (fb.b - fb.t) * 0.5).sort((a, b) => a.left - b.left);
+          const side = row.every((q, k) => !k || q.left >= row[k - 1].right - 8);
+          if (row.length >= 2 && side && row[0].left <= 1 && Math.max(...row.map((q) => q.right)) >= W - 1) band = true;
+        }
+        if (band) continue;
+        // (a row of its kind carried past one side by a scene, speed-bent-row's prints at the end of their run, is the scene's
+        // travel; a still row cut by one side, outside a scene, is counted)
+        if (sceneKey(el)) {
+          let kin = false;
+          for (let e = el, i = 0; e && e.parentElement && e.parentElement !== document.body && i < 6 && !kin; e = e.parentElement, i++) {
+            const q = e.getBoundingClientRect();
+            kin = [...e.parentElement.children].some((s) => { if (s === e || s.tagName !== e.tagName || String(s.className) !== String(e.className)) return false; const o = s.getBoundingClientRect(); return o.width > 8 && Math.min(o.bottom, q.bottom) - Math.max(o.top, q.top) > Math.min(o.height, q.height) * 0.5 && (o.left >= q.right - 8 || q.left >= o.right - 8) && Math.abs(o.width - q.width) <= Math.max(o.width, q.width) * 0.5; });
+          }
+          if (kin) continue;
+        }
+        // (a field of colour as tall as its section is that section's ground split in two, not an object: a sticky half of
+        // a features section)
+        // (and a sticky field that fills the screen's height, R2's "Fixed output, live controls" left half, is that ground held)
+        if (kind === 'a box' && r.width >= W * 0.3) {
+          const s = el.parentElement?.closest('section, [data-scene], footer, header, main > *'); const q = s ? s.getBoundingClientRect() : null;
+          if (q && Math.abs(r.top - q.top) <= 4 && Math.abs(r.bottom - q.bottom) <= 4) continue;
+          let held = false; for (let e = el, i = 0; e && e !== document.body && i < 3; e = e.parentElement, i++) if (css(e).position === 'sticky') { held = true; break; }
+          if (held && r.height >= H * 0.85) continue;
+        }
+        // (how far its frame runs past the side: a picture sized past a window that clips it flush with the screen's side,
+        // scroll-turned-drum's last picture, is flush, not cut)
+        // (a frame as tall as its section, as tall as the screen from its top to its foot (scroll-turned-drum's last picture
+        // while its stage holds), or held sticky at the screen's height, is half of a split: the half-bleed picture that
+        // edge-run warns on; a picture in the middle of its section, ground above and under it, is an object)
+        const sq = el.parentElement?.closest('section, [data-scene], footer, header, main > *')?.getBoundingClientRect();
+        let stuck = false; for (let e = el, i = 0; e && e !== document.body && i < 3; e = e.parentElement, i++) if (css(e).position === 'sticky') { stuck = true; break; }
+        const fullH = (!!sq && Math.abs(fb.t - sq.top) <= 4 && Math.abs(fb.b - sq.bottom) <= 4) || (fb.t <= 1 && fb.b >= H - 1) || (stuck && fb.b - fb.t >= H * 0.85);
+        found.push({ el, kind, r, fb, side: L ? 'left' : 'right', past: Math.round(L ? Math.max(0, -Math.max(r.left, c.l)) : Math.max(0, Math.min(r.right, c.r) - W)), round: radius(el) >= 4, fullH });
+      }
+      for (const f of found) {
+        if (found.some((g) => g !== f && g.el.contains(f.el))) continue;
+        // (a box round the product's window, both at the same edge, is the window's own frame)
+        if (f.kind !== 'a product window' && found.some((g) => g !== f && f.el.contains(g.el) && g.kind === 'a product window' && g.side === f.side)) f.kind = 'a product window';
+        const inner = Math.round(f.side === 'left' ? W - f.fb.r : f.fb.l);
+        edges.push({ id: idOf(f.el), what: f.kind, text: norm(f.el.getAttribute('alt') || (f.el.innerText || '')).slice(0, 40) || desc(f.el), side: f.side, past: f.past, round: f.round, fullH: f.fullH, w: Math.round(f.fb.r - f.fb.l), h: Math.round(f.fb.b - f.fb.t), share: +((f.fb.r - f.fb.l) / W).toFixed(2), inner, t: Math.round(f.fb.t), fl: Math.round(f.fb.l), fr: Math.round(f.fb.r), scene: sceneKey(f.el) });
+        if (edges.length >= 12) break;
+      }
+    }
     const clip = clipped();
     // each running scene or pinned stage in view: where its words and pictures are (a picture by its frame), so phase 1
     // can tell a stage resting on a step from one in the middle of a change (cards in flight, words coming in)
     const stageOf = (el) => { const s = el.closest('.scene.is-live, .pin-spacer'); return s ? idOf(s) : 0; };
     for (const p of pics) p.stage = stageOf(S.els.get(p.id)?.deref() || document.body);
     for (const x of headList) x.stage = stageOf(S.els.get(x.id)?.deref() || document.body);
+    for (const x of edges) x.stage = stageOf(S.els.get(x.id)?.deref() || document.body);
     const stages = [...document.querySelectorAll('.scene.is-live, .pin-spacer')].filter((s) => { const r = s.getBoundingClientRect(); return r.bottom > 0 && r.top < H; });
     const snap = (list) => list.map(([e, s]) => {
       const media = /^(IMG|VIDEO|CANVAS)$/.test(e.tagName); let r = e.getBoundingClientRect();
@@ -350,7 +449,7 @@ export function restLook(opts = {}) {
     if (opts.phase !== 1) {
       const parts = [];
       for (const s of stages) { let n = 0; for (const e of s.querySelectorAll('*')) { if (++n > 600) break; if (/^(IMG|VIDEO|CANVAS)$/.test(e.tagName) || [...e.childNodes].some((c) => c.nodeType === 3 && c.nodeValue.trim())) parts.push([e, idOf(s)]); } }
-      window.__tsRestA = { sy, clip, pics, heads: headList, parts: snap(parts), seen: [...headList.map((x) => x.text), ...pics.map((p) => 'pic:' + p.id)], veils, cutHeads };
+      window.__tsRestA = { sy, clip, pics, heads: headList, parts: snap(parts), seen: [...headList.map((x) => x.text), ...pics.map((p) => 'pic:' + p.id)], veils, cutHeads, edges };
       return { y: sy, n: clip.length + pics.length + headList.length };
     }
     // --- phase 1: keep what held still since phase 0 (it moved with the page, by the scroll between the two looks, or
@@ -375,6 +474,8 @@ export function restLook(opts = {}) {
       // (a veil seen in both looks; a heading cut while its stage held still, the page moving under it)
       veils: (A.veils || []).filter((a) => veils.some((b) => b.media === a.media && b.what === a.what)),
       cutHeads: (A.cutHeads || []).filter((a) => { const b = cutHeads.find((x) => x.id === a.id); return b && dy !== 0 && Math.abs(b.st - a.st) <= 2; }),
+      // (an object at one side of the screen in both looks, its frame where it was: it moved with the page or held)
+      edges: (A.edges || []).filter((a) => { const b = edges.find((x) => x.id === a.id); return b && !moving.has(a.stage) && still(a.t, b.t) && Math.abs(a.fl - b.fl) <= 2 && Math.abs(a.fr - b.fr) <= 2; }),
     };
   } finally { hitStyle.remove(); }
 }
@@ -416,8 +517,9 @@ export async function restGo(y) {
 // template-hero: the first screen as the generic stack. A centred h1 (centred text whose lines sit within 5% of the
 // screen's middle, or a block of lines centred so and not running edge to edge), a line under it, two actions side by
 // side under that (a button and a text link, or two buttons), and a picture card under or beside them that is
-// rounded (8px or more) and narrower than the screen (under 94% of it: r9-p44's card was 93% at 1440). The four
-// together; any three of them is not the stack.
+// rounded (8px or more) and narrower than the screen (under 94% of it: r9-p44's card was 93% at 1440). Round 11
+// (r10-p47): the actions are optional, and a row of two or three cards under the line stands for the picture card. The
+// headline, the line and the card or cards together are the stack.
 export function heroStack() {
   const W = innerWidth, H = innerHeight;
   const seen = (el) => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.5) return false; } const r = el.getBoundingClientRect(); return r.width > 2 && r.height > 2; };
@@ -459,9 +561,9 @@ export function heroStack() {
     const same = acts.filter((b) => Math.abs((b.r.top + b.r.bottom) / 2 - (a.r.top + a.r.bottom) / 2) <= 14);
     if (same.length === 2 && same.some((x) => buttonLike(x.el))) { row = same.sort((p, q) => p.r.left - q.r.left); break; }
   }
-  if (!row) return out;
-  const R = { l: Math.min(...row.map((x) => x.r.left)), r: Math.max(...row.map((x) => x.r.right)), t: Math.min(...row.map((x) => x.r.top)), b: Math.max(...row.map((x) => x.r.bottom)) };
-  out.actions = row.map((x) => norm(x.el.innerText).slice(0, 30) + (buttonLike(x.el) ? ' (button)' : ' (link)'));
+  // (round 11, r10-p47: the actions are not needed; the stack is the centred headline and line over the cards)
+  const R = row ? { l: Math.min(...row.map((x) => x.r.left)), r: Math.max(...row.map((x) => x.r.right)), t: Math.min(...row.map((x) => x.r.top)), b: Math.max(...row.map((x) => x.r.bottom)) } : { l: S.left, r: S.right, t: S.top, b: S.bottom };
+  if (row) out.actions = row.map((x) => norm(x.el.innerText).slice(0, 30) + (buttonLike(x.el) ? ' (button)' : ' (link)'));
   // the picture card: a photograph (img, video, a box with a photograph for its background) in a frame rounded 8px or
   // more that is about the picture's own size, a quarter of the width or more, starting on the first screen, under the
   // actions (within about a third of a screen) or beside the stack
@@ -494,7 +596,26 @@ export function heroStack() {
     if (card) break;
   }
   if (card) out.card = card;
-  out.stack = !!(out.centred && out.sub && out.actions && out.card);
+  // a row of two or three cards under the stack (r10-p47: two portrait pictures, "For brands" and "For studios", under
+  // the centred name): side by side, each a quarter of the screen tall or more and under 45% of its width, each a picture
+  // or a box with a fill, starting within a third of a screen under the line or the actions and on the first screen
+  if (!card) {
+    const filled = (el) => bg(getComputedStyle(el)) && (() => { const m = getComputedStyle(el).backgroundColor.match(/rgba?\(([^)]+)\)/); const p = m ? m[1].split(/[,\s/]+/).filter(Boolean).map(Number) : []; let g = null; for (let e = el.parentElement; e && !g; e = e.parentElement) { const n = getComputedStyle(e).backgroundColor.match(/rgba?\(([^)]+)\)/); const q = n ? n[1].split(/[,\s/]+/).filter(Boolean).map(Number) : []; if (q.length >= 3 && (q.length < 4 || q[3] >= 0.9)) g = q; } g = g || [255, 255, 255]; return [0, 1, 2].some((i) => Math.abs(p[i] - g[i]) >= 6); })();
+    const cand = [...document.querySelectorAll('a, article, li, figure, div, span')].filter((el) => {
+      if (bar(el) || el.closest('nav, [role=banner], [data-ui], dialog') || !seen(el)) return false;
+      const r = el.getBoundingClientRect(); if (r.top < R.b - 8 || r.top - R.b > H * 0.35 || r.top >= H * 0.92 || r.height < H * 0.25 || r.width < W * 0.12 || r.width > W * 0.45) return false;
+      return !!el.querySelector('img, video, picture, canvas') || /url\(/.test(getComputedStyle(el).backgroundImage) || filled(el);
+    }).map((el) => ({ el, r: el.getBoundingClientRect() }));
+    // (the outermost of each card; a box that holds two cards side by side is the row, not a card)
+    const row2 = (c) => { const ins = cand.filter((d) => d !== c && c.el.contains(d.el)); return ins.some((a) => ins.some((b) => a !== b && !a.el.contains(b.el) && !b.el.contains(a.el) && (b.r.left >= a.r.right - 4 || a.r.left >= b.r.right - 4))); };
+    const cards = cand.filter((c) => !row2(c));
+    const outer = cards.filter((c) => !cards.some((d) => d !== c && d.el.contains(c.el)));
+    for (const a of outer) {
+      const rowC = outer.filter((b) => Math.abs(b.r.top - a.r.top) <= 16 && Math.abs(b.r.height - a.r.height) <= a.r.height * 0.25);
+      if (rowC.length >= 2 && rowC.length <= 3) { const img = rowC[0].el.querySelector('img, video'); out.cards = { n: rowC.length, w: +(rowC[0].r.width / W).toFixed(2), src: img ? srcName(img.currentSrc || img.src || '') : rowC[0].el.tagName.toLowerCase(), radius: Math.round(radius(getComputedStyle(rowC[0].el))) }; break; }
+    }
+  }
+  out.stack = !!(out.centred && out.sub && (out.card || out.cards));
   return out;
 }
 

@@ -1,8 +1,8 @@
 /* tasteskill / scenes / lens-over-thumbnail-stream.css — a lens over a thumbnail stream.
    By default (no script, reduced motion, a phone set to 'rest') the section is a contact-sheet index: the
    title, then one row per project with its name as a link, its year and category, and every picture in
-   full colour. Under .is-live it becomes the held stage: three bands (head, collage, caption), a strip of
-   greyscale thumbnails on the lane and the playhead line. Takes the page's --ink, --ground, --accent,
+   full colour. Under .is-live it becomes the held stage: three bands (head, collage, caption) and a strip
+   of thumbnails in their own colour on the lane; no playhead line, chip or live count. Takes the page's --ink, --ground, --accent,
    --font-display and --font-text when they exist.
    Weights follow the page: --display-weight (the title, the names and the caption; 500 here when the
    page sets none) and --text-weight (the years; 400 here when the page sets none). A weight the page
@@ -142,8 +142,7 @@ html.js [data-scene="lens-over-thumbnail-stream"].is-live > .scene-stage {
 /* the names' link and year are hidden the same way, so no box of theirs is wider than what shows of it */
 [data-scene="lens-over-thumbnail-stream"].is-live .lens-title,
 [data-scene="lens-over-thumbnail-stream"].is-live .lens-name,
-[data-scene="lens-over-thumbnail-stream"].is-live .lens-name > *,
-[data-scene="lens-over-thumbnail-stream"].is-live .lens-count {
+[data-scene="lens-over-thumbnail-stream"].is-live .lens-name > * {
   position: absolute;
   width: 1px;
   height: 1px; /* taste-skill-ignore: visually hidden text for screen readers, not a drawn rule */
@@ -165,14 +164,9 @@ html.js [data-scene="lens-over-thumbnail-stream"].is-live > .scene-stage {
   pointer-events: none;
 }
 [data-scene="lens-over-thumbnail-stream"].is-live .lens-range { font-size: 16px; }
-[data-scene="lens-over-thumbnail-stream"].is-live .lens-count-live {
-  display: grid;
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.4;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
+/* the static count ("8 projects") stays as it is: no live "3 of 8" (a counter) */
+[data-scene="lens-over-thumbnail-stream"].is-live .lens-count { margin: 0; font-size: 16px; line-height: 1.4; text-align: right; }
+[data-scene="lens-over-thumbnail-stream"].is-live .lens-count-live { display: none; }
 
 /* collage band: 13-77%, the strip on the lane at 45% */
 [data-scene="lens-over-thumbnail-stream"].is-live .lens-field { position: absolute; inset: 0; }
@@ -230,46 +224,11 @@ html.js [data-scene="lens-over-thumbnail-stream"].is-live > .scene-stage {
   object-fit: cover;
   transform-origin: 50% 50%;
   transform: scale(calc(1 / var(--s, 1)));
-  filter: grayscale(1);
 }
-[data-scene="lens-over-thumbnail-stream"].lens-classcolour.is-live .lens-thumb img { transition: filter .25s linear; }
-[data-scene="lens-over-thumbnail-stream"].lens-classcolour.is-live .lens-thumb.is-lit img { filter: none; }
 
-/* the playhead runs only through the collage band, 8px past each edge */
-[data-scene="lens-over-thumbnail-stream"].is-live .lens-playhead {
-  display: block;
-  position: absolute;
-  left: 0;
-  top: calc(13% - 8px);
-  height: calc(64% + 16px);
-  width: 0;
-  z-index: 7;
-  pointer-events: none;
-  will-change: transform;
-}
-[data-scene="lens-over-thumbnail-stream"].is-live .lens-line {
-  position: absolute;
-  inset: 0 auto 0 -1px;
-  width: 2px;
-  background: var(--lens-accent);
-  transform: scaleY(0);
-  transform-origin: 50% 50%;
-}
-[data-scene="lens-over-thumbnail-stream"].is-live .lens-flag {
-  position: absolute;
-  left: 10px;
-  top: 8px;
-  padding: 5px 10px 6px;
-  background: var(--lens-accent);
-  color: var(--lens-paper);
-  font-size: 16px;
-  line-height: 1.2;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  visibility: hidden;
-}
-[data-scene="lens-over-thumbnail-stream"].is-live .lens-flag.is-left { left: auto; right: 10px; }
-[data-scene="lens-over-thumbnail-stream"].is-live .lens-flag-text { display: block; }
+/* No playhead: a line through every collage is a drawn track standing for the scroll, and the year chip
+   on it a boxed label. Older markup with .lens-playhead stays hidden; the year reads in the meta row. */
+[data-scene="lens-over-thumbnail-stream"].is-live .lens-playhead { display: none; }
 
 /* caption band: 77-100% */
 [data-scene="lens-over-thumbnail-stream"].is-live .lens-foot {
@@ -326,6 +285,8 @@ html.js [data-scene="lens-over-thumbnail-stream"].is-live > .scene-stage {
   white-space: nowrap;
   pointer-events: auto;
 }
+[data-scene="lens-over-thumbnail-stream"].is-live .lens-meta-year { font-variant-numeric: tabular-nums; }
+[data-scene="lens-over-thumbnail-stream"].is-live .lens-meta-year:empty { display: none; }
 [data-scene="lens-over-thumbnail-stream"].is-live .lens-meta.is-empty { visibility: hidden; }
 [data-scene="lens-over-thumbnail-stream"].is-live .lens-meta-link { color: inherit; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .2em; }
 [data-scene="lens-over-thumbnail-stream"].is-live.is-kb .lens-caption { outline: 2px solid var(--lens-accent); outline-offset: 10px; }
@@ -335,13 +296,11 @@ html.js [data-scene="lens-over-thumbnail-stream"].is-live > .scene-stage {
   html.js [data-scene="lens-over-thumbnail-stream"].is-live > .scene-stage { --h0: 28px; }
   [data-scene="lens-over-thumbnail-stream"].is-live .lens-head { padding-top: 20px; }
   [data-scene="lens-over-thumbnail-stream"].is-live .lens-range,
-  [data-scene="lens-over-thumbnail-stream"].is-live .lens-count-live { font-size: 15px; }
+  [data-scene="lens-over-thumbnail-stream"].is-live .lens-count { font-size: 15px; }
   [data-scene="lens-over-thumbnail-stream"].is-live .lens-track { top: calc(44% - var(--h0) / 2); gap: 20px; }
   [data-scene="lens-over-thumbnail-stream"].is-live .lens-thumbs { gap: 3px; }
   [data-scene="lens-over-thumbnail-stream"].is-live .lens-thumb[data-phone="hide"] { display: none; }
   [data-scene="lens-over-thumbnail-stream"].is-live .lens-cap { font-size: 15px; right: calc(100% + 14px); }
-  [data-scene="lens-over-thumbnail-stream"].is-live .lens-playhead { top: calc(14% - 8px); height: calc(60% + 16px); }
-  [data-scene="lens-over-thumbnail-stream"].is-live .lens-flag { font-size: 15px; }
   [data-scene="lens-over-thumbnail-stream"].is-live .lens-foot {
     height: 26%;
     flex-direction: column;

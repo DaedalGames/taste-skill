@@ -173,7 +173,7 @@
     </ul>
   </section>
 
-  <section class="scene" id="close" data-scene="page-lifts-off-closing-picture" data-options='{"band":"auto","foot":".foot"}' style="--lift-band:#dff1ff; --lift-object:50% 52%" aria-labelledby="close-title">
+  <section class="scene" id="close" data-scene="page-lifts-off-closing-picture" data-options='{"band":"auto","foot":".foot","lift":1,"dim":0}' style="--lift-band:#dff1ff; --lift-object:50% 52%" aria-labelledby="close-title">
     <div class="scene-stage">
       <div class="lift">
         <div class="lift-band">
@@ -240,7 +240,7 @@
     const scene = document.getElementById('close');
     scene.querySelector('.lift-media').replaceWith(document.getElementById('ui-picture').content.cloneNode(true));
     scene.style.setProperty('--lift-band', '#e1e4e2');
-    scene.dataset.options = JSON.stringify({ band: 'token', foot: '.foot' });
+    scene.dataset.options = JSON.stringify({ band: 'token', foot: '.foot', lift: 1, dim: 0 });
     document.querySelector('#credits p').remove();
   }
   // the second row rises as it comes into view; nothing stays hidden if the observer never fires

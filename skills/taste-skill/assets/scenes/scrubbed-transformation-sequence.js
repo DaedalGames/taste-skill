@@ -3,13 +3,15 @@
 // A held stage shows one hero object going through one change of state (raw to finished, closed to
 // open, lifted and handed over) as a frame sequence drawn on a canvas and scrubbed by the scroll. Around
 // it the page moves in step: a camera that starts pushed in on the raw object pulls back while the change
-// begins, the ground opens from the page colour to the after colour as a hard-edged disc from the
-// object's centre (first a halo around the object, then, once the title has lifted away, the whole
-// stage), the "before" context (a cut-out the object came from) slides out to the right while a
+// begins, the "before" context (a cut-out the object came from) slides out to the right while a
 // pre-blurred copy of it fades in (a rack focus without an animated filter), the before statement lifts
 // away word by word, the camera glides the object to the centre of the stage while a receiver cut-out
 // (the plinth, shelf, pad or trailer the object ends on) rises under it, the object settles onto it,
-// callouts land, and the camera steps back aside for the after line and one action. Use it only when you
+// callout labels land beside it, and the camera steps back aside for the after line and one action.
+// The whole change happens on the page's own ground (ground "none", the default since round 10); the
+// old "iris" (a flat disc of a scene-owned colour opening from the object until it becomes a second
+// ground) is still accepted for old pages but never dealt: it is a drawn circle and a second ground.
+// Use it only when you
 // have 80-250 rendered or filmed frames with alpha of the object changing; never fake it by rotating one
 // still. Frame the footage tight: the object should fill most of the frame (the box is large).
 //
@@ -38,15 +40,11 @@
 //         <img class="xf-still" src="…/d/0119.webp" srcset="…/m/0059.webp 720w, …/d/0119.webp 1200w"
 //              sizes="(max-width: 767px) min(125vw, 58svh), min(92svh, 62vw)"
 //              alt="[the object, finished]" width="1200" height="1200">
-//         <div class="xf-before">                                         the finished composition only
-//           <img data-src="…/m/0000.webp" alt="[the object before]">      data-src: loaded only there
-//           <noscript><img src="…/m/0000.webp" alt="[the object before]"></noscript>   (no script)
-//           <p>Where it started</p>
-//         </div>
+//         (an old page's <div class="xf-before"> tile is still accepted, but never shown or loaded)
 //         <canvas class="xf-canvas" aria-hidden="true"></canvas>
 //         <ul class="xf-callouts">                                         0-6 callouts, 3 is right
 //           <li class="xf-callout" style="--x:64.5%;--y:22%" data-side="right">
-//             <span class="xf-mark" aria-hidden="true"></span>
+//             <span class="xf-mark" aria-hidden="true"></span>            optional, never shown (old pages)
 //             <span class="xf-label">Thrown in one sitting</span>          2-6 words, at most 2 lines
 //           </li> …
 //         </ul>
@@ -59,14 +57,21 @@
 //     </div>
 //   </section>
 //
-// --x / --y place each callout's marker as a fraction of the object box: put markers on the silhouette
+// --x / --y place each callout's point as a fraction of the object box: put points on the silhouette
 // edge of the LAST frame (look at it; never guess), labels on the side away from the object, none of
 // them over the receiver (above ~0.8 of the box in the demo), and the first one ~160px below the stage
-// top (the nav). A laptop shows at most six callouts on the object (the rest stay in the document for
-// screen readers); a phone lists at most four under the object. Two guards keep a label readable when a
-// marker is placed badly: a label whose text would sit on the object (the last frame's alpha says where)
-// slides out beside it, away from the object, as far as the stage allows; one that would sit on an
-// earlier label or another marker is moved up or down beside its own marker, the shorter way.
+// top (the nav). No marker is drawn on the point (a square on the silhouette is a drawn marker): the
+// label stands alone beside the object, its near edge 22-34px off the point. A laptop shows at most six
+// callouts on the object (the rest stay in the document for screen readers); a phone lists at most four
+// under the object, as plain lines with no bullets. Two guards keep a label readable when a point is
+// placed badly: a label whose text would sit on the object (the last frame's alpha says where) slides
+// out beside it, away from the object, as far as the stage allows; one that would sit on an earlier
+// label is moved up or down beside its own point, the shorter way.
+//
+// Words land on a clock, never half-way on the scroll: the before statement as it leaves, each callout
+// label, the phone's rows and the after line with its action move in under half a second once the
+// scrubbed timeline passes their moment, and go back (faster) when the scroll returns past it.
+// Wherever the reader stops, a line of words is whole or not there.
 //
 // The statement is the live headline and keeps to two lines: at full size (4.4vw, 63px at 1440) that is
 // about 26 characters (5-6 words). A longer one is set smaller, down to 40px (28px on a phone), which
@@ -78,13 +83,15 @@
 // middle of the scene), the URL the frame set fetches first, and nothing while that loads, so the
 // finished object never shows at the start. Its src, srcset and sizes come back with the finished
 // composition. Give the before context's pictures data-src, not src: they are only shown live on a
-// laptop, and this file loads them there; the "where it started" tile is the other way round (data-src
-// plus a <noscript> copy). Do not put loading="lazy" on the scene's pictures: Stage.ready() waits for
+// laptop, and this file loads them there. Do not put loading="lazy" on the scene's pictures: Stage.ready() waits for
 // every picture in a scene, and a lazy one that is hidden in one mode never loads.
 //
 // Footage: frames are squares with alpha, the object filling most of the frame (about 65% of its width
 // at the start, 85% of its height at the end) with its foot at the same place at the end, so the
-// receiver lines up. Export each set at about twice the box's CSS size, so a 2x screen draws them 1:1:
+// receiver lines up. On a laptop the before context is kept whole on the stage: if at the camera's
+// start scale its far edge would pass 24px off the stage's right side, it is drawn smaller about its
+// near foot (down to 0.45 of its size), and past that it stays out.
+// Export each set at about twice the box's CSS size, so a 2x screen draws them 1:1:
 // the laptop box is up to ~830px (frames 1600-1700px, WebP quality ~80, 40-50 KB each), the phone box
 // ~490px (frames ~1000px, every second frame). Smaller sets work (the demo ships 1200 and 720px) but
 // look soft on 2x screens. About 120 frames (80-250). "####" in the pattern is the zero-padded frame
@@ -102,9 +109,12 @@
 //   phoneHold    screens held on a phone                    3     (2-4)
 //   scrub        seconds of catch-up                        0.3 with Stage.smooth(), else 0.6
 //   split        share of the frames played linearly        0.85  (0.5-0.95); the rest ease out over 0.62-0.86
-//   ground       "iris" | "none"                            "iris"; "none" keeps the page colour (light pages)
-//   irisAt       [x, y] where the disc grows from, in box   [0.5, 0.54]: the object's centre in its first
-//                fractions                                  frames (also the camera's pivot)
+//   ground       "none" | "iris"                            "none": the page's own ground throughout. "iris"
+//                                                          (the old default) opens a flat disc of --xf-after
+//                                                          from the object into a second ground; kept for
+//                                                          old pages, never dealt (a drawn disc, rule 7)
+//   irisAt       [x, y] the camera's pivot (and where an    [0.5, 0.54]: the object's centre in its first
+//                iris grows from), in box fractions        frames
 //   push         how far the camera starts pushed in        1.25  (1-1.4); on a laptop it is lowered until
 //                                                          the first frame's object keeps 56px off the title
 //   firstBox     [x0, y0, x1, y1] the object's outline in   [0.17, 0.3, 0.83, 0.81] (the demo's lump):
@@ -116,23 +126,26 @@
 // Timeline (fractions of the hold; all scrubbed, so scrolling back un-builds it exactly):
 //   0.00-0.40  the camera pulls back from `push` to 1 (power1.inOut) around the object's centre
 //   0.04-0.62  frames 0 → split × last, linear;  0.62-0.86  → last frame, power1.out
-//   0.08-0.25  ground: an after-colour disc grows to a halo around the object, its edge kept 44px clear
-//              of the statement's words;  0.25-0.44 it holds (growing a little);  0.44-0.56 it fills the stage
-//              (power2.in), reaching the statement's words only as they finish lifting away (~0.48)
-//   0.30-0.62  before context leaves past the right edge (scale 0.86, opacity 0.5); its blurred copy
-//              fades in over 0.30-0.50 and the sharp one out over 0.46-0.56 (not on phones)
-//   0.40-0.48  statement words lift away (yPercent -70, 4deg, fading out; no masks, so no word is ever cut)
+//   (ground "iris" only: 0.08-0.25 an after-colour disc grows to a halo around the object, 0.25-0.44 it
+//              holds, 0.44-0.56 it fills the stage)
+//   0.30-0.48  before context leaves past the right edge (scale 0.86) and fades out whole, so no sliver
+//              of it is left at the edge; its blurred copy fades in as it goes (not on phones)
+//   0.44       statement words lift away on a clock (yPercent -70, fading out, upright; no masks, so no
+//              word is cut)
 //   0.46-0.60  the camera glides the object to the stage's centre (laptop)
-//   0.48-0.66  receiver rises from below the stage;  0.62-0.78  object settles onto it (its contact
+//   0.47       the receiver rises a short way into its place as it fades in (on a clock: never caught
+//              half in, never cut by the stage's foot);  0.62-0.78  object settles onto it (its contact
 //              shade fades in over 0.68-0.78)
-//   0.66-0.84  callouts: marker pops and focuses, its label rises word by word (0.05 apart)
+//   0.47-0.61  callouts, 0.07 apart (spread over 0.2 when there are more than three): each label lands
+//              word by word on a clock (phone: at 0.46 one clock lifts the statement out of the bottom
+//              slot and then brings the rows of the stack into it, so they never share it)
 //   0.76-0.88  the camera glides back, clearing the left for the after line (laptop)
-//   0.84-0.92  after line rises into the statement's slot;  0.88-0.93  the action fades up
-//   0.92-1.00  hold, then the page scrolls on
+//   0.84       the after line rises into the statement's slot, the action after it (on a clock)
+//   0.88-1.00  hold, then the page scrolls on
 // Phone (< 768px): the same fractions on the phone frames; the box is wider than the screen and centred
 // higher, the camera starts at 1.12 and eases to 1 over 0.04-0.40, no glide, the after line takes a top
-// slot, callout labels become a stack (at most four rows) in the bottom slot, the markers on the object
-// and the before context are hidden, no blur.
+// slot (about as large as the before statement it answers), callout labels become a stack (at most four
+// rows, no bullets) in the bottom slot, the before context is hidden, no blur.
 // Reduced motion, no script, a failed CDN, data-saving visitors and frames that will not load get the
 // finished composition (CSS); the first four download no frames.
 (() => {
@@ -389,13 +402,14 @@
     const phoneHold = num(opts.phoneHold, 3, 2, 4);
     const scrub = opts.scrub ?? (Stage.lenis ? 0.3 : 0.6);
     const split = num(opts.split, 0.85, 0.5, 0.95);
-    const irisOn = opts.ground !== 'none' && !!iris;
+    // the page's own ground unless an old page asks for the iris by name
+    const irisOn = opts.ground === 'iris' && !!iris;
     const irisAt = Array.isArray(opts.irisAt) ? [num(opts.irisAt[0], 0.5, 0, 1), num(opts.irisAt[1], 0.54, 0, 1)] : [0.5, 0.54];
     const push = num(opts.push, 1.25, 1, 1.4);
     const fb = Array.isArray(opts.firstBox) && opts.firstBox.length === 4 ? opts.firstBox.map((v, i) => num(v, [0.17, 0.3, 0.83, 0.81][i], 0, 1)) : [0.17, 0.3, 0.83, 0.81];
     const centreOn = opts.centre !== false;
     const contact = receiver && receiver.querySelector('.xf-receiver__contact');
-    if (!irisOn) root.setAttribute('data-xf-ground', 'none');
+    root.setAttribute('data-xf-ground', irisOn ? 'iris' : 'none');
     if (!pattern && canvas) console.warn(`[${ID}] no frames given: showing the finished composition`);
     const off = !pattern || !canvas || saveData();
 
@@ -631,6 +645,22 @@
         G.dText = Math.hypot(G.cx - x, G.cy - y);
       }
     }
+    // the before context stays whole on the stage: at the camera's start scale s0 (about the pivot) its
+    // far edge keeps 24px off the stage's right side. One that would pass it is drawn smaller about its
+    // near foot (its transform-origin), down to 0.45; past that it stays out. Returns the scale it starts
+    // at (the prop's tween multiplies its own by it), measured again on every refresh.
+    function fitProp(s0) {
+      if (!prop) return 1;
+      prop.style.removeProperty('visibility');
+      if (getComputedStyle(prop).display === 'none' || !prop.offsetWidth) return 1;
+      const px = posIn(prop, stage)[0], pw = prop.offsetWidth;
+      const left = G.cx + s0 * (px - G.cx), right = G.cx + s0 * (px + pw - G.cx), limit = G.W - 24;
+      if (right <= limit) return 1;
+      const k = (limit - left) / Math.max(1, right - left);
+      if (k >= 0.45) return +k.toFixed(3);
+      prop.style.visibility = 'hidden';
+      return 1;
+    }
     // the largest push-in (≤ max) that keeps the first frame's object CLEAR px off the title
     function pushScale(max) {
       if (!G.text || max <= 1) return max;
@@ -745,6 +775,14 @@
       // Words and markers move in 2D (force3D off): scrubbing back and forth across their windows would
       // otherwise promote and drop a compositor layer per word, which costs more than repainting them.
       const tween = (targets, from, to, at) => { gsap.set(targets, from); return tl.fromTo(targets, from, { ...to, force3D: false }, at); };
+      // words (and the receiver) that land on a clock: a paused tween played once the scrubbed timeline
+      // passes `at` and reversed when it goes back before it, so no rest of the scroll shows them half in
+      const clocks = [];
+      const clock = (targets, from, to, at) => {
+        if (!targets || (Array.isArray(targets) && !targets.length)) return;
+        gsap.set(targets, from);
+        clocks.push({ at, on: false, tw: gsap.fromTo(targets, from, { ...to, force3D: false, paused: true, immediateRender: true }) });
+      };
 
       const N = set.count, mid = Math.round(split * (N - 1));
       // the still stands in with the first or the last frame, whichever is nearer the playhead now
@@ -789,49 +827,72 @@
       }
       // 5. the before context leaves; on a laptop its blurred copy fades in over it (a rack focus)
       if (prop) {
-        tl.fromTo(prop, { x: 0, yPercent: 0, scale: 1, opacity: 1 }, { x: () => G.W - posIn(prop, stage)[0] + 24 + Math.max(0, -glide()), yPercent: 6, scale: 0.86, opacity: 0.5, duration: 0.32, ease: 'power1.inOut' }, 0.3);
+        // (its start scale keeps it whole on the stage under the camera's push: fitProp)
+        let pk = 1;
+        const propFit = () => { measure(); pk = phone ? 1 : fitProp(pushScale(push)); return pk; };
+        tl.fromTo(prop, { x: 0, yPercent: 0, scale: propFit, opacity: 1 }, { x: () => G.W - posIn(prop, stage)[0] + 24 + Math.max(0, -glide()), yPercent: 6, scale: () => 0.86 * pk, opacity: 0, duration: 0.18, ease: 'power1.inOut' }, 0.3);
         if (propOn && soft && sharp) {
-          layerDuring([soft, sharp], 0.299, 0.561);
-          tl.fromTo(soft, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'none' }, 0.3);
-          tl.fromTo(sharp, { opacity: 1 }, { opacity: 0, duration: 0.1, ease: 'none' }, 0.46);
+          layerDuring([soft, sharp], 0.299, 0.481);
+          tl.fromTo(soft, { opacity: 0 }, { opacity: 1, duration: 0.18, ease: 'none' }, 0.3);
         }
       }
-      // 6. the before statement lifts out
-      if (sw.length) tween(sw, { yPercent: 0, rotation: 0, autoAlpha: 1 }, { yPercent: -70, rotation: 4, autoAlpha: 0, duration: 0.04, ease: 'power2.in', stagger: { amount: 0.04 } }, 0.4);
+      // 6. the before statement lifts out word by word, on a clock (never caught half gone), just before
+      //    the camera glides towards its corner. On a phone the callout rows take its slot: one clock lifts
+      //    the statement and then brings the rows in, so the two never share the slot, even scrolling back.
+      const lift = { yPercent: -70, autoAlpha: 0, duration: 0.24, ease: 'power2.in', stagger: { amount: 0.1 } };
+      const phoneRows = phone ? rows.filter((r) => r && getComputedStyle(r).display !== 'none') : [];
+      if (phoneRows.length) {
+        if (sw.length) gsap.set(sw, { yPercent: 0, autoAlpha: 1 });
+        gsap.set(phoneRows, { autoAlpha: 0, y: 14 });
+        const swap = gsap.timeline({ paused: true });
+        if (sw.length) swap.fromTo(sw, { yPercent: 0, autoAlpha: 1 }, { ...lift, force3D: false, immediateRender: false }, 0);
+        swap.fromTo(phoneRows, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.36, ease: 'power3.out', stagger: 0.1, force3D: false, immediateRender: false }, sw.length ? 0.34 : 0);
+        clocks.push({ at: 0.46, on: false, tw: swap });
+      } else clock(sw, { yPercent: 0, autoAlpha: 1 }, lift, 0.44);
       // 7. while the title is away the camera glides the object to the centre of the stage (laptop)
       if (glides) {
         tl.fromTo(camera, { x: 0 }, { x: glide, duration: 0.14, ease: 'power2.inOut' }, 0.46);
         tl.to(camera, { x: 0, duration: 0.12, ease: 'power2.inOut' }, 0.76);
       }
-      // 8. the receiver rises from below the stage; 9. the object settles onto it
-      if (receiver) tl.fromTo(receiver, { y: () => { measure(); return Math.max(0, G.H - G.recTop) + 8; } }, { y: 0, duration: 0.18, ease: 'power3.out' }, 0.48);
+      // 8. the receiver rises a short way into its place as it fades in, on a clock (never half in, never
+      //    cut by the stage's foot); 9. the object settles onto it
+      if (receiver) clock(receiver, { yPercent: 7, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.45, ease: 'power2.out' }, 0.47);
       tl.fromTo(obj, { y: 0 }, { y: () => obj.offsetWidth * (parseFloat(getComputedStyle(root).getPropertyValue('--xf-settle')) || 0), duration: 0.16, ease: 'power2.inOut' }, 0.62);
       if (contact) {
         layerDuring(contact, 0.679, 0.781);
         tl.fromTo(contact, { opacity: 0 }, { opacity: 1, duration: 0.1, ease: 'power1.in' }, 0.68);
       }
-      // 10. callouts: the marker pops and focuses, its label rises (on a phone: its row in the stack)
-      const shown = phone ? callouts : callouts.slice(0, MAX_CALLOUTS);
-      const n = shown.length, gap = n > 1 ? Math.min(0.05, 0.13 / (n - 1)) : 0;
-      shown.forEach((c, i) => {
-        const t0 = 0.66 + gap * i;
-        const mark = c.querySelector('.xf-mark');
-        if (phone) {
-          if (rows[i]) tl.fromTo(rows[i], { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.05, ease: 'power3.out', force3D: false }, t0);
-          return;
-        }
-        if (mark) {
-          tl.fromTo(mark, { scale: 0 }, { scale: 1, duration: 0.05, ease: 'expo.out', force3D: false }, t0);
-          tl.fromTo(mark, { opacity: 0, filter: 'blur(6px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.06, ease: 'power2.out' }, t0);
-        }
-        const lw = words(c.querySelector('.xf-label'));
-        if (lw.length) tween(lw, { yPercent: 60, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.04, ease: 'power3.out', stagger: { amount: 0.02 } }, t0 + 0.02);
-      });
-      if (!phone) guardLabels();
-      // 11. the after line rises into the slot the statement left; 12. the action
+      // 10. callouts: each label lands word by word on a clock, starting as the title has left and the
+      //     shape is thrown (a phone's rows came in with the statement's exit, step 6). No marker is
+      //     drawn: a marker in the markup stays hidden (CSS) and is not animated.
+      if (!phone) {
+        const shown = callouts.slice(0, MAX_CALLOUTS);
+        const n = shown.length, gap = n > 1 ? Math.min(0.07, 0.2 / (n - 1)) : 0;
+        shown.forEach((c, i) => {
+          const lw = words(c.querySelector('.xf-label'));
+          if (lw.length) clock(lw, { yPercent: 60, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.32, ease: 'power3.out', stagger: { amount: 0.12 } }, 0.47 + gap * i);
+        });
+        guardLabels();
+      }
+      // 11. the after line rises into the slot the statement left; 12. the action after it (one clock)
       const cw = words(closing);
-      if (cw.length) tween(cw, { yPercent: 70, rotation: -4, autoAlpha: 0 }, { yPercent: 0, rotation: 0, autoAlpha: 1, duration: 0.05, ease: 'power3.out', stagger: { amount: 0.03 } }, 0.84);
-      if (cta) tl.fromTo(cta, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.05, ease: 'power2.out' }, 0.88);
+      clock(cw, { yPercent: 70, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.34, ease: 'power3.out', stagger: { amount: 0.1 } }, 0.84);
+      clock(cta, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.3, delay: 0.14, ease: 'power2.out' }, 0.84);
+      // the clocks follow the scrubbed playhead (a watcher over the whole hold)
+      if (clocks.length) {
+        const watch = { t: 0 };
+        const tick = () => {
+          for (const c of clocks) {
+            const on = watch.t >= c.at;
+            if (on === c.on) continue;
+            c.on = on;
+            // forward at its own pace; back two and a half times as fast, so a jump back up the page
+            // never leaves words standing over the pushed-in camera
+            if (on) c.tw.timeScale(1).play(); else c.tw.timeScale(2.5).reverse();
+          }
+        };
+        tl.fromTo(watch, { t: 0 }, { t: 1, duration: 1, ease: 'none', onUpdate: tick }, 0);
+      }
       // 13. hold to the end
       tl.set({}, {}, 1);
       step();
@@ -844,8 +905,8 @@
       root.classList.remove('xf-drawn');
       if (iris) ['left', 'top', 'width', 'height'].forEach((k) => iris.style.removeProperty(k));
       stillBack();
-      // the "where it started" tile is the finished composition's only: it loads here, never live
-      obj.querySelectorAll('.xf-before img[data-src]').forEach((img) => { img.src = img.dataset.src; img.removeAttribute('data-src'); });
+      // the "where it started" tile is no longer shown (a small captioned thumbnail beside the heading
+      // read as a label): its markup is still accepted, and its picture is never loaded
       guardLabels();
       // the still is the last frame again: its silhouette keeps the labels off the object
       if (still) readMask(still);
@@ -860,7 +921,7 @@
     });
     // The stage calls rest() from a gsap.matchMedia whose conditions are "motion allowed" and "phone",
     // and gsap calls nothing while none of them match: a laptop with reduced motion. The CSS already
-    // shows the finished composition there; what it lacks (the "where it started" tile) is loaded here,
+    // shows the finished composition there; rest() (the labels kept off the object) runs here too,
     // also when reduced motion is switched on later (after the stage has taken the live layout down).
     const calm = Stage.live && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce) and (min-width: 768px)');
     if (calm) {

@@ -498,7 +498,9 @@ export function probe() {
     for (let i = 0; i < 4 && p && p !== document.body; i++, p = p.parentElement) { const pos = getComputedStyle(p).position; if (pos === 'fixed' || pos === 'sticky') { fixed = true; host = p; break; } }
     const hr = host.getBoundingClientRect(); const hcs = getComputedStyle(host);
     const links = [...navEl.querySelectorAll('a')].filter((a) => { const r = a.getBoundingClientRect(); return r.width > 0 && r.top < 140; });
-    nav = { links: links.length, fixed, height: Math.round(hr.height), floatingPill: hr.width < W * 0.92 && parseFloat(hcs.borderTopLeftRadius) >= 16 && hr.top > 4, blur: (hcs.backdropFilter || 'none') !== 'none' };
+    // (round 11: the floating pill is a dealt design when it is opaque; translucent or blurred, it is glass)
+    const pillBg = (hcs.backgroundColor.match(/rgba?\(([^)]+)\)/) || [, '0,0,0,0'])[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+    nav = { links: links.length, fixed, height: Math.round(hr.height), floatingPill: hr.width < W * 0.92 && parseFloat(hcs.borderTopLeftRadius) >= 16 && hr.top > 4, blur: (hcs.backdropFilter || 'none') !== 'none', opaque: pillBg.length >= 3 && (pillBg.length < 4 || pillBg[3] >= 0.9) };
   }
   // where the navigation and the first screen's buttons lead; further down the page the nav-lost check looks
   // for a visible way back to one of them

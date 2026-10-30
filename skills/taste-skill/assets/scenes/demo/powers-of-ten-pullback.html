@@ -42,33 +42,36 @@
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    padding: 24px var(--gutter);
+    height: 92px;
+    padding: 0 var(--gutter);
     font-size: 17px;
   }
   .bar .mark { font-weight: 800; font-size: 21px; letter-spacing: -.02em; text-decoration: none; }
   .bar nav { display: flex; align-items: center; gap: clamp(16px, 3vw, 40px); }
   .bar nav a { text-decoration: none; }
 
+  /* the first screen is the opening alone (the bar is 92px): the film starts at the fold */
+  /* the headline at the top, sized with the screen, and the line at the foot on the right */
   .opening {
-    min-height: calc(86svh - 80px);
+    min-height: calc(100svh - 92px);
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
     column-gap: 24px;
-    align-content: end;
-    padding: 10svh var(--gutter) 12svh;
+    align-content: space-between;
+    padding: clamp(24px, 5svh, 64px) var(--gutter) clamp(40px, 8svh, 96px);
   }
   .opening h1 {
-    grid-column: 1 / 12;
+    grid-column: 1 / 13;
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(42px, 8.4vw, 150px);
+    font-size: clamp(56px, min(13vw, 24svh), 230px);
     font-weight: 600;
     line-height: .94;
     letter-spacing: -.045em;
     text-wrap: balance;
   }
   .opening p {
-    grid-column: 7 / 12;
+    grid-column: 8 / 13;
     margin: 40px 0 0;
     max-width: 38ch;
     font-size: clamp(18px, 1.4vw, 21px);
@@ -109,35 +112,62 @@
   .now li strong { font-size: clamp(24px, 2.2vw, 32px); font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
   .now li span { color: var(--muted); }
   .now .button { grid-column: 7 / 13; justify-self: start; align-self: end; margin-top: 48px; }
+  /* the footer: large links on the ink. The sections and the one action at the h2 step on the left two
+     thirds, the studio's address and contact at body size on the right, the small print at the foot */
   footer {
-    display: flex;
-    justify-content: space-between;
-    gap: 24px;
-    padding: 28px var(--gutter) 36px;
-    color: var(--muted);
-    font-size: 15px;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+    gap: 64px 48px;
+    min-height: 70svh;
+    margin-top: clamp(64px, 10svh, 120px);
+    padding: clamp(80px, 12svh, 140px) var(--gutter) 36px;
+    background: var(--ink);
+    color: #c9ccd0;
+  }
+  .foot-links { display: grid; align-content: start; gap: 4px; }
+  .foot-links a {
+    width: max-content;
+    font-size: clamp(40px, 5.2vw, 88px);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -.03em;
+    color: var(--ground);
+    text-decoration: none;
+    transition: transform .25s ease, color .25s ease;
+  }
+  .foot-links a:hover, .foot-links a:focus-visible { transform: translateX(8px); color: #9fb6c8; }
+  .foot-contact { display: grid; align-content: start; gap: 6px; margin: 0; }
+  .foot-contact a { color: var(--ground); }
+  .foot-small { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin: 0; font-size: 15px; color: #9a9ea4; }
+  /* on a tall narrow screen the headline and the line stand together in the middle of it */
+  @media (max-width: 900px) {
+    .opening { align-content: center; }
   }
   @media (max-width: 767px) {
-    .bar nav a:not(.button) { display: none; }
-    .opening { min-height: 70svh; }
+    .bar { font-size: 16px; }
+    .bar nav { gap: 16px; }
+    .bar nav a:not(.button):not(:first-child) { display: none; }
+    .bar .button { padding: 0 14px; }
     .opening h1, .opening p, .now h2, .now ul, .now .button, .now figure { grid-column: 1 / -1; grid-row: auto; }
+    .opening h1 { font-size: 15vw; }
     .opening p { margin-top: 24px; }
     .now h2 { margin-bottom: 32px; }
     .now figure { margin-top: 48px; order: 5; }
-    footer { flex-direction: column; gap: 6px; }
+    footer { grid-template-columns: 1fr; gap: 48px; min-height: 0; }
   }
 </style>
 </head>
 <body>
 <header class="bar">
   <a class="mark" href="#">Aldern</a>
-  <nav><a href="#swim">Work</a><a href="#now">Now showing</a><a class="button" href="#now">Tell us about a wall</a></nav>
+  <nav><a href="#swim">Work</a><a href="#now">Now showing</a><a class="button" href="#contact">Book a wall</a></nav>
 </header>
 
 <main>
   <section class="opening">
-    <h1>Aldern makes films for walls.</h1>
-    <p>A studio of three in Rotterdam. We shoot, grade and install moving pictures cut for one surface and the people who pass it.</p>
+    <h1>Films cut <br>for one wall</h1>
+    <p>A studio of three in Rotterdam. We shoot, grade and install moving pictures for one surface and the people who pass it.</p>
   </section>
 
   <section class="scene pb" id="swim" data-scene="powers-of-ten-pullback" data-options='{}' aria-labelledby="pb-head">
@@ -150,7 +180,7 @@
               <picture>
                 <source media="(max-width: 767px)" sizes="175vw" width="1600" height="2000"
                         srcset="https://picsum.photos/id/494/1600/2000.webp 1600w, https://picsum.photos/id/494/2666/3333.webp 2666w">
-                <img class="pb-room-img" src="https://picsum.photos/id/494/2400/1600.webp" sizes="120vw" width="3600" height="2400"
+                <img class="pb-room-img" src="https://picsum.photos/id/494/2400/1600.webp" sizes="170vw" width="3600" height="2400"
                      srcset="https://picsum.photos/id/494/2400/1600.webp 2400w, https://picsum.photos/id/494/3600/2400.webp 3600w"
                      alt="The stone wall under the Varda viaduct at night, a woman and her dog in a shaft of light below the screen">
               </picture>
@@ -190,14 +220,20 @@
       <li><strong>Low Sun</strong><span>Lobby of the Kanaalhal, from 12 December, eight in the morning to six.</span></li>
       <li><strong>Swim</strong><span>Under the Varda viaduct. Ended on 28 September after 96 nights.</span></li>
     </ul>
-    <a class="button" href="#">Tell us about a wall</a>
   </section>
 </main>
 
-<footer>
-  <span>Aldern, Rotterdam</span>
-  <span>Photographs from Unsplash via Lorem Picsum: Matthew Wiebe, Todd Quackenbush.</span>
+<!-- the footer: large links on the ink, the contact beside them, the small print at the foot -->
+<footer id="contact">
+  <nav class="foot-links" aria-label="Footer">
+    <a href="#swim">Work</a>
+    <a href="#now">Now showing</a>
+    <a href="mailto:walls@aldern.studio">Book a wall</a>
+  </nav>
+  <p class="foot-contact"><span>Keilestraat 9, Rotterdam</span><a href="mailto:walls@aldern.studio">walls@aldern.studio</a><span>Send us a photograph of the wall and where people pass it.</span></p>
+  <p class="foot-small"><span>Photographs from Unsplash via Lorem Picsum. Aldern is invented for this demonstration.</span><a href="#">Back to the top</a></p>
 </footer>
+<!-- Photographs: Matthew Wiebe, Todd Quackenbush, through Unsplash. -->
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>

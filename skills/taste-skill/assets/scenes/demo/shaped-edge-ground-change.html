@@ -15,7 +15,9 @@
 <style>
   /* Two chapters. The opening is a cool bone paper with deep teal type. The scene's photograph has a deep teal
      sky; --ground is that sky, the median of a 5% patch in its top third (#015e6f), sampled from the
-     2400 and 3200px files the page loads. Everything after the scene sits on it, in --ink (7.1:1). */
+     2400 and 3200px files the page loads. Everything after the scene sits on it, in --ink (7.1:1).
+     The photograph carries crossorigin="anonymous" (the host allows it), so the scene can read the sky
+     right behind the lede and paint its strip that colour instead of --ground. */
   :root {
     --paper: #e8ecea;
     --deep: #082a30;
@@ -59,8 +61,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    min-height: 76px;
-    padding: 14px var(--gutter);
+    height: 76px;
+    padding: 0 var(--gutter);
     font-size: 16px;
   }
   .bar .mark { text-decoration: none; font-size: 26px; line-height: 1; }
@@ -76,8 +78,9 @@
     font-weight: 600;
   }
 
+  /* the first screen is the opening alone (the bar is 76px): the scene starts at the fold */
   .opening {
-    min-height: min(calc(100svh - 76px), 62vw);
+    min-height: calc(100svh - 76px);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -85,7 +88,7 @@
   }
   .opening h1 {
     margin: 0;
-    font-size: clamp(64px, 16vw, 250px);
+    font-size: clamp(64px, min(21vw, 26svh), 250px);
     line-height: 0.84;
     letter-spacing: -0.015em;
   }
@@ -114,8 +117,9 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
     gap: 48px clamp(40px, 6vw, 112px);
-    align-items: start;
+    align-items: end;
   }
+  .stages > div { display: contents; }
   .stages h2 {
     margin: 0 0 24px;
     font-size: clamp(40px, 4.6vw, 72px);
@@ -123,8 +127,8 @@
     letter-spacing: -0.01em;
     text-wrap: balance;
   }
-  .stages p { margin: 0 0 1em; max-width: 34rem; text-wrap: pretty; }
-  .stages .action {
+  .stages p { margin: 0; max-width: 34rem; text-wrap: pretty; }
+  .foot .action {
     display: inline-flex;
     align-items: center;
     min-height: 52px;
@@ -140,8 +144,10 @@
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 30px 40px;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 36px 40px;
+    margin-top: 24px;
   }
   .stages li { display: grid; gap: 6px; align-content: start; }
   .stages li strong {
@@ -155,24 +161,53 @@
   }
   .stages li span { font-size: 16px; }
 
+  /* the footer: a photograph on the left half and the facts on the deep teal beside it, both inside the
+     margins; the closing line, the one action, the contact, the sections and the small print */
   .foot {
-    padding: 0 var(--gutter) 48px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 12px 32px;
-    font-size: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    min-height: 62svh;
+    padding: 0 var(--gutter) var(--gutter);
   }
-  .foot p { margin: 0; }
+  .foot-pic { margin: 0; position: relative; min-height: 360px; }
+  .foot-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 60%; }
+  .foot-facts {
+    display: grid;
+    align-content: space-between;
+    gap: 40px;
+    padding: clamp(40px, 6svh, 72px) clamp(28px, 4vw, 64px);
+    background: var(--deep);
+  }
+  .foot-facts h2 {
+    margin: 0 0 28px;
+    font-size: clamp(40px, 4.4vw, 72px);
+    line-height: 0.92;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .foot-facts p { margin: 0; max-width: 30rem; }
+  .foot-facts nav { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+  .foot-facts nav a { text-decoration: none; }
+  .foot-facts nav a:hover { text-decoration: underline; }
+  .foot-facts .small { font-size: 15px; color: #b9cdd0; }
 
   @media (max-width: 900px) {
-    .stages { grid-template-columns: 1fr; }
+    /* two lines of the headline, and the opening's words in the middle of a tall screen */
+    .opening { justify-content: center; }
+    .opening h1 { font-size: 16vw; }
+    .stages, .foot { grid-template-columns: 1fr; }
+    .stages ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .foot-pic { min-height: 0; aspect-ratio: 4 / 3; }
   }
   @media (max-width: 767px) {
     body { font-size: 17px; }
-    .bar nav a:not(.book) { display: none; }
-    .bar .mark { font-size: 22px; }
-    .opening h1 { font-size: 19vw; }
+    /* the phone keeps one section link beside the action */
+    .bar, .bar nav { gap: 16px; }
+    .bar nav { font-size: 15px; }
+    .bar nav a:not(.book):not(:first-child) { display: none; }
+    .bar nav a.book { padding: 0 12px; }
+    .bar .mark { font-size: 18px; }
+    .bar .mark, .bar nav a { white-space: nowrap; }
     .opening .lead { grid-template-columns: 1fr; }
     .opening .lead a { justify-self: start; }
     .stages ul { grid-template-columns: 1fr; gap: 22px; }
@@ -186,15 +221,15 @@
   <nav aria-label="Main">
     <a href="#stages">Stages</a>
     <a href="#stages">Huts</a>
-    <a class="book" href="#stages">Book the route</a>
+    <a class="book" href="#book">Book the route</a>
   </nav>
 </header>
 
 <main id="top">
   <section class="opening" aria-labelledby="page-title">
-    <h1 class="display" id="page-title">Varn High Route</h1>
+    <h1 class="display" id="page-title">Nine days on the ice</h1>
     <div class="lead">
-      <p>Nine days on foot across the Varn glaciers, from Ossen to Valtar, sleeping every night in a staffed hut. Open from 1 July to 14 September.</p>
+      <p>On foot across the Varn glaciers from Ossen to Valtar, with a staffed hut every night. Open 1 July to 14 September.</p>
       <a href="#stages">See the stages</a>
     </div>
   </section>
@@ -208,7 +243,7 @@
           <img class="seg-photo__img"
                src="https://picsum.photos/id/327/2400/1600"
                srcset="https://picsum.photos/id/327/1600/1067 1600w, https://picsum.photos/id/327/2400/1600 2400w, https://picsum.photos/id/327/3200/2133 3200w"
-               sizes="125vw" width="3200" height="2133" fetchpriority="high"
+               sizes="125vw" width="3200" height="2133" fetchpriority="high" crossorigin="anonymous"
                alt="A range of snow-covered peaks and brown ridges under a clear, deep teal sky, with a small daytime moon above them.">
         </picture>
       </figure>
@@ -233,7 +268,7 @@
             <img class="seg-inset__img"
                  src="https://picsum.photos/id/635/1200/600"
                  srcset="https://picsum.photos/id/635/800/400 800w, https://picsum.photos/id/635/1200/600 1200w, https://picsum.photos/id/635/1600/800 1600w"
-                 sizes="(max-width: 767px) 126vw, 36vw" width="1600" height="800"
+                 sizes="(max-width: 767px) 168vw, (orientation: portrait) 126vw, 64vw" width="1600" height="800"
                  alt="Enamel mugs and a teapot set out on a wooden table in a hut, in warm evening light.">
           </figure>
         </div>
@@ -244,9 +279,7 @@
   <section class="stages" id="stages" aria-labelledby="stages-title">
     <div>
       <h2 class="display" id="stages-title">One hut a night</h2>
-      <p>Each hut sleeps thirty to sixty in shared rooms and serves dinner, breakfast and a packed lunch. Book the route once and we hold your bed in all nine, on the nights you choose.</p>
-      <p>On the two glacier days a guide walks with groups of eight. The rest of the path is marked, and every hut keeper knows you are coming.</p>
-      <a class="action" href="#stages">Book the route</a>
+      <p>Each hut sleeps thirty to sixty and serves dinner, breakfast and a packed lunch. On the two glacier days a guide walks with groups of eight; the rest of the path is marked.</p>
     </div>
     <ul aria-label="The nine stages">
       <li><strong>Ossen to Kerr Hut</strong><span>11 km, 1,150 m of climbing</span></li>
@@ -261,11 +294,26 @@
     </ul>
   </section>
 
-  <footer class="foot">
-    <p>The Varn High Route is kept by the Varn Hut Association.</p>
-    <p>Photographs by Ryan Schroeder and André Freitas, on Unsplash.</p>
-  </footer>
 </main>
+
+<!-- the footer: a photograph of the walk beside the facts on the deep teal -->
+<footer class="foot" id="book" aria-labelledby="foot-title">
+  <figure class="foot-pic">
+    <img src="https://picsum.photos/id/685/1400/1400" srcset="https://picsum.photos/id/685/1000/1000 1000w, https://picsum.photos/id/685/1400/1400 1400w" sizes="(max-width: 900px) 88vw, 44vw" width="1400" height="1400" loading="lazy" decoding="async"
+         alt="A walker sitting on the rocks of a ridge at dawn, above a sea of cloud.">
+  </figure>
+  <div class="foot-facts">
+    <div>
+      <h2 class="display" id="foot-title">Book all nine huts</h2>
+      <p>We hold your bed in every hut on the nights you choose.</p>
+    </div>
+    <p><a class="action" href="mailto:route@varnhuts.org">Book the route</a></p>
+    <p>route@varnhuts.org<br>The Varn Hut Association, Ossen</p>
+    <nav aria-label="Footer"><a href="#stages">Stages</a><a href="#stages">Huts</a><a href="#top">Back to the top</a></nav>
+    <p class="small">Photographs from Unsplash via Lorem Picsum. The Varn High Route is invented for this demonstration.</p>
+  </div>
+</footer>
+<!-- Photographs by Ryan Schroeder and André Freitas, on Unsplash; the ridge at dawn is Lorem Picsum's id 685. -->
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>

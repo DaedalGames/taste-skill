@@ -214,8 +214,9 @@ first, and a page that cannot lean on them has to find structure in space, tone 
 - No conventional top navigation bar on about 45; small corner links on about 22; a single link or
   button on about 10.
 - Endings: the name at full width about 18, the hero repeated inverted about 12, a closing scene of
-  its own about 14, no footer or a single line about 22. Link-column footers are mentioned only as
-  criticism.
+  its own about 14; about 22 had no footer or a single line, which the owner rejected in October 2026
+  (the footer is now a designed section, dealt in section 0 of the sheet). Link-column footers were
+  criticised where they repeated the navigation.
 - Motion (inferred from frames): autoplaying video about 50; pinned or fixed stages about 40; text
   reveals about 30 (blur-in 10, masked line rises 8, scroll-tied word colouring 7); horizontal strips
   about 27; marquees about 26; media swapped behind a fixed element about 15; scroll-linked scaling

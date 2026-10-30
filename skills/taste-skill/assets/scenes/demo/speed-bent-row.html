@@ -37,14 +37,14 @@
     .bar .bar-order { display: inline-flex; align-items: center; height: 42px; padding: 0 18px; border-radius: 999px; background: var(--ink); color: var(--ground); font-weight: 500; }
     .bar .bar-order:hover { background: var(--accent); text-decoration: none; }
 
-    .intro { padding: 24px 32px 0; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); column-gap: 32px; row-gap: 36px; align-items: end; }
+    .intro { min-height: calc(100svh - 82px); padding: 24px 32px 0; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 32px; row-gap: 36px; align-items: end; }
     .intro h1 { margin: 0; font-size: clamp(48px, 6.6vw, 104px); line-height: .92; }
     .intro-text { display: grid; gap: 18px; justify-items: start; padding-bottom: .4em; }
     .intro-text p { margin: 0; max-width: 34ch; font-size: clamp(18px, 1.35vw, 20px); line-height: 1.42; }
     .intro-text a { font-weight: 500; text-decoration-thickness: 2px; }
     .intro-text a:hover { color: var(--accent); }
-    .intro figure { grid-column: 1 / -1; margin: 0; }
-    .intro figure img { width: 100%; height: auto; aspect-ratio: 1920 / 667; object-fit: cover; }
+    .intro figure { grid-column: 1 / -1; align-self: stretch; margin: 0; }
+    .intro figure img { width: 100%; height: 100%; min-height: 240px; object-fit: cover; }
 
     .prints { padding: 64px 32px 0; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: 32px; row-gap: 32px; align-items: start; }
     .prints h2 { margin: 0; font-size: clamp(40px, 5vw, 80px); line-height: .95; max-width: 11ch; }
@@ -69,16 +69,16 @@
     .credits button { padding: 0; border: 0; background: none; color: inherit; font: 500 15px/1.4 var(--font-text); text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
 
     @media (max-width: 1099px) {
-      .intro { grid-template-columns: 1fr; }
+      .intro { grid-template-columns: 1fr; grid-template-rows: auto auto minmax(0, 1fr); }
       .prints { grid-template-columns: 1fr; }
     }
     @media (max-width: 767px) {
       .bar { flex-wrap: wrap; padding: 16px; gap: 10px 16px; font-size: 15px; }
       .bar nav { gap: 18px; }
       .bar .bar-order { height: 40px; padding: 0 16px; }
-      .intro { padding: 16px 16px 0; row-gap: 24px; }
+      .intro { min-height: calc(100svh - 72px); padding: 16px 16px 0; row-gap: 24px; }
       .intro h1 { font-size: clamp(40px, 12vw, 56px); }
-      .intro figure img { aspect-ratio: 4 / 3; object-position: 62% 50%; }
+      .intro figure img { object-position: 62% 50%; }
       .prints { padding: 24px 16px 0; }
       .foot { padding: 112px 16px 24px; }
       .credits { padding: 22px 20px 24px; }

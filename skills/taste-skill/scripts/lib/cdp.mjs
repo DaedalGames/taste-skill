@@ -1,4 +1,6 @@
-// Zero-dependency Chrome DevTools Protocol client.
+// Zero-dependency Chrome DevTools Protocol client. It only ever stops the Chrome it started: a closed or crashed
+// browser is never killed again at exit (its pid is cleared and its exit hooks removed, so a reused pid is never hit),
+// a failed launch stops its own Chrome, a dropped socket fails every pending call at once, and eval takes a timeout.
 // Drives an installed Chrome / Edge / Chromium in headless mode over Node's built-in WebSocket.
 // Requires Node 22+. No npm install.
 import { spawn, spawnSync } from 'node:child_process';
@@ -94,10 +96,13 @@ export class Browser {
     let pid = 0;
     const drop = () => {
       try { if (pid) { if (process.platform === 'win32') spawnSync('taskkill', ['/pid', String(pid), '/T', '/F'], { stdio: 'ignore' }); else process.kill(pid, 'SIGKILL'); } } catch {}
+      pid = 0;
       try { rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch {}
     };
+    const onSig = () => { drop(); process.exit(130); };
     process.once('exit', drop);
-    for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.once(sig, () => { drop(); process.exit(130); });
+    for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.once(sig, onSig);
+    const unhook = () => { process.off('exit', drop); for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.off(sig, onSig); };
     const args = [
       '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${dir}`,
       '--disk-cache-size=16777216', '--media-cache-size=16777216',
@@ -109,6 +114,7 @@ export class Browser {
     ];
     const proc = spawn(exe, args, { stdio: ['ignore', 'ignore', 'pipe'] });
     pid = proc.pid;
+    proc.once('exit', () => { pid = 0; });
     claim(pid);
     const wsUrl = await new Promise((resolve, reject) => {
       let buf = '';
@@ -119,11 +125,12 @@ export class Browser {
         if (m) { clearTimeout(t); resolve(m[1]); }
       });
       proc.on('exit', (code) => { clearTimeout(t); reject(new Error('Chrome exited early, code ' + code + '\n' + buf.slice(-600))); });
-    });
+    }).catch((e) => { drop(); unhook(); throw e; });
     const b = new Browser();
-    b.proc = proc; b.dir = dir; b.nextId = 1; b.pending = new Map(); b.listeners = new Map();
+    b.proc = proc; b.dir = dir; b.nextId = 1; b.pending = new Map(); b.listeners = new Map(); b.drop = drop; b.unhook = unhook;
     b.ws = new WebSocket(wsUrl);
-    await new Promise((res, rej) => { b.ws.onopen = res; b.ws.onerror = () => rej(new Error('CDP socket failed')); });
+    await new Promise((res, rej) => { b.ws.onopen = res; b.ws.onerror = () => rej(new Error('CDP socket failed')); }).catch((e) => { drop(); unhook(); throw e; });
+    b.ws.onclose = () => { b.closed = true; for (const [, p] of b.pending) { clearTimeout(p.timer); p.reject(new Error('CDP socket closed')); } b.pending.clear(); };
     b.ws.onmessage = (ev) => {
       const msg = JSON.parse(typeof ev.data === 'string' ? ev.data : Buffer.from(ev.data).toString());
       if (msg.id && b.pending.has(msg.id)) {
@@ -140,6 +147,7 @@ export class Browser {
 
   send(method, params = {}, sessionId, timeoutMs = 30000) {
     const id = this.nextId++;
+    if (this.closed) return Promise.reject(new Error('CDP socket closed'));
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => { this.pending.delete(id); reject(new Error('CDP timeout: ' + method)); }, timeoutMs);
       this.pending.set(id, { resolve, reject, timer });
@@ -170,9 +178,11 @@ export class Browser {
   async close() {
     try { await this.send('Browser.close', {}, undefined, 3000); } catch {}
     try { this.ws.close(); } catch {}
-    try { this.proc.kill(); } catch {}
+    try { if (this.proc.exitCode === null) this.proc.kill(); } catch {}
     await sleep(300);
-    try { rmSync(this.dir, { recursive: true, force: true, maxRetries: 3 }); } catch {}
+    // our own Chrome only: drop() stops it if it still runs (pid is cleared once it has exited), then the hooks go
+    try { this.drop(); } catch {}
+    try { this.unhook(); } catch {}
   }
 }
 
@@ -212,11 +222,11 @@ export class Page {
   }
 
   // Evaluates a function (serialised) or an expression string in the page and returns its JSON value.
-  async eval(fnOrExpr, arg) {
+  async eval(fnOrExpr, arg, timeoutMs = 30000) {
     const expression = typeof fnOrExpr === 'function'
       ? `(${fnOrExpr.toString()})(${arg === undefined ? '' : JSON.stringify(arg)})`
       : fnOrExpr;
-    const r = await this.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, 30000);
+    const r = await this.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, timeoutMs);
     if (r.exceptionDetails) {
       throw new Error('page eval: ' + (r.exceptionDetails.exception?.description || r.exceptionDetails.text));
     }

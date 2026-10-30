@@ -34,7 +34,21 @@ Then list the page as claims, one per section, each with its proof:
 
 A section with no claim is filler; delete it. This is also how you escape the stock order of
 hero, logos, features, testimonial, pricing, call to action: the order of the argument is the order of
-the page.
+the page. Five or six claims after the hero are plenty; two that say one thing are one section.
+
+**Budgets.** The owner's verdict on the recent pages was "too much text: cut almost everything", and
+the inspector now counts:
+
+| Where | At most |
+| --- | --- |
+| The first screen, everything in it | 30 words |
+| Its headline | 12 words (about 32 characters is safer) |
+| A section, outside a list or a table | 60 words |
+| A card or an item | one sentence, about 25 words |
+| The whole page | about 500 words |
+
+Past one and a half times a budget the inspector fails the page. Write the deck, count it, then cut
+every sentence that repeats the heading, explains the design or could stand on a competitor's page.
 
 ## 2. The two-line headline
 
@@ -92,7 +106,10 @@ All seen repeatedly on the gallery sites. Pick the plainest one that is true.
 
 - **The name.** The brand or the person, set very large, with a one-line description elsewhere.
   Strongest when the name is short and the subject is visual (studios, restaurants, hotels, people),
-  and when the page is built on what the name means (Klee is clover; Hvit is white).
+  and when the page is built on what the name means (Klee is clover; Hvit is white). The name then
+  appears once on the first screen: the bar shows the mark alone, or its wordmark arrives once the
+  hero has scrolled away. A headline that repeats the logo beside it reads as a template (a roastery's
+  first screen, round 10).
 - **What it is.** "A vinyl shelf in your pocket." "Furniture for small rooms." Category, stated with
   one specific word.
 - **The claim.** "Your bank won't do this." One sentence a competitor could not sign.
@@ -120,7 +137,7 @@ Sentence case. No full stop unless the direction's voice uses them everywhere.
 
 ## 4. Supporting line, body, buttons
 
-**Supporting line.** One sentence, at most about 22 words, that says concretely what the thing is and
+**Supporting line.** One sentence, at most about 18 words, that says concretely what the thing is and
 who it is for. It is where the detail cut from the headline goes. It never repeats the headline in
 other words. The offer is one sentence, never a stacked list of labels (city / service / service).
 
@@ -130,10 +147,14 @@ different company could print it unchanged; if so, sharpen it or cut it.
 
 **Buttons.** Name the action or the thing: "Book a table", "See the plans", "Download for Mac".
 One to three words. The primary action keeps one name everywhere on the page. One primary button per
-screen; a second action is a plain text link. No arrow glyph on every link and button; at most one
-arrow, on the primary action, if the direction uses arrows at all.
+screen; the second action takes the treatment the dealt button design names (a text link, a quieter
+fill). An arrow only where that design has one, never on every link. One action appears once in a
+block: never two buttons or links to the same place in one screen or section (a roastery's first
+screen had two Directions buttons).
 
-**Navigation.** The wordmark, up to five plain links, one action. Link labels are single nouns.
+**Navigation.** The wordmark, up to five plain links, one action. Link labels are single nouns, one
+or two words; never a sentence or a tagline in the bar, and no announcement or information strip
+above it.
 
 ## 5. Proof without inventing it
 
@@ -161,23 +182,25 @@ it. List every sample detail in the report so the client confirms or replaces it
 
 **Facts about the real world are not sample details, and they are not to be left out either.** A page
 about a real place names the real, checkable things a visitor needs to get there and to picture it:
-the region and its towns, the road that reaches it, the ferry, the train or the airport that serves
-it, and distances by road ("70 km by road" is a distance; "an hour's drive" is a travel time), only
-when read from a map or the brief in this session; otherwise the towns and the road without a number,
-since a recalled number is how "forty minutes" happened. What cannot be checked
-from a map or the brief stays off the page: travel times, populations, history, awards, records and
-"the oldest" or "the only". A guess ("forty minutes from Reykjavik" for a house in the Westfjords,
-hours away) is wrong to every reader who knows; a page that names no town, road or flight at all
-reads as thin and tells the visitor nothing. List every real-world fact the page states in the report,
+the village it stands in, the region and its towns, the road that reaches it, the ferry, the train
+or the airport that serves it, and the drive from the nearest town with its time ("70 km by road,
+about an hour and a quarter"): from the road distance on a map when one can be read in this session,
+otherwise at about 60 km an hour on country roads, rounded up and marked in the report to confirm.
+A visitor plans by the time, and a page that names no village and no drive time leaves them guessing
+(a Westfjords guesthouse, round 10). No time ever makes a place nearer than it is: "forty minutes
+from Reykjavik" for a house in the Westfjords, hours away, is wrong to every reader who knows. What
+cannot be checked from a map or the brief stays off the page: populations, history, awards, records
+and "the oldest" or "the only". List every real-world fact the page states in the report,
 with where it came from, for the client to confirm.
 
 **A place people go to says how to get there.** A café, a bar, a restaurant, a shop, a guesthouse or
 a studio with a door gets a visit block with six things: the street, a real street in the right
 district of the town the brief names (one such a place would stand in, with no house number unless
-the brief gives one), or for a remote place, or a brief that names only a region, the nearest town
-and the road from it, and no street; the district or area; the nearest stop and its line, read from
-a map in this session or one you are sure of, otherwise the district's main station (for a remote
-place, the drive from that town, a distance only as the paragraph above allows); the opening hours
+the brief gives one), or for a remote place, or a brief that names only a region, the village it
+stands in and the nearest town with the road from it, and no street; the district or area; the
+nearest stop and its line, read from a map in this session or one you are sure of, otherwise the
+district's main station (for a remote place, the drive from that town with its time, as the
+paragraph above says); the opening hours
 (a house or a hotel may print its season and its check-in times instead); a "Directions" link to a
 maps service (OpenStreetMap, Google or Apple Maps) searching that street and town, or that road and
 town; and one contact. The street, district, way there and hours the brief does not give are sample

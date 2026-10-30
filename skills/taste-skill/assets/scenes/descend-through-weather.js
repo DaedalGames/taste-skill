@@ -1,12 +1,12 @@
 // tasteskill / scenes / descend-through-weather.js — the hero sinks through a cloud deck onto the place below.
 //
 // A held full-bleed photograph is a camera going down through the weather. The giant place name creeps
-// up and loses focus with the cloud tops rising just under it; once the sharp word has gone, two cloud
-// layers rise past its soft copies at different speeds (no cloud crosses the word while it is read); a
-// soft wall of cloud then fills the frame with mist while one line in the display face rises slowly
-// through it; the frame clears from the bottom, under a ceiling of cloud, onto a second photograph where
-// a two-line statement rises out of its masks. A signature hero exit for travel, hospitality, outdoor,
-// architecture or wellness pages with two strong pictures.
+// up with the cloud tops rising just under it; then two cloud layers rise towards it at different speeds
+// and the name leaves as the cloud reaches it (sharp, on a short clock: no blur on text); a wall of
+// cloud fills the frame with mist for a breath while one line in the display face rises through it; the
+// frame clears from the bottom, under a ceiling of cloud, onto a second photograph where a two-line
+// statement rises out of its masks. A signature hero exit for travel, hospitality, outdoor, architecture
+// or wellness pages with two strong pictures.
 //
 // The cloud. By default the scene grows its own: warped fractal noise gathered into rounded billows,
 // laid on a plane in perspective, lit from above, solid toward the deck and graded to --mist exactly so
@@ -19,8 +19,10 @@
 // while it is scrolled; the finished art is handed to the layers one per frame, and the deck's art is
 // swapped in only while the scene is still or the deck is off screen. Without Worker support it runs on
 // the main thread in small slices. If a cloud photograph cannot be read, the scene falls back to its own
-// cloud; if nothing can be drawn, the deck still rises as a soft flat wall of mist and nothing breaks.
-// No gradients anywhere: soft edges are cloud art or blurred flat fills.
+// cloud; if nothing can be drawn, the deck still rises as a flat wall of mist and nothing breaks.
+// No gradients, no blur on text and no blurred flat fill as a soft edge: soft edges are cloud art (the
+// haze and the ground band, blurred flat fills, are no longer drawn; a keyed cloud photograph is still
+// softened a little in the canvas, as part of cutting it).
 //
 // DOM. The script builds the title copies, cloud layers, deck, haze and ground band itself.
 //
@@ -48,7 +50,9 @@
 // an aerial or high view of the place, its top quarter the palest part (hazy sky), its bottom third dark
 // and calm (it fades into --ground), warmer and more saturated than the first so the descent reads as
 // arriving. Both at least 2400px wide. --above-pos / --below-pos set their object-position (the phone
-// crops them to portrait).
+// crops them to portrait); a portrait tablet runs the desktop plan on a tall screen, so give it the phone
+// crop too (for example @media (max-width: 1099px) and (orientation: portrait)), or the subject of photo A
+// can be cut by the screen's edge.
 //
 // Tokens (set on :root or the section): --mist (#eef2f4, the cloud and the deck; match it to the
 // brightest cloud in the first photograph), --on-mist (#1c2329: the note on the white), --on-above (#fff:
@@ -79,34 +83,34 @@
 //   fill         0.86     share of the width the title is fitted to (0.6-0.94); held under 36% of the
 //                         height, so very wide screens keep the word inside the bottom band. Phones fit
 //                         it 0.1 wider (up to 0.98).
-//   blur         14       px of blur on the lost title copy (8-16); the soft copy carries a third of it
+//   blur         14       no longer used: the title's copies are sharp (blur on text is a banned device);
+//                         read and ignored, so a page that sets it still works
 //   feather      60       svh of soft cloud edge on each side of the deck (40-80; softer is calmer)
 //   phoneFeather 40       the same under 768px (30-60)
 //   settle       1.2      scale photo B settles from (1.08-1.25); phone 1.12
 //
-// The root also gets data-sky="above" | "in" | "below" as the scene plays (in = 0.44-0.60), so a fixed
+// The root also gets data-sky="above" | "in" | "below" as the scene plays (in = 0.43-0.56), so a fixed
 // nav can change colour: body:has([data-sky="in"]) .nav { color: … }. It is removed whenever the scene
 // shows its finished composition.
 //
 // Progress map (desktop, hold 3): 0 photo A still, the white title sharp at about 66-95svh over the dark
 // foot of the picture, tagline read in the sky, a 4svh cloud lip below the title. 0-50% photo A zooms 1
-// to 1.12 and drifts up 8svh; the title rises 42svh (0.28x). 10-20% a 5px copy of the title fades in over
-// it and 17-25% the sharp copy leaves (soft, still read to about 24%); 28-40% the 14px copy takes over
-// and 40-48% fades to a ghost and out. 14-22% the tagline leaves. 0-25% the far cloud rises with the
-// title, its top 1svh under the title's foot (96 to 75svh); 25-50% it rises on to 14svh past the soft
-// copies, and the near veil 118 to -30svh (scale 1.25): nothing crosses the sharp word while it shows.
-// 24-48% the deck rises 100 to -60svh (power1.in) and the
-// frame is mist from 48%; 42-58% the note rises 14 to -14svh through the mist (read 45-55%). 50% photo
-// A, title and clouds are switched off under the deck; photo B settles 1.2 to 1 (to 100%, power2.out).
-// 41-48% photo A pales to 0.4 into the mist. 52-78% the deck leaves upward (power1.out) and the frame
-// clears from the bottom through thinning, pale cloud; 54-86% a cloud ceiling with grey-blue undersides
-// behind it (a 64svh layer, 6 to -64svh, power2.in): it lingers, its dense part in the top quarter of
-// the frame to about 72%, then lifts away; 58-84% the haze clears; 66-80% the ground band darkens the
-// bottom; 74-85% the statement rises line by line; 85-100% held.
+// to 1.12 and drifts up 8svh; the title rises 42svh (0.28x). A sharp copy of the title takes over from
+// the word at 10-25% without a visible change, and leaves on a clock of 0.35s at 37%, as the cloud
+// reaches it (never half faded at a stop). 14-22% the tagline leaves. 0-25% the far cloud rises with the
+// title, its top 1svh under the title's foot (96 to 75svh); 25-50% it rises on to 14svh over the word,
+// and the near veil 118 to -30svh (scale 1.25). 26-47% the deck rises 100 to -60svh (power2.in); 41-48%
+// photo A pales to 0.4 into the mist; at 47.5% photo A and the clouds are switched off under the deck.
+// 43-55% the note rises 12 to -12svh through the mist, shown on a clock from 44% to 53.5%. 48-92%
+// photo B settles 1.2 to 1 at a steady rate (fix-006; power2.out to 100% before). 50-76% the deck leaves upward (power2.out) and the frame clears
+// from the bottom through thinning, pale cloud: flat mist for about 0.43-0.53 only. 52-90% a cloud
+// ceiling with grey-blue undersides (a 64svh layer, 6 to -64svh, power2.in) lingers in the top quarter
+// of the frame, then lifts away: the landing's last beat lands near 0.9 (fix-006; 0.84 and 1.0 before).
+// From 72% the statement's lines rise on a clock; held to 100%.
 // Phone (hold 2.2): the far cloud on a narrower layer (114 to 97svh with the title to 28%, then to
 // 10svh) and the near veil 122 to -30svh from 28% (scale 1.15, no sideways drift); the title fitted
-// to 0.96 of the width, rising 30svh with a 10px lost copy, each blur step 0.03 later; deck feathers of
-// 40svh (180svh deck); ceiling 4 to -50svh; photo B settles from 1.12. Same fractions otherwise.
+// to 0.96 of the width, rising 30svh, each copy step 0.03 later; deck feathers of 40svh (180svh deck);
+// ceiling 4 to -50svh; photo B settles from 1.12. Same fractions otherwise.
 //
 // Finished composition (no script, reduced motion, phone 'rest'): photo A with the title, a seam of
 // mist carrying the note, photo B with the statement. With the script present the seam's edges are the
@@ -563,8 +567,9 @@
       note: $('.wx-note'), statement: $('.wx-statement'),
     };
 
-    // the title: the word itself for readers, two blurred copies on top whose opacity alone changes. The
-    // copies are drawn as generated content, so the heading's text stays the one word.
+    // the title: the word itself for readers, two sharp copies on top whose opacity alone changes (only the
+    // "soft" one is shown now; "lost" stays for older styling). The copies are drawn as generated content,
+    // so the heading's text stays the one word.
     if (r.title && !r.title.querySelector('.wx-title__word')) {
       const word = r.title.textContent.trim().replace(/\s+/g, ' ');
       r.title.textContent = '';
@@ -820,13 +825,24 @@
         onToggle: (self) => root.classList.toggle('wx-near', self.isActive),
       });
 
+      // what must never stand half done at a stop runs on clocks: the title's copy (leaves at 0.37), the
+      // note on the white (shown while the deck's mist holds it, 0.44-0.535, so every flat-mist frame
+      // carries it) and the statement's two lines (from 0.72), each played when
+      // the scroll passes its point and played back when it returns
+      const clocks = [];
+      const clock = (tw) => { const c = { tw, on: false }; clocks.push(c); return c; };
+      const drive = (c, on) => { if (!c || on === c.on) return; c.on = on; if (on) c.tw.play(); else c.tw.reverse(); };
+      let noteC = null, linesC = null, titleC = null, titleAt = 0.37;
       let sky = '';
       tl.eventCallback('onUpdate', () => {
         const p = tl.progress();
         r.p = p;
         r.moved = performance.now();
-        const s = p < 0.44 ? 'above' : p < 0.6 ? 'in' : 'below';
+        const s = p < 0.43 ? 'above' : p < 0.56 ? 'in' : 'below';
         if (s !== sky) { sky = s; root.dataset.sky = s; }
+        drive(titleC, p >= titleAt);
+        drive(noteC, p >= 0.44 && p < 0.535);
+        drive(linesC, p >= 0.72);
       });
 
       // photo A and the title (the picture scales from a quarter down its height, so the zoom always
@@ -839,22 +855,23 @@
       // (photo A is held at 0.999, not 1: an opaque layer hides what lies under it from the browser, which
       // then leaves photo B, the haze and the ground band unpainted until the moment they show; behind a
       // not-quite-opaque photo they are painted while the hero is still read, before anything moves)
-      if (r.above) tl.fromTo(r.above, { autoAlpha: 0.999 }, { autoAlpha: 0, duration: 0.01 }, 0.49);
+      if (r.above) tl.fromTo(r.above, { autoAlpha: 0.999 }, { autoAlpha: 0, duration: 0.01 }, 0.475);
       if (r.title) {
         tl.fromTo(r.title, { y: 0 }, { y: sv(P ? -30 : -42), duration: 0.5 }, 0);
-        // each blurrier copy fades in on top before the one under it leaves, so the word never dims or
-        // doubles; autoAlpha hides what has faded out, so nothing invisible still counts as text on screen
-        // (on the phone the word is smaller against the cloud, so each step comes 0.03 later)
+        // the copy fades in on top before the word under it leaves, so the word never dims or doubles;
+        // autoAlpha hides what has faded out, so nothing invisible still counts as text on screen (on the
+        // phone the word is smaller against the cloud, so each step comes 0.03 later)
         const lag = P ? 0.03 : 0;
-        // The lost copy carries the word's fade to a ghost (to 0.55 by 0.44, gone by 0.48) on its own
-        // opacity: fading the whole heading would make the compositor draw the copies into a group
-        // first on every frame.
+        // The copies are sharp now (no blur on text), so the hand-over from the word to its copy is
+        // invisible; it stays because the copy is generated content, not text, so the cloud rising over it
+        // from 0.25 never counts as crossing words. The copy then leaves on a clock of 0.35s once the
+        // scroll passes 0.37, as the cloud reaches it, so no stop shows the name half faded or half
+        // swallowed by the cloud (the lost copy is no longer shown).
         tl.fromTo(r.soft, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.1 }, 0.1 + lag)
-          .fromTo(r.word, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.08 }, 0.17 + lag)
-          .fromTo(r.lost, { autoAlpha: 0 }, { autoAlpha: 0.72, duration: 0.12 - lag }, 0.28 + lag)
-          .fromTo(r.soft, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.08 - lag, immediateRender: false }, 0.36 + lag)
-          .fromTo(r.lost, { autoAlpha: 0.72 }, { autoAlpha: 0.55, duration: 0.04, immediateRender: false }, 0.4)
-          .fromTo(r.lost, { autoAlpha: 0.55 }, { autoAlpha: 0, duration: 0.04, immediateRender: false }, 0.44);
+          .fromTo(r.word, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.08 }, 0.17 + lag);
+        if (r.lost) gsap.set(r.lost, { autoAlpha: 0 });
+        titleC = clock(gsap.fromTo(r.soft, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.35, ease: 'power1.in', paused: true, immediateRender: false }));
+        titleAt = 0.37 + lag;
       }
       if (r.tagline) tl.fromTo(r.tagline, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: sv(-3), duration: 0.08, ease: 'power1.in' }, P ? 0.16 : 0.14);
 
@@ -865,43 +882,46 @@
       const far0 = P ? 114 : 96, far1 = far0 - (rise * gone) / 0.5, farEnd = P ? 10 : 14, farX = P ? -10 : -6;
       tl.fromTo(r.far, { y: sv(far0), x: 0 }, { y: sv(far1), x: vw((farX * (far0 - far1)) / (far0 - farEnd)), duration: gone }, 0)
         .to(r.far, { y: sv(farEnd), x: vw(farX), duration: 0.5 - gone }, gone)
-        .fromTo(r.far, { autoAlpha: 0.9 }, { autoAlpha: 0, duration: 0.01 }, 0.5);
+        .fromTo(r.far, { autoAlpha: 0.9 }, { autoAlpha: 0, duration: 0.01 }, 0.475);
       tl.fromTo(r.near, { y: sv(P ? 122 : 118), x: 0, scale: 1 }, { y: sv(-30), x: P ? 0 : vw(8), scale: P ? 1.15 : 1.25, duration: 0.5 - gone }, gone)
-        .fromTo(r.near, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.01 }, 0.5);
+        .fromTo(r.near, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.01 }, 0.475);
 
-      // the deck: in with power1.in (it accelerates into the cloud), out with power1.out
-      tl.fromTo(r.deck, { y: sv(100) }, { y: sv(-F), duration: 0.24, ease: 'power1.in' }, 0.24)
-        .fromTo(r.deck, { y: sv(-F) }, { y: sv(-(2 * F + 100)), duration: 0.26, ease: 'power1.out', immediateRender: false }, 0.52);
+      // the deck: in with power2.in (it accelerates into the cloud), out with power2.out from 0.5, both
+      // steeper and closer together than before, so the frame is flat mist for about a tenth of the hold
+      // (0.43-0.53), not a sixth: the mist is a breath between the two pictures, not a held empty screen
+      tl.fromTo(r.deck, { y: sv(100) }, { y: sv(-F), duration: 0.21, ease: 'power2.in' }, 0.26)
+        .fromTo(r.deck, { y: sv(-F) }, { y: sv(-(2 * F + 100)), duration: 0.26, ease: 'power2.out', immediateRender: false }, 0.5);
 
       // the one line on the white: it rises slowly through the mist on its own, held by the deck's solid
-      // body the whole time it is visible (the body covers it from 0.44 to past 0.57)
+      // body the whole time it is visible; it appears and leaves on a clock (0.25s), so no stop shows it
+      // half faded
       if (r.note) {
-        tl.fromTo(r.note, { yPercent: -50, y: sv(14) }, { y: sv(-14), duration: 0.16 }, 0.42)
-          .fromTo(r.note, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.03, ease: 'power1.out' }, 0.44)
-          .fromTo(r.note, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.025, immediateRender: false }, 0.545);
+        tl.fromTo(r.note, { yPercent: -50, y: sv(12) }, { y: sv(-12), duration: 0.12 }, 0.43);
+        noteC = clock(gsap.fromTo(r.note, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25, ease: 'power1.out', paused: true }));
       }
 
       // the cloud ceiling behind the deck: farther off than the deck's own edge, so it lingers. It drifts
       // up slowly while the deck clears (its dense part held in the top quarter of the frame to about
-      // 0.72, so arriving under the cloud reads as an image), then lifts away faster, gone by 0.86
-      tl.fromTo(r.under, { autoAlpha: 0 }, { autoAlpha: 0.92, duration: 0.01 }, 0.5)
-        .fromTo(r.under, { y: sv(P ? 4 : 6), x: 0 }, { y: sv(P ? -50 : -64), x: P ? 0 : vw(-5), duration: 0.32, ease: 'power2.in' }, 0.54);
+      // 0.7, so arriving under the cloud reads as an image), then lifts away faster, gone by 0.90 (0.84
+      // before fix-006, which left 83-100% three identical frames of the clear lake: the lift is now the
+      // landing's last beat, near 0.9)
+      tl.fromTo(r.under, { autoAlpha: 0 }, { autoAlpha: 0.92, duration: 0.01 }, 0.48)
+        .fromTo(r.under, { y: sv(P ? 4 : 6), x: 0 }, { y: sv(P ? -50 : -64), x: P ? 0 : vw(-5), duration: 0.38, ease: 'power2.in' }, 0.52);
 
-      // photo B and the landing
-      if (r.bImg) tl.fromTo(r.bImg, { scale: P ? Math.min(o.settle, 1.12) : o.settle, y: sv(P ? 4 : 6) }, { scale: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 0.5);
-      // the haze and the ground band are large blurred fills: they wait at a trace of opacity (0.002,
-      // invisible, under photo A) rather than hidden, so their blur is painted once while the hero is read
-      // and never on the frame they appear
-      tl.fromTo(r.haze, { opacity: 0.002 }, { opacity: 1, duration: 0.01 }, 0.49)
-        .fromTo(r.haze, { opacity: 1 }, { opacity: 0, duration: 0.26, immediateRender: false }, 0.58)
-        .fromTo(r.ground, { opacity: 0.002 }, { opacity: 1, duration: 0.14 }, 0.66);
-      // one tween per line (a staggered fromTo only sets its first target before it starts); each line is
-      // hidden while it waits in its mask and shown the moment it starts to rise
-      r.lines.forEach((line, i) => {
-        const at = 0.74 + i * 0.03;
-        tl.fromTo(line, { yPercent: 110 }, { yPercent: 0, duration: 0.08, ease: 'power3.out' }, at)
-          .fromTo(line, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.002 }, at);
-      });
+      // photo B and the landing (the haze and the ground band, blurred fills, are no longer drawn); it
+      // settles with the ceiling's lift, by 0.92, at a steady rate (power2.out before fix-006 left it still
+      // from about 0.8), so the frame is still settling at the 83% step even where a portrait crop has lost
+      // the ceiling by then, and the last step is the landing at rest
+      if (r.bImg) tl.fromTo(r.bImg, { scale: P ? Math.min(o.settle, 1.12) : o.settle, y: sv(P ? 4 : 6) }, { scale: 1, y: 0, duration: 0.44, ease: 'none' }, 0.48);
+      // the statement's lines rise out of their masks on a clock once the scroll passes 0.72 (each hidden
+      // while it waits in its mask and shown the moment it starts to rise), so no stop shows a line half
+      // out of its mask
+      if (r.lines.length) {
+        gsap.set(r.lines, { yPercent: 110, autoAlpha: 0 });
+        const lt = gsap.timeline({ paused: true });
+        r.lines.forEach((line, i) => { lt.set(line, { autoAlpha: 1 }, i * 0.12).to(line, { yPercent: 0, duration: 0.55, ease: 'power3.out' }, i * 0.12); });
+        linesC = clock(lt);
+      }
     }
 
     // the finished composition: the seam of mist gets the keyed cloud on its edges (cut once per size)

@@ -1,7 +1,7 @@
 /* tasteskill / scenes / wordmark-under-strain.css — see wordmark-under-strain.js for the DOM and options.
    By default this is the finished composition (reduced motion, no script, a phone set to 'rest'): the word
-   stands in its stepped echo, every copy on a plate of the ground colour, with the button under it.
-   Under .is-live the stage is held, the copies start flat on each other and the timeline moves them.
+   whole, with the button under it (with echo: true, the word stands in its stepped echo, every copy on a
+   plate of the ground colour). Under .is-live the stage is held and the timeline moves the word.
    Takes the page's tokens: --ground, --ink, --font-display, --font-text.
    Weights follow the page: --display-weight (the wordmark; 800 here when the page sets none),
    --strong-weight (the label; 600 here when the page sets none) and --text-weight (the top line and the
@@ -16,10 +16,11 @@
   --ws-gutter: max(16px, 4vw);
   --ws-text-size: 18px;
   --ws-label-size: 16px;
-  /* the echo: copies, scale lost and sink per copy, plate overflow. The script sets them to its plan and
-     measures the side plates from the ink; without script these defaults keep the strips and the gaps
-     between them clear of hairline widths for most capitals (the advance box is all CSS can see) */
-  --ws-n: 6;
+  /* the echo (off by default: one copy): copies, scale lost and sink per copy, plate overflow. The script
+     sets them to its plan and measures the side plates from the ink; without script these defaults keep
+     the strips and the gaps between them clear of hairline widths for most capitals (the advance box is
+     all CSS can see) when a page authors the copies */
+  --ws-n: 1;
   --ws-step: .07692;
   --ws-shift: 2;
   --ws-plate-x: .025em;

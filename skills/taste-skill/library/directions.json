@@ -25,7 +25,7 @@
   ],
   "needs": [],
   "idea": "The name is the headline. Set it so large that it becomes architecture: as wide as the viewport, cropped by an edge, or stacked to fill the screen. Nothing else on the first screen competes; the description of what this is drops to a single small sentence. The idea comes from treating the name's letters as material. Ask what the subject can do to its own name: a photograph of the work stands behind it or opens under it, the name repeats down the page like a reel, the letters are split to opposite corners and the page happens between them (never a picture inside the letters or between the words). In the study this was the single most common device among sites scoring 7.5 or more.",
-  "composition": "First screen: the wordmark spans 88–100% of the viewport width (font-size 16–24vw, set with a clamp so it never wraps), anchored either to the bottom edge with its descenders nearly touching it, or dead centre with everything else pushed to the corners. One line of supporting text at 16–20px sits in a corner on a shared margin; navigation is three or four words in the opposite corner. After the hero the page is deliberately small and calm: a narrow text column or a simple two-column grid, so the contrast with the monument holds. The footer is the dealt one, at text sizes: the name does not return there at full width. Margins are tight (20–32px) so the type reaches the edges. Two type sizes do nearly all the work: the monument and a small text size, with one mid size for section headings.",
+  "composition": "First screen: the wordmark spans 88–100% of the viewport width (font-size 16–24vw, set with a clamp so it never wraps), anchored either to the bottom edge with its descenders nearly touching it, or dead centre with everything else pushed to the corners. One line of supporting text at 16–20px sits in a corner on a shared margin; navigation is three or four words in the opposite corner. After the hero the page is deliberately small and calm: a narrow text column or a simple two-column grid, so the contrast with the monument holds. The footer is the dealt one, at text sizes: the name does not return there at full width. The name may reach the screen's edges as display type cropped on purpose; everything else keeps the margins section 0 deals. Two type sizes do nearly all the work: the monument and a small text size, with one mid size for section headings.",
   "typography": "One family. The display cut must survive enormous sizes: tight tracking (-0.04 to -0.07em), leading 0.8–0.9, optical kerning on. Section headings are modest (28–40px) on purpose.",
   "typeClasses": [
    "grotesk-tight",
@@ -85,7 +85,7 @@
   ],
   "needs": [],
   "idea": "The page is an argument in plain sentences, each with its evidence beside it. The first screen is one short sentence about the subject that a visitor can check against the picture next to it ('Every loaf leaves the oven by six', beside the racks at six): the sentence sets the grid and the measure, and the picture stands beside it or opens full width right after it, never inside it. Write the sentences first, from the inventory, one claim each; then give each the one thing that proves it: a photograph, a figure, a short list, the product doing it. The reader believes the page because every sentence is shown.",
-  "composition": "First screen: the sentence, four to seven words on two lines at the dealt display step, flush to the left margin across columns 1–7, with one supporting sentence and the action under it on the same edge. The picture it names fills columns 8–12 at the full height of the screen and runs off the right edge; or, when the sentence takes the full width, the picture runs across the width directly under it, cropped by the bottom of the screen. Later sections repeat the grammar at a smaller scale: a heading of one short sentence on the left half and its proof on the right half (a photograph, a figure with its unit, a short list, an interface fragment), top-aligned with it, so the page reads as a series of sentences with evidence. Every sentence starts on the same left edge, and no picture sits between words or between lines. 160px or more between sections.",
+  "composition": "First screen: the sentence, four to seven words on two lines at the dealt display step, flush to the left margin across columns 1–7, with one supporting sentence and the action under it on the same edge. The picture it names fills columns 8–12 at the full height of the screen and ends on the right margin; or, when the sentence takes the full width, the picture runs across the width directly under it, cropped by the bottom of the screen. Later sections repeat the grammar at a smaller scale: a heading of one short sentence on the left half and its proof on the right half (a photograph, a figure with its unit, a short list, an interface fragment), top-aligned with it, so the page reads as a series of sentences with evidence. Every sentence starts on the same left edge, and no picture sits between words or between lines. The space between sections as section 0 deals it.",
   "typography": "Display weight with real presence (medium to bold), tracking -0.03 to -0.05em, leading 0.95–1.0 so two lines sit close. The sentences are real sentences: sentence case, with a full stop on every one or on none.",
   "typeClasses": [
    "grotesk-tight",
@@ -301,8 +301,8 @@
    "editorial"
   ],
   "needs": [],
-  "idea": "Find the printed or physical artefact that already exists in the subject's world and build the page as that thing. A wedding site is the invitation card. A restaurant is its menu. A conference is the ticket; a record is its sleeve; a shop is the receipt or the swing tag; an archive is a stack of tabbed folders; a course is the syllabus sheet. The artefact supplies everything a template would otherwise invent: its proportions, its typographic manners, its way of grouping information. Visitors recognise the object instantly, which is why these pages feel specific.",
-  "composition": "The first screen shows the artefact as a single filled panel (paper colour on a contrasting ground) centred or offset, with believable proportions: a card at 5:7, a ticket at about 2.2:1 with a notch cut by `clip-path`, a menu as a tall sheet. All primary content lives on it, set the way that object is set: centred and symmetrical for an invitation, in tidy aligned columns for a menu or ticket. The ground behind is a flat colour or one full-bleed photograph. As the page continues, each section is another piece of the same stationery: a second card, a tear-off stub, a folded panel, always filled shapes with real edges (straight, notched, scalloped, perforated by a dotted `border` of round dots at 4px or more), never outlined boxes. The footer is the back of the object.",
+  "idea": "Find the printed or physical artefact that already exists in the subject's world and build the page as that thing. A wedding site is the invitation card. A restaurant is its menu. A conference is the ticket; a record is its sleeve; a shop is the receipt or the swing tag; an archive is its catalogue card; a course is the syllabus sheet. The artefact supplies everything a template would otherwise invent: its proportions, its typographic manners, its way of grouping information. Visitors recognise the object instantly, which is why these pages feel specific.",
+  "composition": "The first screen sets the artefact's proportions and manners on the page's own ground, not a panel on a field: a menu's tall column and tidy price alignment, a ticket's wide format with its facts in aligned cells, an invitation's centred symmetry. All primary content is set the way that object is set; the ground is a flat colour, with one photograph beside the words where the subject has one. As the page continues, each group that belongs together (the courses, the ticket's details, the dates) stands in the card style section 0 deals, with straight edges: never scallops, notches, perforations or an outlined box.",
   "typography": "Take the manners of the artefact: a bookish serif with small caps avoided, or a blunt condensed face for tickets and posters. Sizes stay within what print would use relative to the panel; the name is large on the panel, details are small and exact.",
   "typeClasses": [
    "serif-text",
@@ -317,15 +317,15 @@
    "earth",
    "light-neutral"
   ],
-  "imagery": "Optional. One photograph behind the object, or small photographs placed on it like tipped-in plates. The object itself is the image.",
+  "imagery": "Optional. One photograph beside the words, or small photographs set like tipped-in plates. The artefact's manners are the image.",
   "sectionTags": [
    "object-led",
    "type-led",
    "colour-field"
   ],
   "motion": "curtain-footer",
-  "richness": "Recognition. The shaped edges, the print-like alignment and the limited inks make a familiar object out of plain HTML.",
-  "pitfalls": "Choose an artefact that truly belongs to the subject, or it becomes costume. Shape the edges with fills and `clip-path`; an outlined rectangle with a thin border is not an object. Keep text sizes readable on a phone, where the object becomes full width with its shaped edge kept at top and bottom.",
+  "richness": "Recognition. The print-like proportions and alignment and the limited inks make a familiar object out of plain HTML.",
+  "pitfalls": "Choose an artefact that truly belongs to the subject, or it becomes costume. The object shows in its proportions, its type manners and its grouping, never in drawn edges: no notches, scallops, perforations or dotted borders, and no outlined rectangle. Keep text sizes readable on a phone.",
   "seenIn": [
    "opl-sarah-matt-wedding",
    "aww-mosbys-files",
@@ -335,7 +335,14 @@
    "opl-archiv"
   ],
   "allow": [],
-  "weight": 0.3
+  "weight": 0.3,
+  "heroes": [
+   "object-on-plain-ground",
+   "menu-column-sticky-photo",
+   "two-photographs-and-a-line",
+   "anchored-text-specimen-half",
+   "photograph-with-a-line"
+  ]
  },
  {
   "id": "one-motif",
@@ -459,7 +466,7 @@
   ],
   "needs": [],
   "idea": "Radical understatement. Where every competitor shouts, this page almost whispers: a headline barely larger than body text, a narrow column, small exact demonstrations, and a great deal of untouched space. The restraint is the claim. It says the thing is simple, finished and sure of itself. This only works when it is carried through completely; one loud element breaks it. In the study, a tool for simple lists sold itself with a 27px headline and 12–14px copy and was one of the most confident pages in the set.",
-  "composition": "A single column 440–560px wide, placed left of centre (starting at about 22% of the viewport width) or dead centre, running the whole page. The headline is the one large thing on the first screen: two lines at display size (5–7vw), medium weight, starting on the column's left edge and allowed to run wider than the column. The supporting paragraph follows at body size (17–19px) in the full ink. One small primary button and one text link. Below, each point is a short paragraph followed by a compact demonstration or image no wider than the column. Sections are separated only by space (96–140px). Nothing spans the full width until the footer, which is a single quiet line. The first screen is mostly empty and that emptiness is composed: the column's top edge sits at about 30% of the viewport height.",
+  "composition": "A single column 440–560px wide, placed left of centre (starting at about 22% of the viewport width) or dead centre, running the whole page. The headline is the one large thing on the first screen: two lines at display size (5–7vw), medium weight, starting on the column's left edge and allowed to run wider than the column. The supporting paragraph follows at body size (17–19px) in the full ink. One small primary button and one text link. Below, each point is a short paragraph followed by a compact demonstration or image no wider than the column. Sections are separated only by space (the gap section 0 deals). Nothing spans the full width until the footer, the one full-width section, built as section 0 deals it. The first screen is mostly empty and that emptiness is composed: the column's top edge sits at about 30% of the viewport height.",
   "typography": "One family, two weights. A display size for the headline (5–7vw), one heading size for section titles (about 32–40px), body at 17–19px, a small size for captions (14–15px). Leading 1.5 for text. Letter-spacing near zero. The typeface must be handsome at small sizes.",
   "typeClasses": [
    "grotesk-light",
@@ -568,7 +575,7 @@
    "product-photo"
   ],
   "idea": "Present what is on offer the way a field guide presents birds: each item alone on the same plain field, same scale, same angle, named plainly. A bakery's pastries become specimens and the specimens become the menu. A furniture maker's chairs each stand alone in the same pale frame. The format flatters ordinary objects because it treats each as worth looking at, and it replaces both the feature grid and the product-card grid with something that has a point of view.",
-  "composition": "Hero: a left-aligned statement of what this is (5–7vw, upper-left) beside or above a tight cluster of four to seven specimen tiles of different sizes arranged as a loose mosaic that runs off the right edge. Each tile is a square or 4:5 rectangle in one fill, the page's surface one step off the ground, with one photograph centred on it, no border, 8–12px gaps. The main section is the catalogue itself: a grid of tiles in which each item has its name and one fact set beneath the tile in the text face, aligned left to the tile edge. Every tile takes that same fill: the items carry the colour, never the tiles. One tile in every six or seven is double size. Supporting sections (about, how to order) are plain text on the ground colour, kept short.",
+  "composition": "Hero: a left-aligned statement of what this is (5–7vw, upper-left) beside or above a tight cluster of four to seven specimen tiles of different sizes arranged as a loose mosaic that ends on the right margin. Each tile is a square or 4:5 rectangle in one fill, the page's surface one step off the ground, with one photograph centred on it, no border, 8–12px gaps. The main section is the catalogue itself: a grid of tiles in which each item has its name and one fact set beneath the tile in the text face, aligned left to the tile edge. Every tile takes that same fill: the items carry the colour, never the tiles. One tile in every six or seven is double size. Supporting sections (about, how to order) are plain text on the ground colour, kept short.",
   "typography": "Friendly and plain. Item names at 18–22px in medium weight, facts beneath in the soft ink. One big statement in the hero; no other display type.",
   "typeClasses": [
    "grotesk-tight",
@@ -691,7 +698,7 @@
    "dark-neutral",
    "light-neutral"
   ],
-  "imagery": "Many images: at least 24 frames to make a sheet. They can be project photographs from the dealt set cropped to mixed ratios, or page captures of the work. Square corners, no captions on the frames.",
+  "imagery": "Many images: at least 24 frames to make a sheet. They are the client's own work (stills, title cards, page captures), never stock photographs standing in for it; with fewer pieces, a smaller sheet of the pieces there are. Square corners, no captions on the frames.",
   "sectionTags": [
    "dense",
    "photo-led",
@@ -941,7 +948,7 @@
    "editorial"
   ],
   "needs": [],
-  "idea": "A calm page where the pictures are placed like prints on a gallery wall: each at its own size and position, with text set small and light between them. Nothing lines up in the obvious way, yet everything sits on a grid you can feel. The unevenness is what makes it read as art-directed by a person: a small portrait far left, a wide landscape running off the right edge, a square that overlaps the next section. It lets photographs lead without ever becoming a slideshow.",
+  "idea": "A calm page where the pictures are placed like prints on a gallery wall: each at its own size and position, with text set small and light between them. Nothing lines up in the obvious way, yet everything sits on a grid you can feel. The unevenness is what makes it read as art-directed by a person: a small portrait far left, a wide landscape ending on the right margin, a square set lower than both. It lets photographs lead without ever becoming a slideshow.",
   "composition": "A 12-column grid with wide margins (5–7vw). The hero is a single line of large light type (6–9vw) across the top third, and below it one photograph placed off-centre (columns 6–12, 16:10), its top edge overlapping the baseline zone of the headline by a few pixels of deliberate tension. Each following section places two or three photographs with different spans and vertical offsets: for example a 3:4 portrait in columns 2–5 starting 120px lower than a 16:10 landscape in columns 7–12; then a single small 1:1 in columns 9–11 beside a paragraph in columns 2–6. Paragraphs are short (max 40ch) and sit in the gaps. No two consecutive sections use the same arrangement. Vertical spacing is large and irregular on purpose (120–260px).",
   "typography": "A light or regular weight at large size for the few headings; small, quiet text. Serif or a slender sans. Everything left-aligned to grid lines.",
   "typeClasses": [
@@ -1065,7 +1072,7 @@
    "light-neutral",
    "dark-neutral"
   ],
-  "imagery": "The first screen has no picture. Further down, real pictures of the subject's world (found with scripts/assets.mjs) arrive large and few: a full-bleed photograph between two type sections, a looping clip in one band, an archival image beside a list. Do not add icons, shapes, patterns or abstract graphics to compensate for anything.",
+  "imagery": "The first screen has no picture. Further down, real pictures of the subject's world (found with scripts/assets.mjs) arrive large and few: a full-bleed photograph between two type sections, a looping clip in one band, a sharp modern photograph beside a list. Do not add icons, shapes, patterns or abstract graphics to compensate for anything.",
   "sectionTags": [
    "type-led",
    "poster",

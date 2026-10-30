@@ -217,6 +217,11 @@
   perspective: var(--drum-persp, 1350px);
   perspective-origin: var(--drum-ox, 50%) var(--drum-y, 50%);
 }
+/* the names' layer never lies over the pictures (a page checker looking for what is on top would find the
+   names' empty box there, not the picture): beside the pictures it ends where the picture drum starts, and
+   over the phone's window the window is drawn on top (it is clipped to the window, so it never covers a name) */
+.scene.is-live[data-scene="scroll-turned-drum"][data-layout="reel"] .drum-view { right: auto; width: calc(var(--drum-names-w, 46vw) + 2 * var(--drum-gutter)); }
+.scene.is-live[data-scene="scroll-turned-drum"][data-layout="stack"] .drum-pics { z-index: 1; }
 
 /* the drum sits back by its radius so the front face lands on z = 0 and renders 1:1, crisp. Its centre is
    the front line (--drum-y). Nothing on .drum may flatten it: no opacity, filter, clip-path, mask or overflow. */

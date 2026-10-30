@@ -392,7 +392,9 @@
   "seenIn": [
    "opl-dabbit",
    "aww-sstr-friction-reduction"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "it marks each point with a drawn shape in a colour per column and crops its photograph by the left edge: no drawn shapes, no colour sprawl, nothing into one screen edge"
  },
  {
   "id": "showcase-two-giant-words-compared",
@@ -433,7 +435,7 @@
   ],
   "needs": [],
   "blueprint": "Two panels side by side, each 50vw wide and 92svh tall, in two different flat tones from the palette, meeting on a clean vertical edge with no gap. Each panel is dominated by one cut-out object photograph scaled to 130–150% of the panel's width and positioned so the panel's top edge crops it: the reader sees the lower two-thirds of the object, very close. On light panels use mix-blend-mode: multiply to lose a white studio background. Along the bottom of each panel, 28px in from the edges, one row: the name at 20px medium and a price or fact at 17px on the left; on the right, two small rectangular actions, one filled with ink and one with paper. Nothing sits in the middle of a panel. The heading, two to four words at 32–40px, is set at the top-left of the first panel only, in the empty corner beside the object.",
-  "mobile": "Panels stack, each 78svh tall, the object scaled to 150% of the width and cut by the top and right edges. The bottom row becomes two lines: name and fact, then the two actions side by side at full width. The heading sits top-left on the first panel at 26px.",
+  "mobile": "Panels stack, each 78svh tall, the object scaled to 150% of the width, centred, and cut by the panel's top, left and right edges alike. The bottom row becomes two lines: name and fact, then the two actions side by side at full width. The heading sits top-left on the first panel at 26px.",
   "seenIn": [
    "aww-noho"
   ]
@@ -1609,7 +1611,9 @@
   "needs": [],
   "blueprint": "The price is printed on a ticket. On a flat contrasting ground, one filled panel about 64vw wide with 2.3:1 proportions sits centred and straight, built as a two-part grid (7fr 3fr). A half-round notch 28px across is bitten out of the top and bottom edges where the two parts meet (two absolutely positioned circles in the ground colour), and a column of round dots 6px across in the ground colour runs between the notches as the perforation. The main part holds, top-left with 40px padding, what is being bought in two to four words at about 4vw, and along its bottom three or four short lines at 17px (dates, what is included, terms) in two tidy columns. The stub holds the price at about 6vw, centred, and under it the action as a solid bar the full width of the stub, 56px tall.",
   "mobile": "The ticket turns upright: full width less 20px margins, main part on top, stub beneath, the notches now on the left and right edges and the dot perforation running across. Title at 9vw, price at 16vw, the action bar full width inside the stub.",
-  "seenIn": []
+  "seenIn": [],
+  "banned": true,
+  "bannedWhy": "A ticket with notches bitten out and a perforation of dots: a box cut to a shape, which framed-elements fails (r9-p43, round 11)."
  },
  {
   "id": "pricing-itemised-receipt",
@@ -1930,8 +1934,8 @@
    "borrowed-category"
   ],
   "needs": [],
-  "blueprint": "The thing shown in the hero comes back once, from another angle, to close the page. On one flat field 90svh tall, the object's photograph occupies columns 1–8, scaled to about 130% of that area and anchored so the section's bottom and left edges crop it (`overflow: hidden` on the section; on light fields `mix-blend-mode: multiply` removes a white studio background). The text sits small in columns 10–12, vertically centred: a closing line of three to five words at 32–40px, one sentence at 17px, the price or key fact on its own line at 22px, and one rectangular button. Nothing overlaps the object's focal area. Where the page's subject is a shape rather than a photograph, the page's motif takes the object's place at the same scale as a flat filled shape. The closing line is the only heading.",
-  "mobile": "The text block comes first: closing line at 28px, sentence, fact, full-width button. The object follows at 130% of the screen width, shifted so the right and bottom edges crop it, filling about 55svh on the same flat field.",
+  "blueprint": "The thing shown in the hero comes back once, from another angle, to close the page. On one flat field 90svh tall, the object's photograph occupies columns 1–8, scaled to about 130% of that area and anchored so the section's bottom edge crops it while its left side keeps the page margin (`overflow: hidden` on the section; on light fields `mix-blend-mode: multiply` removes a white studio background). The text sits small in columns 10–12, vertically centred: a closing line of three to five words at 32–40px, one sentence at 17px, the price or key fact on its own line at 22px, and one rectangular button. Nothing overlaps the object's focal area. Where the page has no photograph of an object, the closing line takes the field alone at the display step. The closing line is the only heading.",
+  "mobile": "The text block comes first: closing line at 28px, sentence, fact, full-width button. The object follows at the full content width, centred, cut only by the section's bottom edge, filling about 55svh on the same flat field.",
   "seenIn": [
    "opl-dabbit",
    "opl-monte"
@@ -1954,8 +1958,8 @@
    "dark-room"
   ],
   "needs": [],
-  "blueprint": "The page ends on an almost empty screen. On the page ground, with no band and no panel, one sentence of eight to fourteen words is set at 18–22px in the regular weight, in the full ink, no wider than 34ch, on the same left edge as the page's text column (or centred only if the whole page is centred). 24px beneath it sits one small filled button, about 40px tall with 18px side padding, and optionally one text link beside it on the same baseline. That is all. Above the sentence leave at least 30svh of empty ground and below it at least 20svh before the footer line, so the emptiness reads as decided. The sentence is written as something a person would say, and it names the action plainly. No headline-sized type appears anywhere in this section.",
-  "mobile": "Identical in spirit: the sentence at 18px with 20px margins, the button beneath at its natural width (not full width), 44px tall. Keep 20svh of empty ground above the sentence and 14svh below the button, before the footer line.",
+  "blueprint": "The page ends on an almost empty screen. On the page ground, with no band and no panel, one sentence of eight to fourteen words is set at 18–22px in the regular weight, in the full ink, no wider than 34ch, on the same left edge as the page's text column (or centred only if the whole page is centred). 24px beneath it sits one small filled button, about 40px tall with 18px side padding, and optionally one text link beside it on the same baseline. That is all. Above the sentence leave at least 30svh of empty ground and below it at least 20svh before the footer, so the emptiness reads as decided. The sentence is written as something a person would say, and it names the action plainly. No headline-sized type appears anywhere in this section.",
+  "mobile": "Identical in spirit: the sentence at 18px with 20px margins, the button beneath at its natural width (not full width), 44px tall. Keep 20svh of empty ground above the sentence and 14svh below the button, before the footer.",
   "seenIn": [
    "opl-compile",
    "opl-rows"
@@ -2107,7 +2111,9 @@
    "opl-eagles-nest",
    "aww-white-desert",
    "opl-lovably"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "it sets the wordmark across the whole width: no giant name in the footer; section 0 deals the footer"
  },
  {
   "id": "footer-wordmark-first-places-below",
@@ -2218,7 +2224,9 @@
    "opl-woblo",
    "aww-2xa-studio",
    "opl-uglycash"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "it builds the name from drawn blocks: no drawn shapes and no giant name; section 0 deals the footer"
  },
  {
   "id": "footer-single-quiet-line",
@@ -2245,7 +2253,9 @@
    "opl-rows",
    "opl-compile",
    "opl-tiny-computer-co"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "the footer is a designed section, never a single line (the owner, October 2026); section 0 deals the footer"
  },
  {
   "id": "footer-contact-set-large",
@@ -2303,7 +2313,9 @@
    "opl-britt-taylor",
    "opl-sarah-matt-wedding",
    "opl-transport"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "it cuts scalloped edges and frames a stamp: no drawn shapes; section 0 deals the footer"
  },
  {
   "id": "footer-row-of-tiles",
@@ -2776,8 +2788,8 @@
    "editorial-report"
   ],
   "needs": [],
-  "blueprint": "Top: a heading of two to four words at clamp(40px, 4vw, 60px) on the left margin, then 24px below it a three-line lead paragraph at 21–22px across columns 1–6. 72px lower, two tiles sit side by side with a 16px gap. The left tile spans columns 1–8: a landscape photograph at 16:10 with square corners or a 10px radius. A short paragraph of up to 35 words at 16px is set in a solid paper-colour block 320px wide with 20px padding, placed over the photograph's top-right corner and flush with both edges. The right tile spans columns 9–12 and is a flat palette colour, 60% of the photograph's height: it holds the client's own map or plan of the place, photographed or supplied as a file and marked data-plan, or without one the place's name at 28px and its coordinates under it, in type; never an outline drawn for the page. Under the colour tile, four label and value pairs at 14px in a two-by-two grid: altitude, distance, season, local time.",
-  "mobile": "Heading at 9vw, lead at 18px. The photograph goes full width at 4:3 and its overlaid paragraph moves beneath it as ordinary text. The colour tile follows at full width and 3:2, and the four label and value pairs sit under it in two columns.",
+  "blueprint": "Top: a heading of two to four words at clamp(40px, 4vw, 60px) on the left margin, then 24px below it a three-line lead paragraph at 21–22px across columns 1–6. 72px lower, two tiles sit side by side with a 16px gap. The left tile spans columns 1–8: a landscape photograph at 16:10 with square corners or a 10px radius. A short paragraph of up to 35 words at 16px stands 20px under the photograph on the ground, across its first five columns (never in a block laid over the picture: a box on a photograph fails `framed-elements`). The right tile spans columns 9–12 and is a flat palette colour, 60% of the photograph's height: it holds the client's own map or plan of the place, photographed or supplied as a file and marked data-plan, or without one the place's name at 28px and its coordinates under it, in type; never an outline drawn for the page. Under the colour tile, four label and value pairs at 14px in a two-by-two grid: altitude, distance, season, local time.",
+  "mobile": "Heading at 9vw, lead at 18px. The photograph goes full width at 4:3 and its paragraph stays beneath it. The colour tile follows at full width and 3:2, and the four label and value pairs sit under it in two columns.",
   "seenIn": [
    "opl-eagles-nest",
    "opl-le-petit-bleu"
@@ -2849,7 +2861,7 @@
    "editorial-report"
   ],
   "needs": [],
-  "blueprint": "The left 13% of the width is a `position: sticky` column holding the section name at 28px and, beneath it, two text filters at 15px, the active one in full ink. To its right each project is one horizontal strip of four to six images, all exactly 190px tall at their natural widths (`height: 190px; width: auto`), 8px apart, the last one cut off by the right viewport edge with `overflow: hidden`. Under each strip, one line at 13px spread across the strip's width: project name flush left, a three-word descriptor at the centre, the year flush right. 45px separate one strip from the next, so four projects fit on a 900px screen and ten make a page. Square corners; no captions on individual frames. Hovering a strip dims the other strips to 40% opacity. There is no heading beyond the section name in the rail.",
+  "blueprint": "The left 13% of the width is a `position: sticky` column holding the section name at 28px and, beneath it, two text filters at 15px, the active one in full ink. To its right each project is one horizontal strip of four to six images, all exactly 190px tall at their natural widths (`height: 190px; width: auto`), 8px apart, the strip ending on the right margin, its last frame cropped inside the strip's own box with `overflow: hidden`. Under each strip, one line at 13px spread across the strip's width: project name flush left, a three-word descriptor at the centre, the year flush right. 45px separate one strip from the next, so four projects fit on a 900px screen and ten make a page. Square corners; no captions on individual frames. Hovering a strip dims the other strips to 40% opacity. There is no heading beyond the section name in the rail.",
   "mobile": "The rail becomes a single line above the list: section name left, filters right. Strips are 120px tall and each scrolls sideways on its own with `overflow-x: auto` and scroll snapping. The caption line keeps the name left and the year right; the descriptor is dropped.",
   "seenIn": [
    "aww-boc-studio",
@@ -3046,8 +3058,8 @@
    "editorial-report"
   ],
   "needs": [],
-  "blueprint": "One project per block, three or four blocks, 140px apart. In each, one oversized visual fills columns 1–7 and bleeds off the left viewport edge: an object photograph scaled to 120% of its box and cropped by `overflow: hidden` on the section, 80svh tall, sitting on the page ground (use `mix-blend-mode: multiply` on a light ground so a white studio background disappears). The right third, columns 9–12, holds a small cluster bottom-aligned with the visual: a landscape image at 16:10 with 6px corners, then 28px below it a two-column row with the project title at clamp(28px, 3vw, 44px) on two lines at the left and a five-line description at 13–14px at the right. Column 8 stays empty. Blocks do not mirror; the second visual is 60svh tall and the third 90svh, so the rhythm changes while the structure holds. No section heading: each title leads its block.",
-  "mobile": "The visual comes first at 110% of the width, bleeding off the left edge in a 4:5 crop. Beneath it the title at 8vw, then the description at 15px, then the small landscape image at 70% width against the right margin. 88px between blocks.",
+  "blueprint": "One project per block, three or four blocks, 140px apart. In each, one oversized visual fills columns 1–7 from the left margin: an object photograph scaled to 120% of its box and cropped by `overflow: hidden` on that box, 80svh tall, sitting on the page ground (use `mix-blend-mode: multiply` on a light ground so a white studio background disappears). The right third, columns 9–12, holds a small cluster bottom-aligned with the visual: a landscape image at 16:10 with 6px corners, then 28px below it a two-column row with the project title at clamp(28px, 3vw, 44px) on two lines at the left and a five-line description at 13–14px at the right. Column 8 stays empty. Blocks do not mirror; the second visual is 60svh tall and the third 90svh, so the rhythm changes while the structure holds. No section heading: each title leads its block.",
+  "mobile": "The visual comes first at the full content width in a 4:5 crop. Beneath it the title at 8vw, then the description at 15px, then the small landscape image at 70% width against the right margin. 88px between blocks.",
   "seenIn": [
    "opl-artem-taradash",
    "aww-normal-is-boring"
@@ -3522,7 +3534,7 @@
    "name-as-monument"
   ],
   "needs": [],
-  "blueprint": "A heading of four to six words on two lines, flush to the left margin across the full width. 64–96px below, two parts, top-aligned: in columns 1–5, one 4:5 photograph of what the table lists (the room the rates are for, the office, the hall), running off the left edge; in columns 6–12, the table. Without such a photograph the table takes the full width instead, its three parts spread across columns 1–12, so no row is empty on its left. Each row is a three-part line at the body size with 26px between rows: the kind or day at the left of the measure, the place or service at 40%, and the address, time or price right-aligned, with a small arrow where the row links. Rows are separated by space only; every fourth row has 44px above it to form groups. The heading names the table: no label beside it. Holds 5–14 rows.",
+  "blueprint": "A heading of four to six words on two lines, flush to the left margin across the full width. 64–96px below, two parts, top-aligned: in columns 1–5, one 4:5 photograph of what the table lists (the room the rates are for, the office, the hall), from the left margin; in columns 6–12, the table. Without such a photograph the table takes the full width instead, its three parts spread across columns 1–12, so no row is empty on its left. Each row is a three-part line at the body size with 26px between rows: the kind or day at the left of the measure, the place or service at 40%, and the address, time or price right-aligned, with a small arrow where the row links. Rows are separated by space only; every fourth row has 44px above it to form groups. The heading names the table: no label beside it. Holds 5–14 rows.",
   "mobile": "Heading at the phone display size, flush left. The photograph first at full width (4:5), then the table at full width: each row stacks the kind above the place, with the value right-aligned on the first line.",
   "seenIn": [
    "aww-kononenko-architectural-bureau",
@@ -3622,7 +3634,9 @@
   "seenIn": [
    "opl-the-sapphic-bar-index",
    "opl-rafael-derolez-2026"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "A coupon cut to a shape by clip-path or a mask, with a dotted perforation: framed-elements fails it (r9-p43, round 11)."
  },
  {
   "id": "contact-single-field",
@@ -3653,8 +3667,8 @@
  {
   "id": "contact-visit-card-on-photograph",
   "role": "contact",
-  "name": "Visit card on a photograph",
-  "shape": "full-bleed",
+  "name": "Visit card beside a photograph",
+  "shape": "split",
   "tags": [
    "photo-led",
    "object-led"
@@ -3667,8 +3681,8 @@
    "hero-object"
   ],
   "needs": [],
-  "blueprint": "A full-bleed photograph of the place, 100vw by 100svh, carries one solid card and nothing else. The card is a filled panel in the paper colour, fully opaque, 380px wide with 8px corners and 32px padding, placed in the upper-right corner 60px from the top and right edges (or the upper-left: pick the corner where the photograph is calmest). It holds, top to bottom: a two- or three-word title at 28px in a light weight; the address on two lines at 16px; the opening hours as three rows with days at the left and times right-aligned in tabular figures; the phone number; then, flush with the card's bottom edge and spanning its width, a solid booking button 52px tall. The card may be `position: sticky; top: 60px` inside a taller section so it holds while the photograph scrolls beneath it. The photograph's focal point must stay clear of the card. No heading outside the card.",
-  "mobile": "The photograph is 100vw by 70svh. The card leaves the corner: it spans the width with 16px margins and overlaps the photograph's bottom edge by 80px, so image and card interlock. The booking button is full width, 56px tall, at the card's bottom.",
+  "blueprint": "A photograph of the place on columns 1–7, inside the page margins, as tall as the section (about 80svh), with the dealt corner and `object-fit: cover`, its focal point in the middle. On columns 8–12, on the page ground and top-aligned with the photograph, one filled card in the card style section 0 deals: a two- or three-word title at the h3 step; the street and the district on two lines at body size; the opening hours as three rows with the days at the left and the times right-aligned in tabular figures; the email (a phone only where the brief gives one); then a Directions link and, at the card's foot, the booking button where the page books. Nothing is laid over the photograph, and there is no heading outside the card.",
+  "mobile": "The photograph comes first at the full content width at 4:5, inside the page margins; the card follows 24px under it at full width, its button full width at its foot, 52px tall.",
   "seenIn": [
    "opl-the-deep-end",
    "opl-madie"
@@ -3719,8 +3733,8 @@
    "product-performs"
   ],
   "needs": [],
-  "blueprint": "A flat saturated field, full-bleed and 92svh tall, holds one working control from the product: the toggle, slider, segmented switch or record button the whole product turns on. Build it at true proportions with every dimension in em, mark its root data-ui, then raise that root's font-size until the control stands about 46vh tall. Anchor it right of centre so the section's right and bottom edges crop about a fifth of it (overflow: hidden on the section). It keeps its real label and value, now at poster size, and it works: operating it swaps the field between two palette colours and changes one word of the heading. The heading, two to four words at clamp(28px, 2.6vw, 40px), sits top-left on the page margin with one sentence at 17px beneath it. The lower-left third of the field stays empty.",
-  "mobile": "The field is 86svh. Heading and sentence sit top-left at 26px and 16px. The control is enlarged to about 130vw wide and anchored bottom-left, so the right edge crops its far end while its thumb or active segment stays within reach. It still works and still swaps the field colour.",
+  "blueprint": "A flat saturated field, full-bleed and 92svh tall, holds one working control from the product: the toggle, slider, segmented switch or record button the whole product turns on. Build it at true proportions with every dimension in em, mark its root data-ui, then raise that root's font-size until the control stands about 46vh tall. Anchor it right of centre, its right side on the right margin, so the section's bottom edge crops about a fifth of it (overflow: hidden on the section). It keeps its real label and value, now at poster size, and it works: operating it swaps the field between two palette colours and changes one word of the heading. The heading, two to four words at clamp(28px, 2.6vw, 40px), sits top-left on the page margin with one sentence at 17px beneath it. The lower-left third of the field stays empty.",
+  "mobile": "The field is 86svh. Heading and sentence sit top-left at 26px and 16px. The control is enlarged to the full content width between the page margins and anchored at the bottom, so the section's lower edge crops its foot while its thumb or active segment stays within reach. It still works and still swaps the field colour.",
   "seenIn": [
    "opl-textmode-overlay",
    "opl-uni"
@@ -3744,7 +3758,7 @@
   ],
   "needs": [],
   "blueprint": "For products that make documents: invoices, reports, emails, statements. Columns 1–5 list the names of three to five outputs, one per line, at clamp(36px, 4vw, 64px), leading 1.1, each a `<button>`; the selected name is in full ink, the rest in the soft ink. There is no other heading. Columns 7–12 are a stage in a flat tone one step from the ground, 88svh tall, and on it lies the selected output as an object: a paper-white sheet 560px wide, built in HTML at true size, root marked data-ui, with a real sender, real line items, sums that add up and a date. The sheet starts 72px below the stage's top and runs past its bottom edge, which crops it. Selecting a name swaps the sheet with a 200ms crossfade; an email is narrower (440px), a receipt narrower still (300px), all left-aligned 64px into the stage.",
-  "mobile": "Names become one sideways-scrolling row at 22px with scroll-snap, the selected one in full ink. Beneath, the stage fills the width and is 70svh tall; the sheet keeps its true size, anchored top-left with a 16px inset and cropped by the stage's right and bottom edges. Tapping a name swaps it.",
+  "mobile": "Names become one sideways-scrolling row at 22px with scroll-snap, the selected one in full ink. Beneath, the stage fills the content width inside the page margins and is 70svh tall; the sheet keeps its true size, anchored top-left with a 16px inset, and the stage crops its right and bottom edges inside the margins. Tapping a name swaps it.",
   "seenIn": [
    "aww-cominvi"
   ]
@@ -4285,7 +4299,9 @@
   "seenIn": [
    "aww-lpas",
    "aww-white-desert"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Cards travelling over a darkened full-bleed photograph, each in its own tone: cards laid on a picture and colour sprawl (round 11)."
  },
  {
   "id": "list-object-rides-the-schedule",
@@ -4392,8 +4408,8 @@
    "uneven-photographs"
   ],
   "needs": [],
-  "blueprint": "A white or pale ground. A photograph taller than it is wide, 720px wide (columns 7–12), sits flush against the right viewport edge with its top at 46% of the section's first screen and runs below the fold. The heading starts on the 32px left margin across columns 1–8: two lines of light-weight serif capitals at clamp(64px, 5.6vw, 88px), leading 1.04, the first line starting 34% down the screen and the second placed so that its right half runs onto the photograph's upper-left corner. Choose a picture whose upper-left quarter is pale enough for the ink, or set the second line twice, in the ink and in the paper colour, each copy clipped to its side of the photograph's left edge. Under the heading on columns 1–5, one paragraph of up to 25 words at 22px, leading 1.4. At the bottom-left a second, smaller photograph of 360×400px enters, cropped by the screen's lower edge, and on the next screen becomes the left half of a staggered pair with the large one. Nothing else is on the screen.",
-  "mobile": "The heading sits at 10vw on two lines on the 20px margin. The photograph becomes 75% of the width, flush right, and starts under the heading's first line so the second line crosses its top-left corner. The paragraph follows at 17px, then the small photograph at 50% of the width on the left margin.",
+  "blueprint": "A white or pale ground. A photograph taller than it is wide, 720px wide (columns 7–12), ends on the right page margin with its top at 46% of the section's first screen and runs below the fold. The heading starts on the 32px left margin across columns 1–8: two lines of light-weight serif capitals at clamp(64px, 5.6vw, 88px), leading 1.04, the first line starting 34% down the screen and the second placed so that its right half runs onto the photograph's upper-left corner. Choose a picture whose upper-left quarter is pale enough for the ink, or set the second line twice, in the ink and in the paper colour, each copy clipped to its side of the photograph's left edge. Under the heading on columns 1–5, one paragraph of up to 25 words at 22px, leading 1.4. At the bottom-left a second, smaller photograph of 360×400px enters, cropped by the screen's lower edge, and on the next screen becomes the left half of a staggered pair with the large one. Nothing else is on the screen.",
+  "mobile": "The heading sits at 10vw on two lines on the 20px margin. The photograph becomes 75% of the content width, ending on the right margin, and starts under the heading's first line so the second line crosses its top-left corner. The paragraph follows at 17px, then the small photograph at 50% of the width on the left margin.",
   "seenIn": [
    "aww-sobha-privy-collection"
   ]
@@ -4439,7 +4455,7 @@
    "sentence-as-layout"
   ],
   "needs": [],
-  "blueprint": "A sticky stage of 100svh split 38/62. The right 62%, from x 560 to the right viewport edge, is one photograph the full height of the stage, bleeding off the right, top and bottom edges, square corners: a staged picture of the current project in use, in a real place. The left column, from the 20px margin to x 520, holds the heading at the top, two lines at clamp(80px, 8.2vw, 120px), leading 0.95, 40px under the navigation; then empty ground; then, anchored to the bottom with a 32px margin, the index: three to six rows 44px tall, each with the project's name at 28px on the left and two or three disciplines at 16px right-aligned in the soft ink. The current row is in the full ink and the others at 40% opacity; rows are told apart by space only. Each project gets one viewport of scroll: as it arrives, its photograph wipes in from the bottom edge (`clip-path: inset(100% 0 0 0)` to `inset(0)` over 900ms) and the current row moves down the list. The empty middle of the left column is closed by the heading above it and the index below.",
+  "blueprint": "A sticky stage of 100svh split 38/62. The right part, from x 560 to the right page margin, is one photograph the full height of the stage, cut by its top and bottom, with the dealt corner: a staged picture of the current project in use, in a real place. The left column, from the 20px margin to x 520, holds the heading at the top, two lines at clamp(80px, 8.2vw, 120px), leading 0.95, 40px under the navigation; then empty ground; then, anchored to the bottom with a 32px margin, the index: three to six rows 44px tall, each with the project's name at 28px on the left and two or three disciplines at 16px right-aligned in the soft ink. The current row is in the full ink and the others in the soft ink; rows are told apart by space only. Each project gets one viewport of scroll: as it arrives, its photograph wipes in from the bottom edge (`clip-path: inset(100% 0 0 0)` to `inset(0)` over 900ms) and the current row moves down the list. The empty middle of the left column is closed by the heading above it and the index below.",
   "mobile": "The heading sits at the top at 14vw on two lines, then the photograph at full width at 4:5, sticky under the heading while the index rows below it change the picture; or let each project simply stack as photograph and row.",
   "seenIn": [
    "aww-neutomni"

@@ -24,11 +24,16 @@
      --seg-flat-size    size of the heading when it is set straight instead of on the curve; the
                         statement under it is then set smaller than it, never larger
      --seg-title-size   size of the chapter title
-     --seg-inset-w      width of the inset picture
-     --seg-inset-ratio  its shape, default 2 / 1 (phone 4 / 3, so the end frame holds a picture, not a strip)
+     --seg-inset-w      width of the inset picture, default clamp(260px, min(64vw, 104svh), 1000px), so the
+                        end frame closes on a picture you can see (it was 36vw, a small stamp)
+     --seg-inset-ratio  its shape, default 2 / 1 (portrait tablet 4 / 3 at min(84vw, 60svh); phone 1 / 1 at
+                        84vw, so the end frame holds a picture, not a strip)
+     --seg-lede-ground  the colour of the lede's strip when the script cannot read the photograph: the sky
+                        sampled at the lede's own spot (default --ground)
 
    The headline is set in --ink straight on the sky, with no scrim: that needs open, even sky behind it.
-   The lede under it sits on a solid strip of the ground. For any other photograph put the class
+   The lede under it sits on a solid strip in the colour of the sky right behind it (the script samples
+   it from the photograph; else --seg-lede-ground, else the ground). For any other photograph put the class
    seg--band on the section (or pass hero: "band"): the headline block gets a solid band in --ink and
    type in the ground's colour.
    Weights follow the page: --display-weight (the headline, the words on the arch, the statement and the
@@ -50,7 +55,7 @@
   --seg-say-top: 0.62;
   --seg-flat-size: calc(var(--seg-arc-size) * 0.85);
   --seg-title-size: clamp(56px, 9.5vw, 148px);
-  --seg-inset-w: clamp(240px, min(36vw, 52svh), 600px);
+  --seg-inset-w: clamp(260px, min(64vw, 104svh), 1000px);
   --seg-inset-ratio: 2 / 1;
   position: relative;
   background: var(--seg-ground);
@@ -98,18 +103,21 @@
   text-transform: uppercase;
   text-wrap: balance;
 }
-/* The lede is small text and never trusts the sky: a sky that looks even still carries haze, a ridge or
-   the zoom's next crop under 19px letters (the demo's read 4.1:1 at its worst). It sits on a solid strip
-   of the ground, the sky's own colour, so on an even sky it does not show, and --ink reads 7:1 on it
-   at every width. Flat, never a gradient. */
+/* The lede never trusts the sky blindly: a sky that looks even still carries haze, a ridge or the
+   zoom's next crop under small letters (the demo's read 4.1:1 at its worst at 19px). The script reads
+   the photograph under it (--seg-lede-sky): where the sky reads against --ink there (4.5:1, or 3:1 at
+   24px and up, which the lede reaches on wide screens) it has no strip; where it is a shade too pale, a
+   solid strip of the nearest shade of that sky that reads. Without the script's reading the strip is
+   --seg-lede-ground, else --ground (7:1 by the colour contract); a strip of the top third's median shows
+   as a darker or paler box lower down the sky. Flat, never a gradient. */
 [data-scene="shaped-edge-ground-change"] .seg-hero__lede {
   width: fit-content;
   margin: clamp(16px, 2.4svh, 28px) 0 0 -0.55em;
   padding: 0.3em 0.55em 0.4em;
-  max-width: 25rem;
-  background: var(--seg-ground);
+  max-width: 20em;
+  background: var(--seg-lede-sky, var(--seg-lede-ground, var(--seg-ground)));
   font-family: var(--font-text, inherit);
-  font-size: clamp(17px, 1.35vw, 20px);
+  font-size: clamp(17px, 1.7vw, 26px);
   line-height: 1.45;
   text-wrap: pretty;
 }
@@ -290,6 +298,15 @@ html:not(.js) [data-scene="shaped-edge-ground-change"] svg.seg-arc { font-size: 
 /* live, the cap keeps its exact height: the ground's travel and the body's place are measured from it */
 .scene.is-live[data-scene="shaped-edge-ground-change"].seg--flat .seg-cap { height: var(--seg-cap); min-height: 0; }
 
+/* A portrait tablet runs the desktop plan on a tall screen: the inset takes most of the width, 4:3, so
+   the end frame is a picture under the title, not a strip in a field of ground. */
+@media (min-width: 768px) and (orientation: portrait) {
+  [data-scene="shaped-edge-ground-change"] {
+    --seg-inset-w: min(84vw, 60svh);
+    --seg-inset-ratio: 4 / 3;
+  }
+}
+
 @media (max-width: 767px) {
   [data-scene="shaped-edge-ground-change"] {
     --seg-cap: clamp(240px, 62vw, 70svh);
@@ -301,7 +318,7 @@ html:not(.js) [data-scene="shaped-edge-ground-change"] svg.seg-arc { font-size: 
     --seg-flat-size: 32px;
     --seg-title-size: 15vw;
     --seg-inset-w: 84vw;
-    --seg-inset-ratio: 4 / 3;
+    --seg-inset-ratio: 1 / 1;
   }
   [data-scene="shaped-edge-ground-change"] .seg-hero { left: 6vw; right: 6vw; width: auto; }
   [data-scene="shaped-edge-ground-change"].seg--band .seg-hero { max-width: none; margin-left: -16px; margin-right: -16px; padding: 18px 16px 20px; }
@@ -384,6 +401,9 @@ html.js .scene.is-live[data-scene="shaped-edge-ground-change"] {
   margin: 0;
   will-change: transform;
 }
+/* The title and the inset are one centred group at every width, so a one-line and a two-line title both
+   settle into a composed end frame (a large picture under the title) instead of two items pinned to
+   fixed heights. The inset is held under the screen's height whatever its width asks for. */
 .scene.is-live[data-scene="shaped-edge-ground-change"] .seg-body {
   position: absolute;
   top: var(--seg-cap);
@@ -391,35 +411,26 @@ html.js .scene.is-live[data-scene="shaped-edge-ground-change"] {
   right: 0;
   bottom: 0;
   margin: 0;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(28px, 4.5svh, 48px);
+  padding: 4svh 4vw;
 }
-.scene.is-live[data-scene="shaped-edge-ground-change"] .seg-title {
-  position: absolute;
-  top: 30%;
-  left: 4vw;
-  right: 4vw;
-}
+.scene.is-live[data-scene="shaped-edge-ground-change"] .seg-title { position: relative; width: 100%; }
 .scene.is-live[data-scene="shaped-edge-ground-change"] .seg-title__char { will-change: transform, opacity; }
 .scene.is-live[data-scene="shaped-edge-ground-change"] .seg-inset {
-  position: absolute;
-  top: 62%;
-  left: 50%;
+  position: relative;
+  flex: none;
   margin: 0;
-  translate: -50% 0;
+  max-width: 100%;
 }
 .scene.is-live[data-scene="shaped-edge-ground-change"] .seg-inset__img { will-change: transform; }
 
-/* On a phone the title and the inset are one centred group, so a one-line and a two-line title both
-   settle into a composed end frame instead of two items pinned to fixed heights. */
 @media (max-width: 767px) {
   .scene.is-live[data-scene="shaped-edge-ground-change"] .seg-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     gap: clamp(32px, 5svh, 48px);
     padding: 0 6vw 6svh;
   }
-  .scene.is-live[data-scene="shaped-edge-ground-change"] .seg-title { position: relative; top: auto; left: auto; right: auto; width: 100%; }
-  .scene.is-live[data-scene="shaped-edge-ground-change"] .seg-inset { position: relative; top: auto; left: auto; translate: none; flex: none; }
 }

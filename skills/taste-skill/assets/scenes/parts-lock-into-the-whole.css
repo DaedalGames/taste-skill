@@ -8,7 +8,9 @@
    Three layouts of the screen, each a CSS grid of the same panels (grid areas bar, side, main, insp):
      wide (over 1100px)   toolbar across the top; sidebar, main pane and inspector side by side.
      narrow (768-1100px)  toolbar; sidebar and main pane; the inspector across the foot in three columns.
-                          The main pane flies in from the right, the inspector from the bottom.
+                          The main pane and the inspector fly in from the bottom.
+   A panel shows only once it lies wholly on the screen (the script fades it in over the rest of its
+   flight), so a panel with little room to its edge shows late: send each from the side with room.
      phone (under 768px)  one column: toolbar, the sidebar folded to a row of two plans, the main pane (two
                           quarters and the cost), the inspector (the selected cell beside its thread; the
                           chart and the reply stay on wider screens). The pieces start 44px outside their
@@ -242,6 +244,8 @@
 [data-scene="parts-lock-into-the-whole"] .pl-sheet .is-sel { outline: 2px solid var(--pl-accent); outline-offset: -2px; background: #f4f9f6; }
 [data-scene="parts-lock-into-the-whole"] .pl-n,
 [data-scene="parts-lock-into-the-whole"] .pl-old { position: relative; z-index: 1; }
+/* a figure that inks in (data-layer on .pl-n) settles a few px as it fades: it needs a box to move */
+[data-scene="parts-lock-into-the-whole"] .pl-sheet td > .pl-n { display: inline-block; }
 [data-scene="parts-lock-into-the-whole"] .pl-old {
   color: var(--pl-ui-muted);
   text-decoration: line-through;
@@ -349,6 +353,8 @@
   align-items: start;
 }
 [data-scene="parts-lock-into-the-whole"] .pl-comment + .pl-comment { margin-top: 14px; }
+/* a comment without an avatar (the name in bold is enough) takes the whole row */
+[data-scene="parts-lock-into-the-whole"] .pl-comment > p:only-child { grid-column: 1 / -1; }
 [data-scene="parts-lock-into-the-whole"] .pl-comment .pl-av { margin: 0; border: 0; }
 [data-scene="parts-lock-into-the-whole"] .pl-comment b { display: block; font-size: 13px; }
 
@@ -457,7 +463,8 @@ html.js [data-scene="parts-lock-into-the-whole"].is-live > .scene-stage { displa
     grid-template-areas: "bar bar" "side main" "insp insp";
   }
   [data-scene="parts-lock-into-the-whole"] .pl-side { border-radius: 0; }
-  [data-scene="parts-lock-into-the-whole"] .pl-main { --pl-from: right; padding: 20px 22px; }
+  /* from the bottom: the room under it (the inspector's place) lets it show early, under the landed word */
+  [data-scene="parts-lock-into-the-whole"] .pl-main { --pl-from: bottom; padding: 20px 22px; }
   [data-scene="parts-lock-into-the-whole"] .pl-agent { left: 22px; right: 22px; bottom: 18px; }
   [data-scene="parts-lock-into-the-whole"] .pl-insp {
     --pl-from: bottom;
@@ -474,9 +481,11 @@ html.js [data-scene="parts-lock-into-the-whole"].is-live > .scene-stage { displa
   [data-scene="parts-lock-into-the-whole"] .pl-crumbs i:nth-of-type(2), [data-scene="parts-lock-into-the-whole"] .pl-crumbs span { display: none; }
   [data-scene="parts-lock-into-the-whole"].is-live .pl-ui { top: 8svh; bottom: 13svh; grid-template-rows: 52px minmax(0, 1fr) auto; }
   [data-scene="parts-lock-into-the-whole"].is-live .pl-caption { bottom: 4.5svh; }
-  [data-scene="parts-lock-into-the-whole"].is-live .pl-endslot { top: 6svh; bottom: auto; height: 48svh; width: auto; right: var(--pl-gx); }
-  [data-scene="parts-lock-into-the-whole"].is-live .pl-spec { top: 59svh; bottom: 5svh; left: var(--pl-gx); justify-content: flex-start; gap: 28px; }
-  [data-scene="parts-lock-into-the-whole"].is-live .pl-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 32px; }
+  /* the end: the screen keeps about four fifths of its size (its words stay readable), the heading and a
+     two-column spec list under it */
+  [data-scene="parts-lock-into-the-whole"].is-live .pl-endslot { top: 5svh; bottom: auto; height: 64svh; width: auto; right: var(--pl-gx); }
+  [data-scene="parts-lock-into-the-whole"].is-live .pl-spec { top: 72svh; bottom: 3svh; left: var(--pl-gx); justify-content: flex-start; gap: 20px; }
+  [data-scene="parts-lock-into-the-whole"].is-live .pl-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 32px; }
 }
 
 /* ---- phone ---- */
@@ -519,7 +528,7 @@ html.js [data-scene="parts-lock-into-the-whole"].is-live > .scene-stage { displa
   [data-scene="parts-lock-into-the-whole"] .pl-sheet :is(th, td):is(:nth-child(2), :nth-child(3)) { display: none; }
   [data-scene="parts-lock-into-the-whole"] .pl-sheet :is(th, td) { padding: 0 calc(6px + 2.1em) 0 6px; }
   [data-scene="parts-lock-into-the-whole"] .pl-sheet :is(th, td):first-child { padding: 0 8px 0 0; }
-  [data-scene="parts-lock-into-the-whole"] .pl-sheet :is(th, td):last-child { padding-right: calc(6px + 4.4em); }
+  [data-scene="parts-lock-into-the-whole"] .pl-sheet :is(th, td):last-child { padding-right: calc(10px + 4.6em); }
   [data-scene="parts-lock-into-the-whole"] .pl-sheet thead th { font-size: 12px; }
   [data-scene="parts-lock-into-the-whole"] td > .pl-new { right: 6px; }
   [data-scene="parts-lock-into-the-whole"] .pl-sheet .pl-empty:nth-child(n + 11) { display: none; }

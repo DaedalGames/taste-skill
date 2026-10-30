@@ -24,8 +24,9 @@ This skill replaces those defaults with decisions, in four ways:
 
 1. **A script deals the direction; you build it.** `scripts/draw.mjs` deals, at random and away from
    recent builds, the direction, a type pairing from 169 faces with its own scale, a restrained
-   palette, the navigation, the footer, corners, spacing, how pictures are treated, whether the page
-   has an interactive piece or a video, and its scroll scenes. You do not choose among options: your
+   palette, the navigation, the footer, the cards and the buttons (each one of about twelve designs),
+   corners, spacing, how pictures are treated, whether the page has an interactive piece or a video,
+   and its scroll scenes. You do not choose among options: your
    own choice is the bias this skill exists to remove.
 2. **The idea comes from the subject.** In the study, what separated the best sites from the forgettable
    ones was a concept taken from the thing itself, not the styling.
@@ -193,7 +194,8 @@ The command prints a **direction sheet**. It is the art direction for this build
 - When a dealt section cannot hold the real content (it compares three plans and there is one price;
   it wants five quotations and there are none), do not bend the content to fit. List the others with
   `--alternatives <role>`, pick the one whose assumptions match the content, and take it with
-  `--redraw section:<role>=<id>`.
+  `--redraw section:<role>=<id>`. The footer is section 0's: `--redraw section:footer` deals another
+  of its designs.
 - **Take the accent from the subject.** If the dealt accent has nothing to do with the subject (a
   software teal on a coffee roaster), keep its lightness and strength and move its hue to the subject's
   own colour (crema amber, copper, the green of the name), and say so in the report.
@@ -265,19 +267,24 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
 - One supporting sentence, directly under the headline (32–48px below it) and shown with it, never
   docked at the foot of the first screen or held back by an animation. When the headline is a name or
   a figure of speech, this sentence says plainly what the thing is. One primary action, named for what
-  it does, as a real button on the first screen.
+  it does, as a real button on the first screen, and once: never two buttons or links to the same
+  place in one block (a roastery's first screen had two Directions buttons).
 - **The first screen answers the visitor's first question in large type.** For an event: what it is,
   when and where (the dates belong in the headline or at the second size, never only in small text).
   For a product: what it is and what it costs or does. For a person: who and what they do. Every
   section the visitor came for (the line-up, the menu, the rooms, the price) has its own heading and
   its own place in the navigation.
-- **The whole page is about 300-500 words** (award sites carry about 27 words a screen, professional
-  sites about 79; the inspector warns past 70 a screen and fails past 95). Count before you build.
+- **Cut hard: far less text than you think.** The first screen holds 30 words at most, its headline
+  12 at most; a section holds 60 words at most outside a list or a table; the whole page about 500
+  (award sites carry about 27 words a screen). The inspector warns over each and fails past one and a
+  half times (`wordy-hero`, `hero-words`, `wordy-section`, `wordy-page`).
+  Fewer, shorter sections: five or six after the hero is plenty; drop any that carries no claim and
+  merge two that say one thing. Count before you build.
 - **The full content, in few words.** Every section the brief asks for delivers its information
   completely (the whole menu with prices, each room with its details, every speaker, the price with
   what it includes, an answer for each real question), as facts: lists, tables, names and numbers, not
-  paragraphs about them. Budgets: a section heading of two to eight words; one or two sentences under
-  it; card or item text of one sentence; no paragraph over about 50 words. Plain words that say what
+  paragraphs about them. Budgets: a section heading of two to six words; one sentence under it, two at
+  most; card or item text of one sentence; no paragraph over about 40 words. Plain words that say what
   the thing is and does, never jargon the visitor has to decode ("Folgezettel spine", "0.8 ms at 90k
   cards"). If a sentence could be cut without losing a fact, cut it.
 - **No labels that carry nothing.** No timestamps, "connected source", status chips, tags, kickers or
@@ -304,18 +311,19 @@ Write the whole page as a copy deck (plain text) before markup, following `refer
   names what a visitor needs to get there and picture it: on the first screen the specific place the
   brief gives (the fjord, the village, the district); when it names only a region, a real place in it
   chosen with the visit block and marked as sample copy in the report, never the region alone (a
-  Westfjords guesthouse never named its fjord); then the region's towns, the road, the ferry, train
-  or airport that serves it, and distances by road only when read from a map or the brief in this
-  session (otherwise the towns and the road without a number). Travel times, populations, history
-  and awards come from the brief or stay off the page: a guesthouse in the Westfjords set "forty
-  minutes from Reykjavik" (it is hours away), and another, naming no town, road or flight at all, read
-  as thin. The report lists the facts to confirm (`references/copy.md` §5).
+  Westfjords guesthouse never named its fjord); then the village, the region's towns, the road, the
+  ferry, train or airport that serves it, and the drive time from the nearest town (from the road
+  distance on a map, or at about 60 km an hour on country roads when no map can be read, rounded up,
+  and marked to confirm). Populations, history and awards come from the brief or stay off the page,
+  and no time ever makes a place nearer than it is: a guesthouse in the Westfjords set "forty minutes
+  from Reykjavik" (it is hours away), another named no village and no drive time and left the visitor
+  guessing. The report lists the facts to confirm (`references/copy.md` §5).
 - **A place people go to says how to get there.** A café, bar, restaurant, shop, guesthouse or studio
   with a door gets a visit block with the street (a real street in the right district of the town
   the brief names, no house number unless the brief gives one; for a remote place, or a brief that
-  names only a region, the nearest town and the road from it, and no street), the district, the
-  nearest stop (read from a map or one you are sure of, otherwise the district's main station) or
-  the drive from that town, the opening hours (for a house, its season and check-in times), a
+  names only a region, the village it stands in and the nearest town with the road from it, and no
+  street), the district, the nearest stop (read from a map or one you are sure of, otherwise the
+  district's main station) or the drive from that town with its time, the opening hours (for a house, its season and check-in times), a
   "Directions" link to a maps service for that street or road, and one contact. Never a placeholder
   street, never a zeroed or patterned phone (with no phone in the brief, the contact is the email on
   the brand's own domain), never the city's name alone: a roastery that printed hours and an email
@@ -335,14 +343,20 @@ not finished. Order of work:
 2. **The hero, in the shape its blueprint describes,** set in the dealt type, colour and frame, at
    desktop and at phone width. Within the house rules its geometry is binding, over the direction's
    composition too: what is large, where the words sit, how the picture is cut. The headline takes
-   the dealt display step, not a size the blueprint names. Get the main thing clear before anything
+   the dealt display step, not a size the blueprint names. **It fills the first screen alone:**
+   `min-height: 100svh` with the navigation inside it, and nothing of the next section (its heading,
+   text, picture or ground) in view at 1440 by 900 or 390 by 844; on the owner's review the next
+   section crowding into the first view was what made the pages read as cluttered
+   (`hero-not-alone` fails it). Get the main thing clear before anything
    else exists: the first screen is built round the page's own idea at display scale, and its largest
    type carries that idea or, for a name whose meaning the page is built on (Klee is clover), the
    name; never a bare category line with nothing of this client in it ("Roasted and poured in
-   Berlin"). **Never the template stack:** a centred headline, a line under it, two actions side by
-   side and a photograph card with round corners under or beside them, the four together. A roastery
-   page dealt "the object on a plain ground" built exactly that, and the judge called it any café;
-   the inspector fails it (`template-hero`). **A split hero has a large headline
+   Berlin"). **The headline never repeats the logo:** when the name is the headline, the bar shows no
+   second wordmark on the first screen (the mark alone, or the wordmark once the hero has scrolled
+   away); otherwise the headline says something new. **Never the template stack:** a centred headline and a line under it over a photograph
+   card with round corners or a row of two or three cards, with or without actions. A roastery page
+   dealt "the object on a plain ground" built exactly that, and the judge called it any café; a
+   portfolio set its name over two work cards; the inspector fails both (`template-hero`). **A split hero has a large headline
    or a full-bleed picture:** beside a picture that holds half the screen, or in a strip between
    pictures above and below it, the `h1` is about 5vw or more at 1440 (72px; the sheet raises the
    display step for a split hero), on two lines; words that cannot be that large go over the picture,
@@ -355,9 +369,15 @@ not finished. Order of work:
    one layout; at least one section breaks the split grid (a full-bleed picture, a headline across the
    width, an 8/4 asymmetry): a cargo-bike page ran 50/50 blocks all the way down and read as a stock
    theme (`repeated-split` warns at three in a row). The key content stands in the open (the specs, the loads, the rooms, the menu); tabs and
-   accordions only for secondary detail such as the questions. **Carry the idea into every section,**
-   pricing and FAQ included: the commonest failure in the study is a distinctive first screen followed
-   by stock blocks.
+   accordions only for secondary detail such as the questions. **Cards group what belongs together:**
+   in two or three sections, the things a visitor compares or reads as one (the plans, the rooms, the
+   visit details, the features) stand in the card style section 0 deals, filled, never outlined; text
+   floating loose where it belongs to a group loses the hierarchy. Never a card inside a card (a
+   product window on a card is one), never a card laid half or more over a photograph, never more
+   than one product window on the first screen, never a page of nothing but cards
+   (`framed-elements`, `boxed-page`); the other sections stand on the ground. **Carry the idea into every
+   section,** pricing and FAQ included: the commonest failure in the study is a distinctive first
+   screen followed by stock blocks.
 4. **Pictures: fewer, better, larger.** Professional sites give about 30% of every screen to pictures;
    the builds this skill used to make gave 10%, mostly small, soft or random. Order of sources:
    1. the project's own;
@@ -365,8 +385,9 @@ not finished. Order of work:
    3. the photographs dealt on the sheet and the rest of the library (`draw.mjs --photos <words>`):
       sharp, modern, no credit needed; atmosphere, never a stand-in for a person, and for a room, a
       dish or a product only as a picture of its kind (step 1);
-   4. sharp modern photographs of the subject's world from the open collections
-      (`node <skill>/scripts/assets.mjs "<query>"`, 1800px or wider by default). Look at each one, and
+   4. only for what the library lacks (a kind of room, a dish, the product's kind in use), sharp
+      modern photographs from the open collections (`node <skill>/scripts/assets.mjs "<query>"
+      --source openverse`, 1800px or wider by default; never the museum sources). Look at each one, and
       every stand-in, at full size before using it, and crop or drop any that shows another maker's
       name or logo, a shop or company sign, a readable house number or licence plate, words that would
       embarrass the client, or a child who could be recognised (children only from behind, far off or
@@ -379,7 +400,13 @@ not finished. Order of work:
    Rules: every picture shows this subject's world, never the category's stock shot unless it is
    art-directed (full-frame beans, hands on a laptop: `references/imagery.md` §2), and is requested
    at least 1.5 times the size it is shown (twice for the hero); one treatment for all (section 0);
-   three to eight good pictures beat twelve weak ones. Every file the page asks for exists: a `src`, a
+   three to six good pictures of the subject and its world beat twelve weak ones (the rooms, dishes or
+   products a page pictures are their own set, one each), and none beats a bad one. **Never documentary or
+   archive photographs:** no old Commons or museum pictures, history photographs, postcards, old maps
+   or engravings, no news-like or snapshot shots; the owner found they made pages look serious, old and
+   cheap. Every photograph is modern, well lit and professional-looking (a good Unsplash or Pexels
+   photograph; the library's are), or the slot goes to the product, the type, the colour or the
+   interface. Every file the page asks for exists: a `src`, a
    `srcset` crop or a CSS background that is not there fails. Words on a photograph sit on its calm part, of one tone, at 1440, 768 and
    390 alike: the crop moves as the screen narrows, and the inspector reads the pixels under the
    letters. Flat colour tiles, one per project or card, are a wall of boxes: one picture leads, on
@@ -395,16 +422,18 @@ not finished. Order of work:
    not the client's own is captioned with what and where it is, as its source names it, never with a
    place the source does not name; a room or product stand-in has the name beside it; each has its
    credit in the Image credits dialog.
-   Pictures of one series count as one: at most two from one shoot or archive. A drawing rendered to PNG is still a
-   drawing. Archive photographs, old maps and engravings only when they are the idea itself
-   (the history this subject continues, like the slip boxes behind a notes app), sharp, large and of
-   one family; never as filler or a random old picture of the place. Never a picture inside a headline
+   Pictures of one series count as one: at most two from one shoot. A drawing rendered to PNG is still a
+   drawing. A picture that carries its own lettering (a title card, a sign, a label, a poster) is
+   cropped so the lettering stays whole or leaves the frame, at every width: a portfolio cut its own
+   work titles to "Pelik" and "ZUIDKAI" (`cropped-lettering` warns). Never a picture inside a headline
    or a thumbnail inside a sentence. Software shows itself large on the first screen, at a size a
    visitor can read, and at least one other large picture that is not an interface card; never more
    than two sections in a row made of interface cards. Its interface sits in the page's own ground,
-   cropped or bleeding off an edge, with at most one framed window on the page; never the black ground
-   with a white interface slab in every section that every model builds. One photograph or object that
-   carries the product's idea (a card catalogue for a notes app) does more than another panel.
+   cropped inside the page margins (never run into one screen edge), with at most one framed window on
+   the page; never the black ground
+   with a white interface slab in every section that every model builds. One modern photograph or object
+   that carries the product's idea (a card catalogue for a notes app, shot today) does more than
+   another panel.
    Switches, checkboxes and sliders appear only where they do what the product does, never as
    decoration, and a control in a product fragment (a search box, a New note button) either works or
    reads as static: no pointer, hover or focus, never a field the visitor types into in vain
@@ -412,9 +441,11 @@ not finished. Order of work:
    (`assets.mjs --credits` prints it), one for every photograph that is not the client's own, whether
    its licence asks or not (`uncredited-picture` warns), never as a list across the footer, never as a
    sentence on the page. When the project has footage or a real picture of its own product, the first screen shows it,
-   large. A portfolio whose work is invented for the brief shows each piece as a finished still of that
-   work (its title card, an end frame, a poster), with real detail; a stock or location photograph
-   never stands in for a piece of work (a motion designer's work slots showing skylines lost a test).
+   large. A portfolio shows its work on the first or second screen, before any statement, scene or
+   photograph of its city, with one place photograph on the whole page at most (a motion designer's
+   page opened on four screens of Rotterdam before her work). Work invented for the brief is shown as
+   a finished still of each piece (its title card, an end frame, a poster), with real detail; a stock
+   or location photograph never stands in for a piece of work (work slots showing skylines lost a test).
 
    **Logos of known products are the real ones, never drawn.** When the page names products it works
    with or the brief names (Gmail, Google Calendar, Figma, Slack, Teams, Chrome, ChatGPT, Claude),
@@ -425,12 +456,19 @@ not finished. Order of work:
    in the dealt type, or the client's real one.
 
    `references/imagery.md` covers searching, licences, video, drawing, crops and treatments.
-5. **The navigation and the footer** as section 0 deals them: a real header with the page's sections
-   as links and the one action, on every page; a footer that works (links, contact, legal), never a
-   giant name or email. On a one-page site the footer is one line (name or ©, city, legal, Image
-   credits); it never repeats the navigation or a list the page already shows. **The interactive
-   piece,** only if dealt, in the section where it proves the claim, with real content, a thumb-sized
-   phone version and a plain fallback.
+5. **The navigation, the footer, the cards and the buttons** as section 0 deals them, each one of
+   about twelve designs, built at the sizes and with the behaviour written there: the owner found
+   every page with the same plain bar, the same three button shapes and a one-line footer. The
+   navigation carries the page's sections as one- or two-word links and the one action; nothing
+   stands above it (no announcement or information strip, `announcement-bar`) and nothing in it is a
+   sentence (a manuscript tool put a sentence in its bar and the page read as chaos; `nav-sentence`
+   fails it, and any link or button there over three words). The footer is a designed
+   section on its own ground, never a single line: links, contact, legal and the Image credits link at
+   text sizes, never a giant name or email, never a list the page already shows as content. A page
+   ends once: a footer that opens on its own closing line carries the call to action (the sheet then
+   builds no cta section), and the visit details of a place stand in one place only. **The
+   interactive piece,** only if dealt, in the section where it proves the claim, with real content, a
+   thumb-sized phone version and a plain fallback.
 6. **The scroll scenes,** when the sheet deals them (section 9), each with the section it carries: the page's big
    moments, the row of work that bends with the scroll, the picture that opens to the whole screen,
    the word that buckles under the scroll. Copy the shared stage and the scene's files from
@@ -449,8 +487,8 @@ not finished. Order of work:
    a coffee panel that showed two of its four coffees on a phone was marked broken, and the inspector
    fails text cut off by its box at rest (`clipped-text`; one line of display type cropped on purpose
    at the screen's side or foot is a crop and passes). The inspector also looks at each scene's
-   finished composition and fails a list drawn as boxes there (`boxed-list`: tickets, date cards,
-   panes) and a display heading left alone on its screen for two screens (`lone-heading`);
+   finished composition and fails a list drawn as boxes there (`boxed-list`: outlined items, tickets
+   cut to a shape, items that each hold a box of their own) and a display heading left alone on its screen for two screens (`lone-heading`);
    `scenes.mjs` warns a settled step whose heading's letters are turned or off their line
    (`tilted-letters`) or whose picture or filled box the screen edge cuts to a sliver (`edge-sliver`).
    A software page gets one scroll scene at most. A page built without one (`--redraw scenes=none`) is
@@ -470,28 +508,32 @@ not finished. Order of work:
    tablet page; it read as stock, and the inspector fails a picture shown three times
    (`repeated-picture`). Check it with `scenes.mjs` like any scene; if it cannot be built honestly
    within three look-and-fix rounds, `--redraw scenes`, which counts toward the same limit of two.
-7. **Fullness.** Look at each desktop screen as a poster: one dominant thing and the content it
-   carries. A screen that is mostly empty ground is an underbuilt section, not a rest; one deliberate
-   rest per page is the limit, and the inspector fails a page with two or more near-empty screens.
+7. **Fullness and air.** Look at each desktop screen as a poster: one dominant thing and the content
+   it carries, with clear air round it. The space between sections (section 0) is generous, never a
+   whole screen: a screen that is mostly empty ground is an underbuilt section, not a rest; one
+   deliberate rest per page is the limit, and the inspector fails a page with two or more near-empty
+   screens.
    Running text, lists and tables are in the full ink at 16px or more (15px on a phone), on dark
    grounds too; under 14px fails (under 15px on a phone), and a list's own labels count as the list.
    Only captions and the footer's legal line are smaller. Under a display heading text is 18px or more
    on desktop. Grey is for secondary notes; running text under 4.5:1 against its ground fails
    (`contrast`).
-8. **The frame.** The page has one pair of equal outer margins at every width, and every section uses
-   the width the page has set up: when its text sits in the left half, the right half holds its
-   picture, its second column, its list or its figure, never nothing, and a left column never ends
-   while the one beside it runs on (`empty-left` warns). Asymmetry lives inside the grid,
-   never in the frame: a void is placed only when something closes it on the far side. No stretch of
-   the page taller than about half a screen holds nothing at all; sections are 120–240px apart on
-   desktop. Every section the visitor came for opens with a heading that names it, and the first
-   screen carries the page's title in an `h1`. These are what readers name first when a page looks
-   wrong ("no clear title", "random empty space", "everything is pushed to one side"), and the
-   inspector measures each of them. On a page longer than about ten screens at 1440 (a page with
-   scenes always is), the navigation stays in reach after the hero: the plain bar hides while the
-   visitor scrolls down and comes back on the first scroll up, on a solid band of the ground where it
-   passes pictures, or at least the one action stays fixed in a corner. A hero that animates its bar
-   away hands it on to that bar (`references/layout.md` §7).
+8. **The frame.** The page has one pair of equal outer margins at every width (as section 0 deals
+   them, 16px at the least on a phone), and nothing that is not full-bleed touches or runs past one
+   screen edge while the margin holds at the other: a notes app's product window ran into the right
+   edge and the owner named it first (`edge-run` fails it). Every section uses the width the page has
+   set up: when its text sits in the left half, the right half holds its picture, its second column,
+   its list or its figure, never nothing, and a left column never ends while the one beside it runs
+   on (`empty-left` warns). Asymmetry lives inside the grid, never in the frame: a void is placed only
+   when something closes it on the far side. Sections stand apart by the space section 0 deals, 16vh
+   or more at 1440 counted from the last content of one to the first of the next (`section-air`);
+   no stretch of the page taller than about half a screen holds nothing at all. Every section the
+   visitor came for opens with a heading that names it, and the first screen carries the page's title
+   in an `h1`. These are what readers name first when a page looks wrong ("no clear title", "random
+   empty space", "everything is pushed to one side"), and the inspector measures each of them. On a
+   page longer than about ten screens at 1440 (a page with scenes always is), the navigation or at
+   least the one action stays in reach on every screen, the way the dealt navigation says. A hero that
+   animates its bar away hands it on to that navigation (`references/layout.md` §7).
 9. **States and semantics.** Real links and buttons, visible focus, alt text, a phone layout that is
    its own composition. Every navigation and skip link lands on the section that holds what it names,
    never on a scene that only introduces it. Every control, any tool included, works from the
@@ -532,7 +574,7 @@ server showed). The inspector warns when it is looking at a dev server.
 
 Passing the gate means nothing banned was measured. It does not mean the page is good. Open the
 screenshots the inspector lists (every viewport, with your image viewer or Read tool) and critique them
-with `references/critique.md`: the fourteen passes, the Awwwards-weighted score, the caps. Write the critique
+with `references/critique.md`: the sixteen passes, the Awwwards-weighted score, the caps. Write the critique
 down in its format, fix the top three problems, run the inspector again, look again. Three rounds at
 most.
 
@@ -578,7 +620,10 @@ Do not report until all of these are true; each one was skipped in a test run th
 - With scroll scenes: `scenes.mjs` ran on the final page with no problems, and you read every sheet
   (desktop, phone, reduced motion).
 - A stranger reading the first screen for five seconds can say what this is and what to do.
+- The first screen at 1440 and at 390 shows the hero alone; the sections stand well apart; nothing
+  runs into one edge of the screen.
 - Every section has a heading; the margins match on both sides; no stretch of the page is empty.
+- The words are counted: the first screen 30 at most, a section 60, the page about 500.
 - The page is about 16 screens or fewer at 1440 (the inspector's header counts them), and the
   navigation or the one action can be reached from every screen.
 - The critique of your last round is written down in the shape of `references/critique.md` §4.
@@ -599,8 +644,10 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | --- | --- |
 | **Headlines: two lines or fewer, at every width.** Every `h1`–`h6`, and the main line of the first screen whatever its tag. | Cut words. Then widen the measure. Size last. |
 | **A clear title on the first screen**, in the page's one `h1`, and a heading on every section, one per idea. | Say what this is: the name with what it does, the product with what it is for, the event with its date and place. |
-| **Equal outer margins; no section huddled on one side** with the other half of the screen empty. | Close every void with something on its far side: the section's picture, a second column, a list, a figure. |
-| **No blank stretches** taller than about half a screen. | The normal section gap. A deliberate rest is a placed picture or a field of colour, once per page. |
+| **The hero alone on the first screen.** Nothing of the next section in view on load, at 1440 or on a phone. | `min-height: 100svh`, the navigation inside it, the next section after the section gap. |
+| **Air between sections:** 16vh or more at 1440, as section 0 deals it. | Fewer sections, fewer words, each with room round it. |
+| **Equal outer margins; nothing run into one screen edge; no section huddled on one side** with the other half of the screen empty. | Everything that is not full-bleed keeps the margin on both sides; close every void with something on its far side: the section's picture, a second column, a list, a figure. |
+| **No blank stretches** taller than about half a screen. | The dealt section gap. A deliberate rest is a placed picture or a field of colour, once per page. |
 | **Statements are paragraphs.** An intro sentence or a quotation set large is marked up as `<p>` or `<blockquote>`, stays at statement size (36px or less on desktop, 24px on a phone) and runs to about 25 words, three lines. | Larger than that it is a headline and the two-line rule applies. In blind tests jurors read a 42px sentence over four lines as a four-line headline. |
 | **No eyebrows.** No small label above a heading, no pill badge above the headline, no "New ·" chip. | Put the information in the heading or the first sentence, or drop it. |
 | **No monospace** outside real code blocks. | The text face. Tabular figures where numbers align. |
@@ -610,17 +657,20 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **No shadows on things at rest.** No glows. | A tone step between surfaces. Shadows only on what truly floats: a menu, a dialog. |
 | **No assistant palette.** No yellow-cream ground with terracotta or rust; no violet, indigo, lavender or periwinkle (a blue lightened for a dark ground drifts there; `palette-purple`). | The dealt palette; a blue lightened toward its cyan side. |
 | **No tiny uppercase letter-spaced labels.** | Sentence case at a readable size. |
-| **No icon-topped feature cards, no rows of identical cards.** | The dealt section blueprint. |
-| **No glass.** No backdrop blur panels, no floating pill navigation. | A plain bar: wordmark, a few links, one action. |
+| **No icon-topped cards, no outlined cards.** | Filled cards in the style section 0 deals, where things belong together. |
+| **No glass.** No backdrop blur, no translucent panels or bars. | Opaque surfaces one tone step from the ground; the navigation section 0 deals (a floating pill too is opaque). |
+| **No bar above the navigation, no sentence in it.** No announcement or information strip over the bar. | The dealt navigation: the wordmark, one- or two-word links, one action. |
+| **The footer is a designed section,** never a single line. | The footer section 0 deals, on its own ground: links, contact, legal, Image credits. |
+| **No documentary or archive photographs.** No old Commons or museum pictures, history photographs, postcards, old maps, engravings, news-like shots. | Modern, well-lit, professional photographs (the library's first), or none: the product, the type, the colour. |
 | **No emoji, no gradient blobs, no decorative shapes, no drawn diagrams, charts or illustrations, no fake dashboards of grey bars.** | A real picture, a real interface fragment, the process said in words, or nothing. |
 | **No styled accent word** in a headline (italic, serif, coloured, underlined). | One face, one colour. The words carry the emphasis. |
 | **The dealt type system:** its faces, its weights, its six steps. Two families at most. | Map every other size onto the nearest step. |
 | **No pictures in headlines or sentences.** No photograph between the words of a headline, no picture inside the letters, no thumbnails inside running text. | The picture gets its own place, beside, above or behind the words, at a size that shows what it is. |
-| **No headline in a card, no template stack.** The hero headline stands on the page ground or on its picture, never in a panel, card or box; and never a centred headline, a line, two actions and a round-cornered photograph card together. | The first screen as one composition in the dealt hero's geometry, built round the page's idea: headline, one sentence, the action, the picture. |
+| **No headline in a card, no template stack.** The hero headline stands on the page ground or on its picture, never in a panel, card or box; and never a centred headline and a line over a round-cornered photograph card or a row of two or three cards, with or without actions (`template-hero`). | The first screen as one composition in the dealt hero's geometry, built round the page's idea: headline, one sentence, the action, the picture. |
 | **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges. | Neutral ground (white, off-white, near-black); colour from the pictures; the accent on the action. |
-| **No giant name or email anywhere, no credit walls.** | The email at the h3 step or smaller, with a Copy button and a mailto link; the dealt footer: links, contact, legal at text sizes; picture credits behind one small "Image credits" link. |
+| **No giant name or email anywhere, no credit walls.** | The email at the h3 step or smaller, with a Copy button and a mailto link; the dealt footer with its links, contact and legal at text sizes; picture credits behind one small "Image credits" link. |
 | **No drag rails or progress bars** outside a working tool, no range sliders, no line with a knob or dots on it that reads as one, and no switch, checkbox or toggle that changes nothing: a length or a count is a row of stepped buttons; no sideways scrollers on desktop. | A list or grid that fits the width; stepped buttons of real values; features as lines of text at full ink; a control only where it does what it says. |
-| **No page built from boxes,** no bento grids of cards, no wall of tiles in several fills, no list drawn as filled or outlined boxes (questions, loads, specs, plans, options), no staggered folder tabs, no heading alone in its column or on its screen, no empty half-rows (nothing on the left, text on the right), no section with more than one framed thing (a filled panel or the product's window; an outlined box never; `framed-elements` fails three, warns two). | Text straight on the page, separated by space and size: questions as plain rows, specs as name and figure, options as text buttons with only the chosen one filled; the heading over its content; the key content in the open, tabs or an accordion only for secondary detail. The one framed surface is the product's own window, one to a section. |
+| **No page built only of boxes, no boxes in boxes,** no box laid over a photograph, no outlined boxes in a row, no bento grids, no wall of tiles in several fills, no staggered folder tabs, no heading alone in its column or on its screen, no empty half-rows (nothing on the left, text on the right) (`framed-elements`, `boxed-list`, `boxed-page`, `bento`). | Filled cards in the dealt style where things belong together, in two or three sections, side by side and never one inside another; the rest on the ground, separated by space and size: questions as plain rows, specs as name and figure; the heading over its content; the key content in the open, tabs or an accordion only for secondary detail. The product's window holds no card inside it. |
 | **No labels that carry nothing**, no walls of text, no stats band of big figures over one-word labels. | Facts, few words, a figure in the line that says what it counts; see step 5. |
 
 Three places keep their own conventions and are left alone by the inspector: real code in
@@ -637,8 +687,8 @@ generators imitate them and why they now read as costume. They are banned here w
 `references/tells.md` keeps the dated registry.
 
 Removing ornament leaves space. Never fill it with another ornament. Fill it with the full content,
-with a good picture of this subject, or close the gap (tighter sections). Leave it empty on purpose
-once per page at most.
+with a good picture of this subject, or close the gap inside the section; the air between sections
+stays. Leave a screen empty on purpose once per page at most.
 
 ## Laws of the craft
 
@@ -653,12 +703,15 @@ Short form. Numbers are from the study unless marked as house style.
 - Left-aligned by default. Centre at most one moment.
 
 **Space**
-- One grid, one pair of tight margins (16–32px), used everywhere; large things run to the edges. Text
-  blocks share two or three left edges on the whole page.
+- One grid, one pair of margins as section 0 deals them (32-72px at 1440, 20-24px on a phone), used
+  everywhere; a full-bleed picture runs to both edges, everything else keeps both margins. Text blocks
+  share two or three left edges on the whole page.
 - Asymmetry inside the grid, never in the frame: the two outer margins are equal, and an off-centre
   heading is answered by something at the far side of the grid.
-- The gap between sections is clearly larger than any gap inside one: 120–240px on desktop (the study's median is about 240).
-- Each section has a different composition from its neighbours; none is a card grid.
+- The hero fills the first screen alone. The gap between sections is clearly larger than any gap
+  inside one: 16vh or more at 1440 as dealt (the study's median is about 240px).
+- Each section has a different composition from its neighbours; cards group what belongs together
+  in two or three of them, in the dealt style.
 
 **Colour**
 - One ground, one ink, one accent. The accent appears on the action and perhaps one other thing.
@@ -676,17 +729,19 @@ Short form. Numbers are from the study unless marked as house style.
 - Nothing ever lies on top of a headline or a statement (the inspector fails it).
 
 **Components**
-- Buttons: flat, one fill colour, the dealt corner, decided once. Most strong heroes have one button,
+- Buttons: the dealt design (section 0: its shape, height, type, fill and hover), flat, decided once
+  for the page; the brand's own button wins where there is one. Most strong heroes have one button,
   or two (the action and a quieter second).
-- Navigation: the dealt kind, on every page, with the real sections as links and the one action. On a
-  long page it stays in reach: the plain bar returns on scroll up, or the one action stays fixed.
+- Navigation: the dealt design, on every page, with the real sections as links and the one action,
+  nothing above it and no sentence in it. On a long page it stays in reach the way its design says.
+- Cards: the dealt style, filled, for what belongs together; one style on the page.
 - A control explains how to use it by its form, its label and its place. When it seems to need a
   sentence on how to operate it, redesign the control instead of adding the sentence. What a field
   accepts is different. First remove the limit where you can: a date picker, or a parser that takes
   any common format. A limit that remains, such as password rules or file type and size, stays visible
   beside the field and is tied to it with `aria-describedby`.
-- The footer is the dealt kind: it works (links, contact, legal) at text sizes. None of the 65
-  professional sites studied sets a giant name or email there.
+- The footer is the dealt design, a section of its own: it works (links, contact, legal) at text
+  sizes. None of the 65 professional sites studied sets a giant name or email there.
 
 ## Special cases
 
@@ -713,7 +768,8 @@ asset, say so in the report, and pass `--allow <rule>` to the inspector for that
 4. **Order of work, biggest effect for least risk:** type (faces and scale), colour (one ground, one
    ink, one accent), the frame (margins, section rhythm, a title on the first screen and a heading on
    every section), states (hover, focus, loading, empty, error), then the stock components (icon
-   cards, pill badges, gradient blobs, card grids) replaced by the dealt blueprints.
+   cards, pill badges, gradient blobs, bento grids) replaced by the dealt blueprints and section 0's
+   navigation, footer, cards and buttons.
 5. **Prove it.** Inspect again into `.taste-skill/after`, compare before and after at every width,
    click through every link, form and menu that worked before, and report the before and after
    measurements side by side.

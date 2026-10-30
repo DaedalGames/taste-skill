@@ -44,7 +44,7 @@
 }
 [data-scene="room-walk-track"] .rw-chrome,
 [data-scene="room-walk-track"] .rw-underlay,
-[data-scene="room-walk-track"] .rw-edge { display: none; }
+[data-scene="room-walk-track"] .rw-where { display: none; }
 [data-scene="room-walk-track"] a { color: inherit; }
 [data-scene="room-walk-track"] a:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 /* the pills are ink with paper text, set on light blocks: their ring is ink, so it shows on the block. The
@@ -296,7 +296,6 @@ html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-ground {
   display: grid; place-items: center;
 }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-chrome { display: block; position: absolute; inset: 0; z-index: 10; pointer-events: none; will-change: opacity; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge { display: block; }
 /* the moving parts that move for a while keep their own layers for the whole walk */
 html.js [data-scene="room-walk-track"].is-live.rw-walk :is(.rw-flip__a, .rw-flip__b, .rw-pic, .rw-pic img, .rw-stack__pic img, .rw-hold) { will-change: transform; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-read .rw-rl { will-change: opacity; }
@@ -389,21 +388,11 @@ html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-q__body { position: a
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-q__body .rw-rl { display: block; overflow: clip; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-q__body .rw-rl > .rw-in { display: block; }
 
-/* coral, 100vw: a sheet with a soft flat shade on the edge that leads or trails */
+/* coral, 100vw: a flat sheet (no shade at its edges: a drawn shadow is a tell) */
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-coral { width: 100vw; min-height: 0; padding: 0; display: block; overflow: visible; will-change: transform; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-window { position: absolute; left: 50%; top: 50%; width: min(64vw, 113.8vh); aspect-ratio: 16 / 9; translate: -50% -52%; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-window__pan { will-change: transform; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-cap { position: absolute; left: calc(50% - min(32vw, 56.9vh)); top: calc(48% + min(18vw, 32vh) + 2.4vh); width: min(64vw, 113.8vh); }
-/* the shade: fourteen stacked flat translucent strips just outside the sheet's edge (no blur, no
-   gradient), narrower ones nearer the coral, so it deepens toward the edge in steps too small to read
-   as stripes; nothing of it reaches onto the coral itself. The script adds the strips. */
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge { position: absolute; top: 0; height: 100%; width: 4.4vw; pointer-events: none; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge > i { position: absolute; top: 0; height: 100%; background: rgb(21 19 17 / 0.016); }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--l { right: 100%; will-change: opacity; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--l > i { right: 0; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--r { left: 100%; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-edge--r > i { left: 0; }
-
 /* the still stage under the track; its own layer, so the closing settle never repaints the headline */
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-exit { gap: 4.4vh; transform-origin: 50% 50%; will-change: transform; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-exit__title { font-size: min(11vw, 20vh); }
@@ -417,9 +406,7 @@ html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-chip {
   text-decoration: none;
 }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-mark { top: 16px; left: 16px; font-weight: var(--strong-weight, 600); }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-where { bottom: 16px; left: 16px; display: flex; align-items: center; gap: 12px; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-where__count { opacity: 0.62; font-variant-numeric: tabular-nums; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-bar { display: block; width: 56px; height: 4px; border-radius: 2px; background: rgb(21 19 17 / 0.14); overflow: hidden; }
-html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-bar > span { display: block; height: 100%; background: var(--rw-ink); transform-origin: 0 50%; transform: scaleX(0); will-change: transform; }
+/* the where chip (room name, n of 8, a filling bar) was a counter and a progress readout: never shown */
+html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-where { display: none; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-skip { bottom: 16px; right: 16px; }
 html.js [data-scene="room-walk-track"].is-live.rw-walk .rw-chip:hover { background: var(--rw-ink); color: var(--rw-paper); }

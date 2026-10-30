@@ -68,7 +68,7 @@
 
   /* the quiet section before: the school in a sentence */
   .intro {
-    min-height: calc(86svh - 82px);
+    min-height: calc(100svh - 82px);
     padding: clamp(40px, 7vh, 96px) var(--gutter) clamp(56px, 9vh, 120px);
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -136,7 +136,7 @@
     .bar .mark { font-size: 18px; flex-basis: 100%; }
     .bar nav { margin-right: auto; }
     .button { min-height: 42px; padding: 0 16px; }
-    .intro { min-height: 0; padding: 32px 16px 72px; grid-template-columns: minmax(0, 1fr); row-gap: 28px; }
+    .intro { min-height: calc(100svh - 141px); padding: 32px 16px 72px; grid-template-columns: minmax(0, 1fr); row-gap: 28px; align-content: center; }
     .intro h1, .intro__text { grid-column: 1; }
     .intro h1 { font-size: 10.2vw; text-wrap: balance; }
     .visit { padding: 72px 16px 48px; grid-template-columns: minmax(0, 1fr); row-gap: 24px; }

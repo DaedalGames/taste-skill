@@ -3,7 +3,7 @@
 // product's own interface while that interface's panels fly in from the four edges (toolbar from the top,
 // sidebar from the left, inspector from the right, the main pane from the bottom), land with a seam and
 // lock shut into one whole screen. Then three or four layers of detail ink in one at a time (the data, the
-// team's comments, an agent's edits) while one caption in the corner rewrites itself for each layer, and
+// team's comments, an agent's edits) while one caption in the corner changes its line for each layer, and
 // the finished screen shrinks into a column beside a short spec list.
 // Needs stage.css + stage.js, GSAP 3.15.0 and ScrollTrigger (see stage.js for the script tags).
 //
@@ -64,10 +64,13 @@
 //   gap 14 (0-28)           the seam, in px, the panels land with before they lock shut; phoneGap 8
 //   phoneTravel 44 (16-96)  on phones the panels start this far outside their place (not at the screen edge,
 //                           which would send them across the whole screen), fading in as they come
-//   stagger 0.02 (0-0.04)   between one panel's flight and the next
+//   stagger 0.04 (0-0.04)   between one panel's flight and the next (0.04: the main pane flies late enough
+//                           that the shrinking word never lies on its subtitle, at 768 as at 1440)
 //   word true               false: no opening word (the title is there from the start, the panels lock
 //                           around an empty stage); keep it, the word is what the visitor watches land
-//   phone "same"            "same" | "rest" (phones get the finished composition)
+//   phone "rest"            "rest" (phones get the finished composition: the heading and the spec list over
+//                           the full-width screen, every layer on it) | "same" (the build on the phone too;
+//                           its end shrinks the screen into the top half, small, over the spec list)
 // CSS custom properties on the section: --pl-bg (stage ground), --pl-ink (stage type), --pl-surface,
 // --pl-side-bg, --pl-line, --pl-ui-ink, --pl-ui-muted, --pl-accent, --pl-tint, --pl-gx (side margin),
 // --pl-word-size (see parts-lock-into-the-whole.css).
@@ -78,26 +81,31 @@
 // picture): that is what the eye holds while the stage's ground scrolls in empty.
 // Timeline (fractions of the hold): the word alone to 0.02; it steps back onto its title 0.02-0.17 (scale
 // and place solved from the title's own box, so the swap is exact); panel k flies 0.04 + k*stagger for 0.18
-// (phones 0.06 + k*stagger for 0.17, fading in over the first half), so the word is small before any pane's
-// words come near it; they lock shut over 0.035 after the last lands, and the word swaps for the real
-// title as they close; layers ink in between 0.33 and 0.73, one equal share each (the first 55% of a share
-// inking, every part of the layer setting off within 0.03, the rest at rest, so the layer reads whole
-// before the next begins); the caption shows from 0.39, rewrites at the start of each layer (timed, about
-// 0.5s: the old line is taken back to the words both share and the new one is typed on, so every
-// in-between frame reads as part of a real sentence; always to the line of the layer the scroll is in, so a
-// fast flick never leaves it behind) and leaves at 0.745; the screen shrinks onto .pl-endslot 0.765-0.90,
-// and the heading and spec rows rise 0.885-0.955 as it clears their ground; the last frame holds to 1 (a
-// short rest before the release, not a dead stretch).
+// from beyond its edge of the screen, but shows only from the moment it lies wholly on the screen, fading
+// in over the rest of its flight, so no frame has a panel sliced by the screen's edge (phones 0.06 +
+// k*stagger for 0.17 from phoneTravel outside its place, fading in over the first half), so the word is
+// small before any pane's words come near it; they lock shut over 0.035 after the last lands, and the word swaps for the real
+// title as they close; layers ink in from just after the lock (0.387 with four panels) to 0.69, one equal
+// share each, each layer's inking moved to the nearest start that keeps it inside one tenth of the hold,
+// clear of the 10% marks (three layers: 0.412, 0.512, 0.612), so a frame on any tenth shows a layer not
+// begun or whole (the first 55% of a share inking, every part of the layer setting off within 0.03, the
+// rest at rest, so the layer reads whole before the next begins); the caption shows with the first layer,
+// changes its line at the start of each layer (timed, about 0.35s: the old line fades out and the new one
+// in, so no frame shows a half-typed word; always to the line of the layer the scroll is in, so a fast
+// flick never leaves it behind) and leaves at 0.70; the screen shrinks onto .pl-endslot 0.72-0.85, and
+// the heading and spec rows rise 0.83-0.90 as it clears their ground; the last frame, whole and in full
+// ink, holds from 0.90 to 1 (a short rest before the release, not a dead stretch).
 (() => {
   if (!window.Stage) return;
   const ID = 'parts-lock-into-the-whole';
   const num = (v, d, lo, hi) => { const n = Number(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
 
   const WORD = [0.02, 0.17];
-  const LAYERS = [0.33, 0.73];
-  const CAP_OUT = 0.745;
-  const SHRINK = [0.765, 0.9];
-  const SPEC = 0.885;
+  const LAYERS = [0.33, 0.69]; // the layers ink in here, never before the panels have locked shut
+  const CAP_OUT = 0.7;
+  const SHRINK = [0.72, 0.85];
+  const SPEC = 0.83;           // the heading and the spec rows rise 0.83-0.90
+  const EDGE = 0.012;          // the least room between a layer's inking and a tenth of the hold
 
   // An element's layout box in the stage, transforms ignored: where it rests when everything has landed.
   const boxIn = (el, root) => {
@@ -150,7 +158,14 @@
         // the seam: each panel lands a little outside its place, in percent of its own size
         const gx = from === 'left' ? -gap : from === 'right' ? gap : 0;
         const gy = from === 'top' ? -gap : from === 'bottom' ? gap : 0;
-        return { x0, y0, gx: r.w ? (gx / r.w) * 100 : 0, gy: r.h ? (gy / r.h) * 100 : 0 };
+        // the share of its flight after which the panel lies wholly on the screen (power3.out solved
+        // backwards from the room between its place, seam included, and the screen's edge): it shows
+        // only from then on, so no frame has a panel cut by the edge of the screen
+        const room = from === 'top' ? r.y : from === 'bottom' ? S.h - r.y - r.h : from === 'left' ? r.x : S.w - r.x - r.w;
+        const travel = Math.abs(x0 || y0);
+        const inside = travel ? Math.min(1, Math.max(0, 1 - (room - gap) / travel)) : 0;
+        const tin = phone ? 0 : 1 - Math.cbrt(1 - inside);
+        return { x0, y0, gx: r.w ? (gx / r.w) * 100 : 0, gy: r.h ? (gy / r.h) * 100 : 0, tin };
       });
       const out = { S, U, P, wx: 0, wy: 0, wk: 1, ex: 0, ey: 0, es: 1 };
       if (word && target) {
@@ -193,8 +208,11 @@
       tl.fromTo(word, { x: 0, y: 0, scale: 1, transformOrigin: '0% 0%', force3D: true }, {
         x: () => geo().wx, y: () => geo().wy, scale: () => geo().wk, duration: WORD[1] - WORD[0], ease: 'power2.inOut',
       }, WORD[0]);
-      tl.fromTo(word, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.001 }, lock1);
-      tl.fromTo(target, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, lock1);
+      // one instant, no fade: the word and the title it lies on are never both showing (two copies of the
+      // same word printed on each other read as a smear, and scenes.mjs counts them as crossing)
+      gsap.set(target, { autoAlpha: 0 });
+      tl.set(word, { autoAlpha: 0 }, lock1);
+      tl.set(target, { autoAlpha: 1 }, lock1);
     }
     if (lead.length) tl.fromTo(lead, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.03, ease: 'power1.out' }, word ? lock1 : lock0);
 
@@ -208,7 +226,16 @@
       tl.fromTo(p, { x: () => geo().P[i].x0, y: () => geo().P[i].y0, force3D: true }, {
         x: 0, y: 0, duration: fly, ease: 'power3.out',
       }, s0);
-      tl.fromTo(p, { autoAlpha: 0 }, { autoAlpha: 1, duration: fly * (phone ? 0.5 : 0.25), ease: 'power1.out' }, s0);
+      if (phone) tl.fromTo(p, { autoAlpha: 0 }, { autoAlpha: 1, duration: fly * 0.5, ease: 'power1.out' }, s0);
+      else {
+        // hidden while any of it is off the screen, then fading in over the rest of its flight
+        const seen = (t) => {
+          if (t >= 1) return 1;
+          const a = geo().P[i].tin;
+          return Math.min(1, Math.max(0, (t - a) / Math.max(0.05, Math.min(0.22, 1 - a))));
+        };
+        tl.fromTo(p, { autoAlpha: 0 }, { autoAlpha: 1, duration: fly, ease: seen }, s0);
+      }
     });
 
     // 3. The layers ink in, one equal share of 0.39-0.72 each: every part of a layer sets off within 0.03 of
@@ -216,12 +243,33 @@
     // a layer's line once the layer has begun to show (starts[]), never before.
     const marked = q('[data-layer]').filter((e) => e.getClientRects().length);
     const N = Math.min(4, Math.max(0, ...marked.map((e) => Math.round(+e.dataset.layer) || 0)));
-    const share = N ? (LAYERS[1] - LAYERS[0]) / N : 0;
+    // the first layer waits for the lock (a later stagger moves the lock later)
+    const L0 = Math.max(LAYERS[0], lock1 + EDGE);
+    const share = N ? (LAYERS[1] - L0) / N : 0;
+    const ink = share * 0.55;
+    // Each layer's inking (its spread and its tween) is moved to the nearest start that keeps it inside one
+    // tenth of the hold, clear of the 10% marks, so a frame taken on any tenth shows each layer either not
+    // begun or whole, never half inked.
+    const span = Math.min(0.045, ink * 0.7) + Math.min(0.03, ink - Math.min(0.045, ink * 0.7));
+    const t0s = [];
+    for (let L = 1, prev = -1; L <= N; L++) {
+      const s = L0 + (L - 1) * share;
+      const least = Math.max(L0, prev < 0 ? 0 : prev + span + 0.02);
+      const tenth = (t) => Math.floor(t * 10 + 1e-9) / 10;
+      const ok = (t) => t >= least - 1e-9 && t - tenth(t) >= EDGE - 1e-9 && t + span <= tenth(t) + 0.1 - EDGE + 1e-9;
+      let best = Math.max(s, least);
+      if (span <= 0.1 - 2 * EDGE && !ok(best)) {
+        const m = tenth(s);
+        const c = [m - 0.1, m, m + 0.1, m + 0.2].flatMap((t) => [t + EDGE, t + 0.1 - EDGE - span]).filter(ok);
+        if (c.length) best = c.reduce((a, b) => (Math.abs(b - s) < Math.abs(a - s) - 1e-9 ? b : a));
+      }
+      t0s.push(best);
+      prev = best;
+    }
     const starts = [];
     for (let L = 1; L <= N; L++) {
       const els = marked.filter((e) => Math.round(+e.dataset.layer) === L);
-      const t0 = LAYERS[0] + (L - 1) * share;
-      const ink = share * 0.55;
+      const t0 = t0s[L - 1];
       starts.push(t0 + Math.min(0.02, ink * 0.35));
       const d = Math.min(0.045, ink * 0.7);
       const spread = Math.min(0.03, ink - d);
@@ -239,8 +287,9 @@
       });
     }
 
-    // 4. The caption: one line, rewritten letter by letter from the left at the start of each layer. Timed,
-    // not scrubbed, but always aimed at the line of the layer the scroll is in.
+    // 4. The caption: one line, swapped whole at the start of each layer (the old line fades out, the new one
+    // fades in, about 0.35s in all). Timed, not scrubbed, but always aimed at the line of the layer the
+    // scroll is in.
     let rewrite = null;
     if (caption) {
       const lines = [...caption.querySelectorAll('.pl-cap')].map((e) => e.textContent.replace(/\s+/g, ' ').trim());
@@ -253,26 +302,13 @@
       const to = (k) => {
         const next = lines[k] || '';
         if (rewrite) rewrite.kill();
-        if (+gsap.getProperty(caption, 'opacity') < 0.05 || !text) { text = next; now.textContent = next; return; }
-        // take the old line back to the words both lines share, then type the new one on: every frame in
-        // between is the start of a real sentence, never a mix of two
-        const from = text;
-        let p = 0;
-        while (p < from.length && p < next.length && from[p] === next[p]) p++;
-        p = from.slice(0, p).lastIndexOf(' ') + 1;
-        const del = from.length - p;
-        const add = next.length - p;
-        const cut = del / Math.max(1, del + add * 1.6);
-        const st = { k: 0 };
-        rewrite = gsap.to(st, {
-          k: 1, duration: 0.5, ease: 'none',
-          onUpdate: () => {
-            const k = st.k;
-            text = k < cut ? from.slice(0, from.length - Math.round((k / cut) * del)) : next.slice(0, p + Math.round(((k - cut) / (1 - cut)) * add));
-            now.textContent = text || ' ';
-          },
-          onComplete: () => { text = next; now.textContent = next; },
-        });
+        if (+gsap.getProperty(caption, 'opacity') < 0.05 || !text || next === text) { text = next; now.textContent = next; gsap.set(now, { autoAlpha: 1 }); return; }
+        // the old line fades out, the new one fades in: never a half-typed word, never two lines at once
+        text = next;
+        rewrite = gsap.timeline()
+          .to(now, { autoAlpha: 0, duration: 0.14, ease: 'power1.in' })
+          .call(() => { now.textContent = next; })
+          .to(now, { autoAlpha: 1, duration: 0.2, ease: 'power1.out' });
       };
       tl.fromTo(caption, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.02, ease: 'power1.out' }, starts.length ? starts[0] - 0.01 : LAYERS[0]);
       tl.fromTo(caption, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.015, ease: 'power1.in', immediateRender: false }, CAP_OUT);
@@ -296,6 +332,7 @@
         ScrollTrigger.removeEventListener('refreshInit', forget);
         if (rewrite) rewrite.kill();
         const now = caption && caption.querySelector('.pl-cap-now');
+        if (now) gsap.set(now, { clearProps: 'opacity,visibility' });
         if (now) now.remove();
       });
     }
@@ -310,7 +347,7 @@
       gap: num(opts.gap, 14, 0, 28),
       phoneGap: num(opts.phoneGap, 8, 0, 20),
       phoneTravel: num(opts.phoneTravel, 44, 16, 96),
-      stagger: num(opts.stagger, 0.02, 0, 0.04),
+      stagger: num(opts.stagger, 0.04, 0, 0.04),
       word: opts.word !== false,
     };
     const run = (tl, ctx) => build(tl, ctx, o);
@@ -318,7 +355,8 @@
       hold: o.hold,
       scrub: o.scrub,
       build: run,
-      phone: opts.phone === 'rest' ? 'rest' : { hold: o.phoneHold, build: run },
+      // phones get the finished composition unless the page asks for the build ("same")
+      phone: opts.phone === 'same' ? { hold: o.phoneHold, build: run } : 'rest',
     });
   };
 })();

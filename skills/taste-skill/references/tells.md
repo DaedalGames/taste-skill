@@ -29,7 +29,7 @@ inspector fails the page; **warned** means it flags it and you need a reason.
 | Glass panels: backdrop blur, translucent cards | warned (2 or more) | Opaque surfaces one tone step from the ground |
 | Glowing or gradient "Get started" button | banned | Flat button named for its action |
 | Soft grey drop shadow under every card | banned | Tone step, or no box |
-| Three identical feature cards, each with an icon in a rounded square | banned | The dealt section blueprint |
+| Three identical feature cards, each with an icon in a rounded square | banned (the icon) | Cards in the dealt style, with no icon on top, or the dealt section blueprint |
 | Emoji as icons or bullets | banned | Words, or a real picture |
 | Centred headline, subtitle, two buttons, screenshot below | no rule; the draw avoids it | The dealt hero |
 | The same typeface on every generated page | warned (lint: default-font) | The dealt type system |
@@ -41,9 +41,9 @@ inspector fails the page; **warned** means it flags it and you need a reason.
 | Eyebrow / kicker: tiny tracked uppercase label above every heading | banned | Fold it into the heading, or delete |
 | Pill badge above the hero headline ("New", "Beta", "Introducing") | banned | Say it in the supporting sentence |
 | One word of the headline in italic serif, colour or underline | warned | One face, one colour |
-| Bento grid of rounded tiles as the feature section | warned as card rows and bento; a list of boxes fails (boxed-list) | A composed section set as type on the ground; a tile only where it holds a picture |
+| Bento grid of rounded tiles as the feature section | failed when two of its cards are half empty or more (`bento`); outlined boxes in a row fail (`boxed-list`) | The dealt card style for a group of one kind; the rest set as type on the ground |
 | Near-black ground with one neon accent and a glow | banned via shadow, gradient | A dealt dark palette, no glow |
-| Floating rounded pill navigation with blur | warned | A plain bar |
+| Floating rounded pill navigation with blur | warned when blurred or see-through (`pill-nav`) | The navigation section 0 deals; a floating capsule only opaque, one tone step from the ground |
 | Fake dashboard hero built from grey bars and donut charts | no rule; see imagery.md §7 | A real interface fragment, or no image |
 | Decorative status dot ("Available for work", pulsing "live") | lint: bounce | Remove |
 | Fade-and-rise on every section | no rule; see motion.md | One signature move |
@@ -89,7 +89,7 @@ against 57% of weak ones.
 | Stock section order: hero, logos, features, testimonial, pricing, CTA | no rule; see copy.md §1 | The order of the argument |
 | Every section the same layout family | critique.md pass 9 | Different composition per section, from the sheet |
 | Everything centred | warned over 72% | Left-anchored, one centred moment |
-| One medium border radius (12–16px) on everything | none | Square or fully round, chosen once |
+| One medium border radius (12–16px) on everything | none | The dealt corner for cards and pictures, the dealt button design for buttons |
 | Nine nearly equal font sizes | warned over 9 | Five sizes, far apart |
 | Invented social proof: logos, quotes, star rows, "10,000+ teams" | copy.md §5 | Real proof, or none |
 | Text or a CSS box where a picture belongs | critique.md cap | A real picture, or a design that needs none |
@@ -98,13 +98,13 @@ against 57% of weak ones.
 | Bento grid of feature cards with empty cells (October 2026) | failed (`bento`) | An editorial list, or one large product view with annotations |
 | A range slider as an estimator (October 2026) | failed (`range-slider`) | Stepped buttons of real values |
 | A scene drawing wheels, waves or a scrubber rail (October 2026) | failed (`scene-drawing`, `scene-track`) | Real pictures, the product's interface, or type |
-| A link-column footer on a one-page site (October 2026) | not dealt | One quiet line: name, city, legal, Image credits |
+| A link-column footer on a one-page site (October 2026) | not dealt | One of the other footer designs section 0 deals |
 | A short line held for two screens or more (October 2026) | failed over 1.2 screens (`line-holds`) | One screen a line, or a second beat with new content |
-| The template stack: a centred headline, a line, two actions and a round-cornered photograph card (October 2026) | failed (`template-hero`) | The dealt hero's geometry, its largest type the page's idea or the name |
+| The template stack: a centred headline and a line over a round-cornered photograph card or a row of two or three cards, with or without actions (October 2026) | failed (`template-hero`) | The dealt hero's geometry, its largest type the page's idea or the name |
 | One photograph held under every step of a stepped scene, repeated down the page without the pin (October 2026) | failed at three showings on tablet and phone (`repeated-picture`) | Its own picture per step; one picture shown once, the steps beside it |
 | A band of big figures, each over a one- or two-word label (October 2026) | warned (`stats-band`) | A figure in the line that says what it counts |
 | Two email forms on one page, the closing section and the footer (October 2026) | warned (`duplicate-form`) | One form |
-| Three framed things in one section: mini-interface slabs, a boxed photograph, a box repeating a label (October 2026) | failed at three, warned at two (`framed-elements`) | One framed window a section; the rest on the ground |
+| Boxes in boxes (a card in a panel, a product window on a card), a box laid half or more over a photograph or cut to a shape, three outlined boxes in one section, three product windows on the first screen (October 2026) | failed (`framed-elements`); a page of nothing but boxes fails `boxed-page` | Filled cards side by side in the dealt style, never one inside another; no outlines |
 | Picture beside text in every section, 50/50 all the way down (October 2026) | warned at three in a row (`repeated-split`) | One section breaks the split: a full-bleed picture, a headline across the width, an 8/4 asymmetry |
 | A milky or dark fade over a full-bleed photograph (October 2026) | failed (`gradient`) | Words on its calm part, or beside it; at most a flat dark scrim |
 | A blue lightened for a dark ground into periwinkle (October 2026) | failed (`palette-purple`); the draw turns it | Lighten toward the cyan side, or another accent |
@@ -112,11 +112,27 @@ against 57% of weak ones.
 | A search box or button in a product fragment that does nothing when used (October 2026) | warned (`dead-control`) | It works, or it reads as static: no pointer, hover or focus |
 | A photograph with no line in the Image credits (October 2026) | warned (`uncredited-picture`) | One credit for every photograph that is not the client's own |
 | A product replay whose beats change a few percent of its window (October 2026) | warned at one faint beat (under 15% of the window) or a largest beat under 30%, failed when most are faint (`replay-faint`) | Each beat changes about a third of the window; the result large and in the accent |
-| A scene that rests on a row of tickets, date cards or filled panes (October 2026) | failed (`boxed-list`, in the scene's finished composition too) | The items as type on the ground, or another scene |
+| A list drawn as boxes that are not cards: outlined items, tickets cut to a shape, items that each hold a box of their own (October 2026) | failed (`boxed-list`, in a scene's finished composition too) | Filled cards in the dealt style, or the items as type on the ground |
 | A display statement alone on its screen while its section's content waits below (October 2026) | failed when it holds alone for two screens (`lone-heading`) | The heading over its content from the first frame |
 | Running text in a pale grey (October 2026) | failed under 4.5:1 (`contrast`) | The full ink; grey only for notes |
 | A left column that ends while the text beside it runs on (October 2026) | warned (`empty-left`) | Balance the columns, or let the text run full width below |
 | A scene frame with a heading's letters turned or off their line, or a picture cut to a sliver by the screen edge mid-hold (October 2026) | warned on the contact sheets (`tilted-letters`, `edge-sliver`) | Every settled step finished and level |
+
+On 29 October 2026 the owner looked at the test pages himself. What he named, and what it is now:
+
+| Tell | Status | Do instead |
+| --- | --- | --- |
+| Everything alike: three button shapes at one size, one plain bar that hides on scroll, a one-line footer | not dealt; each is one of about twelve designs in section 0 | The navigation, footer, cards and buttons the sheet deals |
+| The next section already in view on the first screen | failed (`hero-not-alone`) | The hero alone, `min-height: 100svh` |
+| Sections crowding each other, no air between them | warned under 12% of the screen, failed under 6% (`section-air`) | 16vh or more between sections at 1440, as dealt |
+| A product window or picture run into one screen edge while the other keeps its margin | failed (`edge-run`; a picture or colour field as tall as its section, flush with one side, is warned) | Inside both margins, or full-bleed across both edges |
+| An announcement or information strip above the navigation | failed (`announcement-bar`) | Nothing above the bar |
+| A sentence in the navigation | failed (`nav-sentence`, also any link or button over three words) | One- or two-word links |
+| Text floating with no card or container where it belongs to a group | critique.md | The dealt card style for the group |
+| A one-line footer | not dealt | A designed footer section |
+| Documentary or archive photographs: old Commons or museum pictures, postcards, old maps, news-like shots | banned | Modern, well-lit photographs (the library's), or none |
+| Too much text: long supporting lines, paragraphs, a heading and two sentences over every list | warned over the budget, failed past 1.5 times (`wordy-hero`, `hero-words`, `wordy-section`, `wordy-page`) | The first screen 30 words, a section 60, the page about 500 |
+| A headline that repeats the logo beside it; two buttons to the same place on one screen | critique.md | The name once on the first screen; one action once a block |
 
 ## 6. Copy tells
 

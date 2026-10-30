@@ -34,26 +34,35 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 24px var(--gutter);
+    height: 76px;
+    padding: 0 var(--gutter);
     font-size: 16px;
   }
   .bar .mark { font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }
   .bar .go { text-decoration: none; }
+  .bar .links { display: flex; gap: clamp(18px, 3vw, 36px); }
   .bar .go:hover, .bar .go:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
 
+  /* the first screen is the opening alone (the bar is 76px): the day starts at the fold */
+  /* the line at the top right, the headline at the foot on the left, sized with the screen so the words
+     fill it, and the action beside its last line */
   .intro {
-    min-height: calc(56svh - 76px);
-    padding: clamp(40px, 8vh, 96px) var(--gutter) clamp(48px, 8vh, 88px);
+    min-height: calc(100svh - 76px);
+    padding: clamp(32px, 6svh, 72px) var(--gutter) clamp(40px, 7svh, 80px);
     display: grid;
     grid-template-columns: minmax(0, 1fr) clamp(280px, 30vw, 420px);
-    column-gap: 6vw;
-    align-items: end;
-    align-content: end;
+    grid-template-rows: auto 1fr;
+    gap: 40px 6vw;
   }
+  .intro > div { display: contents; }
+  .intro p { grid-column: 2; grid-row: 1; }
+  .intro .book { grid-column: 2; grid-row: 2; align-self: end; justify-self: start; }
   .intro h1 {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
     margin: 0;
-    max-width: 12ch;
-    font-size: clamp(52px, 8vw, 128px);
+    font-size: clamp(64px, min(12.5vw, 30svh), 280px);
     font-weight: 600;
     line-height: 0.92;
     letter-spacing: -0.04em;
@@ -93,16 +102,36 @@
   .book:hover { background: #2a332f; }
   .book:active { transform: scale(0.98); }
   .book:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
-  footer { padding: 48px var(--gutter) 40px; font-size: 16px; color: #3d4441; }
-  footer p { margin: 0; max-width: 62ch; }
+  /* the footer: three filled cards in the surface tone on the ground (the place, the contact, the day),
+     the small print under them */
+  footer { padding: clamp(96px, 14vw, 180px) var(--gutter) 40px; }
+  .foot-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .foot-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 32px;
+    min-height: 280px;
+    padding: 28px;
+    border-radius: 14px;
+    background: #d8ddd8;
+  }
+  .foot-card h2 { margin: 0; font-size: clamp(26px, 2.2vw, 34px); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; }
+  .foot-card p { margin: 0; }
+  .foot-card a { text-underline-offset: 4px; }
+  .small { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin: 24px 0 0; font-size: 15px; color: #3d4441; }
 
   /* below 1024px the headline takes the full measure, so it holds two lines */
   @media (max-width: 1023px) {
     .intro, .after { grid-template-columns: minmax(0, 1fr); row-gap: 32px; }
+    .intro p { grid-column: 1; }
+    .intro .book { grid-column: 1; grid-row: 3; }
+    .intro h1 { font-size: clamp(64px, min(19vw, 30svh), 280px); }
+    .foot-cards { grid-template-columns: 1fr; }
+    .foot-card { min-height: 200px; }
   }
   @media (max-width: 767px) {
-    .intro { min-height: calc(60svh - 76px); }
-    .intro h1 { font-size: 52px; }
+    .intro h1 { font-size: 19vw; }
     .intro p { font-size: 18px; }
     .after h2 { font-size: 40px; }
   }
@@ -111,14 +140,14 @@
 <body>
 <header class="bar">
   <a class="mark" href="#top" id="top">Nesvik Sea Baths</a>
-  <a class="go" href="#season">Book a swim</a>
+  <nav class="links" aria-label="Main"><a class="go" href="#day">The day</a><a class="go" href="#season">Book a swim</a></nav>
 </header>
 
 <main>
 <section class="intro" aria-labelledby="intro-title">
-  <h1 id="intro-title">Swim the open sea at Nesvik</h1>
+  <h1 id="intro-title">Swim the open sea</h1>
   <div>
-    <p>A sea-swimming school on the outer coast, with guided swims from seven in the morning until dark, a wood-fired sauna and a bath house by the water.</p>
+    <p>A sea-swimming school on the outer coast, with guided swims from seven until dark and a wood-fired sauna by the water.</p>
     <a class="book" href="#season">See the season</a>
   </div>
 </section>
@@ -131,7 +160,6 @@
     <nav class="chs-index" aria-label="The swims of the day">
       <ol>
         <li class="chs-tab"><a href="#swim-1">Morning</a></li>
-        <li class="chs-tab"><a href="#swim-2">Noon</a></li>
         <li class="chs-tab"><a href="#swim-3">Sundown</a></li>
         <li class="chs-tab"><a href="#swim-4">Last watch</a></li>
       </ol>
@@ -148,20 +176,6 @@
       <div class="chs-text">
         <h3 class="chs-title">In off the rocks</h3>
         <p class="chs-body">The first swim leaves at seven from the flat rocks below the bath house. The bay is clear and fourteen degrees, and a guide swims at the edge of every group.</p>
-      </div>
-    </article>
-
-    <article class="chs-ch" id="swim-2" data-horizon=".657" style="--plate-bg:#7d95a3; --scrim:.52; --obj-pos:50% 70%">
-      <figure class="chs-plate">
-        <picture>
-          <source media="(max-width: 767px)" sizes="112vw" srcset="https://picsum.photos/id/941/400/1200.webp 400w, https://picsum.photos/id/941/600/1800.webp 600w">
-          <source media="(orientation: portrait) and (max-width: 1023px)" sizes="112vw" srcset="https://picsum.photos/id/941/720/1200.webp 720w, https://picsum.photos/id/941/1080/1800.webp 1080w">
-          <img class="chs-img" src="https://picsum.photos/id/941/1700/1700.webp" srcset="https://picsum.photos/id/941/1200/1200.webp 1200w, https://picsum.photos/id/941/1700/1700.webp 1700w, https://picsum.photos/id/941/2200/2200.webp 2200w" sizes="112vw" width="1700" height="1700" alt="A small wooded island on a pale, glassy sea under a bright white sky">
-        </picture>
-      </figure>
-      <div class="chs-text">
-        <h3 class="chs-title">Across to the island</h3>
-        <p class="chs-body">At noon the strong swimmers cross to the island: 1.2 kilometres of open water, a kayak alongside, a rest on the warm rock, then the long swim back.</p>
       </div>
     </article>
 
@@ -198,7 +212,7 @@
 <section class="after" id="season" aria-labelledby="season-title">
   <h2 id="season-title">Open June to August</h2>
   <div>
-    <p>Four swims a day, and every swim has a guide in the water and a kayak alongside. Bring a swimsuit; we lend wetsuits, gloves and the orange caps.</p>
+    <p>Three swims a day, and every swim has a guide in the water and a kayak alongside. Bring a swimsuit; we lend wetsuits, gloves and the orange caps.</p>
     <ul>
       <li><strong>18 euros</strong> a swim, the sauna included</li>
       <li><strong>1.2 kilometres</strong> across the bay, the longest swim</li>
@@ -209,7 +223,25 @@
 </section>
 </main>
 
-<footer><p>Photographs: Paul Jarvis, Ivan Slade, Yoni Kaplan-Nadel and Lee Scott, through Unsplash. Nesvik and its sea baths are invented for this demonstration.</p></footer>
+<!-- the footer: three filled cards (the place, the contact, the day), the small print under them -->
+<footer>
+  <div class="foot-cards">
+    <div class="foot-card">
+      <h2>Nesvik, on the outer coast</h2>
+      <p>The bath house is the last building on the harbour road.<br><a href="#season">Directions</a></p>
+    </div>
+    <div class="foot-card">
+      <h2>Write to us</h2>
+      <p><a href="#season">swim@nesvik.no</a><br>Answered the same day in season.</p>
+    </div>
+    <div class="foot-card">
+      <h2>The day</h2>
+      <p>First swim at seven, the last at sundown. The gate locks at ten.</p>
+    </div>
+  </div>
+  <p class="small"><span>Photographs from Unsplash. Nesvik and its sea baths are invented for this demonstration.</span><a href="#top">Back to the top</a></p>
+</footer>
+<!-- Photographs: Paul Jarvis, Yoni Kaplan-Nadel and Lee Scott, through Unsplash. -->
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>

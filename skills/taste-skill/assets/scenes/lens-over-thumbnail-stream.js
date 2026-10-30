@@ -1,11 +1,13 @@
 // tasteskill / scenes / lens-over-thumbnail-stream.js — a lens over a thumbnail stream (references/scenes.md).
 //
-// A held stage carries one thin strip of greyscale thumbnails grouped by project. Scrolling slides the
-// strip left while a playhead line sweeps right; every picture near the line swells, takes its colour and
-// heaps into a seeded collage of its project that fills the band from top to bottom, then sinks back into
-// the strip once the line has passed. A masthead caption relays letter by letter to name the project under
-// the line, so a whole archive becomes one scrubbable index with the detail view built in. For portfolios,
-// archives and catalogues: 5-12 projects of 5-10 pictures each (it works from 2 projects, it shines from 6).
+// A held stage carries one thin strip of colour thumbnails grouped by project. Scrolling slides the strip
+// left while an unseen lens sweeps right; every picture near the lens swells and heaps into a seeded
+// collage of its project that fills the band from top to bottom, then sinks back into the strip once the
+// lens has passed. Project one is already open under the lens on the first frame. A masthead caption
+// relays letter by letter to name the project under the lens, with its year, category and link beside it,
+// so a whole archive becomes one scrubbable index with the detail view built in. No line, chip, counter or
+// greyscale strip: the lens is shown only by what it opens. For portfolios, archives and catalogues: 5-12
+// projects of 5-10 pictures each (it works from 2 projects, it shines from 6).
 //
 // DOM (the finished composition, a contact-sheet index, is what shows without script or with reduced motion):
 //
@@ -15,7 +17,8 @@
 //       <header class="lens-head">
 //         <h2 class="lens-title" id="lens-title">Selected work</h2>        the caption shows it while live
 //         <p class="lens-range">Commissions from 2019 to 2026</p>
-//         <p class="lens-count" data-now="{k} of {n}">8 projects</p>      live text: "{k} of {n}"
+//         <p class="lens-count">8 projects</p>      static, shown as it is (an older data-now="{k} of {n}" is
+//                                                   ignored: a live count is a counter)
 //       </header>
 //       <div class="lens-field">
 //         <ol class="lens-track">
@@ -31,12 +34,12 @@
 //           </li>
 //           … one li.lens-group per project …
 //         </ol>
-//         <div class="lens-playhead" aria-hidden="true"><i class="lens-line"></i><span class="lens-flag"></span></div>
-//       </div>
-//       <footer class="lens-foot" aria-hidden="true">
+//       </div>                     (an older .lens-playhead with its .lens-line and .lens-flag is kept hidden)
+//       <div class="lens-foot" aria-hidden="true">   a div, not a <footer>: the page's footer must be the
+//                                                    first footer element (tools and readers take it for it)
 //         <p class="lens-caption"><span class="lens-caption-line"></span><span class="lens-caption-line"></span></p>
-//         <p class="lens-meta"><span class="lens-meta-cat"></span><a class="lens-meta-link" href="#" tabindex="-1">View the project</a></p>
-//       </footer>
+//         <p class="lens-meta"><span class="lens-meta-year"></span><span class="lens-meta-cat"></span><a class="lens-meta-link" href="#" tabindex="-1">View the project</a></p>
+//       </div>                     (.lens-meta-year is created when missing; an older <footer class="lens-foot"> still works)
 //     </div>
 //   </section>
 //
@@ -48,22 +51,23 @@
 // height attributes when missing); nothing is cropped. At 1440x900 a key blooms to about 306x460px and a
 // satellite to 130-250px tall: export keys about 960px wide, the rest 480-640px on the long side. Names fit themselves to the caption band (they shrink, and wrap to two lines past about
 // 30 characters), but short names of 1-2 words read best. Give the first two groups eager pictures and the
-// rest loading="lazy"; the scene loads them when it is 1.5 screens away. The playhead and the live count
-// are created when missing; the flag shows each project's data-year.
+// rest loading="lazy"; the scene loads them when it is 1.5 screens away. Each project's data-year shows
+// in the meta row.
 //
-// Colour: the strip is greyscale and colour arrives with the bloom. Flat thumbnails are painted into the
-// strip's own layer (their filter costs nothing per frame); only pictures that are blooming become layers.
+// Colour: every picture is in its own colour, in the strip as in the bloom (a greyscale strip is a banned
+// device). Flat thumbnails are painted into the strip's own layer; only pictures that are blooming become
+// layers.
 //
 // Options (data-options JSON; defaults in brackets):
 //   hold       screens the desktop stage is held for [clamp(0.62 x projects, 4, 7.5)], 2-10
 //   phoneHold  screens on a phone [clamp(0.55 x projects, 3.5, 6.5)], 2-10
 //   phone      'same' (a fixed centre lens and the strip does the travel) | 'rest' (the contact sheet) ['same']
 //   sweep      share of the width the line travels on desktop, 0-0.6 [0.5: from 0.25W to 0.75W]; 0 = fixed lens
-//   bloom      key picture height in bloom units, 4-10 [9]. A unit is 3.78% of the screen height (34px at
-//              1440x900), at most 4% of the width; satellites are 42-82% of the key. 9 fills about 60% of
-//              the width and the whole collage band at 1440x900
+//   bloom      key picture height in bloom units, 4-10 [10]. A unit is 3.78% of the screen height (34px at
+//              1440x900), at most 4% of the width (5.2% on a screen taller than wide); satellites are
+//              42-82% of the key. 10 fills more than half the width and the whole collage band at 1440x900
 //   phoneBloom the same on a phone, in strip heights (28px), 4-10 [9]; the key never outgrows the screen
-//   reach      lens radius as a share of the width, 0.15-0.8 [0.36; phone 0.7]
+//   reach      lens radius as a share of the width, 0.15-0.8 [0.45; phone 0.7]
 //   gate       0.15-1 [0.35]: at 0.15 one collage shows at a time, at 1 two always mix
 //   push       horizontal spread of a bloom, -0.55 (pull in, dense) to 0.35 (push out, roomy) [0.35; phone -0.55]
 //   dwell      0-0.9 [0.7]: how much the strip slows at each project (0 = a steady conveyor)
@@ -165,7 +169,7 @@
       hold: num(opts.hold, clamp(0.62 * N, 4, 7.5), 2, 10),
       phoneHold: num(opts.phoneHold, clamp(0.55 * N, 3.5, 6.5), 2, 10),
       sweep: num(opts.sweep, 0.5, 0, 0.6),
-      bloom: num(opts.bloom, 9, 4, 10),
+      bloom: num(opts.bloom, 10, 4, 10),
       phoneBloom: num(opts.phoneBloom, 9, 4, 10),
       reach: num(opts.reach, NaN, 0.15, 0.8),
       gate: num(opts.gate, 0.35, 0.15, 1),
@@ -207,33 +211,21 @@
     const metaLink = $('.lens-meta-link');
     // only a label before the strip is drawn (see the note on end labels above)
     const caps = [...track.querySelectorAll(':scope > .lens-cap')].filter((c) => c.compareDocumentPosition(groupEls[0]) & Node.DOCUMENT_POSITION_FOLLOWING);
-    let playhead = $('.lens-playhead');
-    if (!playhead && root.querySelector('.lens-field')) {
-      playhead = document.createElement('div');
-      playhead.className = 'lens-playhead';
-      playhead.setAttribute('aria-hidden', 'true');
-      playhead.innerHTML = '<i class="lens-line"></i><span class="lens-flag"></span>';
-      root.querySelector('.lens-field').appendChild(playhead);
+    // The playhead (a drawn line with a year chip on it) is no longer drawn: a line through every collage is
+    // a drawn track standing for the scroll, and the chip a boxed label. A page that still has the markup
+    // keeps it hidden (the CSS); the year now reads in the caption's meta row, beside the category.
+    // the year in the meta row, created when missing (before the category)
+    let metaYear = $('.lens-meta-year');
+    if (!metaYear && metaRow) {
+      metaYear = document.createElement('span');
+      metaYear.className = 'lens-meta-year';
+      metaRow.insertBefore(metaYear, metaRow.firstChild);
     }
-    const line = playhead && playhead.querySelector('.lens-line');
-    const flag = playhead && playhead.querySelector('.lens-flag');
-    let flagText = flag && flag.querySelector('.lens-flag-text');
-    if (flag && !flagText) { flagText = document.createElement('span'); flagText.className = 'lens-flag-text'; flag.textContent = ''; flag.appendChild(flagText); }
 
-    // the caption's two lines, and a live count beside the static one (the static text stays for rest)
+    // the caption's two lines. The head shows the static count ("8 projects") at every moment: a live
+    // "{k} of {n}" is a counter, so data-now is read no more
     let capLines = caption ? [...caption.querySelectorAll('.lens-caption-line')] : [];
     while (caption && capLines.length < 2) { const s = document.createElement('span'); s.className = 'lens-caption-line'; caption.appendChild(s); capLines = [...caption.querySelectorAll('.lens-caption-line')]; }
-    let countLive = null;
-    if (count && head) {
-      countLive = document.createElement('p');
-      countLive.className = 'lens-count-live';
-      countLive.setAttribute('aria-hidden', 'true');
-      countLive.innerHTML = '<span class="lens-caption-line"></span><span class="lens-caption-line"></span>';
-      count.after(countLive);
-    }
-    const totalText = count ? count.textContent.trim() : `${N} projects`;
-    const nowTpl = (count && count.dataset.now) || '{k} of {n}';
-    const nowText = (k) => nowTpl.replace('{k}', String(k + 1)).replace('{n}', String(N));
     const titleText = (title ? title.textContent : '').trim() || 'Selected work';
 
     // ---- caption fitting: every name is measured once per refresh against the room left of the meta row
@@ -259,10 +251,15 @@
       // held hidden beside it)
       const metaW = new Map();
       if (!column && metaRow) {
-        const keep = metaCat ? metaCat.textContent : '';
-        for (const gr of groups) { if (metaCat) metaCat.textContent = gr.cat; metaW.set(gr.name, Math.max(metaW.get(gr.name) || 0, metaRow.offsetWidth)); }
+        const keep = metaCat ? metaCat.textContent : '', keepY = metaYear ? metaYear.textContent : '';
+        for (const gr of groups) {
+          if (metaCat) metaCat.textContent = gr.cat;
+          if (metaYear) metaYear.textContent = gr.year;
+          metaW.set(gr.name, Math.max(metaW.get(gr.name) || 0, metaRow.offsetWidth));
+        }
         metaW.set(titleText, Math.max(metaW.get(titleText) || 0, metaW.get(groups[0].name) || 0));
         if (metaCat) metaCat.textContent = keep;
+        if (metaYear) metaYear.textContent = keepY;
       }
       const tall = foot.clientHeight - parseFloat(fcs.paddingBottom) - (column && metaRow ? metaRow.offsetHeight + (parseFloat(fcs.rowGap) || 0) : 0);
       caption.style.maxWidth = '';
@@ -284,8 +281,8 @@
     };
 
     // the outgoing name is quick to leave, since the incoming one waits for it
-    const capRelay = caption ? relay(capLines, { out: 0.22, outEach: 0.008, inn: 0.7, inEach: 0.022 }, dress) : null;
-    const countRelay = countLive ? relay([...countLive.children], { out: 0.18, outEach: 0.008, inn: 0.45, inEach: 0.018 }) : null;
+    // (0.18s out and about 0.7s in all, so a name has landed before a reader who stops can read it)
+    const capRelay = caption ? relay(capLines, { out: 0.18, outEach: 0.006, inn: 0.5, inEach: 0.016 }, dress) : null;
 
     // keyboard: focusing a project's (visually hidden) link scrolls to the point where it blooms
     let live = null;
@@ -316,7 +313,7 @@
         a: phone ? 0.5 : 0.5 - o.sweep / 2,
         b: phone ? 0.5 : 0.5 + o.sweep / 2,
         key: phone ? o.phoneBloom : o.bloom,
-        reach: Number.isFinite(o.reach) ? o.reach : phone ? 0.7 : 0.36,
+        reach: Number.isFinite(o.reach) ? o.reach : phone ? 0.7 : 0.45,
         push: Number.isFinite(o.push) ? o.push : phone ? -0.55 : 0.35,
         // the gate's half width in pitches: wide enough that the handover valley between two projects
         // still holds two real collages (and on a phone one picture of 150px or more)
@@ -331,9 +328,11 @@
       root.classList.toggle('lens-classcolour', classColour);
       for (const it of items) { if (it.img) it.img.style.filter = ''; it.grey = 1; it.lit = false; it.li.classList.remove('is-lit'); it.flat = false; }
 
-      const st = { line: 0, gain: 0, u: 0 };
+      // gain 1 from the first frame: project one is already open under the lens at 0, so the opening
+      // steps are a collage, not a bare strip (the caption still shows the section's title until 0.03)
+      const st = { gain: 1, u: 0 };
       const M = { W: 0, H: 0, h0: 0, laneY: 0, bandTop: 0, bandBot: 0, R: 1, gateW: 1, ready: false };
-      let focus = -1, first = true, flagLeft = null, flagWant = null, capOp = [];
+      let focus = -1, first = true, capOp = [];
       const D = 0.84 / (N - 1);
       live = { tl, D };
 
@@ -363,7 +362,9 @@
         const maxW = W - 2 * P.gutter - 4; // a few pixels of slack, so rounding never touches a gutter
         // the bloom unit follows the screen, not the strip: the strip stays a thin index line on tablets and
         // short laptops while the collage keeps its share of the band (34px at 1440x900)
-        const unit = phone ? h0 : Math.min(0.0378 * H, 0.04 * W, 50);
+        // (a portrait tablet has height to spare: there the unit may take 5.2% of the width, so the
+        // collage fills the band instead of its upper half)
+        const unit = phone ? h0 : Math.min(0.0378 * H, (H > W ? 0.052 : 0.04) * W, 50);
         const keyPx = P.key * unit;
         groups.forEach((gr, gi) => {
           const vis = gr.items.filter((it) => it.vis);
@@ -423,26 +424,22 @@
         const gr = nf >= 0 ? groups[nf] : null;
         groups.forEach((g2, i) => { const z = nf < 0 ? 1 : i === nf ? 3 : Math.abs(i - nf) === 1 ? 2 : 1; if (g2.z !== z) { g2.z = z; g2.el.style.zIndex = String(z); } });
         const capText = gr ? gr.name : titleText;
-        const cntText = gr ? nowText(nf) : totalText;
-        const flagTxt = (gr || groups[0]).year || (gr || groups[0]).name;
-        // the meta row keeps its height while hidden, so the caption never shifts when it first appears
+        // the meta row (year, category, link) keeps its height while hidden, so the caption never shifts
+        // when it first appears
         const applyMeta = () => {
           const g2 = gr || groups[0];
+          if (metaYear) metaYear.textContent = g2.year;
           if (metaCat) metaCat.textContent = g2.cat;
           if (metaLink) { if (g2.href) metaLink.setAttribute('href', g2.href); metaLink.style.visibility = g2.href ? '' : 'hidden'; }
           if (metaRow) metaRow.classList.toggle('is-empty', !gr);
         };
         if (instant) {
           if (capRelay) capRelay.set(capText);
-          if (countRelay) countRelay.set(cntText);
-          for (const el of [flagText, metaRow]) if (el) { if (el.__sw) el.__sw.kill(); el.style.opacity = ''; }
-          if (flagText) flagText.textContent = flagWant = flagTxt;
+          if (metaRow) { if (metaRow.__sw) metaRow.__sw.kill(); metaRow.style.opacity = ''; }
           applyMeta();
           return;
         }
         if (capRelay) capRelay.go(capText, dir);
-        if (countRelay) countRelay.go(cntText, dir);
-        if (flagText && flagTxt !== flagWant) { flagWant = flagTxt; swap(flagText, () => { flagText.textContent = flagTxt; }); }
         if (metaRow) swap(metaRow, applyMeta); else applyMeta();
       };
 
@@ -452,9 +449,10 @@
         const gain = st.gain;
         const u = clamp(st.u, 0, N - 1);
 
-        // focus first: the project under the line, with hysteresis so a jittering scrub never flickers
+        // focus first: the project under the lens, with hysteresis so a jittering scrub never flickers; the
+        // section's title holds the caption for the first 3% of the hold, then relays to project one
         let nf = focus;
-        if (gain < 0.45) nf = -1;
+        if (gain < 0.45 || tl.progress() < 0.03) nf = -1;
         else if (focus < 0) { if (gain > 0.55) nf = Math.round(u); }
         else if (Math.abs(u - focus) > 0.58) nf = Math.round(u);
         nf = clamp(nf, -1, N - 1);
@@ -465,9 +463,6 @@
         const c = lerp(groups[i0].C, groups[i0 + 1].C, u - i0);
         const T = X - c;
         track.style.transform = `translate3d(${T.toFixed(2)}px,0,0)`;
-        if (playhead) playhead.style.transform = `translate3d(${X.toFixed(2)}px,0,0)`;
-        if (line) line.style.transform = `scaleY(${st.line.toFixed(4)})`;
-        if (flag) { const left = X > 0.7 * W; if (left !== flagLeft) { flagLeft = left; flag.classList.toggle('is-left', left); } }
 
         // the label before the strip steps aside as the first bloom opens
         caps.forEach((cap, i) => {
@@ -497,31 +492,23 @@
           const f = 1 + (it.s - 1) * w;
           const bw = it.w0 * f, bh = h0 * f;
           let x = sx + P.push * d * w + it.j * w;
-          // the edge clamp takes hold faster than the bloom, so a heap pressed against a side never shows a
-          // big picture cut by the screen edge
-          x += Math.min(1, 1.8 * w) * (clamp(x, P.gutter + bw / 2, W - P.gutter - bw / 2) - x);
+          // the edge clamp takes hold well before the bloom (in full by a quarter of it), so a heap pressed
+          // against a side never shows a swelling picture cut by the screen edge
+          x += Math.min(1, 4 * w) * (clamp(x, P.gutter + bw / 2, W - P.gutter - bw / 2) - x);
           const y = clamp(laneY + it.v * w, bandTop + bh / 2, bandBot - bh / 2);
           it.img.style.transform = `translate3d(${(x - sx).toFixed(2)}px,${(y - laneY).toFixed(2)}px,0) scale(${(f / it.s).toFixed(5)})`;
-          if (classColour) {
-            // every picture of the project under the line takes its colour as soon as it starts to swell
-            const lit = w > 0.45 || (it.g === focus && w > 0.1);
-            if (lit !== it.lit) { it.lit = lit; it.li.classList.toggle('is-lit', lit); }
-          } else {
-            const grey = 1 - Math.round(sm((w - 0.2) / 0.4) * 10) / 10;
-            if (grey !== it.grey) { it.grey = grey; it.img.style.filter = grey >= 1 ? '' : grey <= 0 ? 'none' : `grayscale(${grey})`; }
-          }
+          // the strip is in colour now (a greyscale picture is a banned device), so a bloom only swells: the
+          // is-lit class still marks the pictures of the project under the lens, for a page that styles it
+          const lit = w > 0.45 || (it.g === focus && w > 0.1);
+          if (lit !== it.lit) { it.lit = lit; it.li.classList.toggle('is-lit', lit); }
         }
       };
 
       // ---- the timeline: positions are fractions of the hold ----
-      // the line draws and the first project starts to bloom with the first scroll, so a scene that opens a
-      // page shows its lens within a few percent; the title still reads at 0 and relays to the first name
-      // at about p 0.04
+      // project one is open under the lens from the first frame (gain 1), with the section's title in the
+      // caption; it relays to the first name at p 0.03 and the strip starts to travel at 0.08
       const dwell = o.dwell;
       const dwellEase = (t) => (1 - dwell) * t + (dwell * (1 - Math.cos(Math.PI * t))) / 2;
-      tl.fromTo(st, { line: 0 }, { line: 1, duration: 0.05, ease: 'power3.out', immediateRender: false }, 0);
-      if (flag) tl.fromTo(flag, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.04, ease: 'power2.out' }, 0.02);
-      tl.fromTo(st, { gain: 0 }, { gain: 1, duration: 0.08, ease: 'power2.inOut', immediateRender: false }, 0);
       for (let k = 0; k < N - 1; k++) tl.fromTo(st, { u: k }, { u: k + 1, duration: D, ease: dwellEase, immediateRender: false }, 0.08 + k * D);
       tl.set({}, {}, 1);
       tl.eventCallback('onUpdate', render);

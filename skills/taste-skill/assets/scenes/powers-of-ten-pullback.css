@@ -1,8 +1,11 @@
 /* tasteskill / scenes / powers-of-ten-pullback.css — a camera pulls back through nested pictures.
    Without .is-live (no script, reduced motion, a failed CDN, a phone set to 'rest') the section is the
-   finished composition: the copy beside the object, which shows the room with the film registered on its
-   wall by the same --wx --wy --ww --wh fractions the live scene uses. With .is-live the stage is held and
-   the three layers are laid out in px by the scene file.
+   finished composition. One jump (the default): the room full-bleed and flat, with the film registered on
+   its wall by the same --wx --wy --ww --wh fractions the live scene uses, its caption under it and the copy
+   below on the ground (--pb-aspect-one, 2 by default, is the crop of the room on a wide screen; a phone
+   uses --pb-aspect-sm). Two jumps (class pb-print, which the script adds, or "jumps": 2 in data-options):
+   the copy beside the framed print, turned by the tilt option (--pb-tilt, 0 by default). With .is-live
+   the stage is held and the three layers are laid out in px by the scene file.
    Weights follow the page: --display-weight (the copy's first line and the title; 600 here when the
    page sets none) and --strong-weight (the link; 600 here when the page sets none). A weight the page
    has not loaded is never faked: the nearest loaded one shows. */
@@ -63,7 +66,7 @@
 [data-scene="powers-of-ten-pullback"] .pb-tilt {
   grid-column: 7 / 13;
   grid-row: 1;
-  transform: rotate(-3deg);
+  transform: rotate(calc(var(--pb-tilt, 0) * -1deg));
 }
 [data-scene="powers-of-ten-pullback"] .pb-world {
   position: relative;
@@ -203,7 +206,7 @@
   text-wrap: pretty;
 }
 /* side: left puts the object on the left and the copy on the right */
-[data-scene="powers-of-ten-pullback"].pb-side-left .pb-tilt { grid-column: 1 / 7; transform: rotate(3deg); }
+[data-scene="powers-of-ten-pullback"].pb-side-left .pb-tilt { grid-column: 1 / 7; transform: rotate(calc(var(--pb-tilt, 0) * 1deg)); }
 [data-scene="powers-of-ten-pullback"].pb-side-left .pb-title,
 [data-scene="powers-of-ten-pullback"].pb-side-left .pb-label { grid-column: 1 / 7; }
 [data-scene="powers-of-ten-pullback"].pb-side-left .pb-copy { grid-column: 8 / 13; }
@@ -219,8 +222,8 @@
   [data-scene="powers-of-ten-pullback"] .pb-copy > :first-child { font-size: clamp(30px, 8vw, 40px); margin-bottom: 18px; }
   [data-scene="powers-of-ten-pullback"] .pb-copy p { font-size: 17px; }
   [data-scene="powers-of-ten-pullback"] .pb-tilt,
-  [data-scene="powers-of-ten-pullback"].pb-side-left .pb-tilt { transform: rotate(-2deg); margin-top: 44px; }
-  [data-scene="powers-of-ten-pullback"].pb-side-left .pb-tilt { transform: rotate(2deg); }
+  [data-scene="powers-of-ten-pullback"].pb-side-left .pb-tilt { transform: rotate(calc(min(var(--pb-tilt, 0), 2) * -1deg)); margin-top: 44px; }
+  [data-scene="powers-of-ten-pullback"].pb-side-left .pb-tilt { transform: rotate(calc(min(var(--pb-tilt, 0), 2) * 1deg)); }
   [data-scene="powers-of-ten-pullback"] .pb-world { width: 84%; max-width: 420px; }
   /* a portrait print: the room (a 4:5 crop) fits the slot's height and is centred */
   [data-scene="powers-of-ten-pullback"] .pb-slot { aspect-ratio: var(--pb-aspect-sm); }
@@ -236,6 +239,61 @@
   [data-scene="powers-of-ten-pullback"] .pb-title > :first-child { font-size: 17px; }
   [data-scene="powers-of-ten-pullback"] .pb-title > :not(:first-child),
   [data-scene="powers-of-ten-pullback"] .pb-label { font-size: 15px; }
+}
+
+/* one jump, the default: the place full-bleed and flat with the film on its wall, the caption under it,
+   then the copy on the ground (the headline on the left, the words on the right), as the live scene ends */
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-stage {
+  align-content: start;
+  padding-top: 0;
+}
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-tilt {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  margin: 0 calc(-1 * var(--pb-gut));
+  transform: none;
+}
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-world {
+  --pb-b: 0;
+  max-width: none;
+}
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-slot {
+  aspect-ratio: var(--pb-aspect-one, 2);
+  border-radius: 0;
+  background: var(--ink, #111);
+}
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-object,
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-glass { display: none; }
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-title,
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-label {
+  grid-column: 1 / 8;
+  margin-top: 0;
+}
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-title { grid-row: 2; margin-top: 20px; }
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-label { grid-row: 3; margin-top: 4px; }
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-copy {
+  grid-column: 1 / -1;
+  grid-row: 4;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 24px;
+  align-content: start;
+  margin-top: clamp(56px, 9vh, 96px);
+}
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-copy > :first-child { grid-column: 1 / 7; grid-row: 1 / span 2; }
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-copy > :not(:first-child) { grid-column: 8 / 13; justify-self: start; }
+[data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-copy p { margin-top: .4em; }
+@media (max-width: 767px) {
+  [data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-stage { padding-top: 0; }
+  [data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-tilt { margin: 0 -20px; }
+  [data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-world { width: 100%; max-width: none; }
+  [data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-slot { aspect-ratio: var(--pb-aspect-sm); }
+  [data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-title { margin-top: 16px; }
+  [data-scene="powers-of-ten-pullback"]:not(.pb-print, .is-live, [data-options*='"jumps":2'], [data-options*='"jumps": 2']) .pb-copy {
+    order: 0;
+    display: block;
+    margin-top: 44px;
+  }
 }
 
 /* ---------- the live scene ---------- */
@@ -327,17 +385,17 @@
   letter-spacing: -.035em;
   text-wrap: balance;
 }
-/* the wall label: a solid card under the landed screen, placed by the scene file */
+/* the wall label: the scene file moves it into the copy, under the headline; plain words, never a card */
 [data-scene="powers-of-ten-pullback"].is-live .pb-label {
-  position: absolute;
-  z-index: 2;
-  margin: 0;
-  max-width: 360px;
-  padding: 8px 12px;
-  background: var(--surface, #fff);
-  color: var(--ink, #111);
-  font-size: 15px;
-  line-height: 1.4;
+  position: static;
+  margin: 0 0 18px;
+  max-width: 40ch;
+  padding: 0;
+  background: none;
+  color: var(--muted, #5b6066);
+  font-family: var(--font-text, inherit);
+  font-size: 16px;
+  line-height: 1.45;
 }
 /* the copy, on the plain field beside the settled object */
 [data-scene="powers-of-ten-pullback"].is-live .pb-copy {
@@ -398,9 +456,15 @@
     align-content: start;
     max-width: none;
   }
-  [data-scene="powers-of-ten-pullback"].is-live.pb-one .pb-copy > :first-child { grid-column: 1 / 7; grid-row: 1 / span 2; font-size: clamp(40px, 4.6vw, 80px); }
+  [data-scene="powers-of-ten-pullback"].is-live.pb-one .pb-copy > :first-child { grid-column: 1 / 7; grid-row: 1; font-size: clamp(40px, 4.6vw, 80px); }
   [data-scene="powers-of-ten-pullback"].is-live.pb-one .pb-copy > :not(:first-child) { grid-column: 8 / 13; justify-self: start; }
   [data-scene="powers-of-ten-pullback"].is-live.pb-one .pb-copy p { margin-top: .4em; }
+  /* the wall label sits right under the headline; the words beside them take a flexible third row, so
+     their height never pushes the label down */
+  [data-scene="powers-of-ten-pullback"].is-live.pb-one .pb-copy { grid-template-rows: auto auto 1fr; }
+  [data-scene="powers-of-ten-pullback"].is-live.pb-one .pb-copy > .pb-label { grid-column: 1 / 7; grid-row: 2; align-self: start; margin: 0; }
+  [data-scene="powers-of-ten-pullback"].is-live.pb-one .pb-copy > :first-child + p:not(.pb-label),
+  [data-scene="powers-of-ten-pullback"].is-live.pb-one .pb-copy > .pb-label + p { grid-row: 1 / span 3; }
 }
 
 @media (max-width: 767px) {
