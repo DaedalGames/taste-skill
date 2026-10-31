@@ -50,9 +50,11 @@ sheets. Make each pass on its own; do not blend them.
 8. **Images.** Count the real pictures: no more than the sheet's photograph total, each doing a job
    (showing the thing, setting the place, proving the claim)? Does any look documentary, archival, old
    or news-like? Out with it: modern, well-lit photographs or none (a product page never none: its
-   kind, its use, its load). Does each show the client's own trade and world, as the sheet's "What the
+   use, its load, its place). Does each show the client's own trade and world, as the sheet's "What the
    pictures show" line says? A neighbouring trade's things (a mixing desk for a motion designer) or a
-   landmark the brief does not name goes, however good it is. A page of drawings looks unfinished; a
+   landmark the brief does not name goes, however good it is. Whose is it? Open each picture shown as
+   the client's at full size and read its credit: another maker's product, a named hotel's room or
+   someone else's work is never the client's, whatever the crop. A page of drawings looks unfinished; a
    page of type and colour can be finished. Do the crops share ratios, and does any crop cut a
    picture's own lettering? Is anything a grey box, a stretched photo, a fake screen made of bars?
    Does the photography share one light and one grade, or is it a stock mix?
@@ -142,12 +144,12 @@ These override the arithmetic.
 - The idea passes for the nearest competitor (pass 14): creativity cannot exceed **7**.
 - A picture that is soft, random or off subject in a large slot, or pictures inside a headline or a
   sentence: design cannot exceed **6.5**.
-- More than one accent hue, grounds and panels in more tones than the ground and one surface (the ink,
-  the accent and a dealt field aside), or the page on a coloured ground with a second hue on it:
-  design cannot exceed **6.5**.
+- More than one accent hue, grounds in more tones than the ground and one surface (the ink, the accent
+  or a dealt field past one band, and a band sampled from a photograph, counted), or the page on a
+  coloured ground with a second hue on it: design cannot exceed **6.5**.
 - A giant name or email in the footer, or picture credits spread across it: design cannot exceed **7**.
-- The next section in view on the first screen, sections crowding with no air between them, or
-  anything run into one screen edge: design cannot exceed **6.5**.
+- The next section in view on the first screen, the hero's title running on under the fold, sections
+  crowding with no air between them, or anything run into one screen edge: design cannot exceed **6.5**.
 - A one-line footer, a bar above the navigation or a sentence in it, or groups of facts floating with
   no card where they belong together: design cannot exceed **7**.
 - Three button shapes or more, a navigation that hides on scroll or is not the one dealt, three
@@ -159,6 +161,9 @@ These override the arithmetic.
   every block: design cannot exceed **7**.
 - Any placeholder (grey box, lorem, "Image here"): content cannot exceed **5**. A slot marked for the
   client's own picture (`data-slot`, listed in the report) is not a placeholder.
+- Another business's product, room or work shown as the client's (another maker's product however
+  cropped, a named hotel's room, someone else's work in a work slot), whatever its credit says: content
+  cannot exceed **5**.
 - Two or more desktop screens that are mostly empty ground, or a page whose running text is small and
   grey: design cannot exceed **6.5**.
 - A section the brief asked for that is missing or reduced to a few words: content cannot exceed **6**.

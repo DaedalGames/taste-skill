@@ -92,28 +92,23 @@ carry the rest; it never fills slots with whatever a search returns.
 Name the pictures a visitor needs before deciding: for a place to stay, the rooms, the house and the
 table; for food, the plates and the room; for a product, the product; for a practice, its work. When
 the project has none of them, say in the report that they are missing (or ask, when the user is there
-to answer); for a practice's work, choose a direction that does not promise them. **Rooms, dishes and
-products are shown, not boxed:** each room gets a real photograph of that kind of room, each featured
-dish one of that dish, each product one of that kind of product, from the open collections or the
-library, listed in the report as stand-ins for the client's own; never a grey spec panel or a filled
-box in place of the picture (a guesthouse whose rooms were grey panels read as tabs in a blind test).
-As many pictures as items listed: four rooms, four photographs; with fewer good pictures, list fewer
-(the kinds of room), never a room without its picture or a mug in its place. Each room or product
-stands in two columns, its photograph at 55% of the width or more beside one grouped block of its
-name, facts and price; never a small picture centred in wide margins with the name at one edge and
-the price at the other (a guesthouse's four identical bands read as timid). A stand-in sits beside
-the room or dish it stands for, never as the first picture of the house or the restaurant, and one
-whose title or credit names another business (a real hotel's room, another maker's product) is never
-shown as the client's own: take one that names none, or mark it as a placeholder in the Image credits
-and the report. Never a drawing, and never the place's birds and weather in their place
-(`references/imagery.md` §8). A product with no photographs of its own is shown by real photographs of
-its kind in use, large, of one configuration and build (the sheet says how), at least one with the
-people it is for, never claimed as this model, never retouched to pass for it (a cargo-bike page
-painted another maker's name off a box) and never replaced by a picture of what its name means. The
-brief decides what the product is: a two-wheeled cargo bike stays two-wheeled whatever the search
-returns. With no clean photograph of the right kind, the page shows the use, the load and the place
-with the product cropped, unbranded or out of focus, and marks one slot for the client's product shot
-(`data-slot="product-photo"`); never a page without pictures (a cargo-bike page with none lost).
+to answer); for a practice's work, choose a direction that does not promise them. **The client's own
+thing is never shown by another's:** no other maker's product however cropped, no named hotel's or
+other house's room, no other artist's work, no other house captioned as the client's, whatever the
+credit says (three test pages could not be published for this alone, all three credited). Without the
+client's pictures, the product is a designed frame (`data-slot="product-photo"`: its name and two or
+three facts, no drawing) and its photographs show its use, its load and its place with no product of
+its kind in them; each room is a detail that belongs to no one (bed linen, window light, a chair) in a
+`data-slot="room-photo"` frame and the house is shown as its place; each piece of work is the
+project's own still made for the page (`data-slot="work"`). The sheet prints the rule under its
+photograph total, and the inspector fails a picture shown as the client's whose credit names a business
+(`credit-names-business`). **Rooms, dishes and products are shown, not boxed:** as many pictures as
+items listed, each room or product in two columns, its picture at 55% of the width or more beside one
+grouped block of its name, facts and price; never a grey spec panel or a filled box in its place (a
+guesthouse whose rooms were grey panels read as tabs in a blind test). Never a drawing, and never the
+place's birds and weather in their place (`references/imagery.md` §8). The brief decides what the
+product is, whatever a search returns; never a page without pictures (a cargo-bike page with none
+lost).
 
 If the request is vague, decide and state your reading in one line instead of asking. Ask only when a
 missing fact blocks the work (for example, no product name).
@@ -180,8 +175,8 @@ and say why in the report.
   are not quotes), `3d` (a 3D model of the subject). A pattern that needs one of these is never dealt
   without it. Leave it out if you have none: the draw then avoids compositions that depend on them and
   the sheet says how to fill picture slots honestly (software shows its own interface built in HTML; a
-  product with no photographs of its own is shown by real photographs of its kind in use, never
-  claimed as this model, never a drawing and never a fake product shot). Pictures you will find in the
+  product with no photographs of its own is shown by its designed frame and photographs of its use,
+  its load and its place, never another maker's product, never a drawing). Pictures you will find in the
   open collections are not the project's own; leave them out of `--have`.
 - `--keep palette,type`: when the brand already fixes colours or typefaces. The draw then deals only
   the composition, and you map the brand's values onto the roles.
@@ -355,7 +350,9 @@ not finished. Order of work:
 2. **The hero, in the shape its blueprint describes,** set in the dealt type, colour and frame, at
    desktop and at phone width. Within the house rules its geometry is binding, over the direction's
    composition too: what is large, where the words sit, how the picture is cut. The headline takes
-   the dealt display step, not a size the blueprint names. **It fills the first screen alone:**
+   the dealt display step, or `--step-hero` where the sheet prints the blueprint's own giant size (two
+   pages built such a hero at the step and read as timid), and stands whole on the first screen, its
+   last line clear of the fold (`hero-cut` fails a title the fold cuts). **It fills the first screen alone:**
    `min-height: 100svh` with the navigation inside it, and nothing of the next section (its heading,
    text, picture or ground) in view at 1440 by 900 or 390 by 844; on the owner's review the next
    section crowding into the first view was what made the pages read as cluttered
@@ -398,11 +395,12 @@ not finished. Order of work:
    1. the project's own;
    2. generated, if you have an image tool: the best way to show this exact subject;
    3. the photographs dealt on the sheet and the rest of the library (`draw.mjs --photos <words>`):
-      sharp, modern, no credit needed; atmosphere, never a stand-in for a person, and for a room, a
-      dish or a product only as a picture of its kind (step 1);
-   4. only for what the library lacks (a kind of room, a dish, the product's kind in use), sharp
-      modern photographs from the open collections (`node <skill>/scripts/assets.mjs "<query>"
-      --source openverse`, 1800px or wider by default; never the museum sources). Look at each one, and
+      sharp, modern, no credit needed; atmosphere, never a stand-in for a person, and never the
+      client's own product, room, house or work (step 1);
+   4. only for what the library lacks (a detail of a room, a dish, the product's use and its load),
+      sharp modern photographs from the open collections (`node <skill>/scripts/assets.mjs "<query>"`:
+      Openverse, then Wikimedia Commons when it fails, with retries; 1800px or wider by default; never
+      the museum sources; never a search for the client's own thing). Look at each one, and
       every stand-in, at full size before using it, and crop or drop any that shows another maker's
       name or logo, a shop or company sign, a readable house number or licence plate, words that would
       embarrass the client, or a child who could be recognised (children only from behind, far off or
@@ -417,7 +415,7 @@ not finished. Order of work:
    landmark the brief does not name, never the category's stock shot unless it is art-directed
    (full-frame beans, hands on a laptop: `references/imagery.md` §2), and is requested at least 1.5
    times the size it is shown (twice for the hero); one treatment for all (section 0); no more
-   pictures of the subject and its world than the sheet's photograph total (section 5): a few good
+   pictures of the subject and its world than the sheet's photograph total (section 5), which keeps three for a gallery: a few good
    ones beat twelve weak ones (the rooms, dishes or products a page pictures are their own set, one
    each), and none beats a bad one. **Never documentary or
    archive photographs:** no old Commons or museum pictures, history photographs, postcards, old maps
@@ -431,10 +429,10 @@ not finished. Order of work:
    the page's ground. The first picture a visitor sees shows the product or the place itself (the cup
    and the bar, the room, the product working), never a street, a facade or a blurred mood shot; if no
    such picture exists, the hero is set in type (a product with no photographs of its own shows its
-   kind in use instead: step 1). Each photograph appears once on the page, never again as a crop (a
+   designed frame, or a picture of its use or its place with the frame in the section after: step 1). Each photograph appears once on the page, never again as a crop (a
    scene's stamp of the picture it has just shown is the one exception): a cargo-bike page showed its
    one family photograph three times. Never a blurred or pixelated face: take shots with faces turned
-   away, out of frame or naturally out of focus, or frame the product and the load (that photograph's
+   away, out of frame or naturally out of focus, or frame the load and the place (that photograph's
    blurred faces read as news footage). A picture under or beside a line shows what the line names: "A
    white house on the fjord" stood over a village of coloured houses. A photograph of a place that is
    not the client's own is captioned with what and where it is, as its source names it, never with a
@@ -462,11 +460,12 @@ not finished. Order of work:
    large. A portfolio shows its work on the first or second screen, before any statement, scene or
    photograph of its city, with one place photograph on the whole page at most (a motion designer's
    page opened on four screens of Rotterdam before her work). The work is pictures of the work, never
-   type cards (`portfolio-without-work` warns). Work invented for the brief is shown as a finished
-   still of each piece (its title card, an end frame, a poster), with real detail, in a frame marked
-   `data-slot="work"` that the report lists; without one, the slot holds a close photograph of the
-   trade's material or making, never a stock or location photograph posing as a piece of work (work
-   slots showing skylines lost a test), never an empty frame.
+   small type cards (`portfolio-without-work` warns). Work invented for the brief is shown as the
+   project's own still made for the page (a still generated as the copy describes it, a frame of your
+   own motion of it, or its title frame filling the whole frame at the piece's ratio), in a frame
+   marked `data-slot="work"` that the report lists; never a photograph of someone else making or
+   showing work, nor a stock or location photograph posing as a piece (`portfolio-without-work` fails
+   a photograph credited to another among the work), never an empty frame.
 
    **Logos of known products are the real ones, never drawn.** When the page names products it works
    with or the brief names (Gmail, Google Calendar, Figma, Slack, Teams, Chrome, ChatGPT, Claude),
@@ -491,8 +490,8 @@ not finished. Order of work:
    fails it, and any link or button there over three words). The footer is a designed
    section on its own ground, built as dealt, never a single line or a credit row
    (`footer-not-as-dealt`): links, contact, legal and the Image credits link at
-   text sizes, never a giant name or email, never a list the page already shows as content. A page
-   ends once: a footer that opens on its own closing line carries the call to action (the sheet then
+   text sizes, never a giant name or email, never a list the page already shows as content; a closing
+   line in it is 6vw at most, on one screen with its button and links. A page ends once: a footer that opens on its own closing line carries the call to action (the sheet then
    builds no cta section), and the visit details of a place stand in one place only. **The
    interactive piece,** only if dealt, in the section where it proves the claim, with real content, a
    thumb-sized phone version and a plain fallback.
@@ -520,7 +519,8 @@ not finished. Order of work:
    (`tilted-letters`) or whose picture or filled box the screen edge cuts to a sliver (`edge-sliver`).
    A software page gets one scroll scene at most. A page built without one (`--redraw scenes=none`) is
    about 8-12 screens, with nothing pinned in a scene's place. A section that pins counts with the
-   scenes: the sheet deals one only where a scene would fit, and says so under it. About one page in
+   scenes, and so does a hold written in words (a hero whose window widens over a screen of scroll):
+   the sheet deals one only where a scene would fit, and says so under it. About one page in
    two, one of its scenes is a researched technique instead (`library/techniques.json`): a principle,
    a direction to take and what breaks it, with no files and no demo. Build it on the shared stage as
    `references/scenes.md` §8 shows, in this page's own type, colour, pictures and words, never as a
@@ -664,9 +664,8 @@ Do not report until all of these are true; each one was skipped in a test run th
 Tell the user, briefly: the direction dealt (name and seed) and any redraws with reasons; the idea
 sentence and the interactive piece, if one was dealt; the final scores from your last critique round
 and what still falls short; every picture and clip with its source (and, where a licence asks, its
-credit in the Image credits dialog); which bundled photographs and which drawings stand in for
-photography, and which stand-ins are placeholders whose source names another business (so they can be
-replaced); and any sample content that must be swapped before launch. Do
+credit in the Image credits dialog); which bundled photographs stand in for photography, and every
+marked slot (`data-slot`) with what holds it, so the client's own pictures can replace them; and any sample content that must be swapped before launch. Do
 not claim a check you did not run.
 
 ## House rules
@@ -677,7 +676,7 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | --- | --- |
 | **Headlines: two lines or fewer, at every width.** Every `h1`–`h6`, and the main line of the first screen whatever its tag. | Cut words. Then widen the measure. Size last. |
 | **A clear title on the first screen**, in the page's one `h1`, and a heading on every section, one per idea. | Say what this is: the name with what it does, the product with what it is for, the event with its date and place. |
-| **The hero alone on the first screen.** Nothing of the next section in view on load, at 1440 or on a phone. | `min-height: 100svh`, the navigation inside it, the next section after the section gap. |
+| **The hero alone on the first screen.** Nothing of the next section in view on load, at 1440 or on a phone; its title whole above the fold (`hero-cut`). | `min-height: 100svh`, the navigation inside it, the next section after the section gap. |
 | **Air between sections:** 16vh or more at 1440, as section 0 deals it. | Fewer sections, fewer words, each with room round it. |
 | **Equal outer margins; nothing run into one screen edge; no section huddled on one side** with the other half of the screen empty. | Everything that is not full-bleed keeps the margin on both sides; close every void with something on its far side: the section's picture, a second column, a list, a figure. |
 | **No blank stretches** taller than about half a screen. | The dealt section gap. A deliberate rest is a placed picture or a field of colour, once per page. |
@@ -697,12 +696,13 @@ These hold on every build, whatever the direction. `inspect.mjs` measures them.
 | **One button family:** the dealt button and one quieter sibling, no third shape (`button-family`). | The dealt button in the bar, the hero, the cards, the forms and the footer, at that part's height. |
 | **The footer is a designed section,** never a single line. | The footer section 0 deals, built as dealt (`footer-not-as-dealt`), on its own ground: links, contact, legal, Image credits. |
 | **No documentary or archive photographs.** No old Commons or museum pictures, history photographs, postcards, old maps, engravings, news-like shots. | Modern, well-lit, professional photographs (the library's first), or none: the product, the type, the colour. |
+| **The client's own thing is never shown by another's.** No other maker's product however cropped, no named hotel's room, no other artist's work, whatever the credit says (`credit-names-business`). | The marked slot as the sheet says: the product's designed frame, a detail that belongs to no one, the project's own still; around it the use, the load and the place. |
 | **No emoji, no gradient blobs, no decorative shapes, no drawn diagrams, charts or illustrations, no fake dashboards of grey bars.** | A real picture, a real interface fragment, the process said in words, or nothing. |
 | **No styled accent word** in a headline (italic, serif, coloured, underlined). | One face, one colour. The words carry the emphasis. |
 | **The dealt type system:** its faces, its weights, its six steps. Two families at most. | Map every other size onto the nearest step. |
 | **No pictures in headlines or sentences.** No photograph between the words of a headline, no picture inside the letters, no thumbnails inside running text. | The picture gets its own place, beside, above or behind the words, at a size that shows what it is. |
 | **No headline in a card, no template stack.** The hero headline stands on the page ground or on its picture, never in a panel, card or box; and never a centred headline and a line over a round-cornered photograph card or a row of two or three cards, with or without actions (`template-hero`). | The first screen as one composition in the dealt hero's geometry, built round the page's idea: headline, one sentence, the action, the picture. |
-| **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges, no ground or panel colour per section or card (`surface-count`). | Neutral ground (white, off-white, near-black) and one surface tone; the ink, the accent or the dealt field as one band; colour from the pictures; the accent on the action. |
+| **One ground, one ink, one accent.** No page on a coloured ground with a second hue on it, no third hue anywhere, no tinted cards, chips or badges, no ground or panel colour per section or card, no band sampled from a photograph (`surface-count`). | Neutral ground (white, off-white, near-black) and one surface tone; the ink, the accent or the dealt field as one band; colour from the pictures; the accent on the action. |
 | **No giant name or email anywhere, no credit walls.** | The email at the h3 step or smaller, with a Copy button and a mailto link; the dealt footer with its links, contact and legal at text sizes; picture credits behind one small "Image credits" link. |
 | **No drag rails or progress bars** outside a working tool, no range sliders, no line with a knob or dots on it that reads as one, and no switch, checkbox or toggle that changes nothing: a length or a count is a row of stepped buttons; no sideways scrollers on desktop. | A list or grid that fits the width; stepped buttons of real values; features as lines of text at full ink; a control only where it does what it says. |
 | **No page built only of boxes, no boxes in boxes,** no box laid over a photograph, no outlined boxes in a row, no bento grids, no wall of tiles in several fills, no staggered folder tabs, no heading alone in its column or on its screen, no empty half-rows (nothing on the left, text on the right) (`framed-elements`, `boxed-list`, `boxed-page`, `bento`). | Filled cards in the dealt style where things belong together, in two or three sections, side by side and never one inside another; the rest on the ground, separated by space and size: questions as plain rows, specs as name and figure; the heading over its content; the key content in the open, tabs or an accordion only for secondary detail. The product's window holds no card inside it. |
@@ -730,8 +730,9 @@ stays. Leave a screen empty on purpose once per page at most.
 Short form. Numbers are from the study unless marked as house style.
 
 **Type**
-- The dealt six steps are the scale. The hero takes the display step the sheet deals: on professional
-  sites the largest type is about 3.8vw (55px at 1440); a giant headline is a dealt event, not a habit.
+- The dealt six steps are the scale. The hero takes the display step the sheet deals, or `--step-hero`
+  where section 3 prints it for a hero built on giant type: on professional sites the largest type is
+  about 3.8vw (55px at 1440); a giant headline is a dealt event, not a habit.
 - Display type: tracking and leading as dealt. Text: 16–18px, leading 1.45–1.6, 45–75 characters a line.
 - Weights: only those the sheet loads. A weight the face lacks is faked by the browser (the inspector
   fails it).

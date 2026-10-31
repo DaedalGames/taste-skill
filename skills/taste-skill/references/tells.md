@@ -138,8 +138,8 @@ The round-11 test pages (30 October 2026) showed two more:
 
 | Tell | Status | Do instead |
 | --- | --- | --- |
-| A new ground or panel colour for each section or card | warned at four tones on grounds and large panels, failed at five (`surface-count`; the ink, the accent and a dealt field do not count) | The ground and one surface tone; the ink, the accent or the field as bands |
-| A portfolio whose work is type cards, no picture of the work | warned under three pictures or marked slots in the work (`portfolio-without-work`) | Frames, stills or films of the work; `data-slot="work"` frames where the client's own are missing |
+| A new ground or panel colour for each section or card | warned at three grounds by the screens a visitor sees them on, failed at four (`surface-count`; a surface a step from the ground counts as its one surface, and a tint a step off the ground beside it is one more; the ink and a dealt field count once they ground more than the footer and one section or two and a half screens, the accent more than one section or a screen and a half; any other tone counts from a quarter of a screen, or from any band across the width, a band sampled from a photograph included; a ground the dealt scene, technique or section asks for is named and only warns) | The ground and one surface tone; the ink, the accent or the field as one band |
+| A portfolio whose work is type cards, no picture of the work | warned under three pictures or marked slots in the work; a photograph credited to another among the work, in a `data-slot="work"` frame or not, fails (`portfolio-without-work`) | Frames, stills or films of the work; `data-slot="work"` frames holding the project's own still where the client's own are missing |
 
 The round-12 test pages (30 October 2026) showed four more:
 
@@ -149,6 +149,13 @@ The round-12 test pages (30 October 2026) showed four more:
 | The dealt navigation built as a plain bar, or a bar that hides on scroll | failed where the built form is not the dealt one (top bar, dock, side index, corners, centred wordmark, masthead); a bar that hides on the way down fails too, and is warned where no navigation was dealt (`nav-not-as-dealt`) | The navigation section 0 deals, on the screen after the hero |
 | Section after section built one way: a small heading, a line and a list panel | warned at three sections round the same thing (a list, cards, a window, one picture), failed at four (`same-structure`) | Each section the structure its content asks for, none three times |
 | Every section a box: product windows, panels and cards on one fill | warned when four sections or more after the hero, all but one, stand in a box (`boxed-page`) | Cards and windows in two or three sections, the rest on the ground |
+
+The four pages on the round-11b commit (30 October 2026) showed two more: three could not be published for the first, and the fourth was marked down for the second:
+
+| Tell | Status | Do instead |
+| --- | --- | --- |
+| Another business's product, room or work shown as the client's: a maker's bike with its name on the frame, a named hotel's room, another roastery's roaster, another artist's work | failed when a picture shown as the client's (a marked slot, their name in its caption, the work, a room, the house, their own place, any picture on a page that sells one product) has a credit that names a business: a hotel or a shop by its name, a maker and its model, or the record's own words that it carries another maker's name; so does any photograph in the product's frame that is not the client's, a picture titled with a product of its kind on a page dealt no product photograph, and a picture shown as theirs with no credit while the page's credits name a business (`credit-names-business`) | The slot as the sheet describes it: the product's name and facts in its frame, details that belong to no one, the project's own still |
+| The hero's title running on under the fold, set to cross it on purpose | failed at 1440 and 390, at any size, once its letters end more than 6px under the fold (`hero-cut`) | The title whole on the first screen, with air under it |
 
 ## 6. Copy tells
 

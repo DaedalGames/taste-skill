@@ -215,6 +215,11 @@ are from the study of 97 Sites of the Day (October 2026).
   screens in the study mostly 50–150px), two lines at most, that says what this is: the name with
   what it does, the product with what it is for, the event with its date and place. If the `h1` is
   the name, the line under it, at 18px or more, says what the thing is.
+- The `h1` stands whole on the first screen: its last line, descenders included, ends above the
+  bottom edge with the page margin under it, at 1440 by 900 and 390 by 844 (`hero-cut`). A name the
+  fold cut read as cut off. Its size is the hero blueprint's where that is well above the display
+  step (`--step-hero`, references/type.md §2): the hero's geometry and its display size come before
+  the type steps on the first screen.
 - A split first screen (the words in one part, a picture holding the other half or more) has a large
   headline or a full-bleed picture: the `h1` beside the picture is about 5vw or more at 1440 (72px),
   on two lines of about 13-15 characters each; words that cannot be that large go over the picture,
@@ -264,9 +269,16 @@ points this way, including several above 7.5.
   ten.
 - **A section that pins is a scene.** A pinned stage, a sticky stage in a wrapper of several screens
   or a stretch held for so many screens counts with the page's scroll scenes: no more held stretches
-  than the page takes scenes, none next to another, none on a page built without a scene. The sheet
-  deals one only where it fits and says so under it. A sticky heading or picture beside content that
-  scrolls is not a pin.
+  than the page takes scenes, none next to another, none on a page built without a scene. So does a
+  hold written in words, the hero's too: a window that widens "over about one screen of scroll", a
+  picture that grows as you scroll. The sheet deals one only where it fits and says so under it. A
+  sticky heading or picture beside content that scrolls is not a pin, nor a move on native scroll as
+  the section passes.
+- **A gallery shows three photographs or more.** The photograph total keeps three for it before the
+  hero takes its share, and no other section; a gallery whose three would take the page over its
+  total is dealt as a smaller section. A section built from one picture and a text card, or a pair,
+  is not dealt as a gallery. On a page with no photographs of its own, no gallery or showcase whose
+  captions name a maker, a model or a price: only another business's products fit them.
 - **The photograph total.** Section 5 of the sheet gives the photographs of the whole page and each
   part's share (the hero, the scenes, each section, the footer). A blueprint takes its share,
   whatever number it names; a section a scene carries is that scene and has no blueprint of its own.
@@ -430,9 +442,13 @@ of loose text. Cards are wanted, varied, and kept to their job.
 - The last section carries a closing line at display size (the action as a statement, or the name),
   never a label-sized heading: its title is at least the size of the other section headings. No card
   over the closing photograph: its words sit on its calm part, or the card stands beside it on the
-  ground. A page ends once: when the dealt footer opens on its own closing line, that line is the call
-  to action and no cta section stands before it; after a closing scene the footer has no closing
-  line of its own.
+  ground. A page ends once: when the dealt footer opens on its own closing line (or on a statement
+  at the display step, with a button or without), that line is the call to action and no cta
+  section stands before it; after a closing scene the footer has no closing line of its own.
+- A closing line in the footer is 6vw at most (`giant-footer` fails 7vw), two lines at most, on the
+  same screen as its button and the footer's links (`lone-heading`). The footer is as tall as its
+  content and never a held stage: no line of it holds or reveals word by word while the scroll runs
+  (`held-dead-screen`, `line-holds`). A closing headline 160-200vh tall tripped all four checks.
 - Put the practical facts (address, hours, email, legal line) in the text face at a readable size, on
   the same anchor lines as the rest of the page.
 

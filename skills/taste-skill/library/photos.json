@@ -1,55 +1,83 @@
 {
  "source": "Lorem Picsum (https://picsum.photos): photographs from Unsplash, used under the Unsplash licence",
  "url": "https://picsum.photos/id/{id}/{width}/{height}",
- "tradesNote": "What a trade's pictures show and must not show, matched against each photograph's alt. The trade the brief names first applies; the other trades it names are its own too (a bakery and cafe shows its coffee), and so are the dishes of a restaurant or of a brief with a kitchen (dishes): their things are never banned. The deal leaves out a neighbouring trade's things (off), a landmark the brief does not name, a photograph that shows a logo, a house number or a plate (unusable), and the trade's stock shot. It deals the trade's things first, the ones least dealt lately leading, then at most two of its place; a place leads only where the library holds none of its things, and never on a product page. A portfolio is dealt none of the things (its work is its own) and one of its place at most. Where a trade lists places ([brief pattern, place pattern]), the first the brief names is its place (a guesthouse on a fjord is shown by the sea, never a whitewashed village). A brief with no listed trade is matched by its own words. A set marked matchOnly (each photograph one trade's hands or one object) gives only the photographs that name the brief's own things; the people set (marked people) never stands for a listed trade's things or place, since a person there would pass for a guest or a customer.",
+ "tradesNote": "What a trade's pictures show and must not show, matched against each photograph's alt. The trade the brief names first applies; the other trades it names are its own too (a bakery and cafe shows its coffee), and so are the dishes of a restaurant or of a brief with a kitchen (dishes): their things are never banned. The deal leaves out a neighbouring trade's things (off), a landmark the brief does not name, a photograph that shows a logo, a house number or a plate (unusable), and the trade's stock shot. It deals the trade's things first, the ones least dealt lately leading, then at most two of its place; a place leads only where none of its things is left. A portfolio is dealt none of the things (its work is its own) and one of its place at most. Where a trade lists places ([brief pattern, place pattern]), the first the brief names is its place (a guesthouse on a fjord is shown by the sea, never a whitewashed village). A brief with no listed trade is matched by its own words. A set marked matchOnly (each photograph one trade's hands or one object) gives only the photographs that name the brief's own things; the people set (marked people) never stands for a listed trade's things or place, since a person there would pass for a guest or a customer. A trade may list its product: on a product page with no photographs of its own, a photograph whose alt names it, or the brief's own word for the product, is never dealt (another maker's product passes for the client's, however cropped), so there the pictures are its use, its load and its place, and a place may lead. A trade may list its first searches of the open collections (queries, with its place searched with placeWord), which never name the client's own thing; on a product page one that names its product is left out.",
  "trades": [
   {
    "id": "coffee",
    "name": "coffee",
    "brief": "\\b(?:coffee(?! tables?\\b)|espresso|roaster(?:y|ies)?|roasting)\\b|\\bcaf[eé]s?(?!\\p{L})",
-   "show": "the coffee and its making: a cup poured at the bar, the counter, the roaster at work where it roasts its own",
+   "show": "the coffee in the cup and the beans close, a cup by a window, the street at its door; its own bar, counter and roaster only in its own pictures",
    "not": "wine, beer, cocktails or tea; a restaurant's plated food; a bakery's bread",
    "things": "\\b(?:coffee|espresso|flat white|cappuccino|latte|barista|roast\\w*|kettle|dripper|counter)\\b|\\bcaf[eé]s?(?!\\p{L})",
    "place": "\\b(?:city streets?|(?:wet|rainy|night) streets?|street lamps?|tram|canal|brick|alley lit)\\b",
-   "off": "\\b(?:wine|grapes?|beer|cocktails?|tea|teapot|salad|vegetables|berries|strawberries|raspberries|honey|pasta|bed|bedside|bedding|towels?)\\b"
+   "off": "\\b(?:wine|grapes?|beer|cocktails?|tea|teapot|salad|vegetables|berries|strawberries|raspberries|honey|pasta|bed|bedside|bedding|towels?|inside a (?:\\w+ )?caf[eé]|caf[eé] tables?)\\b",
+   "queries": [
+    "coffee cup window",
+    "pour over coffee",
+    "coffee beans in a hand"
+   ],
+   "placeWord": "street",
+   "product": "\\b(?:espresso machines?|coffee (?:machines?|makers?|grinders?|bags?|packs?)|grinders?|kettles?|drippers?|pour[- ]over|moka pots?|french press(?:es)?|bags? of (?:coffee|beans))\\b"
   },
   {
    "id": "bakery",
    "name": "bread",
    "brief": "\\b(?:bakery|bakeries|bakers?|bread|patisserie|pastry|pastries|sourdough)\\b",
-   "show": "the bread and its making: dough on the bench, loaves out of the oven, the counter",
+   "show": "the bread close (the crust, the crumb, dough rising in a bowl), the street at its door; its own counter and oven only in its own pictures",
    "not": "coffee as the subject; a restaurant's plated food; wine or beer",
    "things": "\\b(?:bread|loaf|loaves|dough|flour|pastry|pastries|oven|bak\\w*|croissants?)\\b",
    "place": "\\b(?:city streets?|(?:wet|rainy) streets?|tram|canal|brick)\\b",
-   "off": "\\b(?:wine|grapes?|beer|cocktails?|salad|vegetables|bed|bedside|bedding)\\b"
+   "off": "\\b(?:wine|grapes?|beer|cocktails?|salad|vegetables|bed|bedside|bedding)\\b",
+   "queries": [
+    "sourdough loaf",
+    "dough on a floured bench",
+    "bread crust close"
+   ],
+   "placeWord": "street",
+   "product": "\\b(?:bread|loaf|loaves|baguettes?|croissants?|pastr(?:y|ies)|buns?|cakes?)\\b"
   },
   {
    "id": "wine",
    "name": "wine",
    "brief": "\\b(?:wines?|winery|wineries|vineyards?|winemak\\w*)\\b",
-   "show": "the wine and where it grows: the vines, the grapes at harvest, the cellar, a glass poured at the table",
+   "show": "where it grows: the vines, the grapes at harvest, the hills in their light; its own bottle, cellar and glass only in its own pictures",
    "not": "beer, coffee or spirits; a cocktail bar",
    "things": "\\b(?:wines?|grapes?|vines?|vineyards?|cellar|barrels?|harvest)\\b",
    "place": "\\b(?:vineyards?|rolling [\\w-]+ hills|golden hills)\\b",
-   "off": "\\b(?:beer|coffee|espresso|cocktails?|tea|teapot|fog|mist|hay|balloons?|plough\\w*|tractor|sheep|frost\\w*)\\b"
+   "off": "\\b(?:beer|coffee|espresso|cocktails?|tea|teapot|fog|mist|hay|balloons?|plough\\w*|tractor|sheep|frost\\w*)\\b",
+   "product": "\\b(?:bottles?|labels?|glass(?:es)? of (?:red |white )?wine|wine ?glass(?:es)?)\\b",
+   "queries": [
+    "grapes on the vine",
+    "grape harvest crate",
+    "vine leaves autumn light"
+   ],
+   "placeWord": "vineyard"
   },
   {
    "id": "beer",
    "name": "beer",
    "brief": "\\b(?:beers?|brewer(?:y|ies)|brewing|taprooms?)\\b",
-   "show": "the beer and its making: the brewhouse, the tanks, malt and hops in a hand",
+   "show": "what it is made of: hops, malt and barley close, the field, the street at its door; its own brewhouse, tanks and glass only in its own pictures",
    "not": "wine, coffee or cocktails",
    "things": "\\b(?:beers?|brew\\w*|hops|malt|barley|tanks?)\\b",
    "place": "\\b(?:city streets?|(?:wet|rainy|night) streets?|street lamps?|tram|canal|brick|alley lit)\\b",
-   "off": "\\b(?:wine|grapes?|coffee|espresso|tea|teapot)\\b"
+   "off": "\\b(?:wine|grapes?|coffee|espresso|tea|teapot)\\b",
+   "product": "\\b(?:bottles?|beer cans?|pints?|glass(?:es)? of beer|beer glass(?:es)?)\\b",
+   "queries": [
+    "hops close up",
+    "barley field",
+    "malt in a hand"
+   ],
+   "placeWord": "street"
   },
   {
    "id": "stay",
-   "name": "house",
+   "name": "room details",
    "brief": "\\b(?:guest ?houses?|hotels?|inns?|hostels?|b&bs?|lodges?|cabins?|holiday homes?)\\b",
-   "show": "the house and where it stands: the shore, the mountain or the village, its rooms, the view from a window",
-   "not": "a city skyline; a pool at sunset; an office",
-   "things": "\\b(?:cabins?|cottages?|huts?|farmhouses?|guest ?houses?|(?:wooden|white|red|black) houses?)\\b",
+   "show": "where the house stands (the shore, the mountain or the village), and for its rooms the details that belong to no one: bed linen in window light, a chair by the window, a cup on the bedside table, the view from a window",
+   "not": "a city skyline; a pool at sunset; an office; a whole room, a hotel or another house shown as this one",
+   "things": "\\b(?:bed linen|bedding|pillows?|bedside|armchairs?|chair by|curtained window|window light|window in a \\w+ room)\\b|\\b(?:cups?|mugs?)\\b[^.]*\\b(?:bed\\w*|window\\w*)\\b",
    "place": "\\b(?:fjords?|coast\\w*|shores?|sea|bay|harbou?r|mountains?|valley|village|snow\\w*|lake|meadow)\\b",
    "places": [
     [
@@ -69,27 +97,47 @@
      "\\b(?:forest|woods?|pines?|trees)\\b"
     ]
    ],
-   "off": "\\b(?:pool|office|desk|laptop|city|street|apartment|lifeguard|cafe|balloons?|desert|dunes?|sunsets?)\\b"
+   "off": "\\b(?:pool|office|desk|laptop|city|street|apartment|lifeguard|cafe|balloons?|desert|dunes?|sunsets?|traffic|bars?|receipts?|pugs?|dogs?|cats?)\\b",
+   "queries": [
+    "bed linen window light",
+    "window view sea",
+    "wool blanket chair"
+   ],
+   "placeWord": "village"
   },
   {
    "id": "bike",
    "name": "bike",
    "brief": "\\b(?:cargo ?bikes?|e-?bikes?|bicycles?|bikes?|cycling)\\b",
-   "show": "the ride and the load: a parent riding with children in the box (from behind or far off), the box with shopping or a crate, the school run, the city street; another maker's bike only cropped, unbranded or out of focus",
-   "not": "cars, vans, motorbikes or scooters; a road or racing bike; a trike when the bike has two wheels; another maker's name or logo",
+   "show": "the ride and the load without another maker's bike: the shopping in a crate, a child's helmet on a hook, the school run on foot, the city street in the rain",
+   "not": "cars, vans, motorbikes or scooters; a road or racing bike; a trike when the bike has two wheels; another maker's bike, its name or its logo",
    "things": "\\b(?:bicycles?|bikes?|cycl\\w*|cargo|baskets?|crates?|shopping)\\b",
    "place": "\\b(?:city streets?|(?:wet|rainy) streets?|canal|brick|park|school|cycle (?:lanes?|paths?))\\b",
-   "off": "\\b(?:cars?|vans?|trucks?|camper|motor\\w*|scooters?|aircraft|fuselage|balloons?|cable cars?|gondolas?|skateboard\\w*|skatepark)\\b"
+   "off": "\\b(?:cars?|vans?|trucks?|camper|motor\\w*|scooters?|aircraft|fuselage|balloons?|cable cars?|gondolas?|skateboard\\w*|skatepark)\\b",
+   "product": "\\b(?:bicycles?|bikes?|e-?bikes?|cargo ?bikes?|tricycles?|trikes?|cyclists?|cycling)\\b",
+   "queries": [
+    "groceries in a crate",
+    "school street morning",
+    "rain boots puddle"
+   ],
+   "placeWord": "street"
   },
   {
    "id": "furniture",
    "name": "furniture",
    "brief": "\\b(?:furniture|cabinetmak\\w*|joiner(?:y|s)?|chairs?|(?:coffee|dining|side) tables?|interior design\\w*)\\b",
-   "show": "the pieces in use in a room, the joints and the materials close (oak, linen, steel), the workshop",
+   "show": "the materials close (oak grain, linen, steel) and light on a plain wall or floor; its own pieces, rooms and workshop only in its own pictures",
    "not": "another maker's showroom; food on a table as the subject",
    "things": "\\b(?:chairs?|stools?|sofas?|cabinets?|shel(?:f|ves)|dining table|tufted bench)\\b",
    "place": "\\b(?:rooms?|interiors?)\\b",
-   "off": "\\b(?:lifeguard|beach|deck|street|food|pastry|nuts|bowls?|coffee|cups?|mugs?|berries|vegetables|salad|honey|bedding)\\b"
+   "off": "\\b(?:lifeguard|beach|deck|street|food|pastry|nuts|bowls?|coffee|cups?|mugs?|berries|vegetables|salad|honey|bedding)\\b",
+   "product": "\\b(?:chairs?|armchairs?|stools?|sofas?|bench(?:es)?|cabinets?|shel(?:f|ves)|tables?|desks?|lamps?|sideboards?|dressers?)\\b",
+   "queries": [
+    "oak wood grain",
+    "wood shavings close up",
+    "morning light on a white wall"
+   ],
+   "placeWord": "street"
   },
   {
    "id": "motion",
@@ -104,10 +152,16 @@
    "id": "ceramics",
    "name": "ceramics",
    "brief": "\\b(?:pottery|potters?|ceramics?|ceramicists?|stoneware)\\b",
-   "show": "clay on the wheel, glaze, the kiln, finished pieces on a shelf or a table",
+   "show": "the materials close (raw clay, a glaze colour as a surface) and light on a plain table or wall; its own pieces, wheel and kiln only in its own pictures",
    "not": "food on plates as the subject; another trade's hands",
    "things": "\\b(?:clay|glaze\\w*|kiln|ceramics?|pottery|potter(?:'s wheel)?|stoneware)\\b",
-   "off": "\\b(?:food|salad|vegetables|berries|honey)\\b"
+   "off": "\\b(?:food|salad|vegetables|berries|honey)\\b",
+   "product": "\\b(?:ceramics?|pottery|stoneware|porcelain|mugs?|cups?|bowls?|vases?|plates?|jugs?|teapots?|pots)\\b",
+   "queries": [
+    "raw clay texture",
+    "morning light on a white wall"
+   ],
+   "placeWord": "street"
   }
  ],
  "landmarks": [
@@ -1630,6 +1684,38 @@
      "ratio": 1.5,
      "by": "Neil Thomas",
      "page": "https://unsplash.com/photos/12rzbJhQ89E"
+    },
+    {
+     "id": 461,
+     "alt": "Steep mountain coast falling into a calm grey sea under low cloud",
+     "tone": "mid",
+     "colours": [
+      "slate grey",
+      "dark green",
+      "pale grey"
+     ],
+     "mono": false,
+     "calm": "top",
+     "quality": 4,
+     "ratio": 1.5,
+     "by": "Joren Frielink",
+     "page": "https://unsplash.com/photos/qgfiux6vEmc"
+    },
+    {
+     "id": 702,
+     "alt": "Steep green mountainside above a white sand bay with turquoise surf",
+     "tone": "light",
+     "colours": [
+      "moss green",
+      "turquoise",
+      "white"
+     ],
+     "mono": false,
+     "calm": "top right",
+     "quality": 5,
+     "ratio": 1.5,
+     "by": "Dominik Schröder",
+     "page": "https://unsplash.com/photos/9PCmMdc4Crw"
     }
    ]
   },
@@ -2878,6 +2964,53 @@
      "ratio": 1.51,
      "by": "Ales Krivec",
      "page": "https://unsplash.com/photos/HkTMcmlMOUQ"
+    },
+    {
+     "id": 381,
+     "alt": "Wide teal lake between wooded hills in hazy evening light",
+     "tone": "mid",
+     "colours": [
+      "teal",
+      "dark green",
+      "pale sky blue"
+     ],
+     "mono": false,
+     "calm": "top",
+     "quality": 4,
+     "ratio": 1.46,
+     "by": "Nick West",
+     "page": "https://unsplash.com/photos/4M-5WBrG5-c"
+    },
+    {
+     "id": 128,
+     "alt": "Lake under mountains in evening haze seen through tall reeds, a small jetty far off",
+     "tone": "mid",
+     "colours": [
+      "green",
+      "hazy blue",
+      "gold"
+     ],
+     "mono": false,
+     "calm": "top",
+     "quality": 4,
+     "ratio": 1.5,
+     "by": "Matteo Minelli",
+     "page": "https://unsplash.com/photos/hlnucYOsL-c"
+    },
+    {
+     "id": 1053,
+     "alt": "Churning green sea and white foam seen from above",
+     "tone": "mid",
+     "colours": [
+      "sea green",
+      "white"
+     ],
+     "mono": false,
+     "calm": "none",
+     "quality": 4,
+     "ratio": 1.5,
+     "by": "Anna Popović",
+     "page": "https://unsplash.com/photos/x7HJdJZqplo"
     }
    ]
   },
@@ -5516,6 +5649,38 @@
      "ratio": 1.5,
      "by": "Carli Jean",
      "page": "https://unsplash.com/photos/UWRqlJcDCXA"
+    },
+    {
+     "id": 365,
+     "alt": "Steaming cup of tea on an open notebook on white bed linen in window light",
+     "tone": "light",
+     "colours": [
+      "white",
+      "blush pink",
+      "warm grey"
+     ],
+     "mono": false,
+     "calm": "top",
+     "quality": 4,
+     "ratio": 1.5,
+     "by": "Carli Jean",
+     "page": "https://unsplash.com/photos/15YDf39RIVc"
+    },
+    {
+     "id": 755,
+     "alt": "Steaming cup of black coffee held in grey knitted mittens",
+     "tone": "mid",
+     "colours": [
+      "pale grey",
+      "blue grey",
+      "white"
+     ],
+     "mono": false,
+     "calm": "none",
+     "quality": 4,
+     "ratio": 1.32,
+     "by": "Padurariu Alexandru",
+     "page": "https://unsplash.com/photos/k0SwnevO_wk"
     }
    ]
   },

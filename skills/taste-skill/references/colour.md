@@ -81,9 +81,12 @@ With rules and shadows banned, a surface is told apart from the ground by tone a
   or the accent for one section at most. Nothing else grounds a section, a card or a panel: no tint
   between the two, no colour per section, no new tone for cards that overlap or stack (they take the
   surface and the ink in turn). A portfolio page that used seven grounds and panels read as sprawl;
-  a sheet or card in any other colour, a white receipt on grey, is one more. The inspector counts the
-  tones of grounds and large panels, the ink, the accent and a dealt field aside: four warn, five fail
-  (`surface-count`). Where a palette's note names more grounds, the sheet's tokens win.
+  a sheet or card in any other colour, a white receipt on grey, is one more. The inspector counts
+  every ground by the screens a visitor sees it on: the page ground and its surface, the ink and a
+  dealt field once they ground more than the footer and one section (or two and a half screens), the
+  accent past one section, and any other tone, a band sampled from a photograph included. Three warn,
+  four fail; a ground the dealt scene or technique asks for is named and only warns (`surface-count`).
+  Where a palette's note names more grounds, the sheet's tokens win.
 - Do not nest a panel inside a panel.
 - Images do not need a frame. If a light photograph melts into a light ground, change the crop or set
   it on `--surface`, do not outline it.
@@ -126,8 +129,8 @@ or the accent, one section at most each (§4), never a colour of its own.
   black at 40–55%, over the text area only, on a dark page as on a light one (a pale ink scrim reads
   as fog).
 - A section sits with its photograph when the band beside it is the ink or the accent the picture
-  already holds; never a new field sampled from a photograph (its sky, its shadow): that is a third
-  ground (`surface-count`).
+  already holds; never a new field sampled from a photograph (its sky, its shadow) unless the dealt
+  scene asks for one: that is a third ground (`surface-count`).
 
 ## 8. Contrast
 

@@ -25,8 +25,8 @@
   ],
   "needs": [],
   "pictures": 4,
-  "idea": "The name is the headline. Set it so large that it becomes architecture: as wide as the viewport, cropped by an edge, or stacked to fill the screen. Nothing else on the first screen competes; the description of what this is drops to a single small sentence. The idea comes from treating the name's letters as material. Ask what the subject can do to its own name: a photograph of the work stands behind it or opens under it, the name repeats down the page like a reel, the letters are split to opposite corners and the page happens between them (never a picture inside the letters or between the words). In the study this was the single most common device among sites scoring 7.5 or more.",
-  "composition": "First screen: the wordmark spans 88–100% of the viewport width (font-size 16–24vw, set with a clamp so it never wraps), anchored either to the bottom edge with its descenders nearly touching it, or dead centre with everything else pushed to the corners. One line of supporting text at 16–20px sits in a corner on a shared margin; navigation is three or four words in the opposite corner. After the hero the page is deliberately small and calm: a narrow text column or a simple two-column grid, so the contrast with the monument holds. The footer is the dealt one, at text sizes: the name does not return there at full width. The name may reach the screen's edges as display type cropped on purpose; everything else keeps the margins section 0 deals. Two type sizes do nearly all the work: the monument and a small text size, with one mid size for section headings.",
+  "idea": "The name is the headline. Set it so large that it becomes architecture: as wide as the margins allow, or stacked to fill the screen, every letter whole. Nothing else on the first screen competes; the description of what this is drops to a single small sentence. The idea comes from treating the name's letters as material. Ask what the subject can do to its own name: a photograph of the work stands behind it or opens under it, the name repeats down the page like a reel, the letters are split to opposite corners and the page happens between them (never a picture inside the letters or between the words). In the study this was the single most common device among sites scoring 7.5 or more.",
+  "composition": "First screen: the wordmark spans the width between the page margins (font-size 16–24vw, set with a clamp so it never wraps), either whole on the bottom margin with no letter cut by any edge, or dead centre with everything else pushed to the corners. One line of supporting text at 16–20px sits in a corner on a shared margin; navigation is three or four words in the opposite corner. After the hero the page is deliberately small and calm: a narrow text column or a simple two-column grid, so the contrast with the monument holds. The footer is the dealt one, at text sizes: the name does not return there at full width. The name keeps the margins section 0 deals like everything else, every letter whole. Two type sizes do nearly all the work: the monument and a small text size, with one mid size for section headings.",
   "typography": "One family. The display cut must survive enormous sizes: tight tracking (-0.04 to -0.07em), leading 0.8–0.9, optical kerning on. Section headings are modest (28–40px) on purpose.",
   "typeClasses": [
    "grotesk-tight",
@@ -50,7 +50,7 @@
   ],
   "motion": "scaling-wordmark",
   "richness": "Scale. The size of the name against the smallness of everything else is the entire visual event, so protect both ends: do not shrink the name to make room, and do not let body text creep above 20px.",
-  "pitfalls": "A long name set small is just a logo. If the name has more than about 12 characters, stack it on two lines or crop it with the viewport edge; never drop below 12vw. Do not add a second big headline under the name. Do not decorate the letters.",
+  "pitfalls": "A long name set small is just a logo. If the name has more than about 12 characters, stack it on two lines, every letter whole; never drop below 12vw. Do not add a second big headline under the name. Do not decorate the letters.",
   "seenIn": [
    "aww-nothin",
    "opl-kereliott",
@@ -249,8 +249,8 @@
   ],
   "needs": [],
   "pictures": 6,
-  "idea": "For a place, the photograph is the argument. One full-bleed image of where you would be standing fills the first screen, and the design steps back: the name sits along the bottom edge like a film title, or small in a corner, and nothing else interrupts the view. The page that follows keeps that restraint: few words, large pictures, long pauses. The designer's work here is editing: choosing the one frame that makes someone want to be there, and then not covering it.",
-  "composition": "First screen: a single photograph at 100vw by 100svh, focal point kept clear of text. The name is set either very large (14–20vw) hugging the bottom edge with 16–24px of margin, or small (20–28px) top-left with a one-line description bottom-left. Navigation is two to four words in the top corners in the same small size. If text sits on the image, a flat dark scrim under the text area only. Below, sections alternate between a short centred or left-set paragraph in a narrow column (max 52ch) with wide empty margins, and photographs shown large: one full-bleed, then a pair at different sizes, then one portrait offset to the right. Practical information (hours, address, rates, booking) is gathered once near the end in a plain two-column block.",
+  "idea": "For a place, the photograph is the argument. One full-bleed image of where you would be standing fills the first screen, and the design steps back: the name sits whole on the bottom margin like a film title, or small in a corner, and nothing else interrupts the view. The page that follows keeps that restraint: few words, large pictures, long pauses. The designer's work here is editing: choosing the one frame that makes someone want to be there, and then not covering it.",
+  "composition": "First screen: a single photograph at 100vw by 100svh, focal point kept clear of text. The name is set either very large (14–20vw) whole on the bottom margin, no letter cut by any edge, or small (20–28px) top-left with a one-line description bottom-left. Navigation is two to four words in the top corners in the same small size. If text sits on the image, a flat dark scrim under the text area only. Below, sections alternate between a short centred or left-set paragraph in a narrow column (max 52ch) with wide empty margins, and photographs shown large: one full-bleed, then a pair at different sizes, then one portrait offset to the right. Practical information (hours, address, rates, booking) is gathered once near the end in a plain two-column block.",
   "typography": "A face with some grace for the name; small, calm, well-spaced text everywhere else. Sentence case. Body 17–19px with leading around 1.55.",
   "typeClasses": [
    "serif-display",
@@ -544,7 +544,7 @@
    "pastel-fields",
    "dark-neutral"
   ],
-  "imagery": "Use the product's own photographs if they exist. Otherwise use a still-life from the dealt set as a stand-in and say so. Prefer images with a plain background; use `mix-blend-mode: multiply` on light fields so a white studio background disappears into the page colour.",
+  "imagery": "Use the product's own photographs if they exist. Otherwise the product is its designed frame (the sheet's hard rule), never another maker's, and the dealt set gives the still-lifes round it. Prefer images with a plain background; use `mix-blend-mode: multiply` on light fields so a white studio background disappears into the page colour.",
   "photoTreatment": "Scale the main image well past its container (`width: 120–160%`) and let `overflow: hidden` on the section do the cropping.",
   "sectionTags": [
    "object-led",
@@ -601,7 +601,7 @@
    "earth",
    "mono-accent"
   ],
-  "imagery": "Photographs of single items on plain backgrounds, all cropped to sit at the same apparent size within their tile. On pale tiles, `mix-blend-mode: multiply` removes white studio backgrounds. If the subject's own item photographs are missing, use the dealt set and say so.",
+  "imagery": "Photographs of single items on plain backgrounds, all cropped to sit at the same apparent size within their tile. On pale tiles, `mix-blend-mode: multiply` removes white studio backgrounds. If the subject's own item photographs are missing, use the dealt set and say so, never another maker's product as an item (the sheet's hard rule).",
   "sectionTags": [
    "object-led",
    "colour-field",
@@ -1021,7 +1021,7 @@
   "pictures": 4,
   "bare": true,
   "idea": "One dark field from top to bottom, and in it, lit things. Photographs and objects appear like exhibits in a dim gallery: each with space around it, each the brightest thing on its screen. Type is light, small and sparse. The darkness is not a theme switch; it is a room, and the page is a slow walk through it. It suits subjects sold on atmosphere and material: an evening restaurant, a metal card, a record, a house at dusk.",
-  "composition": "A single near-black or deep-toned ground runs the full page with no section bands. First screen: either the name at full width in a light weight along the bottom edge with one dim photograph above it, or one object or photograph centred at 40–50% of the viewport with a line of text beneath at 16–18px. Each later screen holds one or two lit items at a generous size (the main one 40–60% of the screen width) with its text set beside it at full reading size; the darkness frames the items, it does not replace content. Images vary in size but all share the same darkness at their edges so they sit in the ground without frames. Practical details come last in a simple two-column text block. The only solid light element on the page is the single primary action.",
+  "composition": "A single near-black or deep-toned ground runs the full page with no section bands. First screen: either the name at full width in a light weight whole on the bottom margin with one dim photograph above it, or one object or photograph centred at 40–50% of the viewport with a line of text beneath at 16–18px. Each later screen holds one or two lit items at a generous size (the main one 40–60% of the screen width) with its text set beside it at full reading size; the darkness frames the items, it does not replace content. Images vary in size but all share the same darkness at their edges so they sit in the ground without frames. Practical details come last in a simple two-column text block. The only solid light element on the page is the single primary action.",
   "typography": "Light or regular weights; they glow on dark. Avoid heavy bold, which looks cheap on black. Headings 4–7vw at most; text 16–18px with leading 1.6 and a slightly lifted ink (not pure white).",
   "typeClasses": [
    "grotesk-light",
@@ -1149,7 +1149,7 @@
    "dark-neutral",
    "mono-accent"
   ],
-  "imagery": "The product is the picture: real interface fragments (data-ui), the object photographed or generated as it is, or the output it makes. Few people photographs; none of people at laptops.",
+  "imagery": "The product is the picture: real interface fragments (data-ui), the object photographed or generated as it is (without its own photographs, its designed frame, never another maker's), or the output it makes. Few people photographs; none of people at laptops.",
   "sectionTags": [
    "ui-led",
    "quiet",
@@ -1310,7 +1310,7 @@
    "dark-neutral",
    "mono-accent"
   ],
-  "imagery": "The subject photographed or generated cleanly, from the front, the side, close up; its construction shown by a close photograph of the joint or part, never a drawing.",
+  "imagery": "The subject photographed or generated cleanly, from the front, the side, close up; its construction shown by a close photograph of the joint or part, never a drawing. Without the client's own photographs, the subject is its designed frame and the close-ups show its materials, never another maker's product (the sheet's hard rule).",
   "sectionTags": [
    "object-led",
    "dense",

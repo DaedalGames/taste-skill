@@ -2,19 +2,24 @@
 // tasteskill / assets: find real, openly licensed pictures of the subject's world, and keep their credits.
 //
 // A page without photographs of its own still needs sharp, modern pictures of its world: the subject's city
-// and street as they are today, its materials, its kind of work and its kind of product in use, free to use
+// and street as they are today, its materials, its details, the use and the load of its product, free to use
 // with a credit. This searches the open collections without keys and prints what an agent needs to use a
 // picture honestly: a direct image URL, the page it comes from, its size, its creator, its licence and a
 // one-line credit. Then it downloads the chosen ones into the project and records their credits, so the
 // page works offline and credits every picture.
 //
-// By default it searches the sources references/imagery.md allows: Openverse for pictures, Wikimedia Commons
-// and NASA for footage. The archive and museum sources are the documentary look the owner ruled out (October
-// 2026); `--source all` or a named source still reaches them.
+// By default it searches the sources references/imagery.md allows: Openverse for pictures, and Wikimedia Commons
+// when Openverse fails or finds nothing (Openverse answered 504 for whole sessions in round 12); Commons and NASA
+// for footage. Pictures are CC0, CC BY or CC BY-SA, with author and licence from the source's API: public-domain
+// marks are mostly old archive pictures, and anything dated before 2000, Geograph's survey snapshots and files
+// titled with a camera's number are left out. The archive and museum sources are the documentary look the owner
+// ruled out (October 2026); `--source all` or a named source still reaches them, dates and all. A call that fails is
+// tried again, 1, 2 and 4 seconds apart.
 //
-//   node assets.mjs "<query>"                     search Openverse, licences safe for commercial use
+//   node assets.mjs "<query>"                     search Openverse (then Commons), modern licences
 //        [--source openverse|commons|aic|met|museums|all]    one or several, comma-separated
-//        [--license safe|pd|all|cc0,pd,by,by-sa,...]        safe = CC0, public domain, CC BY, CC BY-SA
+//        [--license modern|safe|pd|all|cc0,pd,by,by-sa,...]  modern = CC0, CC BY, CC BY-SA (the default for
+//                                                  pictures); safe adds public domain (the default for footage)
 //        [--orientation landscape|portrait|square]  [--min-width 1800]  [--width 1920]  [--limit 5]
 //        [--no-check]                              skip checking that each image loads (faster)
 //        [--json]                                  machine-readable results
@@ -34,13 +39,16 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, createWriteStream, unlinkSync } from 'node:fs';
 import { join, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { namesBusiness } from './lib/business.mjs';
 
 const UA = 'taste-skill-assets/2.0 (+https://github.com/Leonxlnx/taste-skill)';
 const SELF = fileURLToPath(import.meta.url).split('\\').join('/');
 const CMD = `node ${/\s/.test(SELF) ? `"${SELF}"` : SELF}`;
+const DRAW = SELF.replace(/assets\.mjs$/, 'draw.mjs');
+const DRAW_CMD = `node ${/\s/.test(DRAW) ? `"${DRAW}"` : DRAW}`;
 const SOURCES = {
   openverse: { media: 'image', name: 'Openverse', note: 'one index over Flickr, Wikimedia Commons, museums and libraries' },
-  commons: { media: 'both', name: 'Wikimedia Commons', note: 'archival photographs, old maps, scans of prints and books, places as they look now', videoNote: 'video files with web-sized webm transcodes: places, crafts, processes, nature' },
+  commons: { media: 'both', name: 'Wikimedia Commons', note: 'places, materials and work as they look now (it also holds archive scans: leave those out)', videoNote: 'video files with web-sized webm transcodes: places, crafts, processes, nature' },
   aic: { media: 'image', name: 'Art Institute of Chicago', note: 'public-domain paintings, prints, photographs and textiles, served large' },
   met: { media: 'image', name: 'The Metropolitan Museum of Art', note: 'public-domain objects, prints, drawings and photographs (Open Access)' },
   archive: { media: 'video', name: 'Internet Archive', note: 'the Prelinger Archives: industrial, educational, city and home films from the 1920s to the 1970s, mostly long' },
@@ -50,6 +58,11 @@ const SOURCE_ALIAS = { museums: ['aic', 'met'], wikimedia: ['commons'], artic: [
 const VIDEO_TYPES = { 'video/mp4': 'mp4', 'video/webm': 'webm' }; // what every current browser plays; Ogg Theora and QuickTime are left out
 const LICENCES = ['cc0', 'pd', 'by', 'by-sa', 'by-nc', 'by-nd', 'by-nc-sa', 'by-nc-nd', 'other'];
 const SAFE = ['cc0', 'pd', 'by', 'by-sa'];
+const MODERN = ['cc0', 'by', 'by-sa']; // a public-domain mark is mostly an old archive picture: pictures leave it out unless asked
+// a picture dated before this, or whose title names an earlier year, is the archive look (references/imagery.md §2),
+// except from the sources only searched when named, whose films and objects are old by nature
+const OLDEST = 2000;
+const NAMED_ONLY = ['aic', 'met', 'archive'];
 const LICENCE_ALIAS = { pdm: 'pd', 'public-domain': 'pd', publicdomain: 'pd', 'cc-by': 'by', 'cc-by-sa': 'by-sa', 'cc-zero': 'cc0' };
 const WEB_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif', 'image/svg+xml': 'svg' };
 const PROVIDERS = { flickr: 'Flickr', wikimedia: 'Wikimedia Commons', met: 'The Metropolitan Museum of Art', nypl: 'New York Public Library', rawpixel: 'rawpixel', stocksnap: 'StockSnap', clevelandmuseum: 'Cleveland Museum of Art', brooklynmuseum: 'Brooklyn Museum', sciencemuseum: 'Science Museum Group', europeana: 'Europeana', geographorguk: 'Geograph Britain and Ireland', inaturalist: 'iNaturalist', wordpress: 'WordPress Photo Directory' };
@@ -59,8 +72,9 @@ const AIC_HEADERS = { 'AIC-User-Agent': UA };
 const USAGE = `Find real, openly licensed pictures of the subject's world, download them, keep their credits.
 
   ${CMD} "<query>" [options]
-      --source openverse|commons|aic|met|museums|all   comma-separated; default openverse (the archive and museum sources are the documentary look, ruled out)
-      --license safe|pd|all|cc0,pd,by,by-sa,...        default safe: CC0, public domain, CC BY, CC BY-SA
+      --source openverse|commons|aic|met|museums|all   comma-separated; default openverse, then commons when it fails or finds
+                                                       nothing (the archive and museum sources are the documentary look, ruled out)
+      --license modern|safe|pd|all|cc0,pd,by,by-sa,... default modern: CC0, CC BY, CC BY-SA (safe adds public domain)
       --orientation landscape|portrait|square
       --min-width <px>       smallest acceptable full width, default 1800 (a picture is used at most at about half its width)
       --width <px>           width of the image URL to use or download, default 1920
@@ -77,7 +91,8 @@ const USAGE = `Find real, openly licensed pictures of the subject's world, downl
   ${CMD} --logo <brand>[,<brand>...] [--to assets]   the real logos of known products (Simple Icons), saved to <to>/logos
 
 Queries work best in the subject's own words, as it is today: "gent korenmarkt", "azulejo tiles", "basalt
-texture", "cargo bike school run". For footage, name the action or the process: "coffee roasting", "timber
+texture", "groceries in a crate". Never the client's own thing (its product, its rooms, its work): another
+business's never stands in for it. For footage, name the action or the process: "coffee roasting", "timber
 construction", "river", "city street night".`;
 
 // ---------- arguments ----------
@@ -122,12 +137,13 @@ function pickSources(value) {
 }
 function pickLicences(value) {
   const v = String(value).toLowerCase().trim();
+  if (v === 'modern') return MODERN;
   if (v === 'safe') return SAFE;
   if (v === 'pd') return ['cc0', 'pd'];
   if (v === 'all' || v === 'any') return LICENCES;
   const out = v.split(',').map((x) => x.trim()).filter(Boolean).map((x) => LICENCE_ALIAS[x] || x);
   const bad = out.filter((x) => !LICENCES.includes(x));
-  if (bad.length || !out.length) fail(`Unknown licence "${bad.join(', ') || v}". Use safe, pd, all, or a list of: ${LICENCES.join(', ')}.`);
+  if (bad.length || !out.length) fail(`Unknown licence "${bad.join(', ') || v}". Use modern, safe, pd, all, or a list of: ${LICENCES.join(', ')}.`);
   return out;
 }
 function pickOrientation(value) {
@@ -140,7 +156,7 @@ function pickOrientation(value) {
 const o = {
   // the sources references/imagery.md allows (§3, §11), unless named
   sources: pickSources(args.source ?? args.sources ?? (VIDEO ? 'commons,nasa' : 'openverse')),
-  licences: pickLicences(args.license ?? args.licence ?? 'safe'),
+  licences: pickLicences(args.license ?? args.licence ?? (VIDEO ? 'safe' : 'modern')),
   orientation: pickOrientation(args.orientation),
   minWidth: number('min-width', VIDEO ? 640 : 1800, 0, 20000),
   width: number('width', 1920, 200, 4000),
@@ -187,19 +203,24 @@ async function mapLimit(items, n, fn) {
   await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (next < items.length) { const k = next++; out[k] = await fn(items[k], k); } }));
   return out;
 }
+// A call that fails is tried again up to three times, 1, 2 and 4 seconds apart (a Retry-After up to 8 s wins), and one
+// that timed out once more only: the source's own deadline in search() is 45 s. Openverse answered 504 for whole
+// sessions in round 12, where one quick retry gave up.
+const backoff = (attempt) => 1000 * 2 ** (attempt - 1) + Math.round(Math.random() * 250);
+function retryAfter(r) { const s = Number(r.headers.get('retry-after')); return Number.isFinite(s) && s > 0 ? Math.min(s, 8) * 1000 : null; }
 async function getJson(url, ms = 20000, headers = {}) {
   for (let attempt = 1; ; attempt++) {
     let r;
     try { r = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json', ...headers }, signal: AbortSignal.timeout(ms) }); }
     catch (e) {
       const timedOut = e.name === 'TimeoutError' || e.name === 'AbortError';
-      if (!timedOut && attempt < 2) { await sleep(800); continue; }
-      throw new Error(timedOut ? `no answer within ${Math.round(ms / 1000)} s` : `could not connect (${e.cause?.code || e.message})`);
+      if (attempt < (timedOut ? 2 : 4)) { await sleep(backoff(attempt)); continue; }
+      throw new Error(timedOut ? `no answer within ${Math.round(ms / 1000)} s${attempt > 1 ? `, ${attempt} tries` : ''}` : `could not connect (${e.cause?.code || e.message}), ${attempt} tries`);
     }
-    if ([502, 503, 504].includes(r.status) && attempt < 2) { await sleep(1200); continue; }
-    if (r.status === 429) throw new Error('rate limited (HTTP 429): wait a minute, or search another --source');
+    if ([429, 500, 502, 503, 504].includes(r.status) && attempt < 4) { r.body?.cancel().catch(() => {}); await sleep(retryAfter(r) ?? backoff(attempt)); continue; }
+    if (r.status === 429) throw new Error(`rate limited (HTTP 429), ${attempt} tries: wait a minute, or search another --source`);
     if (r.status === 410) throw new Error('this API endpoint has been retired (HTTP 410); assets.mjs needs updating for it');
-    if (!r.ok) throw new Error(`HTTP ${r.status}${r.status >= 500 ? ', the service is having trouble' : ''}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}${r.status >= 500 ? `, the service is having trouble (${attempt} tries)` : ''}`);
     try { return await r.json(); } catch { throw new Error('the answer was not JSON'); }
   }
 }
@@ -286,6 +307,26 @@ function licenceUrl(it) {
   return null;
 }
 const creditRequired = (it) => it.license !== 'cc0' && it.license !== 'pd';
+// The archive look: a picture whose date names a century, BC or a year before OLDEST ("late 17th century", "between 43
+// and 200"), or whose title names an earlier year where it reads as a date ("Coffee roasting, 1937", "the 1930s", "in
+// 1937"), never a camera's file number or a measure ("DSC 1856", "1500 W").
+const CAMERA_FILE = /\b(?:dsc[fn]?|img|pict|dji|gopr|p)[\s_-]*\d{3,}/gi;
+const TITLE_YEAR = /(?:^|[(,–-]\s*|\b(?:in|from|circa|c\.|ca\.|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*)\s+)1[5-9]\d\d\b(?!\s*(?:w|kw|v|mm|cm|km|kg|px|hp)\b)|\b1[5-9]\d0(?:s|er)\b|\s1[5-9]\d\d$/i;
+function oldPicture(it) {
+  const date = String(it.date || '');
+  return /\bcentur(?:y|ies)\b|\bB\.?C\.?(?:E\.?)?(?![\p{L}])/iu.test(date) || (date.match(/\b\d{3,4}\b/g) || []).some((y) => +y < OLDEST) || TITLE_YEAR.test(String(it.title || '').replace(CAMERA_FILE, ''));
+}
+// The snapshot look the Commons fallback brought back (round 12's live finds: survey shots of schools, a supermarket):
+// Geograph's photographs of every grid square, and files titled with a camera's number alone ("DSC_0412").
+function snapshot(it) { return /geograph/i.test(`${it.title} ${it.via} ${it.page || ''}`) || !String(it.title || '').replace(CAMERA_FILE, '').replace(/[\s\d_().-]+/g, ''); }
+// A title or an author that names a business or a maker (namesBusiness, lib/business.mjs, the rule the inspector's
+// credit-names-business reads too): such a picture is never shown as the client's own product, room or work, whatever
+// its credit says (r12-p55, r12-p57 and r12-p58). A note to look, never a filter.
+function markBusiness(it) {
+  const b = namesBusiness(it.title, it.creator);
+  if (b) it.notes.push(`Its title or author names a business or a maker ("${short(b, 60)}"): never show it as the client's own product, room, house or work, nor in a slot marked for them (data-slot); as the world around, caption it with what and where it is.`);
+  return it;
+}
 function licenceNotes(it) {
   const n = [];
   if (/-sa$/.test(it.license)) n.push('Share-alike: an altered version (recoloured, combined with other pictures) must be shared under the same licence.');
@@ -332,7 +373,7 @@ async function searchOpenverse(q, opts) {
     const p = new URLSearchParams({ q, license: lic.join(','), page_size: '20' });
     if (opts.orientation) p.set('aspect_ratio', { landscape: 'wide', portrait: 'tall', square: 'square' }[opts.orientation]);
     if (large) p.set('size', 'large');
-    return getJson(`https://api.openverse.org/v1/images/?${p}`, 30000);
+    return getJson(`https://api.openverse.org/v1/images/?${p}`, 20000); // (20 s, so a retry fits the source's 45 s)
   };
   // Its default order is led by 1024px Flickr files. Ask for the large ones first, and fill up from the rest only if needed.
   const first = await call(true);
@@ -356,7 +397,7 @@ function fromOpenverse(r) {
     width: r.width || null, height: r.height || null, imageWidth: r.width || null, imageHeight: r.height || null,
   });
   if (!LICENCES.includes(it.license)) it.license = 'other';
-  return it;
+  return markBusiness(it);
 }
 // Openverse points at Wikimedia originals, which can be 10 MB or a TIFF. Swap in a web-sized rendition.
 async function wikimediaSizes(items, width) {
@@ -400,7 +441,7 @@ function fromCommons(pg) {
   const restrictions = m('Restrictions');
   if (restrictions) it.notes.push(`Restrictions named on the source page (${restrictions}): personality rights, a trademark or similar. Read it before use.`);
   if (/^pd-us/i.test(m('License'))) it.notes.push('Public domain in the United States; check the source page before using it elsewhere.');
-  return it;
+  return markBusiness(it);
 }
 function commonsLicence(license, shortName) {
   const l = String(license || '').toLowerCase(); const s = String(shortName || '').toLowerCase();
@@ -595,25 +636,29 @@ function fits(it, opts, skipped) {
   if (opts.orientation && W && H && shape(W, H) !== opts.orientation) { skipped.shape++; return false; }
   return true;
 }
-async function search(query, opts) {
+// The sources searched, filtered and checked: each result is { key, total, items, skipped, error }. `seen` holds the
+// files already listed, so a second call (the fallback) shows none twice.
+async function gather(keys, query, opts, seen) {
   const runners = opts.video ? { commons: searchCommonsVideo, archive: searchArchive, nasa: searchNasa } : { openverse: searchOpenverse, commons: searchCommons, aic: searchAic, met: searchMet };
   // a slow service never holds the whole search: each source gets 45 s, the check 30 s
   const deadline = (ms, message) => new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms).unref());
-  const results = await Promise.all(opts.sources.map(async (key) => {
-    try { return { key, ...(await Promise.race([runners[key](query, opts), deadline(45000, 'no complete answer within 45 s; try again or search another --source')])) }; }
-    catch (e) { return { key, error: e.message, items: [] }; }
-  }));
   // short clips first, then longer ones, then anything over the size cap; the source's own order within each
   const cap = opts.maxMb * 1048576;
   const rank = (it) => (it.media !== 'video' ? 0 : it.bytes && it.bytes > cap ? 4 : !it.duration ? 3 : it.duration <= 30 ? 0 : it.duration <= 90 ? 1 : it.duration <= 300 ? 2 : 3);
   const byRank = (a, b) => rank(a) - rank(b);
-  const seen = new Set();
+  const results = await Promise.all(keys.map(async (key) => {
+    try { return { key, ...(await Promise.race([runners[key](query, opts), deadline(45000, 'no complete answer within 45 s; try again or search another --source')])) }; }
+    catch (e) { return { key, error: e.message, items: [] }; }
+  }));
   for (const r of results) {
-    r.skipped = { licence: r.skippedLicence || 0, small: 0, shape: 0, dead: 0, alike: 0 };
+    r.skipped = { licence: r.skippedLicence || 0, small: 0, shape: 0, dead: 0, alike: 0, old: 0, snapshot: 0 };
     const titles = new Map();
     r.items = r.items.filter((it) => {
       if (!opts.licences.includes(it.license)) { r.skipped.licence++; return false; }
       const k = keyOf(it.original || it.image); if (seen.has(k)) return false; seen.add(k);
+      // (the museum and archive sources are the archive by nature, and only searched when named)
+      if (!NAMED_ONLY.includes(it.source) && oldPicture(it)) { r.skipped.old++; return false; }
+      if (!NAMED_ONLY.includes(it.source) && snapshot(it)) { r.skipped.snapshot++; return false; }
       if (!fits(it, opts, r.skipped)) return false;
       // one scanned book can fill a whole page of results: keep two pictures per title
       const t = it.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().slice(0, 32); const n = (titles.get(t) || 0) + 1; titles.set(t, n);
@@ -635,11 +680,20 @@ async function search(query, opts) {
     for (const r of results) r.items = r.items.filter((it) => (it.check?.ok ? fits(it, opts, r.skipped) : (r.skipped.dead++, (r.skipped.why = it.check?.why || 'not checked within 30 s'), false))).sort(byRank);
   }
   for (const r of results) r.items = r.items.slice(0, opts.limit);
+  return results;
+}
+async function search(query, opts) {
+  const seen = new Set();
+  const results = await gather(opts.sources, query, opts, seen);
+  // Openverse failed or found nothing usable (it answered 504 for whole sessions in round 12): Commons next, by itself
+  const ov = results.find((r) => r.key === 'openverse');
+  const fellBack = !opts.video && ov && !opts.sources.includes('commons') && (ov.error || !ov.items.length) ? (ov.error ? 'could not be searched' : 'found nothing usable') : null;
+  if (fellBack) for (const r of await gather(['commons'], query, opts, seen)) results.push({ ...r, fallback: fellBack });
   const shown = results.reduce((n, r) => n + r.items.length, 0);
 
   if (args.json) {
     console.log(JSON.stringify({ query, options: { media: opts.video ? 'video' : 'image', sources: opts.sources, licences: opts.licences, orientation: opts.orientation, minWidth: opts.minWidth, width: opts.width, res: opts.video ? opts.res : undefined, maxMb: opts.video ? opts.maxMb : undefined, limit: opts.limit, checked: opts.check },
-      sources: results.map((r) => ({ source: r.key, name: SOURCES[r.key].name, total: r.total ?? null, error: r.error || null, skipped: r.skipped,
+      sources: results.map((r) => ({ source: r.key, name: SOURCES[r.key].name, total: r.total ?? null, error: r.error || null, fallback: r.fallback ? `Openverse ${r.fallback}` : null, skipped: r.skipped,
         items: r.items.map(({ check, ...it }) => ({ ...it, licenseLabel: licenceLabel(it), licenseUrl: licenceUrl(it), creditRequired: creditRequired(it), credit: credit(it), notes: [...it.notes, ...licenceNotes(it), ...(it.media === 'video' ? videoNotes(it, opts) : [])] })) })) }, null, 1));
     return shown ? 0 : 1;
   }
@@ -651,8 +705,9 @@ async function search(query, opts) {
   for (const r of results) {
     const src = SOURCES[r.key];
     console.log('');
+    if (r.fallback) console.log(`Openverse ${r.fallback}, so Wikimedia Commons was searched next.`);
     if (r.error) { console.log(`## ${src.name}: could not search it (${r.error})`); continue; }
-    const dropped = [r.skipped.small && `${r.skipped.small} narrower than ${opts.minWidth}px`, r.skipped.shape && `${r.skipped.shape} not ${opts.orientation}`, r.skipped.licence && `${r.skipped.licence} under other licences`, r.skipped.alike && `${r.skipped.alike} more with the same title`, r.skipped.dead && `${r.skipped.dead} did not load (${r.skipped.why})`].filter(Boolean);
+    const dropped = [r.skipped.small && `${r.skipped.small} narrower than ${opts.minWidth}px`, r.skipped.shape && `${r.skipped.shape} not ${opts.orientation}`, r.skipped.licence && `${r.skipped.licence} under other licences`, r.skipped.old && `${r.skipped.old} dated before ${OLDEST}`, r.skipped.snapshot && `${r.skipped.snapshot} survey snapshots or camera file names`, r.skipped.alike && `${r.skipped.alike} more with the same title`, r.skipped.dead && `${r.skipped.dead} did not load (${r.skipped.why})`].filter(Boolean);
     const count = r.total != null ? `${r.total} matches, ${r.items.length} shown` : `${r.items.length} shown`;
     console.log(`## ${src.name}: ${r.items.length ? count : 'nothing usable'}${dropped.length ? ` (dropped: ${dropped.join(', ')})` : ''}`);
     if (r.note) console.log(r.note);
@@ -685,8 +740,9 @@ async function search(query, opts) {
   }
   console.log('');
   if (results.every((r) => r.error)) {
-    console.log('No source could be reached. Check the network and try again; if this machine has no internet access, use the dealt');
-    console.log('photographs and type (references/imagery.md §3) and say in your report that the open collections could not be searched.');
+    console.log('No source could be reached, after retries. Next, in this order: the photographs dealt on the direction sheet and the rest');
+    console.log(`of the library (${DRAW_CMD} --photos <words>); then type, or the slot's marked frame (references/imagery.md §3).`);
+    console.log('Never a museum or archive source in their place. Say in your report which searches failed.');
     return 1;
   }
   if (!shown && opts.video) {
@@ -696,16 +752,17 @@ async function search(query, opts) {
   }
   if (!shown) {
     console.log('Nothing usable came back. Try fewer words; the place\'s own name for things ("azulejo", not "blue tile"); a smaller');
-    console.log('--min-width. For a physical product, search its use, its load and its place instead ("child seat bike", "shopping');
-    console.log('crate", "school street"): a product page is never without pictures. Anything else: if two or three honest queries');
-    console.log('find nothing sharp and fitting, leave the slot to type (references/imagery.md §3).');
+    console.log('--min-width. For a physical product with no photographs of its own, search its use, its load and its place, never');
+    console.log('the product ("groceries in a crate", "school street"): another maker\'s product never stands in for it. Then the');
+    console.log(`library (${DRAW_CMD} --photos <words>); if two or three honest queries find nothing sharp and fitting, leave the`);
+    console.log('slot to type or its marked frame (references/imagery.md §3).');
     return 1;
   }
   if (opts.video) console.log('Next. Watch before you choose: --get downloads the clip and a poster frame into the project and records the credit.');
   else console.log('Next. Look before you choose: --get downloads into the project and records the credit; open the file to see it.');
   console.log(`  ${CMD} --get <ref>[,<ref>...]${o.toArg}`);
   console.log(`  ${CMD} --credits${o.toArg}     the Image credits dialog and the list for your report`);
-  console.log(`These ${opts.video ? 'clips' : 'pictures'} show the subject's world. Never present one as the client's own product, room, dish, person or team.`);
+  console.log(`These ${opts.video ? 'clips' : 'pictures'} show the subject's world. Never present one as the client's own product, room, house, work, person or team, whatever its credit says.`);
   return 0;
 }
 

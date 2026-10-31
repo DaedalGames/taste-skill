@@ -173,12 +173,20 @@ When the brief supplies no proof, use what is true by construction:
 **Sample details are different from proof, and they are expected.** Where the brief gives the shape of
 the content but not every detail (six rooms "from €140", "a short menu", twelve speakers), write the
 full set of plausible details: each room with a name, a bed, a view and its own rate; each dish with
-its price; each speaker with a talk title; or, when there are fewer good photographs than rooms, each
+its price; each speaker with a talk title; or, when there are fewer good pictures than rooms, each
 kind of room (references/imagery.md §2), with its picture and its rate. A design can only be judged at
 its real density, and a page that shows one rate where six rooms exist looks unfinished. The details
-sit beside the room's or the
-dish's photograph (references/imagery.md §2), never in a spec panel or a filled box standing in for
-it. List every sample detail in the report so the client confirms or replaces it.
+sit beside the room's picture or the dish's photograph (references/imagery.md §2), never in a spec
+panel or a filled box standing in for it. List every sample detail in the report so the client
+confirms or replaces it.
+
+**Words beside a stand-in never claim it.** A picture that is not the client's own (a detail of a
+room, the load of a product, the place) carries the facts of the room or the product, never a line
+that says it is the client's photograph, and never another business's name from its credit. A
+`data-slot="product-photo"` frame holds the product's name and two or three facts, and a `work` frame
+the project's own still or its title, set in the page's type; a `room-photo` or `house-photo` frame
+holds its photograph (a detail, the place) with the facts beside it. None says "photo coming soon" or
+"placeholder", or notes that a picture is missing.
 
 **Facts about the real world are not sample details, and they are not to be left out either.** A page
 about a real place names the real, checkable things a visitor needs to get there and to picture it:

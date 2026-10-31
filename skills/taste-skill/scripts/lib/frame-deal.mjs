@@ -107,10 +107,11 @@ export const houseNote = (e) => {
 export const phoneIn = (text) => /\b(?:on a phone|phone)\s*:/i.test(String(text || ''));
 export const patternPhone = (e) => (e.phone && !phoneIn(e.description) ? String(e.phone).trim() : null);
 export const patternText = (e) => `${e.description.trim()}${houseNote(e)}${patternPhone(e) ? ` On a phone: ${patternPhone(e)}` : ''}`;
-// the photographs a pattern takes (its needs.pictures label)
+// the photographs a pattern takes (its needs.pictures label; a "2-3" whose assets name two photographs is a pair and
+// takes two: a photo pair dealt as a gallery was told to show three)
 const PICTURES = { 0: 0, 1: 1, '2-3': 3, '4-8': 6, many: 8 };
 const needsOf = (e) => (e.pneeds || (e.needs && !Array.isArray(e.needs) ? e.needs : {}));
-export const patternPictures = (e) => PICTURES[String(needsOf(e).pictures ?? 0)] ?? 0;
+export const patternPictures = (e) => { const n = PICTURES[String(needsOf(e).pictures ?? 0)] ?? 0; return n === 3 && photosOf(e) === 2 ? 2 : n; };
 // the page's tones in the study's words (quiet is calm there)
 export const studyTones = (tones) => [...new Set((tones || []).map((t) => (t === 'quiet' ? 'calm' : t)))];
 // sector words the study may use for a group of the skill's sectors
@@ -217,8 +218,10 @@ export function partUsable(part, e) {
   return true;
 }
 // a footer pattern that opens on its own closing line and button (it carries the call to action, like CLOSING_FOOTERS;
-// "a one-line prompt and a split button" is one, dealt under a closing scene in round 11b)
-const closingPattern = (e) => says(e.description, /\bclosing (?:line|statement|headline)\b|\bcall to action\b|\bcta\b/i) || says(e.description, /\b(?:headline|statement|prompt)\b[^.]{0,80}\bbutton\b/i);
+// "a one-line prompt and a split button" is one, dealt under a closing scene in round 11b), or on a statement or headline
+// at the display step with no button: that closes the page as well (round 11c: a cta section, then a footer's two-line
+// display statement)
+const closingPattern = (e) => says(e.description, /\bclosing (?:line|statement|headline)\b|\bcall to action\b|\bcta\b/i) || says(e.description, /\b(?:headline|statement|prompt)\b[^.]{0,80}\bbutton\b/i) || says(e.description.split(/\bPhone:/)[0], /\b(?:headline|statement|sentence|line)\b[^.]{0,60}\bat the display step\b/i);
 // a navigation pattern that sets the wordmark large on the first screen (dealt less under a hero whose headline is the name)
 const largeMark = (e) => says(e.description, /\b(?:giant|large|big|wide|full-width)\b[^.]{0,30}\b(?:wordmark|logo|lockup)\b/i);
 // a button pattern whose label is set in the pairing's serif: never on a page whose pairing has none (draw.mjs checks it
@@ -256,6 +259,8 @@ const NAV = [
   ['big-links', 0.7, 'Large links over the hero: the wordmark top-left and the section names as links at the h3 step in the text face at weight 500, spread across the top of the first screen on the grid columns, the action as a button at the right margin; 96px tall in all. Past the hero the links fold into a Menu text button beside the wordmark, the two fixed top-left on one solid tab of the ground (12px padding, the dealt corner), and the action stays fixed top-right on a tab of its own; Menu opens the same large links full-screen. On a phone: the wordmark and Menu on one tab, the action on the other.', (c) => (c.creative ? 1.4 : c.software ? 0.5 : 1)],
 ];
 const ALWAYS_FOOTER = 'The footer is a designed section, never a single line: it stands on its own ground (the surface tone or the ink; the page ground where its cards carry the surface tone), at least 40% of a screen tall at 1440, its links at body size. **Build it as dealt,** every part and size written here: never cut down to a line of credits or a © row (a portfolio\'s dealt three cards were built as one credit line); the inspector compares the built footer with this one (`footer-not-as-dealt`). Never the name or the email at display size, never a credit wall (the credits sit behind one small "Image credits" link that opens a dialog), never a list the page already shows as content (the menu, the rooms).';
+// (under a footer that opens on the page's closing line: the closing footer tested in round 11c tripped four checks)
+const CLOSING_FOOTER = 'Its closing line is 6vw at most (`min(var(--step-display), 6vw)`; `giant-footer` fails 7vw), two lines at most, on one screen with its button and links (`lone-heading`); the footer is as tall as its content, and nothing in it pins, holds or reveals word by word on scroll (`held-dead-screen`, `line-holds`).';
 // A footer that opens on its own closing line and button closes the page: the cta section before it is carried by that
 // line (draw.mjs), and it is not dealt after a closing scene, so a page ends once (round 11: nine of thirty pages ended
 // on a call to action and then a footer's closing line). On a door place the visit block stands once on the page: the
@@ -263,7 +268,7 @@ const ALWAYS_FOOTER = 'The footer is a designed section, never a single line: it
 export const CLOSING_FOOTERS = new Set(['closing-columns', 'picture-footer', 'two-halves', 'statement-and-row', 'picture-and-facts']);
 const ends = (c) => (c.closingScene ? 0 : 1);
 const FOOTER = [
-  ['closing-columns', 1, 'A closing line over columns: the closing line at the h2 step (the action as a statement, four to seven words) with the one button; 96px below, three or four short columns at body size: the sections, the contact (the email, a phone only if the brief gives one), the place or the social links, the legal links with Image credits; the © line at the foot. On the surface tone, about 60svh at 1440. On a phone the columns stack in pairs.', ends],
+  ['closing-columns', 1, 'A closing line over columns: the closing line at the h2 step (the action as a statement, four to seven words, two lines at most) with the one button under it; 96px below, three or four short columns at body size: the sections, the contact (the email, a phone only if the brief gives one), the place or the social links, the legal links with Image credits; the © line at the foot. On the surface tone, as tall as its content, about 60svh at 1440, so the line, the button and the columns share one screen. On a phone the columns stack in pairs.', ends],
   ['contact-block', 1, (c) => `A big contact block on the ink: the heading (Visit, Write, Book) at the h2 step on the left half; on the right half the email at the h3 step with a Copy button and a mailto link, and the city${c.door ? ' with a Directions link (the full visit block stands in the section above)' : ''}; under both, a row of the section links, the legal links and Image credits. About 60-70svh.`],
   ['sitemap-grid', 1, 'A sitemap grid: four or five columns of real links at body size, each under a short heading at the h4 step in the display face (the sections, the contact, the social links, the legal pages with Image credits), across the content width on the surface tone with 48px gaps; the wordmark at the h3 step top-left and the © line at the foot. About 45-55svh. Only links that go somewhere, no column of filler.', (c) => (c.multiPage ? 1.2 : 0.4)],
   ['picture-footer', 1, 'A picture footer: a photograph of the subject the page has not shown yet, full-bleed, 55-65svh, with the closing line at the h2 step and the button on its calm part (one tone under the words, no gradient, no card); under it a 30svh band of the ground with the contact, the links and the legal line in three columns.', (c) => ends(c) * (c.few ? 0.3 : c.software ? 0.5 : 1)],
@@ -272,7 +277,7 @@ const FOOTER = [
   ['three-cards', 1, (c) => `Three filled cards in a row on the ground, on the surface tone with the dealt corner, whatever the page's card style: ${c.door ? 'the place (the city and the district with a Directions link; the full visit block stands in the section above)' : c.software ? 'the company (its city and who makes the product)' : 'the studio\'s or company\'s city and what it takes on'}, the contact (the email with Copy, a phone only if given), and the news or the social links; each 260-320px tall with its heading at the h3 step; the © line, the legal links and Image credits under them.`],
   ['two-halves', 1, 'Two halves: the left half on the ink (or the accent field the palette names) holds the closing line at the h2 step and the button in the ground colour; the right half on the surface tone holds the links in two short columns, the contact and the legal line. Full width, 50-60svh, the halves meeting on the centre line; on a phone they stack.', ends],
   ['hours-and-place', 1, 'The place, in full: two columns on the surface tone: the opening hours (or the season and check-in times) as a real table with tabular figures on the left; the street and district, the nearest stop or the road from the town, a Directions link and the contact on the right; under both the section links, the legal links and Image credits. About 55svh. It is this page\'s visit block: no section above repeats the address, the hours or Directions.', (c) => (c.door && !c.visitShown ? 1.4 : 0)],
-  ['statement-and-row', 1, 'A closing statement: one line at the display step (five to eight words, the action as a statement) with the button under it, on the ground; then 120px of space and one band of the surface tone, 120-160px tall, with the links on the left, the contact in the middle, the © line and Image credits on the right. About 70svh in all.', ends],
+  ['statement-and-row', 1, 'A closing statement: one line of five to eight words (the action as a statement) at the display step held to 6vw at most, two lines at most, with the button 32px under it, on the ground; then 96px of space and one band of the surface tone, 120-160px tall, with the links on the left, the contact in the middle, the © line and Image credits on the right. As tall as its content, about 60svh, so the statement, its button and the band share one screen.', ends],
   ['link-columns', 1, 'Link columns for a site with pages beyond this one: four or five columns of real links to other pages (product, company, resources, legal), each under a heading at the h4 step; the wordmark and one sentence of what the company does at the top-left; the © line at the foot; on the surface tone, about 50svh. Never the navigation again, never a link that goes nowhere.', (c) => (c.multiPage ? 1.2 : 0)],
   ['picture-and-facts', 1, 'A split footer: a photograph of the subject on the left six columns, from the left margin, 60svh tall; on the right six columns, on the surface tone, the closing line at the h3 step, the button, the contact, the links and the legal line, 32px between the groups.', (c) => ends(c) * (c.few ? 0.3 : c.software ? 0.5 : 1)],
 ];
@@ -329,7 +334,7 @@ const SIGNATURES = {
     'big-links': 'The section names as links at the h3 step spread across the top of the first screen; past the hero they fold into a Menu tab beside the wordmark.',
   },
   footer: {
-    'closing-columns': 'A closing line at the h2 step with its one button, then three or four short columns 96px below, on the surface tone, about 60svh.',
+    'closing-columns': 'A closing line at the h2 step with its one button, then three or four short columns 96px below, on the surface tone, about 60svh, all on one screen.',
     'contact-block': 'On the ink: the heading at the h2 step on the left half, the email at the h3 step with a Copy button on the right half.',
     'sitemap-grid': 'Four or five columns of real links, each under a short heading in the display face, with the wordmark at the h3 step top-left.',
     'picture-footer': 'A full-bleed photograph of 55-65svh carrying the closing line and the button, over a 30svh band of contact, links and legal line.',
@@ -338,7 +343,7 @@ const SIGNATURES = {
     'three-cards': 'Three filled cards in a row on the surface tone, 260-320px tall, each with its heading at the h3 step.',
     'two-halves': 'Two halves meeting on the centre line: the closing line and button on the ink at the left, the links and contact on the surface tone at the right.',
     'hours-and-place': 'The opening hours as a real table beside the street, the way there and Directions, in two columns on the surface tone.',
-    'statement-and-row': 'One line at the display step with its button on the ground, then 120px of space and one band of the surface tone with the links, contact and legal line.',
+    'statement-and-row': 'One line at the display step (6vw at most) with its button on the ground, then 96px of space and one band of the surface tone with the links, contact and legal line, all on one screen.',
     'link-columns': 'Four or five columns of links to real pages beyond this one, with the wordmark and one sentence at the top-left.',
     'picture-and-facts': 'A 60svh photograph on the left six columns beside the closing line, the button, the contact and the links on the surface tone.',
   },
@@ -413,7 +418,7 @@ const CLIP = [
   ['slow-picture', 1.5, 'One photograph that moves slowly as the page scrolls (a scale or drift of a few percent), once.'],
 ];
 // the rules every design of a part shares, printed under it on the sheet
-export const FRAME_RULES = { nav: ALWAYS_NAV, footer: ALWAYS_FOOTER, cards: ALWAYS_CARDS, buttons: ALWAYS_BUTTONS };
+export const FRAME_RULES = { nav: ALWAYS_NAV, footer: ALWAYS_FOOTER, closingFooter: CLOSING_FOOTER, cards: ALWAYS_CARDS, buttons: ALWAYS_BUTTONS };
 // every design of the parts with many, for counting and listing
 export const FRAME_DESIGNS = { nav: NAV.map((x) => x[0]), footer: FOOTER.map((x) => x[0]), cards: CARDS.map((x) => x[0]), buttons: BUTTONS.map((x) => x[0]) };
 

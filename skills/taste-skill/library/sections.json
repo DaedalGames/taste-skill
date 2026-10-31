@@ -149,8 +149,8 @@
    "borrowed-category"
   ],
   "needs": [],
-  "blueprint": "Two halves butted together, each 50vw wide and at least 90svh tall, with no gap. Left half, in a pale tone: the heading in three short lines at clamp(36px, 4.2vw, 68px), its middle line pushed flush right while the first and third stay flush left (text-align set per line), so the block zigzags inside the cell. A two-sentence paragraph of 30ch sits at the bottom-left and the single action at the bottom-right on the same baseline. Right half, in the darkest tone: four or five rows of equal height filling it, told apart by alternating two near-black tones, not by lines. Each row is a three-part grid: a title at 28px (5 parts), a short paragraph at 16px (4 parts) and a plain list of three terms at 15px (3 parts), all top-aligned with 28px padding. No images anywhere in the section.",
-  "mobile": "The halves stack. The light cell comes first at 70svh with the zigzag heading at 10vw and the paragraph at its foot. The dark rows follow at full width; each row stacks its title and paragraph, and its three terms run inline as one sentence separated by commas. Rows keep the alternating tones.",
+  "blueprint": "Two halves butted together, each 50vw wide and at least 90svh tall, with no gap. Left half, in a pale tone: the heading in two short lines at clamp(36px, 4.2vw, 68px), both flush left on the cell's margin. A two-sentence paragraph of 30ch sits at the bottom-left and the single action at the bottom-right on the same baseline. Right half, in the darkest tone: four or five rows of equal height filling it, told apart by alternating two near-black tones, not by lines. Each row is a three-part grid: a title at 28px (5 parts), a short paragraph at 16px (4 parts) and a plain list of three terms at 15px (3 parts), all top-aligned with 28px padding. No images anywhere in the section.",
+  "mobile": "The halves stack. The light cell comes first at 70svh with the heading at 10vw on two lines and the paragraph at its foot. The dark rows follow at full width; each row stacks its title and paragraph, and its three terms run inline as one sentence separated by commas. Rows keep the alternating tones.",
   "seenIn": [
    "aww-aspen-search"
   ]
@@ -591,7 +591,7 @@
   "role": "showcase",
   "name": "One image across tiles",
   "shape": "mosaic",
-  "structure": "gallery",
+  "structure": "single-picture",
   "tags": [
    "photo-led",
    "dense"
@@ -1201,7 +1201,7 @@
   ],
   "needs": [],
   "blueprint": "A single field one viewport tall (min-height 100svh), usually the darkest tone of the palette. The lead quotation sits in the upper third: two lines at about 4vw in a light weight, centred, no wider than 60% of the viewport, with nothing near it. Two further short quotations are pushed into the bottom-left and bottom-right corners, each a block three columns wide set at 16px with leading 1.5, left-aligned, with the speaker's name and role on the two lines beneath in the softer ink. The bottom centre, about six columns wide, is deliberately empty. Use a three-row grid (auto 1fr auto) so the corner blocks hold a bottom margin of 32px while the lead quotation keeps its place at any height. There is no heading and there are no portraits; the contrast between one large voice and two small ones is the composition.",
-  "mobile": "The lead quotation moves to the top at 8vw over three or four lines, left-aligned, with 96px of empty field under it. The two small quotations then stack at 16px, the first full width, the second indented by a quarter of the screen so they do not read as a list.",
+  "mobile": "The lead quotation moves to the top at 8vw on three lines at most, left-aligned, with 96px of empty field under it. The two small quotations then stack at 16px, the first full width, the second indented by a quarter of the screen so they do not read as a list.",
   "seenIn": [
    "aww-hilden-kaira"
   ]
@@ -1244,8 +1244,8 @@
    "uneven-photographs"
   ],
   "needs": [],
-  "blueprint": "One photograph fills the section edge to edge at 100vw by 90svh with `object-fit: cover`; choose a frame with a calm lower half. The quotation is set directly on it in the paper colour: two or three lines at clamp(36px, 5vw, 80px), leading 1.0, flush left in columns 1–9, its last baseline 64px above the bottom edge. The speaker's name and role sit at 16px on that same baseline, right-aligned in columns 10–12. For legibility, darken the whole image evenly with `filter: brightness(0.7)` instead of placing a panel behind the words; the photograph must still read as a photograph. There is no heading, no frame and no oversized quotation-mark ornament, only plain curly quotes in the text. The section butts directly against its neighbours with no margin, so the image edge is the section edge.",
-  "mobile": "The photograph becomes 100vw by 80svh, cropped to its strongest vertical slice. The quotation sits in the lower half at 9vw over four lines at most, flush left with 20px margins; the name and role follow under it on one line at 15px.",
+  "blueprint": "One photograph fills the section edge to edge at 100vw by 90svh with `object-fit: cover`; choose a frame with a calm lower half. The quotation is set directly on it in the paper colour: two lines at clamp(36px, 5vw, 80px), leading 1.0, flush left in columns 1–9, its last baseline 64px above the bottom edge. The speaker's name and role sit at 16px on that same baseline, right-aligned in columns 10–12. For legibility, darken the whole image evenly with `filter: brightness(0.7)` instead of placing a panel behind the words; the photograph must still read as a photograph. There is no heading, no frame and no oversized quotation-mark ornament, only plain curly quotes in the text. The section butts directly against its neighbours with no margin, so the image edge is the section edge.",
+  "mobile": "The photograph becomes 100vw by 80svh, cropped to its strongest vertical slice. The quotation sits in the lower half at 8vw on three lines at most, flush left with 20px margins; the name and role follow under it on one line at 15px.",
   "seenIn": [
    "opl-berd"
   ]
@@ -1314,8 +1314,8 @@
    "colour-chapters"
   ],
   "needs": [],
-  "blueprint": "A full-width field with no image. One short quotation, six to ten words, is set at about 9vw in the display face and broken by hand into two or three lines. Each line is a flex row with `justify-content: space-between`, so its first word sits hard against the left margin, its last word hard against the right, and any middle word floats between them. Lines are 0.6em apart, far looser than a headline, which lets the gaps read as pauses. The attribution is spaced the same way on a final row at 18px: name at the left margin, role centred, organisation at the right. Opening and closing quotation marks belong to the first and last words. There is no separate heading. Leave at least 140px of empty field above and below, and give the field its own flat colour when the palette allows.",
-  "mobile": "Lines break after every two words and keep the spread: one word at each margin, at 13vw. A single-word line alternates between the left and right margins. The attribution stacks as three short lines at 15px, aligned left, centre and right in turn.",
+  "blueprint": "A full-width field with no image. One short quotation, six to eight words, is set at about 9vw in the display face and broken by hand into two lines. Each line is a flex row with `justify-content: space-between`, so its first word sits hard against the left margin, its last word hard against the right, and any middle word floats between them. Lines are 0.6em apart, far looser than a headline, which lets the gaps read as pauses. The attribution is spaced the same way on a final row at 18px: name at the left margin, role centred, organisation at the right. Opening and closing quotation marks belong to the first and last words. There is no separate heading. Leave at least 140px of empty field above and below, and give the field its own flat colour when the palette allows.",
+  "mobile": "The quotation drops to 8vw on three lines at most, two or three words a line, and keeps the spread: the first word of each line at the left margin, the last at the right. The attribution stacks as three short lines at 15px, aligned left, centre and right in turn.",
   "seenIn": [
    "opl-poetry-camera",
    "opl-rsquad"
@@ -2625,7 +2625,9 @@
    "aww-pp-neue-montreal",
    "aww-trevor-noah",
    "aww-izanami"
-  ]
+  ],
+  "banned": true,
+  "bannedWhy": "Five lines of display type stepped like stairs, each line in its own colour: a five-line headline, a stepped heading and colour sprawl (round 11d)."
  },
  {
   "id": "intro-heading-captions-panorama",
@@ -2699,7 +2701,7 @@
    "dense-tiles"
   ],
   "needs": [],
-  "blueprint": "Two parts on one 12-column grid with 20px margins. First, a lead paragraph of 30–40 words spans all 12 columns at clamp(22px, 2.2vw, 32px), regular weight, leading 1.2: three lines that read as the opening of a text, with no heading before it. 72px below, four equal columns (three grid columns each, 24px gutters) carry small text at 14–15px with leading 1.45. Each column is one paragraph of 40–70 words that opens with a bold run-in phrase of two or three words in full ink, the rest continuing on the same line in the soft ink. Columns top-align and end ragged at different depths. No cards, icons or dividers; the bold run-ins are the only markers. The four columns answer four plain questions: who, what, where, how to reach them. Padding is modest, 96px top and bottom, so a sheet of images can start straight after.",
+  "blueprint": "Two parts on one 12-column grid with 20px margins. First, a lead paragraph of 30–40 words spans all 12 columns at clamp(22px, 2.2vw, 32px), regular weight, leading 1.2: three lines that read as the opening of a text, with no heading before it. 72px below, four equal columns (three grid columns each, 24px gutters) carry small text at 14–15px with leading 1.45. Each column is one paragraph of 40–70 words that opens with a bold run-in phrase of two or three words in full ink, the rest continuing on the same line in the soft ink. Columns top-align and end ragged at different depths. No cards, icons or dividers; the bold run-ins are the only markers. The four columns answer four plain questions: who, what, where, how to reach them. Padding is modest, 96px top and bottom, so the next section can start straight after.",
   "mobile": "The lead paragraph at 20px, full width. The four columns become a two-by-two grid with a 20px gutter and 40px row gap at 14px; if any paragraph exceeds 60 words, switch to one column with 32px between paragraphs. Run-in phrases stay bold.",
   "seenIn": [
    "opl-april-leihuanani-evangelista",
@@ -2724,8 +2726,8 @@
    "place-carries-it"
   ],
   "needs": [],
-  "blueprint": "A wrapper 300svh tall. Inside it a `position: sticky; top: 0` layer of 100svh holds one sentence of 8–14 words, centred, three lines at clamp(36px, 4.6vw, 68px), leading 1.1, in a block 62% of the viewport wide. The sentence is a paragraph, not a heading; it is white with `mix-blend-mode: difference` (or a solid ink that reads over every photograph) and has a higher `z-index` than the images. Behind it, three photographs sit in normal flow at different sizes and sides and scroll past the fixed sentence: a 4:5 portrait 24vw wide with its left edge at 6vw; 70svh lower a 16:10 landscape 38vw wide touching the right margin; 70svh lower a 1:1 frame 18vw wide starting at 30vw. Each crosses the sentence once. When the wrapper ends, the sentence releases and scrolls away with the last photograph. No scroll hijacking.",
-  "mobile": "Wrapper 260svh. The sentence pins at 40% of the screen height at 8.4vw, four or five lines, with 20px margins. Photographs alternate: 64% wide on the left margin, 78% wide on the right margin, then 52% on the left, with 50svh between them.",
+  "blueprint": "A wrapper 300svh tall. Inside it a `position: sticky; top: 0` layer of 100svh holds one sentence of 6–10 words, centred, two lines at clamp(36px, 4.6vw, 68px), leading 1.1, in a block 62% of the viewport wide. The sentence is a paragraph, not a heading; it is white with `mix-blend-mode: difference` (or a solid ink that reads over every photograph) and has a higher `z-index` than the images. Behind it, three photographs sit in normal flow at different sizes and sides and scroll past the fixed sentence: a 4:5 portrait 24vw wide with its left edge at 6vw; 70svh lower a 16:10 landscape 38vw wide touching the right margin; 70svh lower a 1:1 frame 18vw wide starting at 30vw. Each crosses the sentence once. When the wrapper ends, the sentence releases and scrolls away with the last photograph. No scroll hijacking.",
+  "mobile": "Wrapper 260svh. The sentence pins at 40% of the screen height at 8vw, three lines at most, with 20px margins. Photographs alternate: 64% wide on the left margin, 78% wide on the right margin, then 52% on the left, with 50svh between them.",
   "seenIn": [
    "opl-the-deep-end",
    "aww-revelatio-studio"
@@ -2891,7 +2893,7 @@
   "role": "about",
   "name": "Wide photo, colour tile, facts",
   "shape": "mosaic",
-  "structure": "gallery",
+  "structure": "single-picture",
   "tags": [
    "photo-led",
    "colour-field"
@@ -3858,8 +3860,8 @@
    "quiet-instrument"
   ],
   "needs": [],
-  "blueprint": "One closing row of three elements hanging from the same top line, with open ground between them, on a 12-column grid. Columns 1–5: a sentence of 12–18 words at clamp(26px, 3vw, 44px), four lines, leading 1.1, saying what kind of enquiries are welcome; it is set as a paragraph and there is no separate heading. Columns 8–9: one small square portrait or photograph of the place, 150–170px, with square corners. Columns 10–12: a short question at 18px in medium weight, then 20px below it two underlined links stacked at 18px (the email address and one booking or social link), and beneath them a line at 14px in the soft ink with the city and the usual reply time. Columns 6–7 stay empty. The row has 160px of space above and 120px below. No form. On a dark ground the photograph is the only bright thing in the row.",
-  "mobile": "The sentence comes first at 7.4vw. Below it the portrait at 96px square sits at the left margin with the question and the two links to its right, top-aligned, in the remaining width. The city and reply-time line spans the full width beneath.",
+  "blueprint": "One closing row of three elements hanging from the same top line, with open ground between them, on a 12-column grid. Columns 1–5: a sentence of 10–14 words at clamp(24px, 2.5vw, 36px), three lines at most, leading 1.15, saying what kind of enquiries are welcome; it is set as a paragraph and there is no separate heading. Columns 8–9: one small square portrait or photograph of the place, 150–170px, with square corners. Columns 10–12: a short question at 18px in medium weight, then 20px below it two underlined links stacked at 18px (the email address and one booking or social link), and beneath them a line at 14px in the soft ink with the city and the usual reply time. Columns 6–7 stay empty. The row has 160px of space above and 120px below. No form. On a dark ground the photograph is the only bright thing in the row.",
+  "mobile": "The sentence comes first at 6vw, four lines at most. Below it the portrait at 96px square sits at the left margin with the question and the two links to its right, top-aligned, in the remaining width. The city and reply-time line spans the full width beneath.",
   "seenIn": [
    "opl-artem-taradash",
    "aww-bleibtgleich26",

@@ -40,7 +40,9 @@ The October 2026 comparison adds the other side. On 65 professional sites (techn
 good shops) the largest type is about 3.8vw (middle half 2.5-4.5vw, about 55px at 1440) and body text
 14-16px; the 30 pages built with the previous version of this skill set their largest type at 14vw and
 body text at 17-19px, and read as shouting. So the sheet now deals the display size per page: most pages
-get a confident professional size, and a giant headline is a dealt event, never a habit.
+get a confident professional size, and a giant headline is a dealt event, never a habit: it comes only
+with a hero blueprint built on it (a name across the width, one word filling the lower half), printed
+as `--step-hero` (§2) for the `h1` alone, while every other heading keeps its step.
 
 ## 2. The scale: the six dealt steps
 
@@ -51,7 +53,16 @@ nothing in between. The common failure is nine sizes that are all near each othe
 32...), which reads as mush; the inspector warns past seven.
 
 - `--step-display` is the hero headline's size, dealt for this page (usually 3.5-6vw at 1440). A
-  blueprint that names another size for the headline is overruled by the sheet.
+  section blueprint that names another size is overruled by the sheet. A hero blueprint that sets its
+  headline well above the step (a 120px title, a name about 430px tall) is not: on the first screen
+  the hero's geometry and its display size come before the type steps. The sheet prints that size as
+  `--step-hero`: the blueprint's size at 1440 (letters given as a height are about 0.72 of the size),
+  held to what two lines (or one) fit under the bar, the step's own floor on a phone. Only the `h1`
+  takes it, in the dealt display face and weight. Two pages built such a hero at the 72-84px step and
+  read as timid.
+- The hero headline stays two lines at most, every word whole between the margins, and its last
+  line, descenders included, ends above the first screen's bottom edge with the page margin under it
+  (`hero-cut`). A name the fold cut read as cut off.
 - `--step-head` is every section heading; `--step-sub` a subheading or a large figure; `--step-lead`
   the supporting line under a headline; `--step-small` legal lines and table notes only, never 12px.
 - Keep the gap: the display size is about three times the body size or more on desktop; a headline

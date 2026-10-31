@@ -2,6 +2,7 @@
 // Thresholds come from the October 2026 comparison of professional sites, award sites and skill builds
 // (professional sites: no giant footers, about one hue, almost no page on coloured grounds).
 import { hidesOnScroll } from './frame-deal.mjs';
+import { namesBusiness } from './business.mjs';
 
 export function judgeExtra(x, { width, allow = [], screens = 1, app = false } = {}) {
   const out = [];
@@ -154,6 +155,8 @@ export function judgeExtra(x, { width, allow = [], screens = 1, app = false } = 
 // Round 11b, on desktop: b.grounds (grounds()), b.foot (footing() and the dealt footer) and b.work (workShown()).
 // Round 11c, on desktop: b.buttons (buttonShapes()), b.navs (navForm() at load, down and up, and the dealt navigation) and
 // b.structures (structures()); boxedText: extra()'s running text in boxes, which judgeExtra reports as boxed-page.
+// Round 11d, on desktop: b.grounds is the walk's (groundPoints() at every screen, then grounds()), b.pictures
+// (pictureCredits()); b.space.hero.title at 1440 and 390.
 export function judgeBuild(b, { width, allow = [], boxed = [], scenes = null, dead = null, boxedText = null } = {}) {
   const out = [];
   const add = (level, id, message, fix) => { if (!allow.includes(id)) out.push({ level, id, width, message, fix }); };
@@ -187,7 +190,7 @@ export function judgeBuild(b, { width, allow = [], boxed = [], scenes = null, de
   if (desktop && b.runOn?.length) add('WARN', 'empty-left', `${b.runOn.length} column(s) run out while the column beside them runs on, leaving the left side empty: ${list(b.runOn, (r) => `"${r.head}" ends ${r.gap}px above the foot of its neighbour`)}.`, 'When a column runs out, let the other one take the full width below it (the rest of the list in two or three columns across the grid), or set the heading over the list in one column. A row empty on the left reads as broken.');
   // the page's credits list against the pictures it shows (r9-p43: nine pictures, eight credits; room-attic.jpg had none)
   const c = b.credits;
-  if (c && (c.ledgerMiss.length || (c.pictures > (c.capacity || c.entries) && c.unmatched.length))) add('WARN', 'uncredited-picture', c.ledgerMiss.length ? `${c.ledgerMiss.length} picture(s) fetched with a credit are shown with no entry in the page's credits: ${c.ledgerMiss.slice(0, 4).join(', ')}.` : `The page shows ${c.pictures} pictures and its credits list ${c.entries}; no entry names ${c.unmatched.slice(0, 4).join(', ')} by its file.`, 'Every photograph that is not the client\'s own has its entry in the credits (title, author, licence, a link to the source), and a stand-in that names another business (a hotel\'s room, another maker\'s product) is marked as a placeholder in the credits and the report. A picture cropped from another is credited as that picture.');
+  if (c && (c.ledgerMiss.length || (c.pictures > (c.capacity || c.entries) && c.unmatched.length))) add('WARN', 'uncredited-picture', c.ledgerMiss.length ? `${c.ledgerMiss.length} picture(s) fetched with a credit are shown with no entry in the page's credits: ${c.ledgerMiss.slice(0, 4).join(', ')}.` : `The page shows ${c.pictures} pictures and its credits list ${c.entries}; no entry names ${c.unmatched.slice(0, 4).join(', ')} by its file.`, 'Every photograph that is not the client\'s own has its entry in the credits (title, author, licence, a link to the source); a picture whose credit names another business (a hotel\'s room, another maker\'s product) is never shown as the client\'s (`credit-names-business`). A picture cropped from another is credited as that picture.');
   // controls on the first screen that change nothing (r9-p41's hero: a search box and a New note button drawn in the
   // product's window, clickable to the eye, dead to the hand)
   if (desktop && dead && dead.dead?.length) add('WARN', 'dead-control', `${dead.dead.length} control(s) on the first screen change nothing when used: ${list(dead.dead, (d) => `${d.what.startsWith('drawn') ? `a ${d.what.slice(6)} drawn in the product's window` : `the ${d.what}`} "${d.text}"`, 4)}.`, 'A control on the first screen works (the search finds, the button opens what it names) or reads as part of a still picture: in a product window drawn as an image, draw fields and buttons as the product draws them at rest, with no hover, no pointer and no focus ring, and never a lone call to type into.');
@@ -202,6 +205,10 @@ export function judgeBuild(b, { width, allow = [], boxed = [], scenes = null, de
     const what = (x) => (x.what === 'ground' ? `its ground (${x.text})` : x.what === 'heading' ? `its heading "${x.text}"` : x.what === 'picture' ? `a picture (${x.text})` : x.what === 'box' ? `a box ("${x.text}")` : x.what === 'control' ? `a control ("${x.text}")` : `its words "${x.text}"`);
     add('FAIL', 'hero-not-alone', s ? `The next section shows on the first screen at ${width}px: ${what(s)}${hs.next.head && !(s.what === 'heading' && hs.next.head.startsWith(s.text)) ? ` of "${hs.next.head}"` : ''}, ${s.px}px above the foot of the screen.` : `The foot of the first screen cuts through what comes next at ${width}px: ${c.what === 'text' || c.what === 'heading' ? `the words "${c.text}"` : `${c.what === 'picture' ? 'a picture' : 'a box'} ("${c.text}")`} start ${c.px}px above it and run on under it.`, `The hero fills the first screen alone: give it the screen's height (min-height: 100svh, ${width < 600 ? 'the phone\'s screen with its address bar' : 'the full 900px at 1440'}), place everything it holds inside that height, and let the next section start under the fold with its own space above it. Nothing of the next section (a heading, a picture, a band of colour, the tops of a row of figures) shows before the visitor scrolls.`);
   }
+  // round 11d: the hero's own title across the fold, at any size (r12-p56's "Kaffee Klee", dealt to cross the fold over its
+  // photograph, read as cut off); its words are not named again by hero-not-alone
+  const ht = hs?.title;
+  if (phoneOrDesk && ht) add('FAIL', 'hero-cut', `The hero's title "${ht.text}" crosses the foot of the first screen at ${width}px: "${ht.under}" runs ${ht.px}px under it.`, `The hero's title stands whole on the first screen (${width < 600 ? 'the phone\'s screen with its address bar' : '900px tall at 1440'}): its last line ends above the fold with air under it, however the hero is dealt. A size that does not fit takes the next step down, never a crop at the fold; a title that runs on under the fold reads as cut off.`);
   // the air between sections, on desktop: under 12% of the screen warns, under 6% fails (a scene's held stretch aside)
   if (desktop && b.space?.air?.length) for (const level of ['FAIL', 'WARN']) {
     const as = b.space.air.filter((a) => (level === 'FAIL' ? a.gap < 54 : a.gap >= 54));
@@ -219,18 +226,44 @@ export function judgeBuild(b, { width, allow = [], boxed = [], scenes = null, de
 
   // ---------- round 11b (r11-p51: seven grounds and panels, the work as type cards, a footer read as one credit
   // line) ----------
-  // grounds and panels beyond the ground and one surface tone, the ink, the accent and the dealt fields aside: four warn,
-  // five or more fail (this replaces round 10's count of grounds under the same id)
-  const gs = (b.grounds || []).filter((g) => !['ink', 'accent', 'field'].includes(g.role));
-  if (desktop && gs.length >= 4) add(gs.length >= 5 ? 'FAIL' : 'WARN', 'surface-count', `${gs.length} tones on the page's grounds and large panels, besides the ink, the accent and any dealt field: ${list(gs, (g) => `${g.hex} (${g.where === 'page' ? 'the page' : g.where}${g.n > 1 ? ` and ${g.n - 1} tone(s) a step from it` : ''})`, 7)}.`, 'One ground and one surface tone a step from it; the ink, the accent and a dealt field may stand as bands where they are needed. Every other section, panel and card takes one of these, a sheet in another colour (a white receipt on grey) is set on the section ground, and a piece of work keeps its own colours inside its picture. The palette is one ground, not one per section.');
+  // every ground the walk saw, by the screens a visitor sees it on (round 11d: r12-p57 passed with its stone ground, its
+  // surface, the ink over 4.7 screens and a veil in the accent, r12-p58 with a band sampled from its closing photograph
+  // beside its ground and its footer's surface). The page's ground and its surface count from a quarter of a screen: the
+  // dealt surface, else the largest tone a step from the ground, and a tint a step off the ground beside a dealt surface
+  // is one more. The ink and a dealt field may ground a band (the footer and one section, two and a half screens at most:
+  // r11-p48's white pricing page, flooded by its scene and held, is 2.4) and the accent one (a section, a screen and a
+  // half at most), as references/colour.md deals them, and count past it, by sections or by screens; any other
+  // tone counts from a quarter of a screen, or from any band across the width. A ground a dealt hero, section, scene or
+  // technique asks for (a veil or a window in the accent, the ground and the ink swapped, a scene's ground sampled from
+  // its photograph: r11-p49's sky-blue chapter, built as shaped-edge-ground-change asks) is named so and fails nothing
+  // alone. Three warn, four fail (this replaces round 11b's count of grounds and panels, the ink, the accent and the
+  // fields aside, under the same id)
+  const ROLES = { page: 'the page', surface: 'the surface', ink: 'the ink', accent: 'the accent', field: 'a dealt field' };
+  const band = (g) => (g.role === 'accent' ? g.screens <= 1.5 && g.sections <= 1 : g.screens <= 2.5 && g.sections <= 2);
+  // (a second group near one role's tone, a grey band beside the dealt surface, is a tone of its own)
+  const firsts = new Set(), first = (g) => !!g.role && !firsts.has(g.role) && !!firsts.add(g.role);
+  const gs = (b.grounds || []).filter((g) => (!first(g) ? g.screens >= 0.25 || (g.sections > 0 && g.screens >= 0.05) : ['ink', 'field', 'accent'].includes(g.role) ? !band(g) : g.screens >= 0.25));
+  const step = gs.find((g) => g.role === 'page' && g.step && g.step[1] >= 0.25)?.step, tint = step && gs.some((g) => g.role === 'surface');
+  const count = gs.length + (step ? 1 : 0), asked = gs.filter((g) => g.asked).length;
+  const sc = (n) => `${n} screen${n === 1 ? '' : 's'}`;
+  // (a second ground of one role is named by its element)
+  const told = new Set(); const label = (g) => { if (!ROLES[g.role] || told.has(g.role)) return g.where; told.add(g.role); return ROLES[g.role]; };
+  if (desktop && count >= 3) add(count - asked >= 4 ? 'FAIL' : 'WARN', 'surface-count', `${count} grounds on the page, by the screens they cover: ${list(gs, (g) => `${g.hex} (${label(g)}, ${sc(g.screens)}${g.role === 'page' && step ? `, with ${tint ? 'a tint a step from it' : 'its surface'} ${step[0]} on ${sc(step[1])}` : g.n > 1 && g.role !== 'page' ? `, with ${g.n - 1} tone(s) a step from it` : ''}${['ink', 'field', 'accent'].includes(g.role) ? `, over ${g.sections} section${g.sections === 1 ? '' : 's'}` : ''}${g.asked ? `, as ${g.asked} asks` : ''})`, 7)}.`, 'One ground and one surface tone a step from it, and no tint between them. The ink grounds a band at most (the footer and one section), and so do a dealt field and the accent (one section each); a scene\'s veil or band takes one of these, never a tone sampled from its photograph, unless its own sheet asks for one (then that is the page\'s band). Every other section, panel and card takes one of these, a sheet in another colour (a white receipt on grey) is set on the section ground, and a piece of work keeps its own colours inside its picture.');
   // the footer section 0 dealt, against the one built: one row of words, or under 160px on desktop, is the one-line footer
   const ft = b.foot;
   if (desktop && ft && ft.dealt && (!ft.found || ft.rows <= 1 || ft.h < 160)) add('FAIL', 'footer-not-as-dealt', `Section 0 dealt the "${ft.dealt.id}" footer (${String(ft.dealt.text || '').split(/[:.,;]/)[0].slice(0, 60)}), but the page ${ft.found ? `ends on ${ft.sel}, ${ft.rows === 1 ? 'one row of words' : `${ft.rows} rows of words`} ${ft.h}px tall ("${ft.text}")` : 'has no footer'}.`, 'Build the footer as section 0 describes it: a designed section about 40% of a screen tall at 1440, its links at body size, the © line and Image credits under it. A closing scene ends on that footer, never on a one-line foot.');
   // a portfolio's work in pictures (r11-p51: five pieces set as type in coloured frames, no frame of the work itself);
   // a slot marked for the client's picture (data-slot="work", as the sheet asks) counts as a piece
-  const wk = b.work;
+  // Round 11d (r12-p57: four work slots held other people's photographs of drawing at a pen display, credited to them):
+  // a photograph among the work, marked for it or not, credited to another (a record of its fetch, a licence or a source,
+  // an author who is not the client) is a stand-in and never the work: it fails, and it is no picture of the work in the
+  // count (a title frame the builder lists in the credits as made for the page is no one else's)
+  const shown = b.pictures?.shown || [];
+  const stand = shown.filter((p) => p.slot === 'work' && p.third);
+  const wk = b.work && { ...b.work, pictures: b.work.pictures - (b.work.files || []).filter((f) => stand.some((p) => (p.files || [p.file]).includes(f))).length };
   const pieces = (w) => `${w.pictures ? `${w.pictures} picture(s)` : 'no picture'} of the work${w.slots ? ` and ${w.slots} slot(s) marked for the client's own` : ''}`;
-  if (desktop && wk && wk.pictures + (wk.slots || 0) < 3) add('WARN', 'portfolio-without-work', wk.sections.length || wk.slots ? `The work${wk.sections.length ? ` (${wk.sections.slice(0, 2).map((s) => `"${s}"`).join(', ')})` : ''} shows ${pieces(wk)}${wk.typeset ? `; ${wk.typeset} piece(s) are set in type` : ''}.` : 'This is a portfolio, and no section is named for the work (work, projects, selected, case studies) and no slot is marked for it.', 'A portfolio shows the work as pictures of the work: frames, stills or films of three pieces or more, the strongest large. Where the client\'s own pictures are missing, each piece gets a frame at its ratio with `data-slot="work"`, holding a still of the piece or the best stand-in of this trade\'s own work, listed in the report; never an empty frame, a note that a picture is missing, or type cards standing in for the pieces.');
+  if (desktop && stand.length) add('FAIL', 'portfolio-without-work', `${stand.length} picture(s) shown as the work are photographs credited to other people: ${list(stand, (p) => `${p.file} (${p.record ? `"${p.record.title.slice(0, 50)}"${p.record.creator ? ` by ${p.record.creator.slice(0, 30)}` : ''}` : `"${p.entry.slice(0, 60)}"`})`, 4)}${wk ? `; the work shows ${wk.pictures ? `${wk.pictures} picture(s)` : 'no picture'} of the client's own` : ''}.`, 'A slot marked for the work holds the work: the client\'s own still, or until it arrives the project\'s own still made for the page (a title frame set in the page\'s type, or a frame of the page\'s own motion of it) with its title and facts as the caption. Never a photograph of someone else making or showing work, however close the trade; the report lists every slot for the client\'s own pictures.');
+  else if (desktop && wk && wk.pictures + (wk.slots || 0) < 3) add('WARN', 'portfolio-without-work', wk.sections.length || wk.slots ? `The work${wk.sections.length ? ` (${wk.sections.slice(0, 2).map((s) => `"${s}"`).join(', ')})` : ''} shows ${pieces(wk)}${wk.typeset ? `; ${wk.typeset} piece(s) are set in type` : ''}.` : 'This is a portfolio, and no section is named for the work (work, projects, selected, case studies) and no slot is marked for it.', 'A portfolio shows the work as pictures of the work: frames, stills or films of three pieces or more, the strongest large. Where the client\'s own pictures are missing, each piece gets a frame at its ratio with `data-slot="work"`, holding a still of the piece or the project\'s own still made for the page (a title frame set in the page\'s type, a frame of its own motion), listed in the report; never an empty frame, a note that a picture is missing, or small type cards of a name and a line standing in for the pieces.');
 
   // ---------- round 11c (Leon: three button shapes at one size, a plain bar that hides on scroll; r12-p53's three
   // unrelated buttons, r12-p54's six sections of a heading, a line and a list panel, r12-p52's page of slate boxes) ----------
@@ -272,8 +305,45 @@ export function judgeBuild(b, { width, allow = [], boxed = [], scenes = null, de
   // a box (the sheet puts cards in two or three); not again where the running text in boxes has reported it (judgeExtra)
   const bx = st.filter((s) => s.boxed);
   if (desktop && bx.length >= 4 && bx.length >= st.length - 1 && !BOXED_TEXT(boxedText)) add('WARN', 'boxed-page', `${bx.length} of the ${st.length} sections after the hero hold their content in a box (a product window, a panel or cards on a fill): ${list(bx, (s) => `"${s.head}"`, 6)}.`, 'Cards and windows in two or three sections, where a visitor compares or handles things; the rest stands on the ground: a statement, a list set as type, a picture across the width. A page whose every section is a box reads as a dashboard of boxes.');
+
+  // ---------- round 11d (r12-p55: another maker's bike with its name on the frame as the product, a named maker's
+  // longtail as its step-through; r12-p58: two named hotels' rooms as its own; the round-11b checks passed both) ----------
+  // a picture shown as the client's (a marked slot, their name in its caption, the work, a room, the house, their own
+  // place, anything on a page that sells one product of its own) whose credit names a business (businessIn); a photograph
+  // in the frame marked for the product that is not the client's (the sheet sets that frame with no photograph until
+  // theirs arrives); on a page dealt no photograph of its product, a picture whose title names a product of its kind
+  // (another maker's, however cropped); and a picture shown as theirs with no credit of its own while a credit no
+  // picture matches names a business (r9-p43's rooms, cropped and renamed from two hotels' photographs)
+  const kind = b.pictures?.kind ? new RegExp(b.pictures.kind, 'iu') : null;
+  const loose = (b.pictures?.credits || []).map((c) => businessIn({ record: c.entry ? null : c, entry: c.entry || null })).find(Boolean);
+  const biz = shown.filter((p) => !p.theirs).map((p) => {
+    const name = businessIn(p), k = kind && kindIn(p, kind);
+    return { p, why: name ? `its credit names ${name}` : p.slot === 'product' && (p.third || p.uncredited) ? `a photograph ${p.third ? 'credited to someone else' : 'with no credit'} in the frame for the product` : k ? `its title names a ${k.toLowerCase()}, a product of its kind` : loose && !p.record && !p.entry && ['product', 'room', 'caption', 'place'].includes(p.slot) ? `no credit of its own, while the page's credits name ${loose}` : null };
+  }).filter((x) => x.why);
+  if (desktop && biz.length) add('FAIL', 'credit-names-business', `${biz.length} picture(s) shown as the client's are another's: ${list(biz, (x) => `${x.p.file} (${SHOWN[x.p.slot] || `the "${x.p.slot}" slot`}: ${x.why})`, 4)}.`, 'A picture shown as the client\'s (their product, a room, the house, their own place, a piece of their work, or captioned with their name) never shows another business\'s product, room or work, whatever its credit says: no other maker\'s product however cropped or retouched, no named hotel\'s or café\'s room, no other artist\'s work, and a picture cropped from another keeps that picture\'s credit. Where the client gives none, the slot holds what the sheet describes for it (the product\'s name and facts in its frame with no photograph, details that belong to no one, the project\'s own still), and the pictures round it show the use, the place and the light with no product of its kind in them.');
   return out;
 }
+// a credit that names a business (namesBusiness, lib/business.mjs): the record's title, its file and its author, or the
+// entry's title and the files it links; else the record's notes or the entry's words saying the picture carries or names
+// another maker, brand or hotel (a clause that says it does not is left out, and so is the note on a source's
+// restrictions, which a photograph of people carries)
+const SAYS = /\b(?:another|other|a named|named) (?:maker|brand|business|company|hotel|guesthouse|shop|roaster|roastery|artist|designer|studio)\b|\bmaker['’]?s? (?:name|mark|logo|lettering)\b|\bnames? (?:another|a|the|its) (?:maker|brand|business|company|hotel|shop)\b|\b(?:a|another) hotel['’]s\b/i;
+// (an entry's title: its quoted words, else its words before the author or the licence; with the files it links)
+const entryTitles = (e) => { if (!e) return []; const [text, ...files] = String(e).split(' · '); const q = text.match(/“([^”]{3,})”|"([^"]{3,})"|‘([^’]{3,})’/); return [q ? q[1] || q[2] || q[3] : text.split(/\s(?:by|photo(?:graph)?(?: by)?|©)\s|,\s*(?:cc\b|public domain|licen)/i)[0], ...files]; };
+function businessIn(p) {
+  const r = p.record || {};
+  const author = String(p.entry || '').match(/\bby\s+([^,;.·]+)/)?.[1];
+  for (const [t, c] of [[r.title, r.creator], [r.file], ...entryTitles(p.entry).map((t) => [t, author])]) { const m = t && namesBusiness(t, c); if (m) return `"${String(m).slice(0, 60)}"`; }
+  const said = [r.notes, p.entry].filter(Boolean).flatMap((t) => String(t).replace(/Restrictions named on the source page[^.]*\./g, '').split(/[.;:()[\]]|,\s/)).map((t) => t.trim()).find((t) => t && SAYS.test(t) && !/\b(?:no|not|without|never|none|nor)\b/i.test(t));
+  return said ? `"${said.slice(0, 60)}"` : null;
+}
+// the product word a picture's title, its file or the entry's title names (on a page dealt no photograph of its product)
+function kindIn(p, re) {
+  const r = p.record || {};
+  for (const t of [r.title, r.file, ...entryTitles(p.entry), String(p.file || '').replace(/[-_]+/g, ' ')]) { const m = t && String(t).match(re); if (m) return m[0]; }
+  return null;
+}
+const SHOWN = { product: 'the frame for the product', work: 'the work', room: 'a room', house: 'the house', place: 'the client\'s own place', caption: 'captioned with the client\'s name', 'product page': 'on the product\'s page' };
 // the navigation section 0 dealt, as a form: the twelve tested designs by their id, a pattern by its text and its Must
 // show line before the phone's, the form it takes once the hero has gone first (named: read from the words, not a top
 // bar for want of any; first: the first screen's form beside it); and whether it hides on scroll, by the deal's own test

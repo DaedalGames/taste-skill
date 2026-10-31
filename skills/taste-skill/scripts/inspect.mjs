@@ -82,6 +82,16 @@
 // three sections built round the same thing warn and four fail (same-structure); and four sections or more after the
 // hero, all but one standing in a box, a product window counted, warn (boxed-page).
 //
+// Round 11d (r12-p55, p57 and p58: another business's product, rooms or work shown as the client's, and four grounds
+// passed): on desktop the grounds are read at every screen of the walk and counted by the screens they cover, the ink, a
+// dealt field and the accent once past a band, a band sampled from a photograph like any tone, and a ground the dealt
+// pieces ask for named and never failing alone; three warn and four fail (surface-count). A picture shown as the
+// client's (a marked slot, their name in its caption, the work, a room, the house, their own place, anything on a page
+// that sells one product of its own) whose credit names a business fails, and so do a photograph in the product's frame
+// that is not theirs and, on a page dealt no product photograph, a picture whose title names a product of its kind
+// (credit-names-business); a photograph credited to another among the work fails too (portfolio-without-work). At 1440
+// and 390 the hero's title whose letters run on under the foot of the first screen fails at any size (hero-cut).
+//
 // --app judges an app screen (dashboard, admin, settings) by the rules in references/app-screens.md; a
 // direction dealt with draw.mjs --app switches it on by itself.
 //
@@ -90,6 +100,7 @@
 // Widths sharing a viewport class receive width-qualified screenshot filenames.
 import { existsSync, mkdirSync, readFileSync, writeFileSync, statSync, createReadStream, readdirSync, unlinkSync } from 'node:fs';
 import { resolve, join, relative, dirname, extname, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { Browser, sleep } from './lib/cdp.mjs';
 import { probe, frame, reach, layout, app, colourShare, groundShare, cellDiff } from './lib/probe.mjs';
@@ -97,8 +108,9 @@ import { judge, judgeLayout, judgeApp, APP_SKIP } from './lib/rules.mjs';
 import { extra, controls, replayState, photoText, photoTextDone, photoContrast, splitLetters, tileFills } from './lib/probe-extra.mjs';
 import { judgeExtra, judgeBuild, navKind } from './lib/rules-extra.mjs';
 import { restLook, restStops, restGo, heroStack, visitBlocks } from './lib/probe-rest.mjs';
-import { pageBuild, deadControls, space, navBar, crops, grounds, footing, workShown, navForm, buttonShapes, structures } from './lib/probe-page.mjs';
+import { pageBuild, deadControls, space, navBar, crops, groundPoints, grounds, footing, workShown, pictureCredits, navForm, buttonShapes, structures } from './lib/probe-page.mjs';
 import { viewportClass as name, screenshotLabel, isInspectionScreenshot } from './lib/inspection-files.mjs';
+import { PRODUCT_WORD } from './lib/business.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, def) => { const i = args.indexOf('--' + name); if (i === -1) return def; const v = args[i + 1]; args.splice(i, 2); return v; };
@@ -117,6 +129,31 @@ let dealtNav = null; // the navigation section 0 dealt, to catch a build that we
 let dealtPalette = null; // the dealt ink, accent and fields, which may stand as bands beside the ground and its surface
 let sector = null; // the brief's sector: a portfolio shows its work in pictures
 const PORTFOLIO = ['studio-portfolio', 'personal-portfolio', 'agency', 'architecture']; // (as draw.mjs deals them)
+let client = null; // the client's name, as the brief opens it ("Hvit: a small guesthouse"): a picture captioned with it is theirs
+let ownsProduct = false; // a page that sells one product of its own: every picture on it stands beside that product
+let ownPlace = false; // a café's, a restaurant's or a house's page: a section named for its own place shows it as theirs
+let hasOwn = false; // the client gave pictures of their own (--have photography or product-photo), which carry no credit
+let productKind = null; // on a page dealt no photograph of its product, the words for a product of its kind
+let dealtAsk = null; // the grounds the dealt pieces ask for beside the page's ground and its surface
+const nameOf = (brief) => { const n = String(brief || '').split(/[:,;.(]/)[0].trim(); return n && n.split(/\s+/).length <= 4 ? n : null; };
+// the words for the product's kind: its trade's (library/photos.json, as draw.mjs deals the pictures) and the brief's own
+// product words ("cargo bike" gives bike, bikes)
+const kindOf = (d) => {
+  let trade = null;
+  try { trade = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'library', 'photos.json'), 'utf8')).trades?.find((t) => t.name === d.photos?.trade?.name)?.product || null; } catch {}
+  const words = [...new Set(String(d.input?.brief || '').split(/[^\p{L}-]+/u).filter((w) => PRODUCT_WORD.test(w)).map((w) => { w = w.toLowerCase(); return /(?:ch|sh|x|ss)es$/.test(w) ? w.slice(0, -2) : w.replace(/s$/, ''); }))];
+  return [trade, words.length ? `\\b(?:${words.join('|')})(?:e?s)?\\b` : null].filter(Boolean).join('|') || null;
+};
+// the grounds a dealt hero, section, frame part, scene or technique asks for beside the page's ground and its surface, by
+// the id of the first that asks: a veil, a window or a band in the accent (lib-0312, one-figure-reforms), the ground and
+// the ink swapped (lib-0312), a ground sampled from a photograph (shaped-edge-ground-change). surface-count names them,
+// and they fail nothing alone (r11-p49, published, failed on the sky-blue chapter its scene asks for)
+const ASK = {
+  accent: /\b(?:veil|window|sheet|band|field|panes?)\b[^.;"]{0,40}\b(?:in|on|is|to) the (?:page's )?(?:single )?accent\b|\bveil the page's single accent\b/i,
+  ink: /\bswap(?:s|ped|ping)? (?:the )?(?:page's )?ground and (?:the )?ink\b|\bground, ink and chrome swap|\bpaper-on-ink\b|\bink-on-paper\b/i,
+  sampled: /\b(?:ground|field|band)\b[^.;"]{0,30}\bsampled from\b|\bin the sky's colour\b/i,
+};
+const groundsAsked = (parts) => { const out = {}; for (const p of parts) { if (!p || typeof p !== 'object') continue; const t = JSON.stringify(p); for (const [k, re] of Object.entries(ASK)) if (!out[k] && re.test(t)) out[k] = p.id || p.name || 'the deal'; } return out; };
 const target = args[0];
 if (!target || target === '-h' || target.startsWith('--')) {
   console.error('usage: node inspect.mjs <url | file.html> [--out DIR] [--widths 1440,768,390] [--allow rule,rule] [--app] [--film] [--json]');
@@ -124,7 +161,7 @@ if (!target || target === '-h' || target.startsWith('--')) {
 }
 // Allowances granted by the drawn direction (written by draw.mjs) apply automatically.
 for (const p of ['.taste-skill/direction.json', join(outDir, '..', 'direction.json')]) {
-  if (existsSync(p)) { try { const d = JSON.parse(readFileSync(p, 'utf8')); allow = [...new Set([...allow, ...(d.allow || [])])]; if (d.kind === 'app') appMode = true; if (Array.isArray(d.scenes) && d.scenes.length) film = true; dealtFonts = (d.input?.keep || []).includes('type') ? [] : d.kind === 'app' ? [d.style?.tokens?.font?.family].filter(Boolean) : [d.type?.display?.family, d.type?.text?.family].filter(Boolean); dealtEntrance = d.kind === 'app' ? null : d.entrance?.id || null; dealtReplay = d.kind === 'app' ? null : d.replay || null; dealtFooter = d.kind === 'app' ? null : d.frame?.footer?.id ? d.frame.footer : null; dealtNav = d.kind === 'app' ? null : d.frame?.nav?.id ? d.frame.nav : null; dealtPalette = d.palette ? { ink: d.palette.ink, accent: d.palette.accent, fields: (d.palette.fields || []).map((f) => f.bg) } : null; sector = d.input?.sector || null; } catch {} break; }
+  if (existsSync(p)) { try { const d = JSON.parse(readFileSync(p, 'utf8')); allow = [...new Set([...allow, ...(d.allow || [])])]; if (d.kind === 'app') appMode = true; if (Array.isArray(d.scenes) && d.scenes.length) film = true; dealtFonts = (d.input?.keep || []).includes('type') ? [] : d.kind === 'app' ? [d.style?.tokens?.font?.family].filter(Boolean) : [d.type?.display?.family, d.type?.text?.family].filter(Boolean); dealtEntrance = d.kind === 'app' ? null : d.entrance?.id || null; dealtReplay = d.kind === 'app' ? null : d.replay || null; dealtFooter = d.kind === 'app' ? null : d.frame?.footer?.id ? d.frame.footer : null; dealtNav = d.kind === 'app' ? null : d.frame?.nav?.id ? d.frame.nav : null; dealtPalette = d.palette ? { ink: d.palette.ink, accent: d.palette.accent, surface: d.palette.surface, fields: (d.palette.fields || []).map((f) => f.bg) } : null; sector = d.input?.sector || null; client = nameOf(d.input?.brief); ownsProduct = d.imagery === 'no-product-photo' || d.input?.sector === 'physical-product'; ownPlace = ['restaurant', 'hospitality', 'real-estate'].includes(sector); hasOwn = (d.input?.have || []).some((h) => /photo/.test(h)); productKind = d.imagery === 'no-product-photo' ? kindOf(d) : null; dealtAsk = d.kind === 'app' ? null : groundsAsked([d.hero, ...(d.sections || []), ...Object.values(d.frame || {}), ...(d.scenes || [])]); } catch {} break; }
 }
 // A local file is served over http from a throwaway server on 127.0.0.1, so the browser never has to
 // open a file path (some sandboxes show Node and the browser different views of the disk) and relative
@@ -391,8 +428,19 @@ try {
       const y = await page.eval('Math.round(scrollY || document.scrollingElement.scrollTop || 0)').catch(() => 0);
       for (const x of s) { if (!x.inView) continue; const v = letterSeen.get(x.id) || { text: x.text, size: x.size, at: [] }; v.at.push({ y, top: x.top, chars: x.chars, letters: x.letters, shows: relLetters(x.letters).map((l, i) => (letterOff(x.size, l, 0.5) ? '·' : x.chars[i])).join('') }); letterSeen.set(x.id, v); }
     };
+    // the grounds a visitor sees, on desktop at every screen once it rests (surface-count): a veil or a band that holds
+    // the screen in a scene counts with the sections' grounds. The first look stands for its screen and each after it for
+    // the scroll since the one before (a screen of the walk, the ones a stride passes over, a third of a screen of the
+    // film; the foot of the page, reached in less, once)
+    const seenGrounds = w >= 1100 && !appMode ? { page: null, tones: new Map() } : null;
+    const addGrounds = (acc, g, k) => { acc.page = acc.page || g.page; for (const t of g.tones) { const x = acc.tones.get(t.hex); if (x) { x.n += t.n * k; x.wide = x.wide || t.wide; x.scene = x.scene || t.scene; x.blocks = [...new Set([...x.blocks, ...t.blocks])]; } else acc.tones.set(t.hex, { ...t, n: t.n * k }); } };
+    const groundCheck = async (k) => {
+      if (!seenGrounds || !(k > 0)) return;
+      const g = await page.eval(groundPoints).catch((e) => { if (frameErrors.length < 5) frameErrors.push('grounds: ' + String(e.message).slice(0, 160)); return null; });
+      if (g) addGrounds(seenGrounds, g, k);
+    };
     const frameChecks = [await check()];
-    await photoCheck(); await letterCheck();
+    await photoCheck(); await letterCheck(); await groundCheck(1);
     const reached = [await page.eval(reach, metrics.reach).catch(() => null)];
     let upReach = null, atFoot = total <= 1;
     const where = () => page.eval('({ y: Math.round(scrollY || document.scrollingElement.scrollTop || 0), max: Math.round(document.scrollingElement.scrollHeight - innerHeight) })').catch(() => null);
@@ -405,10 +453,11 @@ try {
       // a smooth-scroll library still easing toward an earlier target can take the jump back: settle it and retry once
       if (pos && pos.y <= lastY + 2 && pos.y < pos.max - 2) { await page.wheel(Math.round(h / 2)); await sleep(1000); await page.eval(to).catch(() => {}); await page.wheel(2); await sleep(650); pos = await where(); }
       if (!pos || pos.y <= lastY + 2) { atFoot = !!pos && pos.y >= pos.max - 2; break; } // the screen before was the end of the page
+      const moved = (pos.y - lastY) / h;
       lastY = pos.y;
       frames.push(await page.screenshot({ quality: 78 }));
       frameChecks.push(await check());
-      await photoCheck(); await letterCheck();
+      await photoCheck(); await letterCheck(); await groundCheck(moved);
       reached.push(await page.eval(reach, metrics.reach).catch(() => null));
       await page.eval('window.__motionSample && window.__motionSample()').catch(() => {});
       // once, past the hero on the way down (a screen held by a scene or a sticky stage, where a dock or an index may step
@@ -456,15 +505,18 @@ try {
       build.space = await page.eval(space).catch((e) => { frameErrors.push('space: ' + String(e.message).slice(0, 160)); return null; });
       build.nav = navAtLoad;
       build.crops = await page.eval(crops).catch((e) => { frameErrors.push('crops: ' + String(e.message).slice(0, 160)); return null; });
-      // round 11b, on desktop: the grounds and panels, the footer against the one section 0 dealt, and a portfolio's work
+      // round 11b, on desktop: the grounds the walk saw, the footer against the one section 0 dealt, and a portfolio's work
       if (w >= 1100) {
-        build.grounds = await page.eval(grounds, dealtPalette).catch((e) => { frameErrors.push('grounds: ' + String(e.message).slice(0, 160)); return null; });
+        build.grounds = await page.eval(grounds, [dealtPalette, seenGrounds && { page: seenGrounds.page, tones: [...seenGrounds.tones.values()] }, dealtAsk]).catch((e) => { frameErrors.push('grounds: ' + String(e.message).slice(0, 160)); return null; });
         if (dealtFooter) build.foot = await page.eval(footing).then((f) => ({ ...f, dealt: dealtFooter })).catch((e) => { frameErrors.push('footer: ' + String(e.message).slice(0, 160)); return null; });
         if (PORTFOLIO.includes(sector)) build.work = await page.eval(workShown).catch((e) => { frameErrors.push('work: ' + String(e.message).slice(0, 160)); return null; });
         // round 11c: the button shapes, the navigation against the one section 0 dealt, and the sections' structures
         build.buttons = await page.eval(buttonShapes).catch((e) => { frameErrors.push('buttons: ' + String(e.message).slice(0, 160)); return null; });
         if (navSeen) build.navs = { ...navSeen, dealt: dealtNav };
         build.structures = await page.eval(structures).catch((e) => { frameErrors.push('structures: ' + String(e.message).slice(0, 160)); return null; });
+        // round 11d: the pictures shown as the client's, with their credits, a portfolio's work among them, marked or not
+        // (the grounds above are the walk's, and the film's take their place where it runs)
+        build.pictures = await page.eval(pictureCredits, { client, product: ownsProduct, place: ownPlace, own: hasOwn, work: build.work?.files || [] }).then((p) => ({ ...p, kind: productKind })).catch((e) => { frameErrors.push('pictures: ' + String(e.message).slice(0, 160)); return null; });
       }
     }
     const appM = appMode ? await page.eval(app).catch(() => null) : null;
@@ -497,8 +549,18 @@ try {
       await page.eval(`window.scrollTo({ top: 0, behavior: 'instant' })`).catch(() => {});
       await sleep(700);
       const shots = []; let lastY = -1, still = 0;
+      // (a veil a scene draws over the screen for less than a screen of scroll falls between two screens of the walk: where
+      // the film runs, its frames count the grounds; a frame where the wheel no longer moves the page is the foot again, and
+      // is left out)
+      const filmGrounds = seenGrounds ? { page: null, tones: new Map() } : null; let groundAt = null;
       for (let i = 0; i < Math.min(150, Math.ceil(total / stride) * 3 + 6); i++) {
         shots.push(await page.screenshot({ quality: 70 }));
+        const at = i ? lastY : 0;
+        if (filmGrounds && at >= 0 && (groundAt === null || at > groundAt)) {
+          const g = await page.eval(groundPoints).catch((e) => { if (frameErrors.length < 5) frameErrors.push('film grounds: ' + String(e.message).slice(0, 160)); return null; });
+          if (g) addGrounds(filmGrounds, g, groundAt === null ? 1 : (at - groundAt) / h);
+          groundAt = at;
+        }
         await page.wheel(Math.round(h / 3) * stride, { step: 100, pauseMs: 16 });
         for (const ms of [120, 160]) { await sleep(ms); const c = await check({ film: true }); if (c) c.step = i; filmChecks.push(c); }
         await sleep(140);
@@ -506,6 +568,7 @@ try {
         if (y === lastY) { if (++still >= 2) break; } else still = 0;
         lastY = y;
       }
+      if (build && filmGrounds?.tones.size) build.grounds = await page.eval(grounds, [dealtPalette, { page: filmGrounds.page, tones: [...filmGrounds.tones.values()] }, dealtAsk]).catch((e) => { frameErrors.push('film grounds: ' + String(e.message).slice(0, 160)); return build.grounds; });
       // how much of each frame is flat empty ground (held-dead-screen)
       for (const s of shots) filmGround.push(await helper.eval(groundShare, 'data:image/jpeg;base64,' + s).catch(() => null));
       for (let i = 0; i < shots.length; i += 24) {

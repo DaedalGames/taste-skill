@@ -54,12 +54,9 @@ In order of preference:
    honestly generic picture fits (the open sea for a house on the sea, stone for a mason). They never
    stand in for a person or a screen, and for a room, a dish or a product only as below.
 4. **Sharp modern photographs from the open collections** (section 3), 1800px or wider, only for what
-   the library lacks (a kind of room, a dish, the product's kind in use): modern, well lit,
+   the library lacks (a detail of a room, a dish, the product's use and its load): modern, well lit,
    professional-looking. Honest means nobody could take one for the client's own building, premises,
-   person, team or customers. Two exceptions, both listed in the report as stand-ins for the client's
-   own: rooms, dishes and products (below), and a product with no photographs of its own, shown by
-   real photographs of its kind in use, large, never named or priced as this model (the direction
-   sheet's imagery section says how).
+   person, team or customers, or for its own product, rooms or work (below).
    **Never documentary or archive photographs:** no old Commons or museum pictures, no history
    photographs, postcards, old maps or engravings, no news-like or snapshot-looking shots. In October
    2026 the owner looked at the test pages himself and named them first: serious, old-looking pictures
@@ -70,53 +67,70 @@ In order of preference:
    figures. Never a drawing of an object, a product or a place in its stead (section 8).
 6. **Type and space alone,** done on purpose (section 9). An empty slot is better than a bad picture.
 
+**The client's own thing is never shown by another's.** The product, a room, the house and a piece of
+work are the client's own or a marked slot: never another maker's product however cropped, unbranded
+or out of focus, never a named hotel's room or another house's, never another artist's work, never
+another house captioned as the client's, whatever the credit says. Three of four test pages on one
+commit failed the publish review for this alone: another maker's cargo bike with its name on the frame
+as the hero, two named hotels' rooms as a guesthouse's, another artist's comic on a pen display as a
+motion designer's work. All three were credited; the credit did not make them honest. When the client
+gives none:
+
+- **A product.** Its large picture (the hero, or the section about it) is a designed frame at the
+  product's real ratio with `data-slot="product-photo"`: the product's name in the page's display type
+  and its two or three facts (what it carries, its range, its price), on `--surface` or the ink, in
+  the dealt corners. Where the hero lays its picture behind the words (full-bleed, filling the first
+  screen, or the headline or the name set on or across it), that picture is the use or the place and
+  the frame comes in the section the sheet names after it, never a frame under the headline. No
+  silhouette, no outline, no drawing, no photograph of another make. With an image tool, the frame
+  may hold this product generated as the brief describes it, listed in the Image credits as made for
+  the page and in the report (`credit-names-business` fails any other photograph in that frame). The
+  photographs show only its use, its load and its place, with no product of its kind in
+  them: the shopping in a crate, a child's helmet on a hook, the school street in the rain. At least
+  one shows who it is for, the people from behind or far off and without the product. Never a page
+  without pictures: a cargo-bike page that shipped none lost its blind test as undesigned.
+- **Rooms and the house.** Each room is shown by a detail that belongs to no one (bed linen in window
+  light, a chair by the window, a cup on the bedside table, the view from a window) in a frame with
+  `data-slot="room-photo"`, beside that room's facts; never a whole room from another house. The
+  house is shown as its place (the fjord, the village), captioned with what and where it is.
+  `data-slot="house-photo"`, the frame its own photograph of the house replaces, goes on a picture of
+  the named place itself from the open collections, its source naming that place; never on a library
+  photograph, which names no place.
+- **Work.** Each piece is the project's own still made for the page, in its frame with
+  `data-slot="work"` at the piece's ratio and size: a frame from your own motion of it first (a CSS or
+  canvas loop built for the piece, resting on its best frame), otherwise its title frame, the whole
+  frame designed as the piece's own opening title (its name alone, large, in the page's display face
+  on `--surface` or the ink, as a film's title fills the screen), with its client, year and role as
+  the caption under it. Never a small card of a name and a line in its place (a motion designer's
+  page showed her work only as such type cards and was marked down), and never a photograph of someone
+  else making or showing work (a pen display, a sketchbook, a light table), however close to the
+  trade.
+
+A credit or file title that names another business (a hotel, a maker, a brand) never sits on a picture
+shown as the client's: such a picture shows only the world around, captioned with what and where it
+is, or is left out. `assets.mjs` notes a find whose title or author plainly names one (a hotel word
+beside a name, a maker's name before its product, a work's author); it cannot tell every name from a
+place, so read the title and the credit of each find yourself. The report lists
+every marked slot and what holds it, so the client's own pictures can replace them. The sheet prints
+this rule under the photograph total.
+
 **Rooms, dishes and products are shown, not boxed.** On a page for a place to stay, each room the
-page lists is shown with a photograph of that kind of room (the bed under its window, the view out of
-it); on a restaurant's page each dish it features with a photograph of that dish as served (the menu
-itself stays a list of names and prices); on a shop each product with a photograph of it or its kind.
-The client's own come first; without them, real photographs matched to each one's details and in one
-light: rooms from the open collections (`assets.mjs "<that kind of room>"`; the library has almost
-none), dishes and products from the library (`draw.mjs --photos <words>`) or the open collections. The
-report lists each as a stand-in for the client's own. A stand-in sits beside the room or dish it
-stands for, with that one's facts, never as the first picture of the house or the restaurant. Never
-grey spec panels, tabs or filled boxes standing in for them: in a blind test five rooms set as grey
-panels read as folder tabs, and the page had no picture of where a guest would sleep.
+page lists has its own picture beside its facts (the client's own, or the detail above); on a
+restaurant's page each dish it features has a photograph of that dish as served (the menu itself stays
+a list of names and prices); on a shop each product has its own photograph or its designed frame. A
+stand-in sits beside the room or dish it stands for, with that one's facts, never as the first picture
+of the house or the restaurant. Never grey spec panels, tabs or filled boxes in their place: in a blind
+test five rooms set as grey panels read as folder tabs.
 
-**As many pictures as items listed.** A section that lists four rooms shows four photographs, one
-beside each room; three featured dishes, three photographs. Never one picture for the lot, and never a
-detail (a mug on a sill, a corner of a table) in place of the room or the dish. With fewer good
-pictures than items, list fewer: the kinds of room the house has, each with its picture, or the dishes
-you can show with the rest of the menu as a plain list of names and prices. A guesthouse that listed
-four rooms and pictured one, beside a blurred mug and a stock dining set, lost its blind test.
+**As many pictures as items listed.** A section that lists four rooms shows four pictures, one beside
+each room; three featured dishes, three photographs. Never one picture for the lot, and never a detail
+in place of a dish. With fewer good pictures than items, list fewer: the kinds of room the house has,
+each with its picture, or the dishes you can show with the rest of the menu as a plain list of names
+and prices.
 
-**A product shown by its kind looks like one product.** Choose photographs in which the kind looks
-alike: the same configuration and build (all long-tail cargo bikes, or all with a box in front), a
-similar colour, the one the brief describes; never a different maker's design in each picture, which
-reads as a catalogue of competitors. The hero shows the product large, about half the hero or more,
-never a small figure in a landscape.
-
-- **The brief decides what the product is, never the photographs found.** A two-wheeled cargo bike
-  stays two-wheeled: a photograph of a trike is left out, and no word, specification or picture slot
-  is changed to match what a search returned. One builder turned its bike into a trike to fit its
-  stock photographs, and its three photographs showed three different vehicles.
-- **One good match, shown once, beats several that differ.** Show the one photograph of the right
-  kind large, once; never again as a crop of a detail. A cargo-bike page showed its one family
-  photograph three times (hero, box, scene) and read as thin; the inspector warns on a repeat and fails
-  a third showing (repeated-picture). A scene's stamp of the picture it has just shown is the one
-  exception.
-- **At least one picture shows it in use with the people it is for:** a parent riding with two
-  children in the box, a cook at the hob with the kettle. An honest stand-in of that kind of product
-  in use, never named as this model and never retouched to pass for it (one builder painted another
-  maker's name off a box); children only from behind, far off or unrecognisable. A product parked in
-  an empty street says nothing about who it is for.
-- **When no clean photograph of the right kind exists,** show the use, the load and the place with the
-  product cropped, unbranded or out of focus: the children in the box from behind, the box with the
-  shopping, the street of the school run. Never a page without pictures: a cargo-bike page that found
-  no usable photograph and shipped none lost its blind test as undesigned.
-- **One slot is marked for the client's product shot:** the large picture of the product (the hero,
-  or the section about it), at its real ratio, with `data-slot="product-photo"` on it and named in the
-  report. Until the client's photograph arrives it holds the best stand-in above, never an empty or
-  grey box, a drawing or a silhouette, and never a claim that it is this model.
+**The brief decides what the product is, never the photographs found.** No word, specification or
+picture slot changes to match what a search returned: one builder turned a two-wheeled cargo bike into
+a trike to fit its stock photographs.
 
 **The quality bar, for every picture before it goes on the page.** Open it at full size and look:
 
@@ -137,10 +151,10 @@ never a small figure in a landscape.
   on, a folded towel. Food: a flat lay of ingredients, a chef plating with tweezers. Property: keys
   handed over. Health: a stethoscope on a desk. Products: the product floating in mid-air on a
   bright colour with no ground under it. A roastery page with full-frame beans and burlap sacks read
-  as generic to its judge. The client's own place, its people at work and the product in use come
-  first; without the client's own, the work in close-up (hands at the roaster's drum, a cup being
-  poured), never passed off as its staff. For software, the product's own interface and the
-  customer's world come first.
+  as generic to its judge. The client's own pictures come first; without them, its use, its load, its
+  place and the details that belong to no one (a cup on a sill, the street at its door), never its
+  own thing by another's (above). For software, the product's own interface and the customer's world
+  come first.
 - **It looks like a photograph made this decade for a brand:** well lit, sharp, composed, colour
   clean, the quality of a good Unsplash or Pexels photograph. Not documentary, archival, news-like, a
   tourist snapshot or a museum scan.
@@ -148,8 +162,8 @@ never a small figure in a landscape.
 - No watermark, burned-in text, frame, scanner edge, noise or heavy compression.
 - **Fewer.** No more photographs of the subject and its world than the sheet's photograph total
   (section 5), scenes included, each earning its slot; none at all is a real option (the product, the
-  type, the colour, the interface), except on a product page, which shows its kind, its use and its
-  load (above).
+  type, the colour, the interface), except on a product page, which shows its use, its load and its
+  place (above).
   The rooms, dishes or products a page pictures are their own set, one photograph each beside its
   facts; a gallery or a wall of work is cut to six.
 - Nothing in it that is not the client's to show, stand-ins and open-collection finds above all: no
@@ -158,7 +172,7 @@ never a small figure in a landscape.
   could be recognised (children only from behind, far off or unrecognisable). Crop it out or drop the
   picture; never blur, pixelate or paint it out. A blurred face reads as news or surveillance footage
   (a family photograph with blurred faces lost a cargo-bike page its best slot): take shots with faces
-  turned away, out of frame or naturally out of focus, or frame the product and the load. A cargo-bike
+  turned away, out of frame or naturally out of focus, or frame the load and the place. A cargo-bike
   page in a preview showed children outside private homes, other makers' bikes with their names
   readable, a shop's logo and a profane sticker.
 - It earns its size: a picture in a large slot has a clear subject; a picture that only fills a gap
@@ -171,25 +185,31 @@ found in the open collections are not the project's own: do not pass `photograph
 ## 3. Real pictures from the open collections
 
 `scripts/assets.mjs` searches open sources without keys and prints, for each find, a direct image
-URL, the page it comes from, its size, its creator, its licence and a credit line. Search
-**Openverse** (one index over Flickr, StockSnap, rawpixel and others): `--source openverse`. Its
-modern photographs are what a page can use; the archive and museum sources (Wikimedia Commons'
-historical scans, the Art Institute of Chicago, the Metropolitan Museum) are the documentary look the
-owner ruled out, so leave them out of the search.
+URL, the page it comes from, its size, its creator, its licence and a credit line. It searches
+**Openverse** (one index over Flickr, StockSnap, rawpixel and others) and, when Openverse fails or
+finds nothing usable, **Wikimedia Commons**, each through its own API, which gives every find's author
+and licence. Their modern photographs are what a page can use; the museum sources (the Art Institute
+of Chicago, the Metropolitan Museum) and the archive scans on Commons are the documentary look the
+owner ruled out.
 
 ```bash
-node <skill>/scripts/assets.mjs "guest room fjord view" --source openverse
-node <skill>/scripts/assets.mjs "basalt texture" --min-width 2400 --source openverse
-node <skill>/scripts/assets.mjs --get openverse:<id>,openverse:<id>    # download, record the credits
+node <skill>/scripts/assets.mjs "bed linen window light"
+node <skill>/scripts/assets.mjs "basalt texture" --min-width 2400
+node <skill>/scripts/assets.mjs --get openverse:<id>,commons:<id>     # download, record the credits
 node <skill>/scripts/assets.mjs --credits                             # the credits dialog and report list
 ```
 
-By default it keeps only licences that allow commercial use (CC0, public domain, CC BY, CC BY-SA) and
-pictures at least 1800 pixels wide, and checks that every image it prints actually loads.
-`--license pd` keeps only pictures that need no credit; `--orientation`, `--min-width` and `--limit`
-narrow the list; `--source` picks the sources (Openverse by default, Commons and NASA for footage; the
-archive and museum sources only when named); `--json` gives the raw results. Each result has a ref
-(`commons:36649959`) that `--get` takes.
+By default it keeps CC0, CC BY and CC BY-SA (a public-domain mark is mostly an old archive picture:
+`--license safe` adds them), pictures at least 1800 pixels wide, nothing dated before 2000 or titled
+with an earlier year, no survey snapshots (Geograph) and no files titled with a camera's number, and
+checks that every image it prints actually loads; a source named with `--source` that only holds old
+films or objects (the museums, the Internet Archive) keeps its dates. A call that fails
+is tried again 1, 2 and 4 seconds apart (Openverse answered 504 for whole sessions in October 2026).
+`--orientation`, `--min-width` and `--limit` narrow the list; `--source` picks the sources (Openverse,
+then Commons, by default; Commons and NASA for footage; the museum sources only when named); `--json`
+gives the raw results. Each result has a ref (`commons:36649959`) that `--get` takes, and a note when
+its title or author plainly names a business or a maker (a hotel, a brand, a work's author): such a
+picture is never shown as the client's own (§2). No note is no proof: read the title and the credit.
 
 **What to search for.** The inventory (SKILL.md step 1), not the category: "bakery" finds other
 people's bakeries. The subject's world is specific:
@@ -198,7 +218,11 @@ people's bakeries. The subject's world is specific:
   "lofoten harbour").
 - **Its materials,** close enough to read as a surface: the stone of its quay, the grain of its oak,
   its glaze, its tiles ("azulejo tiles", "basalt cobblestones", "oak grain").
-- **Its kind of work, today:** hands at the craft, the tools in use, the landscape it works in.
+- **Its use, its load and its details:** what the product carries and where, without the product in
+  it; the details that belong to no one (bed linen, a cup on a sill); the landscape it works in.
+- **Never the client's own thing:** not "cargo bike", "guesthouse" or "motion design reel", since what
+  comes back is another business's product, rooms or work (§2). Search the use, the load, the place
+  and the details instead ("groceries in a crate", "bed linen window light", "flateyri village").
 - **Never its history in pictures:** no old photographs, postcards, maps or engravings, however well
   they fit; a history the page needs is told in one line of text.
 
@@ -230,20 +254,20 @@ as a crop. Treatments stay within section 6 and the treatment the sheet deals.
 **Stay honest.**
 
 - **A found picture is never the client's own.** It may show the client's city as it is today, its
-  materials, the kind of thing it makes; it may never stand in for the client's building, premises,
-  people, team or customers (a bakery counter, the house from outside, a smiling barista, a chef at
-  the pass). Rooms, dishes and products are shown with a photograph of their kind, and a product with
-  no photographs of its own by its kind in use, never named or priced as this model; a stand-in sits
-  beside the room or dish it stands for, never as the first picture of the house or restaurant; the
-  report lists each as not the client's (§2). A stand-in whose title or credit names another business
-  (a real hotel's room, another maker's product) is never shown as the client's own: take one that
-  names none, or mark it as a placeholder in the Image credits and the report (a guesthouse's rooms
-  were real hotels' rooms from the open collections, and one of them had no credit at all).
+  materials, the details that belong to no one, the use and the load of its product; it may never
+  stand in for the client's building, premises, people, team or customers (a bakery counter, the
+  house from outside, a smiling barista, a chef at the pass), nor for its product, rooms or work (§2:
+  the client's own thing is never shown by another's). A detail or a dish sits beside the room or the
+  dish it stands for, never as the first picture of the house or restaurant; the report lists each as
+  not the client's. A find whose
+  title or credit names another business (a real hotel's room, another maker's product) is never shown
+  as the client's own, marked as a placeholder or not (a guesthouse's rooms were real hotels' rooms from
+  the open collections, and one of them had no credit at all).
 - **Say what and where it is.** A photograph of a place that is not the client's own is captioned
   with what and where it is, as its source names it ("Suðureyri in June", "The Korenmarkt, Ghent"),
   never with a place the source does not name and never in words that tie it to the client; a
-  stand-in for a room, a dish or a product has its own facts beside it (bed, view, rate; name, price),
-  never a line saying it is the client's photograph.
+  detail beside a room or a photograph of a dish has that one's facts beside it (bed, view, rate;
+  name, price), never a line saying it is the client's photograph.
   A picture under or beside a line shows what the line names: a guesthouse set "A white house on the
   fjord" over a village of coloured houses, and its booking section over a lighthouse nobody books.
 - **A caption names only what the picture shows.** Read every caption, label and number beside a
@@ -274,9 +298,11 @@ as a crop. Treatments stay within section 6 and the treatment the sheet deals.
 
 If two or three honest queries per idea find nothing sharp, modern and fitting, leave the slot out
 and let type, colour or the product carry it (section 9); never a drawing (section 8). A picture that
-is merely nearby is worse than none. If the script cannot reach any source (no network), use the
-library and type, and say so in the report. For moving pictures, the same script searches real
-footage with `--video` (section 11).
+is merely nearby is worse than none. **When the search fails** (the script retries, then searches
+Commons when Openverse fails; with no source reached it says so), take the dealt photographs and the
+library (`draw.mjs --photos <words>`), then type or the slot's marked frame (§2); never a museum or
+archive source in their place, and say in the report which searches failed. For moving pictures, the
+same script searches real footage with `--video` (section 11).
 
 ## 4. The dealt photographs
 
@@ -288,8 +314,11 @@ footage with `--video` (section 11).
   ceramics) the list comes from every set: its things first, the ones other pages were dealt least
   leading, then at most two of its place; never its stock shot, a neighbouring trade, a landmark the
   brief does not name, or a logo or a house number. A place leads only where the library has none of
-  its things, and never on a product page. A portfolio is dealt none of the things, since its work is
-  its own, and one picture of its place at most.
+  its things. A portfolio is dealt none of the things, since its work is its own, and one picture of
+  its place at most. A place to stay's things are the details that belong to no one (bed linen, a
+  chair, a cup, a window), never houses. On a product page with no photographs of its own, none that
+  shows a product of its kind is dealt (`product` in library/photos.json): its pictures are the use,
+  the load and the place.
 - With fewer than six of the trade's things the sheet says how many there are and sends you to the
   open collections for the rest; with none it says so, or deals none at all.
 - Each line says where the calm area is. Put text there or keep text off the image.
@@ -416,7 +445,8 @@ Do not illustrate. Drawn objects, products, people, rooms, buildings, food, anim
 mascots and decorative motifs in SVG or CSS were the commonest reason reviewers called a page amateur:
 next to award sites they read as clip art, however carefully they are drawn. When there is no picture
 of something, the section is set in type, or it shows the product's own interface, or a real photograph
-of the subject's world; it never gets a drawing in place of a photograph.
+of the subject's world, or the marked frame of §2 (the product's name and facts, a work's title
+frame); it never gets a drawing in place of a photograph.
 
 SVG is right for these, and only these:
 
@@ -433,7 +463,7 @@ SVG is right for these, and only these:
 A chart appears only inside the product's own interface, marked `data-ui`, the way the product draws
 it (app screens: `assets/charts.js`). On the page a figure is set as type: the number large, a short
 table, a list of values. A process is said in words, three short steps as type, or shown by the
-product at work or a real photograph of the hands doing it. A diagram, a chart, a route or a site map
+product at work or the client's own photograph of the hands doing it. A diagram, a chart, a route or a site map
 drawn for the page fails, labelled or not: round 9 explained a process with three SVG diagrams of
 squares and bars, labels and all, and they read as clip art beside the work.
 

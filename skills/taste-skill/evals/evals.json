@@ -20,14 +20,14 @@
       "id": 3,
       "name": "portfolio-designer",
       "prompt": "I'm Mara Lindqvist, a product designer in Stockholm with eight years in fintech and health apps. I need a portfolio homepage: six selected projects (make up plausible names, clients, years and one-line descriptions), a short about paragraph, and a way to contact me (mara@lindqvist.studio). I don't have project images ready, so design it so it still looks finished without them, or use placeholders that I can swap. Static HTML/CSS/JS.",
-      "expected_output": "A portfolio page that looks finished without project imagery (a typographic index, a name-led hero, or atmosphere photographs clearly marked for replacement), with a designed footer, a phone layout that is its own composition, and all house rules met.",
+      "expected_output": "A portfolio page that looks finished without project imagery (a name-led hero, and each project as its own still made for the page, a title frame or a frame of its motion, in a slot marked for replacement; never another person's work or making), with a designed footer, a phone layout that is its own composition, and all house rules met.",
       "files": []
     },
     {
       "id": 4,
       "name": "product-ceramics",
       "prompt": "Launch page for Kiln, a ceramic pour-over coffee set (dripper, carafe and two cups) that is hand-glazed in small batches in Porto. It costs 84 euros and ships across the EU within a week. The glaze is mixed by hand so no two sets are identical. We have not shot product photos yet, so there are no images of the set. One page, with a way to buy (a button is enough). Static HTML/CSS/JS.",
-      "expected_output": "A product page that does not fake product photography: it shows what the product is with real photographs of its kind in use (or a generated image), never named or priced as this set, and says in the report they are not the client's photographs; price and purchase action clear; all house rules met.",
+      "expected_output": "A product page that does not fake product photography: its large picture is a designed frame marked for the client's product shot (the set's name and facts, or a generated image), never another maker's set; the photographs show its use and its place, and the report says they are not the client's photographs; price and purchase action clear; all house rules met.",
       "files": []
     },
     {

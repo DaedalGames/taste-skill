@@ -18,6 +18,10 @@ others.
 11. How the skill was tested
 12. The October 2026 study: 100 Sites of the Day
 13. The app-screen study
+14. The design-anatomy study (round 12)
+15. The round-11 test pages (round 11b)
+16. Round 11c: the patterns built as written, designed chrome, varied pages
+17. Round 11d: honest pictures, checks that catch their faults, a bolder hero
 
 ## 1. Method and its limits
 
@@ -425,3 +429,27 @@ navigation hid, every frame part and hero had its Must show line, and no page ha
 times or two alike in a row. About a third of the frame parts are patterns (round 12: about half).
 The small moves are the weak point: only 17 pass the house rules, so a page gets 1.4 on average and
 some get none.
+
+## 17. Round 11d: honest pictures, checks that catch their faults, a bolder hero
+
+Four pages built on the round-11b commit all won their blind tests, and three of them could not be
+published: a cargo-bike page showed another maker's bike with its name on the frame, a motion
+designer's work slots held another artist's comic on a pen display, and a guesthouse showed two
+named hotels' rooms as its own. Every one was credited; the credit did not make it honest. The checks
+built for these faults passed them, and a fourth page's name ran under the fold.
+
+So the sheet now prints a hard rule under its photograph total: the client's own product, rooms,
+house and work are never shown by another's. Without the client's pictures, the product is a designed
+frame with its name and facts and the photographs show only its use, its load and its place; a room is
+a detail that belongs to no one; a piece of work is the project's own still. The deal gives a product
+page no photograph of its kind, and no search names the client's own thing. The picture search falls
+back to Wikimedia Commons when Openverse fails, and drops old, snapshot and archive pictures. A hero
+built on giant type gets its own size (`--step-hero`) and stays whole above the fold. Galleries keep
+three photographs, holds written in words count with the scenes, and a page closes once. The inspector
+fails a picture shown as the client's whose credit names a business (`credit-names-business`), a work
+slot holding someone else's photograph, and a title the fold cuts (`hero-cut`), and counts every ground
+by the screens it covers (`surface-count`).
+
+In thirty draws over seven briefs every sheet printed the rule, no product page was dealt or sent to
+search a product of its kind, split heroes fell from six to three, and no page closed twice. The
+three failed pages now fail for what their reviews found.

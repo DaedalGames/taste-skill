@@ -323,7 +323,8 @@ export async function pageBuild(opts = {}) {
 // space() is run at the top of the page after the walk, so every reveal has landed where it rests.
 //   hero   the first screen: the block that holds the h1 (the page's blocks as layout() takes them) and what of the block
 //          after it shows on the first screen: its words, a picture, a box, or its ground where it differs from the
-//          hero's, 8px or more above the foot of the screen (hero-not-alone)
+//          hero's, 8px or more above the foot of the screen (hero-not-alone); and the h1's words that run on under the foot
+//          of the screen (hero-cut)
 //   air    on desktop, the empty height between one block's last content and the next one's first (words, pictures,
 //          controls, boxes), under 12% of the screen; a scene or a pinned stage, whose content moves, is left out, and
 //          so are the parts of one block (section-air)
@@ -381,7 +382,25 @@ export function space() {
   if (W < 600) { const p = document.createElement('div'); p.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:100svh;visibility:hidden;pointer-events:none'; B.appendChild(p); const v = p.getBoundingClientRect().height; p.remove(); if (v > 200 && v < H) F = Math.round(v); }
   if (hi >= 0 && SY < 2) {
     const hero = blocks[hi], next = blocks.slice(hi + 1).find((b) => b.group !== hero.group && b.el.getBoundingClientRect().top + SY >= hero.el.getBoundingClientRect().top + SY + 40);
-    out.hero = { sel: sel(hero.el), bottom: Math.round(hero.el.getBoundingClientRect().bottom + SY), fold: F, next: null, cut: null };
+    out.hero = { sel: sel(hero.el), bottom: Math.round(hero.el.getBoundingClientRect().bottom + SY), fold: F, next: null, cut: null, title: null };
+    // round 11d: the hero's own title across the fold, a line of the h1 that starts on the first screen and whose letters
+    // end more than 6px under its foot, however large the type (hero-cut; r12-p56's "Kaffee Klee", set to cross the fold
+    // over its photograph, read as cut off). A line ends where its letters do: its box less the font's descent, plus what
+    // its own letters reach under the baseline (a line of capitals ends on its baseline, a "g" counts to its tail). Its
+    // words are the title's business, not the cut's below (hero-not-alone)
+    if (h1) {
+      const ls = []; const tw = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT); const rg = document.createRange(); let n;
+      const ctx = document.createElement('canvas').getContext('2d');
+      while ((n = tw.nextNode())) {
+        const pe = n.parentElement; if (!norm(n.nodeValue) || !pe || !shown(pe)) continue;
+        const cs = css(pe); ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        const m = ctx.measureText(cs.textTransform === 'uppercase' ? norm(n.nodeValue).toUpperCase() : norm(n.nodeValue)), box = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
+        rg.selectNodeContents(n);
+        for (const q of rg.getClientRects()) if (q.width > 2 && q.height > 2) ls.push({ t: q.top, b: box > 0 ? q.bottom - (m.fontBoundingBoxDescent - Math.max(0, m.actualBoundingBoxDescent)) * ((q.bottom - q.top) / box) : q.bottom, text: norm(n.nodeValue) });
+      }
+      const under = ls.filter((q) => q.b > F + 6);
+      if (under.length && ls.some((q) => q.t < F - 8)) out.hero.title = { text: norm(h1.innerText).slice(0, 48), under: [...new Set(under.map((q) => q.text))].join(' ').slice(0, 40), px: Math.round(Math.max(...under.map((q) => q.b)) - F) };
+    }
     if (next) {
       const nr = next.el.getBoundingClientRect();
       let seen = null;
@@ -417,9 +436,9 @@ export function space() {
     // screen is part of that picture: words are looked at there, not boxes)
     const hc = contentOf(hero.el);
     const filledBy = hc.some((c) => c.what === 'picture' && c.tag !== 'CANVAS' && c.tag !== 'svg' && (Math.min(c.r, W) - Math.max(c.l, 0)) * (Math.min(c.b, F) - Math.max(c.t, 0)) >= W * F * 0.9);
-    // (display type of 56px or more that shows half its line or more is cropped at the foot on purpose, as the library deals
-    // it; under half shows only the tops of the letters of what comes next)
-    const cut = hc.filter((c) => (c.what === 'text' || c.what === 'heading' ? c.t < F - 8 && c.b > F + 2 && !((c.b - c.t) >= 56 && F - c.t >= (c.b - c.t) * 0.5) : !filledBy && !/^(CANVAS|svg|IFRAME)$/.test(c.tag) && c.t >= F * 0.8 && c.t < F - 8 && c.b > F + 2) && c.r > 0 && c.l < W).sort((a, b) => a.t - b.t);
+    // (other display type of 56px or more that shows half its line or more, a word set large behind the title, is left to
+    // the eye; under half shows only the tops of the letters of what comes next. The title is hero-cut's, above)
+    const cut = hc.filter((c) => (c.what === 'text' || c.what === 'heading' ? c.t < F - 8 && c.b > F + 2 && !((c.b - c.t) >= 56 && F - c.t >= (c.b - c.t) * 0.5) && !(h1 && h1.contains(c.el)) :!filledBy && !/^(CANVAS|svg|IFRAME)$/.test(c.tag) && c.t >= F * 0.8 && c.t < F - 8 && c.b > F + 2) && c.r > 0 && c.l < W).sort((a, b) => a.t - b.t);
     if (cut.length) out.hero.cut = { what: cut[0].what, text: cut[0].text, px: Math.round(F - cut[0].t), n: cut.length };
   }
   // --- the air between blocks (desktop)
@@ -568,56 +587,106 @@ export function crops() {
 
 // Round 11b (the round-11 test pages: r11-p51, a motion designer's portfolio on seven grounds and panels, its work shown
 // as type cards, its footer read by the judge as one credit line). Each runs at the top of the page after the walk, on
-// desktop.
-//   grounds    the tones of the page's grounds and large panels: its own ground, every block across the width and every
-//              panel of 8% of a screen or more (a frame behind a picture is the picture; a product window counts by its
-//              own frame, which the sheet sets in the page's colours, and what is inside it is the product's), tones a
-//              step apart taken as one, and which of them is the page's, the ink, the accent or a dealt field (the
-//              dealt palette's, else the text's and the buttons') (surface-count)
-export function grounds(pal = null) {
+// desktop, but groundPoints(), which runs at every screen of the walk.
+// Round 11d (r12-p57 passed on four grounds, the ink over 4.7 screens and a veil in the accent among them; r12-p58 on
+// three, one a band sampled from its closing photograph): the grounds are counted by the screens a visitor sees them on.
+//   groundPoints  at one screen of the walk, once it rests: what paints at 48 points of the screen (8 by 6) under the
+//              words, the topmost fill of a section, a panel or a layer laid over the screen (a veil, a band), else the
+//              page's own. A picture, a film or a canvas is no ground and neither is a frame or a veil over one; the site's
+//              bar is the navigation's; a product window counts by its own frame, and what is inside it is the product's.
+//              Each point is 1/48 of a screen, with the section a fill across the width grounds there (the section, the
+//              footer or the scene round it, else the block of the page it stands in, so one section built of several
+//              fills is one and a chapter of several sections in one wrapper is several), and whether a scene paints it
+//              (surface-count)
+export function groundPoints() {
   const W = innerWidth, H = innerHeight, B = document.body, D = document.documentElement;
   const memo = new Map(); const css = (e) => { let c = memo.get(e); if (!c) { c = getComputedStyle(e); memo.set(e, c); } return c; };
   const rgba = (c) => { const s = String(c || ''); const k = s.match(/color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)(?:\s*\/\s*([-\d.e]+))?\s*\)/); if (k) return [k[1] * 255, k[2] * 255, k[3] * 255, k[4] != null ? +k[4] : 1]; const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
-  const fromHex = (h) => (/^#[0-9a-f]{6}$/i.test(h || '') ? [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)) : null);
   const hex = (c) => '#' + c.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
   const desc = (e) => e.tagName.toLowerCase() + (e.classList && e.classList.length ? '.' + [...e.classList].slice(0, 2).join('.') : '');
-  // (shown: laid out and at half its opacity or more, a layer faded away is not a ground)
-  const shown = (el) => { let o = 1; for (let e = el; e && e !== D; e = e.parentElement) { const cs = css(e); if (cs.display === 'none' || cs.visibility === 'hidden') return false; o *= +cs.opacity; } return o >= 0.5; };
+  // (faded: under half its opacity with its ancestors', a layer on its way out is not a ground)
+  const faded = (el) => { let o = 1; for (let e = el; e && e !== D; e = e.parentElement) { const cs = css(e); if (cs.visibility === 'hidden') return true; o *= +cs.opacity; } return o < 0.5; };
+  // (the site's bar: the nearest layer fixed or sticky round it is under a third of the screen tall)
+  const bar = (el) => { for (let e = el; e && e !== B; e = e.parentElement) if (/fixed|sticky/.test(css(e).position)) return e.getBoundingClientRect().height < H * 0.3; return false; };
+  const PIC = /^(IMG|VIDEO|CANVAS|PICTURE|IFRAME|OBJECT|EMBED)$/;
+  const own = [B, D].map((e) => rgba(css(e).backgroundColor)).find((c) => c && c[3] >= 0.9) || [255, 255, 255, 1];
+  const tones = new Map();
+  // (the blocks across the width each tone grounds, by a number each keeps for the whole walk)
+  const ids = window.__groundIds || (window.__groundIds = { map: new WeakMap(), next: 1 });
+  const idOf = (e) => { let k = ids.map.get(e); if (!k) { k = ids.next++; ids.map.set(e, k); } return k; };
+  const secOf = (e) => { const s = e.closest('section, footer, article, aside, [data-scene]'); if (s) return s; let x = e; while (x.parentElement && x.parentElement !== B && x.parentElement.tagName !== 'MAIN') x = x.parentElement; return x; };
+  // (a veil or a band lets the pointer through: the points are hit-tested with every layer taking it)
+  const hit = document.createElement('style'); hit.textContent = '*, *::before, *::after { pointer-events: auto !important; }'; document.head.appendChild(hit);
+  try {
+    for (let i = 0; i < 8; i++) for (let j = 0; j < 6; j++) {
+      const stack = document.elementsFromPoint((W * (i + 0.5)) / 8, (H * (j + 0.5)) / 6);
+      let tone = own, at = null, picture = false;
+      for (const e of stack) {
+        if (e === D || e === B) break;
+        if (PIC.test(e.tagName)) { if (!faded(e)) { picture = true; break; } continue; }
+        if (e instanceof SVGElement || bar(e) || faded(e)) continue;
+        let ui = e.closest('[data-ui]'); while (ui && ui.parentElement?.closest('[data-ui]')) ui = ui.parentElement.closest('[data-ui]');
+        if (ui && ui !== e) continue;
+        const cs = css(e);
+        if (/url\(/.test(cs.backgroundImage)) { picture = true; break; }
+        const c = rgba(cs.backgroundColor); if (!c || c[3] < 0.9) continue;
+        // (a frame behind a picture, or one that lays its own veil over it, is the picture)
+        if (stack.some((p) => PIC.test(p.tagName) && e.contains(p) && !faded(p))) { picture = true; break; }
+        tone = c; at = e; break;
+      }
+      if (picture) continue;
+      // (where the page's own ground shows, the section under the point is the one it grounds)
+      const top = at || stack.find((e) => e !== D && e !== B && !bar(e));
+      const k = hex(tone), t = tones.get(k), wide = !at || at.getBoundingClientRect().width >= W * 0.94, block = wide && top ? idOf(secOf(top)) : null, scene = !!at && !!at.closest('[data-scene], .scene');
+      if (t) { t.n++; t.wide = t.wide || wide; t.scene = t.scene || scene; if (block && !t.blocks.includes(block)) t.blocks.push(block); } else tones.set(k, { hex: k, n: 1, where: at ? desc(at) : 'page', wide, scene, blocks: block ? [block] : [] });
+    }
+  } finally { hit.remove(); }
+  return { page: hex(own), tones: [...tones.values()] };
+}
+
+//   grounds    the walk's ground points (groundPoints() at each screen, summed) as tones: the screens each grounds and the
+//              sections across the width it grounds, tones a step apart taken as one (the page's with the largest tone a
+//              step from it, its surface or a tint), which of them is the page's, its surface, the ink, the accent or a
+//              dealt field (the dealt palette's, else the text's and the fill the buttons carry most), and the dealt piece
+//              that asks for it (asked: a veil or a window in the accent, the ground and the ink swapped, a scene's ground
+//              sampled from its photograph) (surface-count)
+export function grounds([pal, seen, asked]) {
+  const W = innerWidth, B = document.body;
+  const rgba = (c) => { const s = String(c || ''); const k = s.match(/color\(srgb\s+([-\d.e]+)\s+([-\d.e]+)\s+([-\d.e]+)(?:\s*\/\s*([-\d.e]+))?\s*\)/); if (k) return [k[1] * 255, k[2] * 255, k[3] * 255, k[4] != null ? +k[4] : 1]; const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+  const fromHex = (h) => (/^#[0-9a-f]{6}$/i.test(h || '') ? [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)) : null);
+  const hex = (c) => '#' + c.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
   // the distance between two tones in CIE Lab: under 8 is a step of one tone, under 3 the same tone to the eye
   const lab = (c) => { const f = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; const [r, g, b] = c.slice(0, 3).map(f); const t = (v) => (v > 0.008856 ? Math.cbrt(v) : 7.787 * v + 16 / 116); const x = t((r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047), y = t(r * 0.2126 + g * 0.7152 + b * 0.0722), z = t((r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883); return [116 * y - 16, 500 * (x - y), 200 * (y - z)]; };
   const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
   const near = (a, b) => dist(a, b) < 8;
-  const tones = []; const add = (c, area, where, wide) => { const k = hex(c); const t = tones.find((x) => x.hex === k); if (t) { t.area += area; t.wide = t.wide || wide; } else tones.push({ hex: k, lab: lab(c), area, where, wide }); };
-  const own = [B, D].map((e) => rgba(css(e).backgroundColor)).find((c) => c && c[3] >= 0.9) || [255, 255, 255, 1];
-  add(own, W * H, 'page', true);
-  let k = 0;
-  for (const el of B.querySelectorAll('*')) {
-    if (++k > 8000) break;
-    if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME|INPUT|BUTTON|SELECT|TEXTAREA|OPTION)$/.test(el.tagName) || el instanceof SVGElement) continue;
-    if (el.parentElement?.closest('[data-ui]') || el.closest('nav, dialog, [role=dialog]')) continue;
-    const c = rgba(css(el).backgroundColor); if (!c || c[3] < 0.9) continue;
-    const r = el.getBoundingClientRect(); if (Math.min(r.right, W) - Math.max(r.left, 0) < W * 0.1) continue;
-    const wide = r.width >= W * 0.94 && r.height >= 120;
-    if (!wide && r.width * r.height < W * H * 0.08) continue;
-    // (the site's bar, fixed or sticky over the page, is the navigation's business)
-    if (/fixed|sticky/.test(css(el).position) && r.height < H * 0.3) continue;
-    if (!shown(el) || [...el.querySelectorAll('img, video, canvas')].some((p) => { const q = p.getBoundingClientRect(); return q.width * q.height >= r.width * r.height * 0.85; })) continue;
-    add(c, r.width * r.height, desc(el), wide);
-  }
+  if (!seen || !seen.tones?.length) return [];
+  // (the page's own ground is the one it opened on: one it swaps to later is another ground)
+  const tones = seen.tones.map((t) => ({ ...t, lab: lab(fromHex(t.hex)), where: t.hex === seen.page ? 'page' : t.where === 'page' ? 'body' : t.where }));
   // the ink, the accent and the dealt fields: the dealt palette's, else the page's text and the fill its buttons carry most
-  let ink = fromHex(pal?.ink) || rgba(css(B).color), accent = fromHex(pal?.accent);
-  if (!accent) { const n = new Map(); for (const a of document.querySelectorAll('a, button')) { const c = rgba(css(a).backgroundColor), r = a.getBoundingClientRect(); if (!c || c[3] < 0.9 || r.height < 32 || r.height > 96 || r.width > W * 0.5) continue; n.set(hex(c), (n.get(hex(c)) || 0) + 1); } const top = [...n.entries()].sort((a, b) => b[1] - a[1])[0]; if (top) accent = fromHex(top[0]); }
-  const inkLab = ink ? lab(ink) : null, accentLab = accent ? lab(accent) : null, fieldLabs = (pal?.fields || []).map(fromHex).filter(Boolean).map(lab);
+  const ink = fromHex(pal?.ink) || rgba(getComputedStyle(B).color); let accent = fromHex(pal?.accent);
+  if (!accent) { const n = new Map(); for (const a of document.querySelectorAll('a, button')) { const c = rgba(getComputedStyle(a).backgroundColor), r = a.getBoundingClientRect(); if (!c || c[3] < 0.9 || r.height < 32 || r.height > 96 || r.width > W * 0.5) continue; n.set(hex(c), (n.get(hex(c)) || 0) + 1); } const top = [...n.entries()].sort((a, b) => b[1] - a[1])[0]; if (top) accent = fromHex(top[0]); }
+  const surface = fromHex(pal?.surface);
+  const surfaceLab = surface ? lab(surface) : null, inkLab = ink ? lab(ink) : null, accentLab = accent ? lab(accent) : null, fieldLabs = (pal?.fields || []).map(fromHex).filter(Boolean).map(lab);
   // tones a step apart are one, each joined to the largest tone of its group and never along a chain (greys stepped
-  // down the page one by one are each a ground): a block across the width joins a tone under 3 from it, a panel one
+  // down the page one by one are each a ground): a fill across the width joins a tone under 3 from it, a panel one
   // under 8 (a card a step off its ground reads as that ground's surface)
   const groups = [];
-  for (const t of [...tones].sort((a, b) => b.area - a.area)) {
+  for (const t of [...tones].sort((a, b) => b.n - a.n)) {
     const at = groups.map((g) => [g, dist(g[0].lab, t.lab)]).filter(([, d]) => d < (t.wide ? 3 : 8)).sort((a, b) => a[1] - b[1])[0];
     if (at) at[0].push(t); else groups.push([t]);
   }
-  return groups.map((g) => ({ hex: g[0].hex, where: g.find((x) => x.where === 'page') ? 'page' : g[0].where, n: g.length, share: +(g.reduce((s, x) => s + x.area, 0) / (W * H)).toFixed(2),
-    role: g.some((x) => x.where === 'page') ? 'page' : inkLab && g.some((x) => near(x.lab, inkLab)) ? 'ink' : accentLab && g.some((x) => near(x.lab, accentLab)) ? 'accent' : fieldLabs.some((f) => g.some((x) => near(x.lab, f))) ? 'field' : null }));
+  const of = (g, l) => !!l && g.some((x) => near(x.lab, l));
+  // (each group with its sections across the width and its tones by their screens; the page's with the largest tone a
+  // step from its own, 3 or more from it, its surface or a tint)
+  const sc = (n) => +(n / 48).toFixed(2);
+  return groups.map((g) => {
+    const p = g.find((x) => x.where === 'page'), scene = g.some((x) => x.scene);
+    const role = p ? 'page' : of(g, surfaceLab) ? 'surface' : fieldLabs.some((f) => of(g, f)) ? 'field' : of(g, inkLab) ? 'ink' : of(g, accentLab) ? 'accent' : null;
+    return { hex: g[0].hex, where: p ? 'page' : g[0].where, n: g.length, screens: sc(g.reduce((s, x) => s + x.n, 0)), role,
+      sections: new Set(g.flatMap((x) => x.blocks || [])).size, tones: g.map((x) => [x.hex, sc(x.n)]), scene,
+      asked: (role === 'accent' && asked?.accent) || (asked?.ink && of(g, inkLab) && role !== 'page' && asked.ink) || (role === null && scene && asked?.sampled) || null,
+      step: p ? g.filter((x) => x !== p && dist(x.lab, p.lab) >= 3).map((x) => [x.hex, sc(x.n)])[0] || null : undefined };
+  });
 }
 
 //   footing    the site's footer as built: the last <footer> or [role=contentinfo] outside the page's sections (else the
@@ -671,7 +740,97 @@ export function workShown() {
   }
   // a marked slot counts as a piece of the work until the client's picture is in it (then the picture counts)
   const slots = [...document.querySelectorAll('[data-slot="work"]')].filter((f) => { const r = f.getBoundingClientRect(); return r.width * r.height >= W * H * 0.02 && getComputedStyle(f).display !== 'none' && ![...held].some((e) => f.contains(e)); }).length;
-  return { sections: secs.map((s) => norm(s.querySelector('h1, h2, h3')?.innerText || s.id).slice(0, 40)), pictures: files.size, slots, typeset };
+  // (each file by its name, as pictureCredits() names it)
+  const dec = (u) => { try { return decodeURIComponent(u); } catch { return u; } };
+  return { sections: secs.map((s) => norm(s.querySelector('h1, h2, h3')?.innerText || s.id).slice(0, 40)), pictures: files.size, files: [...files].map((f) => (dec(f).split('/').filter(Boolean).pop() || '').replace(/\.[a-z0-9]{2,5}$/i, '')), slots, typeset };
+}
+
+// Round 11d (r12-p55 showed another maker's bike with its name on the frame as the product, r12-p58 two named hotels'
+// rooms as its own, r12-p57 another artist's pen display in its work slots; the round-11b checks passed all three). On
+// desktop, at the top of the page after the walk.
+//   pictureCredits  every picture shown (a photograph or a film of 64px or more, outside dialogs and the bar) that is shown
+//              as the client's, and its credit: the record assets.mjs kept of it (assets/credits.json: title, author,
+//              notes) and the entry of the page's credits list that names it. Shown as the client's: in a slot marked for
+//              their own picture (data-slot), captioned with their name, among the pictures of a portfolio's work
+//              (workShown()'s, marked or not), in a section named for the rooms or the house or alt-texted as a room, on a
+//              café's, a restaurant's or a house's page in a section named for its own place (its roastery, its bar, its
+//              kitchen: r10-p45 showed another roastery's roaster as "The roastery"), or anywhere on a page that sells one
+//              product of its own. A record is found by the picture's file or any file of its srcset, its film and its
+//              poster, else by the same name at another size ("hero-1440" for "hero-2880"), else by its width, height and
+//              bytes. Each says whether the credit names the client as its author, or another's (a record of its fetch, a
+//              licence or a source in its entry, or an author who is not the client), or no credit at all where the
+//              client gave no pictures; with the credits no picture shown matches (credit-names-business,
+//              portfolio-without-work)
+export async function pictureCredits({ client = null, product = false, place = false, own: hasOwn = false, work = [] } = {}) {
+  const B = document.body;
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  const fold = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/\p{M}/gu, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  const dec = (u) => { try { return decodeURIComponent(u); } catch { return u; } };
+  const base = (u) => (dec(String(u).split(/[?#]/)[0]).split('/').filter(Boolean).pop() || '').replace(/\.[a-z0-9]{2,5}$/i, '');
+  // (a file's name without its size: "hero-1440" and "hero-2880@2x" are one picture)
+  const stem = (f) => f.replace(/(?:[-_@](?:\d{3,4}(?:w|px)?|\d{3,4}x\d{3,4}|[1-4]x|small|medium|large|thumb))+$/i, '');
+  const named = (s) => norm([s.id.replace(/[-_]+/g, ' '), s.getAttribute('aria-label') || '', norm(document.getElementById(s.getAttribute('aria-labelledby') || '')?.innerText), norm(s.querySelector('h1, h2, h3')?.innerText)].join(' '));
+  // (rooms: a section or one round it named for them, never "Book a room"; or a picture alt-texted or captioned as one.
+  // The house: a section named for it. The client's own place: a section named for its roastery, its bar, its kitchen)
+  const ROOMS = /\b(rooms|suites|bedrooms|cabins|apartments|dorms)\b|\bthe (room|suite|cabin|apartment)\b/i, ROOM = /\b(room|bedroom|suite|dorm)\b/i;
+  const HOUSE = /\b(?:the|our) (?:house|home|guesthouse|cottage|lodge|farmhouse)\b/i;
+  const PLACE = /\b(?:roastery|bakery|brewery|kitchen|bar|counter|dining room|inside|interior|the (?:caf[eé]|restaurant|shop|space|place|room)|our (?:caf[eé]|restaurant|shop|space|place|room))\b/i;
+  const within = (el, re) => { for (let s = el.closest('section, article, [data-scene]'); s; s = s.parentElement?.closest('section, article, [data-scene]')) if (re.test(named(s))) return true; return false; };
+  const own = client ? new RegExp('(^|[^\\p{L}])' + client.replace(/[.*+?^$|()[\]{}\\]/g, '\\$&') + '($|[^\\p{L}])', 'iu') : null;
+  // the page's credits list (a dialog, list or section named for credits) and its entries, with the files their links name
+  const CRED = /credit|bildnachweis|fotonachweis|image sources|picture sources|photo sources|photographs? by/i;
+  const conts = [...document.querySelectorAll('dialog, section, aside, div, ul, ol, details')].filter((el) => !el.closest('nav') && CRED.test([el.id, typeof el.className === 'string' ? el.className : '', el.getAttribute('aria-label') || '', norm(el.querySelector('h1, h2, h3, h4')?.textContent)].join(' ')));
+  const entries = conts.flatMap((c) => [...c.querySelectorAll('li, p')].filter((e) => !e.querySelector('li, p') && /\bby\b|\bcc\b|public domain|unsplash|pexels|wikimedia|commons|licen[cs]e|\.(jpe?g|png|webp|avif)\b/i.test(e.textContent)))
+    .map((e) => { const text = norm(e.textContent), files = [...e.querySelectorAll('a[href]')].map((a) => base(a.getAttribute('href')).replace(/^File:/, '').replace(/_/g, ' ')).filter((f) => f.length > 3); return { text: [text, ...files].join(' · '), f: ' ' + fold([text, ...files].join(' ')) + ' ' }; })
+    .filter((e, i, a) => a.findIndex((x) => x.f === e.f) === i);
+  let ledger = [];
+  for (const p of ['assets/credits.json', 'credits.json', 'images/credits.json', 'img/credits.json']) { try { const res = await fetch(p, { cache: 'no-store' }); if (res.ok) { const j = await res.json(); if (Array.isArray(j)) { ledger = j; break; } } } catch {} }
+  const recs = ledger.filter((l) => l && l.file).map((l) => ({ l, f: base(String(l.file)) }));
+  const recOf = (files, el) => {
+    const exact = recs.find((r) => files.includes(r.f)); if (exact) return exact.l;
+    const sized = recs.filter((r) => stem(r.f).length >= 3 && files.some((f) => stem(f) === stem(r.f))); if (sized.length === 1) return sized[0].l;
+    // (a copy saved under another name: the width, height and bytes of one record alone)
+    const w = el.naturalWidth || el.videoWidth || 0, h = el.naturalHeight || el.videoHeight || 0, at = el.currentSrc || el.src;
+    const bytes = w && at ? performance.getEntriesByName(new URL(at, location.href).href)[0]?.decodedBodySize || 0 : 0;
+    const same = bytes ? recs.filter((r) => +r.l.width === w && +r.l.height === h && +r.l.bytes === bytes) : [];
+    return same.length === 1 ? same[0].l : null;
+  };
+  const out = [], seen = new Set(), usedRec = new Set(), usedEntry = new Set(); let k = 0;
+  for (const el of B.querySelectorAll('img, video, [style*="background-image"], figure, div, section, span')) {
+    if (el.closest('dialog, [role=dialog], [data-ui], nav, header[role=banner]')) continue;
+    // its files: what it shows, its source and every size of its srcset and its picture's, a film's clip and its poster
+    const srcs = [];
+    if (el.tagName === 'IMG') { srcs.push(el.currentSrc, el.getAttribute('src')); for (const s of [el, ...(el.parentElement?.tagName === 'PICTURE' ? el.parentElement.querySelectorAll('source') : [])]) for (const c of String(s.getAttribute('srcset') || '').split(',')) srcs.push(c.trim().split(/\s+/)[0]); }
+    else if (el.tagName === 'VIDEO') srcs.push(el.currentSrc, el.getAttribute('src'), ...[...el.querySelectorAll('source')].map((s) => s.getAttribute('src')), el.getAttribute('poster'));
+    else { const cs = getComputedStyle(el), m = cs.backgroundImage.match(/url\(["']?([^"')]+)/); if (m && /cover|contain/.test(cs.backgroundSize)) srcs.push(m[1]); }
+    const files = [...new Set(srcs.filter((u) => u && !/^data:|\.svg(\?|#|$)/i.test(u)).map(base).filter(Boolean))];
+    if (!files.length || !el.getClientRects().length || getComputedStyle(el).display === 'none') continue;
+    const r = el.getBoundingClientRect(); if (r.width < 64 || r.height < 48) continue;
+    const file = files[0]; if (seen.has(file) || ++k > 120) continue;
+    seen.add(file);
+    const rec = recOf(files, el);
+    const t = rec ? fold(rec.title).slice(0, 40) : '', pg = rec ? fold(base(rec.page || '').replace(/^File:/, '').replace(/_/g, ' ')).slice(-40) : '';
+    const entry = entries.find((e) => (t.length >= 8 && e.f.includes(t)) || (pg.length >= 8 && e.f.includes(pg)) || files.some((f) => { const n = fold(f); return n.length >= 4 && e.f.includes(' ' + n + ' '); })) || null;
+    if (rec) usedRec.add(rec);
+    if (entry) usedEntry.add(entry);
+    // what it is shown as: the slot marked on it, a caption with the client's name, the work, a room, the house, the
+    // client's own place, the page's own product
+    const fig = el.closest('figure'), caption = norm(fig?.querySelector('figcaption')?.textContent), alt = norm(el.getAttribute('alt') || el.getAttribute('aria-label'));
+    const mark = el.closest('[data-slot]')?.getAttribute('data-slot') || '';
+    const sec = el.closest('section, article, [data-scene]');
+    const slot = mark ? (/product/i.test(mark) ? 'product' : /work|piece|project/i.test(mark) ? 'work' : /house|home/i.test(mark) ? 'house' : /room|stay/i.test(mark) ? 'room' : mark)
+      : own && own.test(caption + ' ' + alt) ? 'caption' : files.some((f) => work.includes(f)) ? 'work' : within(el, ROOMS) || ROOM.test(caption + ' ' + alt) ? 'room' : within(el, HOUSE) ? 'house' : place && within(el, PLACE) ? 'place' : product ? 'product page' : null;
+    if (!slot || out.length >= 24) continue;
+    // (whose it is: the client's by its record's author, else by the entry's; another's by a record of its fetch, a
+    // licence or a source in its entry, or an author who is not the client)
+    const author = rec ? String(rec.creator || '') : norm(entry?.text.match(/\bby\s+([^,;.·]+)/)?.[1]);
+    const theirs = !!own && own.test(author);
+    const third = !theirs && (!!rec || !!author || /\bcc[ -]?(?:by|0)\b|\bcc0\b|\blicen[cs]ed?\b|public domain|unsplash|pexels|pixabay|wikimedia|commons|openverse|flickr|\bvia\b/i.test(entry?.text || ''));
+    out.push({ file, files, slot, theirs, third, uncredited: !rec && !entry && !hasOwn, head: sec ? named(sec).slice(0, 40) : '', alt: alt.slice(0, 80), caption: caption.slice(0, 80), record: rec ? { title: String(rec.title || '').slice(0, 120), creator: String(rec.creator || '').slice(0, 80), file: base(rec.page || '').replace(/^File:/, '').replace(/_/g, ' ').slice(0, 120), notes: (rec.notes || []).join(' ').slice(0, 300) } : null, entry: entry ? entry.text.slice(0, 400) : null });
+  }
+  // (the credits no picture shown matches: a picture cropped or renamed from one of them is shown without its credit)
+  const credits = [...recs.filter((r) => !usedRec.has(r.l)).map((r) => ({ title: String(r.l.title || '').slice(0, 120), creator: String(r.l.creator || '').slice(0, 80), file: base(r.l.page || '').replace(/^File:/, '').replace(/_/g, ' ').slice(0, 120), notes: '' })), ...entries.filter((e) => !usedEntry.has(e)).map((e) => ({ entry: e.text.slice(0, 300) }))].slice(0, 40);
+  return { shown: out, credits };
 }
 
 // Round 11c (Leon: three button shapes at one size, a plain bar that hides on scroll; r12-p53's three unrelated buttons,
